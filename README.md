@@ -66,6 +66,16 @@ src/
         Options/
         Providers/
 
+  GlucoDesk.Desktop/
+    Bootstrap/
+    ViewModels/
+      Common/
+      Dashboard/
+      Main/
+    Views/
+      Dashboard/
+      Main/
+
 tests/
   GlucoDesk.Core.Tests/
     Glucose/
@@ -109,6 +119,7 @@ Implemented:
 * Core project.
 * Application project.
 * Infrastructure project.
+* Desktop project.
 * Core test project.
 * Application test project.
 * Infrastructure test project.
@@ -123,6 +134,9 @@ Implemented:
 * Application-level glucose data service.
 * Dashboard snapshot request/result model.
 * Dependency injection registration for application services.
+* Avalonia desktop shell.
+* Desktop dependency injection bootstrap.
+* Initial dashboard shell connected to the mock CGM provider.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 
 ## Architecture
@@ -144,7 +158,8 @@ GlucoDesk.Infrastructure
   Currently includes the deterministic mock CGM provider.
 
 GlucoDesk.Desktop
-  Future Avalonia desktop application.
+  Avalonia desktop application.
+  Currently includes the initial desktop shell and a mock-powered dashboard preview.
 ```
 
 The goal is to keep the domain and application layers independent from concrete providers and UI frameworks.
@@ -152,7 +167,7 @@ The goal is to keep the domain and application layers independent from concrete 
 The current application flow is:
 
 ```text
-Future UI
+GlucoDesk.Desktop
   -> IGlucoseDataService
     -> ICgmLiveProvider / ICgmHistoricalProvider / ICgmMetadataProvider
       -> Mock / Nightscout / Dexcom
@@ -228,6 +243,32 @@ It generates deterministic fake CGM readings that are useful for:
 * Future demo mode.
 
 The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk will use Nightscout and/or Dexcom directly through their own provider implementations.
+
+## Desktop model
+
+The current desktop layer includes:
+
+* `DesktopServiceProviderBuilder`
+* `ViewModelBase`
+* `MainWindowViewModel`
+* `DashboardViewModel`
+* `MainWindow`
+* `DashboardView`
+
+The desktop app currently uses the mock CGM provider through the application-level `IGlucoseDataService`.
+
+Current dashboard preview displays:
+
+* Latest glucose value.
+* Trend.
+* Status.
+* Provider name.
+* Data freshness.
+* Last updated timestamp.
+* Recent readings count.
+* Error state, when present.
+
+The current dashboard uses deterministic demo data and is not intended for treatment decisions.
 
 ## Provider strategy
 
@@ -317,9 +358,19 @@ dotnet build -c Release
 dotnet test -c Release
 ```
 
+## Running the desktop app
+
+From the repository root:
+
+```bash
+dotnet run --project src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
+```
+
+The current desktop app uses the mock CGM provider and displays deterministic demo glucose data.
+
 ## Roadmap
 
-* v0.1: Mock provider, application glucose data service, dashboard, chart and local settings.
+* v0.1: Mock provider, application glucose data service, desktop shell, dashboard, chart and local settings.
 * v0.2: Nightscout live provider.
 * v0.3: Analytics engine and compact widget.
 * v0.4: Dexcom Official API historical provider.
