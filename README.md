@@ -20,6 +20,7 @@ The project is designed around a provider-based architecture:
 * Open-source friendly design.
 * Clear separation between domain, application, infrastructure and UI concerns.
 * Support for fake demo data without exposing real personal glucose data.
+* Future support for local history, diabetes diary exports and reporting.
 
 ## Tech stack
 
@@ -41,13 +42,19 @@ src/
 
   GlucoDesk.Application/
     Cgm/
+      Dashboard/
+        Requests/
+        Results/
       Providers/
         Abstractions/
         Metadata/
       Readings/
         Requests/
         Results/
+      Services/
+        Abstractions/
     Common/
+      DependencyInjection/
       Errors/
       Results/
 
@@ -65,12 +72,17 @@ tests/
 
   GlucoDesk.Application.Tests/
     Cgm/
+      Dashboard/
+        Requests/
+        Results/
       Providers/
         Metadata/
       Readings/
         Requests/
         Results/
+      Services/
     Common/
+      DependencyInjection/
       Errors/
       Results/
 
@@ -108,7 +120,10 @@ Implemented:
 * Provider metadata contract.
 * Deterministic mock CGM provider.
 * Mock provider dependency injection registration.
-* Unit tests for mock provider options, provider behavior and DI registration.
+* Application-level glucose data service.
+* Dashboard snapshot request/result model.
+* Dependency injection registration for application services.
+* Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 
 ## Architecture
 
@@ -120,7 +135,8 @@ GlucoDesk.Core
   No dependency on UI, external APIs, storage or infrastructure concerns.
 
 GlucoDesk.Application
-  Application contracts, provider abstractions, request/result models and application-level errors.
+  Application contracts, provider abstractions, request/result models, dashboard models,
+  application-level errors and application services.
   No dependency on concrete CGM providers.
 
 GlucoDesk.Infrastructure
@@ -132,6 +148,15 @@ GlucoDesk.Desktop
 ```
 
 The goal is to keep the domain and application layers independent from concrete providers and UI frameworks.
+
+The current application flow is:
+
+```text
+Future UI
+  -> IGlucoseDataService
+    -> ICgmLiveProvider / ICgmHistoricalProvider / ICgmMetadataProvider
+      -> Mock / Nightscout / Dexcom
+```
 
 ## Domain model
 
@@ -159,11 +184,24 @@ The current application layer includes:
 * `LatestGlucoseReadingResult`
 * `GlucoseReadingsResult`
 * `CgmProviderMetadata`
+* `GlucoseDashboardRequest`
+* `GlucoseDashboardSnapshot`
 * `ICgmLiveProvider`
 * `ICgmHistoricalProvider`
 * `ICgmMetadataProvider`
+* `IGlucoseDataService`
+* `GlucoseDataService`
+* `ApplicationServiceCollectionExtensions`
 
 These contracts allow GlucoDesk to support multiple CGM data sources without coupling the UI or domain model to a specific provider.
+
+The `IGlucoseDataService` acts as the application-level facade that future UI and reporting layers will use to retrieve:
+
+* Provider metadata.
+* Latest glucose reading.
+* Recent readings.
+* Historical readings.
+* Dashboard snapshots.
 
 ## Infrastructure model
 
@@ -221,6 +259,41 @@ User selects demo mode
 
 The application should clearly communicate the freshness and source of each reading.
 
+## Planned reporting and diary features
+
+A future milestone will add local history and monthly diabetes diary exports.
+
+The intended reporting flow is:
+
+```text
+Provider data
+  -> Normalized local storage
+    -> Diary aggregation service
+      -> Excel / PDF / CSV export
+```
+
+The monthly diary feature should allow users to generate exports such as:
+
+```text
+September 2025 diabetes diary
+```
+
+Possible report contents:
+
+* Daily glucose summaries.
+* Meal windows.
+* Pre-meal and post-meal glucose values, when data is available.
+* Carbohydrates, when available from treatments/events.
+* Insulin doses, when available from treatments/events.
+* Notes, when available.
+* Time in range.
+* Time above range.
+* Time below range.
+* Average glucose.
+* Data source and data completeness information.
+
+This feature will depend on local storage, Nightscout treatments/events and future reporting services.
+
 ## Development principles
 
 * Keep the domain model small, explicit and testable.
@@ -246,10 +319,11 @@ dotnet test -c Release
 
 ## Roadmap
 
-* v0.1: Mock provider, dashboard, chart and local settings.
+* v0.1: Mock provider, application glucose data service, dashboard, chart and local settings.
 * v0.2: Nightscout live provider.
 * v0.3: Analytics engine and compact widget.
 * v0.4: Dexcom Official API historical provider.
+* v0.5: Local history, treatments/events and monthly diabetes diary export.
 * v1.0: Production-ready cross-platform release.
 
 ## Medical disclaimer
