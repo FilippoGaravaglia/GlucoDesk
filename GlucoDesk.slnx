@@ -8,7 +8,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/GlucoDesk.Application.Tests/GlucoDesk.Application.Tests.csproj" />
     <Project Path="tests/GlucoDesk.Core.Tests/GlucoDesk.Core.Tests.csproj" />
-    <Project Path="tests/GlucoDesk.Desktop.Tests/GlucoDesk.Desktop.Tests.csproj" />
     <Project Path="tests/GlucoDesk.Infrastructure.Tests/GlucoDesk.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>
