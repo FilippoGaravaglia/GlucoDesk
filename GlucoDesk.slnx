@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GlucoDesk.Application/GlucoDesk.Application.csproj" />
+    <Project Path="src/GlucoDesk.Core/GlucoDesk.Core.csproj" />
+    <Project Path="src/GlucoDesk.Infrastructure/GlucoDesk.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GlucoDesk.Application.Tests/GlucoDesk.Application.Tests.csproj" />
+    <Project Path="tests/GlucoDesk.Core.Tests/GlucoDesk.Core.Tests.csproj" />
+  </Folder>
+</Solution>
