@@ -35,10 +35,16 @@
                        FontWeight="Bold" />
           </StackPanel>
 
-          <Button Grid.Column="1"
-                  Content="Refresh"
-                  Command="{Binding RefreshCommand}"
-                  VerticalAlignment="Top" />
+          <StackPanel Grid.Column="1"
+                      Spacing="8"
+                      VerticalAlignment="Top">
+            <Button Content="Refresh now"
+                    Command="{Binding RefreshCommand}" />
+
+            <TextBlock Text="{Binding AutoRefreshStatusText}"
+                       Opacity="0.65"
+                       TextAlignment="Right" />
+          </StackPanel>
         </Grid>
 
         <Grid ColumnDefinitions="*,*"

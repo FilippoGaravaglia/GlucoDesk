@@ -7,6 +7,7 @@ using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Desktop.ViewModels.Common;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -16,6 +17,7 @@ namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 public sealed partial class DashboardViewModel : ViewModelBase
 {
     private readonly IGlucoseDataService _glucoseDataService;
+    private readonly DashboardRefreshOptions _refreshOptions;
 
     [ObservableProperty]
     private string _providerDisplayName = "Not loaded";
@@ -39,6 +41,9 @@ public sealed partial class DashboardViewModel : ViewModelBase
     private string _recentReadingsCountText = "0 readings";
 
     [ObservableProperty]
+    private string _autoRefreshStatusText = "Auto-refresh not started";
+
+    [ObservableProperty]
     private string? _errorMessage;
 
     [ObservableProperty]
@@ -51,12 +56,23 @@ public sealed partial class DashboardViewModel : ViewModelBase
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
     /// </summary>
     /// <param name="glucoseDataService">The glucose data service.</param>
-    public DashboardViewModel(IGlucoseDataService glucoseDataService)
+    /// <param name="refreshOptions">The optional dashboard refresh options.</param>
+    public DashboardViewModel(
+        IGlucoseDataService glucoseDataService,
+        DashboardRefreshOptions? refreshOptions = null)
     {
         ArgumentNullException.ThrowIfNull(glucoseDataService);
 
         _glucoseDataService = glucoseDataService;
+        _refreshOptions = refreshOptions ?? DashboardRefreshOptions.Default;
+
+        AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_refreshOptions.AutoRefreshInterval)}";
     }
+
+    /// <summary>
+    /// Gets the configured automatic refresh interval.
+    /// </summary>
+    public TimeSpan AutoRefreshInterval => _refreshOptions.AutoRefreshInterval;
 
     /// <summary>
     /// Refreshes the dashboard using the configured glucose data service.
@@ -78,8 +94,7 @@ public sealed partial class DashboardViewModel : ViewModelBase
         try
         {
             var result = await _glucoseDataService
-                .GetDashboardSnapshotAsync(GlucoseDashboardRequest.Default, cancellationToken)
-                .ConfigureAwait(false);
+                .GetDashboardSnapshotAsync(GlucoseDashboardRequest.Default, cancellationToken);
 
             if (result.IsFailure)
             {
@@ -88,6 +103,7 @@ public sealed partial class DashboardViewModel : ViewModelBase
             }
 
             ApplySnapshot(result.Value);
+            AutoRefreshStatusText = $"Last refresh: {DateTimeOffset.Now:HH:mm:ss}";
         }
         catch (OperationCanceledException)
         {
@@ -221,6 +237,21 @@ public sealed partial class DashboardViewModel : ViewModelBase
         return isStale
             ? $"{statusText} · stale data"
             : statusText;
+    }
+
+    /// <summary>
+    /// Formats the automatic refresh interval for display.
+    /// </summary>
+    /// <param name="interval">The automatic refresh interval.</param>
+    /// <returns>The display-friendly interval.</returns>
+    private static string FormatInterval(TimeSpan interval)
+    {
+        if (interval.TotalMinutes >= 1)
+        {
+            return $"{interval.TotalMinutes:0.#} minute(s)";
+        }
+
+        return $"{interval.TotalSeconds:0.#} second(s)";
     }
 
     #endregion
