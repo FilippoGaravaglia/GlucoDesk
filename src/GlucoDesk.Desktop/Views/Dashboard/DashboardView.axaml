@@ -1,0 +1,117 @@
+<UserControl
+    x:Class="GlucoDesk.Desktop.Views.Dashboard.DashboardView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Grid RowDefinitions="Auto,*"
+        Margin="32"
+        RowSpacing="24">
+
+    <StackPanel Grid.Row="0"
+                Spacing="8">
+      <TextBlock Text="GlucoDesk"
+                 FontSize="34"
+                 FontWeight="SemiBold" />
+
+      <TextBlock Text="Local-first CGM desktop companion"
+                 FontSize="16"
+                 Opacity="0.75" />
+    </StackPanel>
+
+    <Border Grid.Row="1"
+            Padding="28"
+            CornerRadius="16"
+            BorderThickness="1">
+      <StackPanel Spacing="20">
+
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Current glucose"
+                       FontSize="14"
+                       Opacity="0.7" />
+
+            <TextBlock Text="{Binding LatestValueText}"
+                       FontSize="56"
+                       FontWeight="Bold" />
+          </StackPanel>
+
+          <Button Grid.Column="1"
+                  Content="Refresh"
+                  Command="{Binding RefreshCommand}"
+                  VerticalAlignment="Top" />
+        </Grid>
+
+        <Grid ColumnDefinitions="*,*"
+              RowDefinitions="Auto,Auto,Auto"
+              ColumnSpacing="24"
+              RowSpacing="14">
+
+          <StackPanel Grid.Row="0"
+                      Grid.Column="0"
+                      Spacing="4">
+            <TextBlock Text="Trend"
+                       Opacity="0.7" />
+            <TextBlock Text="{Binding TrendText}"
+                       FontSize="18"
+                       FontWeight="SemiBold" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="0"
+                      Grid.Column="1"
+                      Spacing="4">
+            <TextBlock Text="Status"
+                       Opacity="0.7" />
+            <TextBlock Text="{Binding StatusText}"
+                       FontSize="18"
+                       FontWeight="SemiBold" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="1"
+                      Grid.Column="0"
+                      Spacing="4">
+            <TextBlock Text="Provider"
+                       Opacity="0.7" />
+            <TextBlock Text="{Binding ProviderDisplayName}"
+                       FontSize="18" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="1"
+                      Grid.Column="1"
+                      Spacing="4">
+            <TextBlock Text="Freshness"
+                       Opacity="0.7" />
+            <TextBlock Text="{Binding FreshnessText}"
+                       FontSize="18" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="2"
+                      Grid.Column="0"
+                      Spacing="4">
+            <TextBlock Text="Last updated"
+                       Opacity="0.7" />
+            <TextBlock Text="{Binding LastUpdatedText}"
+                       FontSize="18" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="2"
+                      Grid.Column="1"
+                      Spacing="4">
+            <TextBlock Text="Recent readings"
+                       Opacity="0.7" />
+            <TextBlock Text="{Binding RecentReadingsCountText}"
+                       FontSize="18" />
+          </StackPanel>
+        </Grid>
+
+        <TextBlock Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding HasError}"
+                   TextWrapping="Wrap"
+                   FontWeight="SemiBold" />
+
+        <TextBlock Text="Demo data provided by the Mock CGM provider. GlucoDesk is not a medical device and must not be used for treatment decisions."
+                   TextWrapping="Wrap"
+                   Opacity="0.65" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

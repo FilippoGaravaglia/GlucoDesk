@@ -1,0 +1,14 @@
+<Window
+    x:Class="GlucoDesk.Desktop.Views.Main.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dashboard="clr-namespace:GlucoDesk.Desktop.Views.Dashboard"
+    Title="GlucoDesk"
+    Width="980"
+    Height="680"
+    MinWidth="760"
+    MinHeight="520">
+
+  <dashboard:DashboardView DataContext="{Binding Dashboard}" />
+
+</Window>
