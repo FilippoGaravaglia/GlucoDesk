@@ -1,5 +1,6 @@
 using GlucoDesk.Application.Common.DependencyInjection;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.Views.Main;
 using GlucoDesk.Infrastructure.Cgm.Mock.DependencyInjection;
@@ -35,11 +36,13 @@ internal static class DesktopServiceProviderBuilder
     #region Helpers
 
     /// <summary>
-    /// Registers desktop windows and view models.
+    /// Registers desktop windows, view models and desktop-specific options.
     /// </summary>
     /// <param name="services">The service collection.</param>
     private static void AddDesktopShell(this IServiceCollection services)
     {
+        services.AddSingleton(DashboardRefreshOptions.Default);
+
         services.AddTransient<MainWindow>();
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();

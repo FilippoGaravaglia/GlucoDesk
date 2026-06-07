@@ -71,6 +71,7 @@ src/
     ViewModels/
       Common/
       Dashboard/
+        Options/
       Main/
     Views/
       Dashboard/
@@ -103,6 +104,11 @@ tests/
         Options/
         Providers/
 
+  GlucoDesk.Desktop.Tests/
+    ViewModels/
+      Dashboard/
+        Options/
+
 docs/
   architecture-decisions/
 
@@ -123,6 +129,7 @@ Implemented:
 * Core test project.
 * Application test project.
 * Infrastructure test project.
+* Desktop test project.
 * Initial glucose domain model.
 * Unit tests for glucose value, range and reading behavior.
 * Application-level result/error model.
@@ -137,7 +144,10 @@ Implemented:
 * Avalonia desktop shell.
 * Desktop dependency injection bootstrap.
 * Initial dashboard shell connected to the mock CGM provider.
+* Dashboard auto-refresh timer.
+* Dashboard refresh options.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
+* Unit tests for dashboard refresh options and dashboard view model behavior.
 
 ## Architecture
 
@@ -159,7 +169,8 @@ GlucoDesk.Infrastructure
 
 GlucoDesk.Desktop
   Avalonia desktop application.
-  Currently includes the initial desktop shell and a mock-powered dashboard preview.
+  Currently includes the initial desktop shell, dashboard view model,
+  auto-refresh behavior and a mock-powered dashboard preview.
 ```
 
 The goal is to keep the domain and application layers independent from concrete providers and UI frameworks.
@@ -168,9 +179,10 @@ The current application flow is:
 
 ```text
 GlucoDesk.Desktop
-  -> IGlucoseDataService
-    -> ICgmLiveProvider / ICgmHistoricalProvider / ICgmMetadataProvider
-      -> Mock / Nightscout / Dexcom
+  -> DashboardView / DashboardViewModel
+    -> IGlucoseDataService
+      -> ICgmLiveProvider / ICgmHistoricalProvider / ICgmMetadataProvider
+        -> Mock / Nightscout / Dexcom
 ```
 
 ## Domain model
@@ -252,6 +264,7 @@ The current desktop layer includes:
 * `ViewModelBase`
 * `MainWindowViewModel`
 * `DashboardViewModel`
+* `DashboardRefreshOptions`
 * `MainWindow`
 * `DashboardView`
 
@@ -266,7 +279,16 @@ Current dashboard preview displays:
 * Data freshness.
 * Last updated timestamp.
 * Recent readings count.
+* Auto-refresh status.
 * Error state, when present.
+
+The dashboard currently supports automatic refresh using a UI-thread dispatcher timer.
+
+The current default refresh interval is:
+
+```text
+30 seconds
+```
 
 The current dashboard uses deterministic demo data and is not intended for treatment decisions.
 
@@ -347,6 +369,7 @@ This feature will depend on local storage, Nightscout treatments/events and futu
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.
 * Keep mock/demo data clearly separated from real provider data.
+* Keep desktop behavior testable through view models and application services.
 
 ## Running build and tests
 
@@ -368,9 +391,11 @@ dotnet run --project src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
 
 The current desktop app uses the mock CGM provider and displays deterministic demo glucose data.
 
+The dashboard refreshes automatically every 30 seconds and can also be refreshed manually.
+
 ## Roadmap
 
-* v0.1: Mock provider, application glucose data service, desktop shell, dashboard, chart and local settings.
+* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, chart and local settings.
 * v0.2: Nightscout live provider.
 * v0.3: Analytics engine and compact widget.
 * v0.4: Dexcom Official API historical provider.
