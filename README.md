@@ -4,7 +4,7 @@ GlucoDesk is a local-first, cross-platform desktop companion for visualizing CGM
 
 The project is designed around a provider-based architecture:
 
-* Mock provider for local development and demos.
+* Mock provider for local development, tests, demos and future demo mode.
 * Nightscout provider for near real-time CGM visualization.
 * Dexcom Official API provider for delayed official historical data and metadata.
 
@@ -12,13 +12,14 @@ The project is designed around a provider-based architecture:
 
 ## Goals
 
-* Cross-platform desktop application for Windows, macOS, and Linux.
+* Cross-platform desktop application for Windows, macOS and Linux.
 * Local-first and privacy-first architecture.
 * Provider-based CGM data access.
 * Clean .NET architecture.
 * Useful desktop dashboard and compact widget.
 * Open-source friendly design.
 * Clear separation between domain, application, infrastructure and UI concerns.
+* Support for fake demo data without exposing real personal glucose data.
 
 ## Tech stack
 
@@ -26,6 +27,7 @@ The project is designed around a provider-based architecture:
 * Avalonia UI
 * CommunityToolkit.Mvvm
 * xUnit
+* Microsoft.Extensions.DependencyInjection
 
 ## Repository structure
 
@@ -50,6 +52,12 @@ src/
       Results/
 
   GlucoDesk.Infrastructure/
+    Cgm/
+      Mock/
+        DependencyInjection/
+        Generators/
+        Options/
+        Providers/
 
 tests/
   GlucoDesk.Core.Tests/
@@ -65,6 +73,13 @@ tests/
     Common/
       Errors/
       Results/
+
+  GlucoDesk.Infrastructure.Tests/
+    Cgm/
+      Mock/
+        DependencyInjection/
+        Options/
+        Providers/
 
 docs/
   architecture-decisions/
@@ -84,12 +99,16 @@ Implemented:
 * Infrastructure project.
 * Core test project.
 * Application test project.
+* Infrastructure test project.
 * Initial glucose domain model.
 * Unit tests for glucose value, range and reading behavior.
 * Application-level result/error model.
 * CGM provider abstractions.
 * CGM readings request and result contracts.
 * Provider metadata contract.
+* Deterministic mock CGM provider.
+* Mock provider dependency injection registration.
+* Unit tests for mock provider options, provider behavior and DI registration.
 
 ## Architecture
 
@@ -102,9 +121,11 @@ GlucoDesk.Core
 
 GlucoDesk.Application
   Application contracts, provider abstractions, request/result models and application-level errors.
+  No dependency on concrete CGM providers.
 
 GlucoDesk.Infrastructure
-  Future implementation layer for mock providers, Nightscout, Dexcom APIs, local storage, HTTP clients and platform integrations.
+  Implementation layer for concrete providers, local storage, HTTP clients and platform integrations.
+  Currently includes the deterministic mock CGM provider.
 
 GlucoDesk.Desktop
   Future Avalonia desktop application.
@@ -144,6 +165,32 @@ The current application layer includes:
 
 These contracts allow GlucoDesk to support multiple CGM data sources without coupling the UI or domain model to a specific provider.
 
+## Infrastructure model
+
+The current infrastructure layer includes:
+
+* `MockCgmProviderOptions`
+* `MockGlucoseReadingGenerator`
+* `MockCgmProvider`
+* `MockCgmProviderServiceCollectionExtensions`
+
+The mock provider implements:
+
+* `ICgmLiveProvider`
+* `ICgmHistoricalProvider`
+* `ICgmMetadataProvider`
+
+It generates deterministic fake CGM readings that are useful for:
+
+* Local development.
+* Automated tests.
+* UI development.
+* README screenshots.
+* Demo videos.
+* Future demo mode.
+
+The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk will use Nightscout and/or Dexcom directly through their own provider implementations.
+
 ## Provider strategy
 
 GlucoDesk is designed to support multiple data sources:
@@ -156,7 +203,20 @@ Dexcom Official API
   Intended for delayed official historical data and metadata.
 
 Mock provider
-  Intended for local development, tests and demos.
+  Implemented for local development, tests, demos and future demo mode.
+```
+
+Expected future runtime behavior:
+
+```text
+User configures Nightscout
+  GlucoDesk uses the Nightscout provider for live or near real-time readings.
+
+User configures Dexcom Official API
+  GlucoDesk uses the Dexcom provider for delayed official historical data and metadata.
+
+User selects demo mode
+  GlucoDesk uses the mock provider with deterministic fake glucose data.
 ```
 
 The application should clearly communicate the freshness and source of each reading.
@@ -172,6 +232,17 @@ The application should clearly communicate the freshness and source of each read
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.
+* Keep mock/demo data clearly separated from real provider data.
+
+## Running build and tests
+
+From the repository root:
+
+```bash
+dotnet restore
+dotnet build -c Release
+dotnet test -c Release
+```
 
 ## Roadmap
 
