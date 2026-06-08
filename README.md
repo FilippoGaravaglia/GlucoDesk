@@ -46,6 +46,12 @@ src/
       Dashboard/
         Requests/
         Results/
+      History/
+        Abstractions/
+        Requests/
+        Results/
+        Services/
+          Abstractions/
       Providers/
         Abstractions/
         Metadata/
@@ -66,6 +72,10 @@ src/
 
   GlucoDesk.Infrastructure/
     Cgm/
+      History/
+        DependencyInjection/
+        Options/
+        Stores/
       Mock/
         DependencyInjection/
         Generators/
@@ -101,6 +111,10 @@ tests/
       Dashboard/
         Requests/
         Results/
+      History/
+        Requests/
+        Results/
+        Services/
       Providers/
         Metadata/
       Readings/
@@ -117,6 +131,10 @@ tests/
 
   GlucoDesk.Infrastructure.Tests/
     Cgm/
+      History/
+        DependencyInjection/
+        Options/
+        Stores/
       Mock/
         DependencyInjection/
         Options/
@@ -186,11 +204,16 @@ Implemented:
 * In-process settings change notification.
 * Live dashboard update after settings save.
 * Automatic dashboard timer interval update after settings changes.
+* Local glucose history request/result contracts.
+* Application-level glucose history service.
+* Local JSON glucose history store.
+* Dependency injection registration for local glucose history infrastructure.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 * Unit tests for dashboard refresh options and dashboard view model behavior.
 * Unit tests for dashboard chart point validation.
 * Unit tests for application settings, settings service, settings change notifier, local settings options, JSON store and DI registration.
 * Unit tests for settings view model load/save behavior.
+* Unit tests for glucose history request/result, history service, storage options, JSON history store and DI registration.
 
 ## Architecture
 
@@ -203,12 +226,14 @@ GlucoDesk.Core
 
 GlucoDesk.Application
   Application contracts, provider abstractions, request/result models, dashboard models,
-  settings models, in-process settings notifications, application-level errors and application services.
+  history contracts, settings models, in-process settings notifications,
+  application-level errors and application services.
   No dependency on concrete CGM providers or storage implementations.
 
 GlucoDesk.Infrastructure
   Implementation layer for concrete providers, local storage, HTTP clients and platform integrations.
-  Currently includes the deterministic mock CGM provider and local JSON settings storage.
+  Currently includes the deterministic mock CGM provider, local JSON settings storage
+  and local JSON glucose history storage.
 
 GlucoDesk.Desktop
   Avalonia desktop application.
@@ -267,6 +292,18 @@ SettingsViewModel
           -> Update DispatcherTimer interval
 ```
 
+The current local glucose history flow is:
+
+```text
+GlucoseReading
+  -> IGlucoseHistoryService
+    -> IGlucoseHistoryStore
+      -> JsonGlucoseHistoryStore
+        -> Local glucose-readings.json
+```
+
+The local history foundation is not yet connected to automatic dashboard persistence. It is the storage and application-service foundation for future historical analysis, provider reconciliation and diary exports.
+
 ## Domain model
 
 The current core glucose domain includes:
@@ -295,11 +332,16 @@ The current application layer includes:
 * `CgmProviderMetadata`
 * `GlucoseDashboardRequest`
 * `GlucoseDashboardSnapshot`
+* `GlucoseHistoryRequest`
+* `GlucoseHistoryResult`
 * `ICgmLiveProvider`
 * `ICgmHistoricalProvider`
 * `ICgmMetadataProvider`
 * `IGlucoseDataService`
+* `IGlucoseHistoryStore`
+* `IGlucoseHistoryService`
 * `GlucoseDataService`
+* `GlucoseHistoryService`
 * `ApplicationSettings`
 * `ApplicationSettingsChangedEventArgs`
 * `IApplicationSettingsStore`
@@ -318,6 +360,8 @@ The `IGlucoseDataService` acts as the application-level facade that future UI an
 * Recent readings.
 * Historical readings.
 * Dashboard snapshots.
+
+The `IGlucoseHistoryService` acts as the application-level facade that future UI, analytics and reporting layers will use to persist and query local glucose history.
 
 The settings application layer currently supports:
 
@@ -341,6 +385,9 @@ The current infrastructure layer includes:
 * `LocalSettingsStorageOptions`
 * `JsonApplicationSettingsStore`
 * `LocalSettingsServiceCollectionExtensions`
+* `LocalGlucoseHistoryStorageOptions`
+* `JsonGlucoseHistoryStore`
+* `LocalGlucoseHistoryServiceCollectionExtensions`
 
 The mock provider implements:
 
@@ -363,9 +410,17 @@ The local JSON settings store implements:
 
 It currently persists non-secret application settings to a local `settings.json` file.
 
+The local JSON glucose history store implements:
+
+* `IGlucoseHistoryStore`
+
+It currently persists normalized glucose readings to a local `glucose-readings.json` file and de-duplicates readings by timestamp and provider.
+
 The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk will use Nightscout and/or Dexcom directly through their own provider implementations.
 
 The local JSON settings store is a foundation for user preferences. Future provider credentials and secrets must use a more secure storage strategy.
+
+The local JSON glucose history store is a foundation for personal glucose history. Glucose history contains sensitive health data, so future production releases should evaluate encryption, retention settings, export controls and clear privacy documentation before storing real personal data extensively.
 
 ## Desktop model
 
@@ -448,6 +503,8 @@ The chart highlights the configured target range and displays deterministic demo
 
 The current dashboard and settings screen use deterministic demo/local data and are not intended for treatment decisions.
 
+The local glucose history foundation is currently registered in the application and infrastructure layers, but it is not yet surfaced in the desktop UI.
+
 ## Provider strategy
 
 GlucoDesk is designed to support multiple data sources:
@@ -526,9 +583,52 @@ The dashboard currently reacts to settings changes and applies:
 
 Provider tokens, API secrets and OAuth credentials should not be stored in plain JSON in future production releases.
 
+## Local history strategy
+
+GlucoDesk now includes a local glucose history foundation.
+
+Current local history contracts are represented by:
+
+* `GlucoseHistoryRequest`
+* `GlucoseHistoryResult`
+* `IGlucoseHistoryStore`
+* `IGlucoseHistoryService`
+
+Current local history persistence is provided by:
+
+* `JsonGlucoseHistoryStore`
+
+Default local glucose history path:
+
+```text
+LocalApplicationData/GlucoDesk/history/glucose-readings.json depending on the runtime environment
+```
+
+The local history layer is intended to support future features such as:
+
+* Historical glucose exploration.
+* Monthly diabetes diary exports.
+* Data completeness checks.
+* Provider reconciliation.
+* Pattern analytics.
+* Time-in-range calculations over locally cached data.
+
+The JSON history store currently persists normalized glucose readings locally and de-duplicates readings by timestamp and provider.
+
+The current history store can:
+
+* Save glucose readings.
+* Merge new readings with existing readings.
+* De-duplicate readings by timestamp and provider.
+* Query readings by date range.
+* Return empty results when no history file exists.
+* Return application-level errors when the history file contains invalid JSON or invalid glucose readings.
+
+Glucose history contains sensitive health data. Future production releases should evaluate encryption, retention settings, export controls and clear privacy documentation before using real personal data extensively.
+
 ## Planned reporting and diary features
 
-A future milestone will add local history and monthly diabetes diary exports.
+A future milestone will add local history UI, treatments/events and monthly diabetes diary exports.
 
 The intended reporting flow is:
 
@@ -558,6 +658,7 @@ Possible report contents:
 * Time below range.
 * Average glucose.
 * Data source and data completeness information.
+* Local history completeness information.
 
 This feature will depend on local storage, Nightscout treatments/events and future reporting services.
 
@@ -569,6 +670,7 @@ This feature will depend on local storage, Nightscout treatments/events and futu
 * Prefer local-first behavior.
 * Do not log sensitive medical data or secrets.
 * Do not store provider secrets in plain text in future production releases.
+* Treat glucose history as sensitive health data.
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.
@@ -603,13 +705,15 @@ The application includes a settings screen for editing non-secret local preferen
 
 After saving settings, the dashboard can update its target range and refresh interval without restarting the app.
 
+The local glucose history foundation is registered, but the UI does not yet automatically persist dashboard readings into history.
+
 ## Roadmap
 
-* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen and live settings propagation.
+* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation and local glucose history foundation.
 * v0.2: Nightscout live provider.
 * v0.3: Analytics engine and compact widget.
 * v0.4: Dexcom Official API historical provider.
-* v0.5: Local history, treatments/events and monthly diabetes diary export.
+* v0.5: Local history UI, treatments/events and monthly diabetes diary export.
 * v1.0: Production-ready cross-platform release.
 
 ## Medical disclaimer

@@ -1,3 +1,5 @@
+using GlucoDesk.Application.Cgm.History.Services;
+using GlucoDesk.Application.Cgm.History.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Services;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Settings.Abstractions;
@@ -27,6 +29,7 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<IGlucoseDataService, GlucoseDataService>();
         services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
+        services.AddScoped<IGlucoseHistoryService, GlucoseHistoryService>();
 
         return services;
     }
