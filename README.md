@@ -171,6 +171,9 @@ Implemented:
 * Application settings service abstraction and implementation.
 * Local JSON settings store.
 * Dependency injection registration for local settings infrastructure.
+* Settings-backed dashboard refresh interval.
+* Settings-backed glucose target range.
+* Dashboard initialization command.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 * Unit tests for dashboard refresh options and dashboard view model behavior.
 * Unit tests for dashboard chart point validation.
@@ -197,7 +200,8 @@ GlucoDesk.Infrastructure
 GlucoDesk.Desktop
   Avalonia desktop application.
   Currently includes the initial desktop shell, dashboard view model,
-  auto-refresh behavior, lightweight glucose trend chart and a mock-powered dashboard preview.
+  auto-refresh behavior, lightweight glucose trend chart,
+  settings-backed dashboard configuration and a mock-powered dashboard preview.
 ```
 
 The goal is to keep the domain and application layers independent from concrete providers, storage implementations and UI frameworks.
@@ -220,6 +224,18 @@ GlucoDesk.Desktop
     -> IApplicationSettingsStore
       -> JsonApplicationSettingsStore
         -> Local settings.json
+```
+
+The current dashboard configuration flow is:
+
+```text
+Local settings.json
+  -> JsonApplicationSettingsStore
+    -> IApplicationSettingsService
+      -> DashboardViewModel
+        -> Dashboard refresh interval
+        -> Glucose target range
+        -> GlucoseTrendChart target range
 ```
 
 ## Domain model
@@ -342,11 +358,15 @@ Current dashboard preview displays:
 * Last updated timestamp.
 * Recent readings count.
 * Auto-refresh status.
+* Settings status.
+* Configured glucose target range.
 * Lightweight recent glucose trend chart.
 * Chart summary with reading count and min/max glucose values.
 * Error state, when present.
 
 The dashboard currently supports automatic refresh using a UI-thread dispatcher timer.
+
+The dashboard now loads local application settings before starting the automatic refresh timer. The configured dashboard refresh interval and glucose target range are applied to the dashboard view model and chart.
 
 The current default refresh interval is:
 
@@ -356,7 +376,7 @@ The current default refresh interval is:
 
 The dashboard includes a lightweight custom Avalonia trend chart based on recent glucose readings.
 
-The chart highlights the standard 70-180 mg/dL target range and displays deterministic demo data while the app runs with the mock provider.
+The chart highlights the configured target range and displays deterministic demo data while the app runs with the mock provider.
 
 The current dashboard uses deterministic demo data and is not intended for treatment decisions.
 
@@ -415,6 +435,14 @@ The local settings foundation is intended for non-secret preferences such as:
 * Preferred glucose unit.
 * Target range.
 * Dashboard refresh interval.
+
+The dashboard currently reads local settings during initialization and applies:
+
+* Dashboard refresh interval.
+* Lower glucose target.
+* Upper glucose target.
+* Target range text.
+* Chart target range.
 
 Provider tokens, API secrets and OAuth credentials should not be stored in plain JSON in future production releases.
 
@@ -486,9 +514,9 @@ From the repository root:
 dotnet run --project src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
 ```
 
-The current desktop app uses the mock CGM provider and displays deterministic demo glucose data, including the latest value, status, auto-refresh state and a lightweight recent trend chart.
+The current desktop app uses the mock CGM provider and displays deterministic demo glucose data, including the latest value, status, auto-refresh state, settings status and a lightweight recent trend chart.
 
-The dashboard refreshes automatically every 30 seconds and can also be refreshed manually.
+The dashboard refreshes automatically using the configured local settings interval and can also be refreshed manually.
 
 The application also registers the local JSON settings store, although the settings screen is not implemented yet.
 

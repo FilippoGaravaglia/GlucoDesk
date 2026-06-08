@@ -30,6 +30,7 @@ public partial class DashboardView : UserControl
 
         _hasLoaded = true;
 
+        await InitializeDashboardAsync();
         StartAutoRefreshTimer();
         await RefreshDashboardAsync();
     }
@@ -43,6 +44,20 @@ public partial class DashboardView : UserControl
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Initializes dashboard settings using the bound view model.
+    /// </summary>
+    /// <returns>A task representing the asynchronous initialization operation.</returns>
+    private async Task InitializeDashboardAsync()
+    {
+        if (DataContext is not DashboardViewModel viewModel)
+        {
+            return;
+        }
+
+        await viewModel.InitializeCommand.ExecuteAsync(null);
+    }
 
     /// <summary>
     /// Starts the dashboard automatic refresh timer.

@@ -4,6 +4,8 @@ using GlucoDesk.Application.Cgm.Dashboard.Requests;
 using GlucoDesk.Application.Cgm.Dashboard.Results;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Application.Settings.Abstractions;
+using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
@@ -19,7 +21,11 @@ namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 public sealed partial class DashboardViewModel : ViewModelBase
 {
     private readonly IGlucoseDataService _glucoseDataService;
+    private readonly IApplicationSettingsService _settingsService;
     private readonly DashboardRefreshOptions _refreshOptions;
+
+    private bool _isInitialized;
+    private TimeSpan _autoRefreshInterval;
 
     [ObservableProperty]
     private string _providerDisplayName = "Not loaded";
@@ -49,7 +55,19 @@ public sealed partial class DashboardViewModel : ViewModelBase
     private string _chartSummaryText = "No chart data";
 
     [ObservableProperty]
+    private decimal _targetLowMgDl = 70m;
+
+    [ObservableProperty]
+    private decimal _targetHighMgDl = 180m;
+
+    [ObservableProperty]
+    private string _targetRangeText = "Target range: 70-180 mg/dL";
+
+    [ObservableProperty]
     private string _autoRefreshStatusText = "Auto-refresh not started";
+
+    [ObservableProperty]
+    private string _settingsStatusText = "Settings not loaded";
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -64,23 +82,54 @@ public sealed partial class DashboardViewModel : ViewModelBase
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
     /// </summary>
     /// <param name="glucoseDataService">The glucose data service.</param>
-    /// <param name="refreshOptions">The optional dashboard refresh options.</param>
+    /// <param name="settingsService">The application settings service.</param>
+    /// <param name="refreshOptions">The optional dashboard refresh fallback options.</param>
     public DashboardViewModel(
         IGlucoseDataService glucoseDataService,
+        IApplicationSettingsService settingsService,
         DashboardRefreshOptions? refreshOptions = null)
     {
         ArgumentNullException.ThrowIfNull(glucoseDataService);
+        ArgumentNullException.ThrowIfNull(settingsService);
 
         _glucoseDataService = glucoseDataService;
+        _settingsService = settingsService;
         _refreshOptions = refreshOptions ?? DashboardRefreshOptions.Default;
+        _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
 
-        AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_refreshOptions.AutoRefreshInterval)}";
+        AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
     }
 
     /// <summary>
     /// Gets the configured automatic refresh interval.
     /// </summary>
-    public TimeSpan AutoRefreshInterval => _refreshOptions.AutoRefreshInterval;
+    public TimeSpan AutoRefreshInterval => _autoRefreshInterval;
+
+    /// <summary>
+    /// Initializes dashboard settings before the view starts automatic refresh.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task InitializeAsync(CancellationToken cancellationToken)
+    {
+        if (_isInitialized)
+        {
+            return;
+        }
+
+        _isInitialized = true;
+
+        var result = await _settingsService
+            .GetSettingsAsync(cancellationToken);
+
+        if (result.IsFailure)
+        {
+            ApplySettingsFallback(result);
+            return;
+        }
+
+        ApplySettings(result.Value);
+    }
 
     /// <summary>
     /// Refreshes the dashboard using the configured glucose data service.
@@ -130,11 +179,47 @@ public sealed partial class DashboardViewModel : ViewModelBase
     #region Helpers
 
     /// <summary>
+    /// Applies application settings to the dashboard view model.
+    /// </summary>
+    /// <param name="settings">The application settings.</param>
+    private void ApplySettings(ApplicationSettings settings)
+    {
+        _autoRefreshInterval = settings.DashboardRefreshInterval;
+        OnPropertyChanged(nameof(AutoRefreshInterval));
+
+        TargetLowMgDl = settings.TargetLowMgDl;
+        TargetHighMgDl = settings.TargetHighMgDl;
+        TargetRangeText = $"Target range: {settings.TargetLowMgDl}-{settings.TargetHighMgDl} mg/dL";
+
+        AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
+        SettingsStatusText = "Settings loaded";
+    }
+
+    /// <summary>
+    /// Applies fallback dashboard settings when local settings cannot be loaded.
+    /// </summary>
+    /// <param name="result">The failed settings result.</param>
+    private void ApplySettingsFallback(Result<ApplicationSettings> result)
+    {
+        _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
+        OnPropertyChanged(nameof(AutoRefreshInterval));
+
+        TargetLowMgDl = 70m;
+        TargetHighMgDl = 180m;
+        TargetRangeText = "Target range: 70-180 mg/dL";
+
+        AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
+        SettingsStatusText = $"Using default settings · {result.Error.Code}";
+    }
+
+    /// <summary>
     /// Applies a successful dashboard snapshot to the view model.
     /// </summary>
     /// <param name="snapshot">The dashboard snapshot.</param>
     private void ApplySnapshot(GlucoseDashboardSnapshot snapshot)
     {
+        var targetRange = CreateTargetRange();
+
         ProviderDisplayName = snapshot.Metadata.DisplayName;
         LatestValueText = snapshot.LatestReading?.Value.ToString() ?? "—";
 
@@ -152,11 +237,11 @@ public sealed partial class DashboardViewModel : ViewModelBase
 
         StatusText = snapshot.LatestReading is null
             ? "No glucose reading available"
-            : FormatStatus(snapshot.LatestReading.GetStatus(GlucoseRange.StandardMgDl), snapshot.IsLatestReadingStale);
+            : FormatStatus(snapshot.LatestReading.GetStatus(targetRange), snapshot.IsLatestReadingStale);
 
         RecentReadingsCountText = $"{snapshot.RecentReadings.Count} readings";
 
-        UpdateChart(snapshot.RecentReadings);
+        UpdateChart(snapshot.RecentReadings, targetRange);
     }
 
     /// <summary>
@@ -185,11 +270,14 @@ public sealed partial class DashboardViewModel : ViewModelBase
     /// Updates the dashboard chart using the recent readings included in the snapshot.
     /// </summary>
     /// <param name="readings">The recent glucose readings.</param>
-    private void UpdateChart(IReadOnlyCollection<GlucoseReading> readings)
+    /// <param name="targetRange">The active glucose target range.</param>
+    private void UpdateChart(
+        IReadOnlyCollection<GlucoseReading> readings,
+        GlucoseRange targetRange)
     {
         var chartPoints = readings
             .OrderBy(reading => reading.Timestamp)
-            .Select(CreateChartPoint)
+            .Select(reading => CreateChartPoint(reading, targetRange))
             .ToArray();
 
         ChartPoints = chartPoints;
@@ -200,8 +288,11 @@ public sealed partial class DashboardViewModel : ViewModelBase
     /// Creates a chart point from a glucose reading.
     /// </summary>
     /// <param name="reading">The glucose reading.</param>
+    /// <param name="targetRange">The active glucose target range.</param>
     /// <returns>The chart point.</returns>
-    private static GlucoseChartPoint CreateChartPoint(GlucoseReading reading)
+    private static GlucoseChartPoint CreateChartPoint(
+        GlucoseReading reading,
+        GlucoseRange targetRange)
     {
         var normalizedValue = reading.Value.Unit == GlucoseUnit.MgDl
             ? reading.Value
@@ -210,7 +301,18 @@ public sealed partial class DashboardViewModel : ViewModelBase
         return new GlucoseChartPoint(
             reading.Timestamp,
             normalizedValue.Amount,
-            reading.GetStatus(GlucoseRange.StandardMgDl));
+            reading.GetStatus(targetRange));
+    }
+
+    /// <summary>
+    /// Creates the active dashboard target range.
+    /// </summary>
+    /// <returns>The active glucose target range.</returns>
+    private GlucoseRange CreateTargetRange()
+    {
+        return new GlucoseRange(
+            new GlucoseValue(TargetLowMgDl, GlucoseUnit.MgDl),
+            new GlucoseValue(TargetHighMgDl, GlucoseUnit.MgDl));
     }
 
     /// <summary>
