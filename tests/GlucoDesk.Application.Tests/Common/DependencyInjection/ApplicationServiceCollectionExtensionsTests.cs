@@ -1,3 +1,8 @@
+using GlucoDesk.Application.Cgm.History.Abstractions;
+using GlucoDesk.Application.Cgm.History.Analytics.Services.Abstractions;
+using GlucoDesk.Application.Cgm.History.Requests;
+using GlucoDesk.Application.Cgm.History.Results;
+using GlucoDesk.Application.Cgm.History.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Metadata;
 using GlucoDesk.Application.Cgm.Readings.Requests;
@@ -15,21 +20,26 @@ namespace GlucoDesk.Application.Tests.Common.DependencyInjection;
 public sealed class ApplicationServiceCollectionExtensionsTests
 {
     [Fact]
-    public void AddGlucoDeskApplication_ShouldRegisterGlucoseDataService()
+    public void AddGlucoDeskApplication_ShouldRegisterApplicationServices()
     {
         var services = new ServiceCollection();
 
         services.AddSingleton<ICgmLiveProvider, FakeCgmProvider>();
         services.AddSingleton<ICgmHistoricalProvider, FakeCgmProvider>();
         services.AddSingleton<ICgmMetadataProvider, FakeCgmProvider>();
+        services.AddSingleton<IGlucoseHistoryStore, FakeGlucoseHistoryStore>();
 
         services.AddGlucoDeskApplication();
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var service = serviceProvider.GetRequiredService<IGlucoseDataService>();
+        var glucoseDataService = serviceProvider.GetRequiredService<IGlucoseDataService>();
+        var glucoseHistoryService = serviceProvider.GetRequiredService<IGlucoseHistoryService>();
+        var glucoseHistoryAnalyticsService = serviceProvider.GetRequiredService<IGlucoseHistoryAnalyticsService>();
 
-        Assert.NotNull(service);
+        Assert.NotNull(glucoseDataService);
+        Assert.NotNull(glucoseHistoryService);
+        Assert.NotNull(glucoseHistoryAnalyticsService);
     }
 
     [Fact]
@@ -101,6 +111,25 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         }
 
         #endregion
+    }
+
+    private sealed class FakeGlucoseHistoryStore : IGlucoseHistoryStore
+    {
+        /// <inheritdoc />
+        public Task<Result> SaveReadingsAsync(
+            IReadOnlyCollection<GlucoseReading> readings,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Result.Success());
+        }
+
+        /// <inheritdoc />
+        public Task<Result<GlucoseHistoryResult>> GetReadingsAsync(
+            GlucoseHistoryRequest request,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Result<GlucoseHistoryResult>.Success(new GlucoseHistoryResult([])));
+        }
     }
 
     #endregion
