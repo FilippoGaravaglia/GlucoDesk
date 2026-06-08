@@ -8,6 +8,7 @@ using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
+using GlucoDesk.Application.Settings.Services;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
@@ -112,6 +113,31 @@ public sealed class DashboardViewModelTests
         Assert.True(viewModel.HasError);
         Assert.Equal("Dashboard.Failed: Unable to build dashboard.", viewModel.ErrorMessage);
         Assert.Equal("Unable to refresh glucose data", viewModel.StatusText);
+    }
+
+    [Fact]
+    public void SettingsChanged_ShouldApplyDashboardConfiguration()
+    {
+        var notifier = new ApplicationSettingsChangeNotifier();
+        var viewModel = new DashboardViewModel(
+            new FakeGlucoseDataService(),
+            new FakeApplicationSettingsService(),
+            new DashboardRefreshOptions(TimeSpan.FromSeconds(10)),
+            notifier);
+    
+        var settings = new ApplicationSettings(
+            targetLowMgDl: 85,
+            targetHighMgDl: 155,
+            dashboardRefreshInterval: TimeSpan.FromSeconds(20));
+    
+        notifier.NotifySettingsChanged(settings);
+    
+        Assert.Equal(TimeSpan.FromSeconds(20), viewModel.AutoRefreshInterval);
+        Assert.Equal(85, viewModel.TargetLowMgDl);
+        Assert.Equal(155, viewModel.TargetHighMgDl);
+        Assert.Equal("Target range: 85-155 mg/dL", viewModel.TargetRangeText);
+        Assert.Equal("Settings updated", viewModel.SettingsStatusText);
+        Assert.Equal("Auto-refresh every 20 second(s)", viewModel.AutoRefreshStatusText);
     }
 
     #region Helpers

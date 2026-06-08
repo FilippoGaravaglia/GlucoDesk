@@ -10,16 +10,21 @@ namespace GlucoDesk.Application.Settings.Services;
 public sealed class ApplicationSettingsService : IApplicationSettingsService
 {
     private readonly IApplicationSettingsStore _settingsStore;
+    private readonly IApplicationSettingsChangeNotifier? _settingsChangeNotifier;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ApplicationSettingsService"/> class.
     /// </summary>
     /// <param name="settingsStore">The application settings store.</param>
-    public ApplicationSettingsService(IApplicationSettingsStore settingsStore)
+    /// <param name="settingsChangeNotifier">The optional application settings change notifier.</param>
+    public ApplicationSettingsService(
+        IApplicationSettingsStore settingsStore,
+        IApplicationSettingsChangeNotifier? settingsChangeNotifier = null)
     {
         ArgumentNullException.ThrowIfNull(settingsStore);
 
         _settingsStore = settingsStore;
+        _settingsChangeNotifier = settingsChangeNotifier;
     }
 
     /// <inheritdoc />
@@ -29,12 +34,21 @@ public sealed class ApplicationSettingsService : IApplicationSettingsService
     }
 
     /// <inheritdoc />
-    public Task<Result> SaveSettingsAsync(
+    public async Task<Result> SaveSettingsAsync(
         ApplicationSettings settings,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        return _settingsStore.SaveAsync(settings, cancellationToken);
+        var result = await _settingsStore
+            .SaveAsync(settings, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (result.IsSuccess)
+        {
+            _settingsChangeNotifier?.NotifySettingsChanged(settings);
+        }
+
+        return result;
     }
 }

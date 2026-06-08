@@ -23,6 +23,7 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+        services.TryAddSingleton<IApplicationSettingsChangeNotifier, ApplicationSettingsChangeNotifier>();
 
         services.AddScoped<IGlucoseDataService, GlucoseDataService>();
         services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
