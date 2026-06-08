@@ -4,6 +4,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.Views.Main;
 using GlucoDesk.Infrastructure.Cgm.Mock.DependencyInjection;
+using GlucoDesk.Infrastructure.Settings.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GlucoDesk.Desktop.Bootstrap;
@@ -23,6 +24,7 @@ internal static class DesktopServiceProviderBuilder
 
         services.AddGlucoDeskApplication();
         services.AddMockCgmProvider();
+        services.AddJsonApplicationSettingsStore();
         services.AddDesktopShell();
 
         return services.BuildServiceProvider(

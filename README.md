@@ -29,6 +29,7 @@ The project is designed around a provider-based architecture:
 * CommunityToolkit.Mvvm
 * xUnit
 * Microsoft.Extensions.DependencyInjection
+* System.Text.Json
 
 ## Repository structure
 
@@ -57,6 +58,10 @@ src/
       DependencyInjection/
       Errors/
       Results/
+    Settings/
+      Abstractions/
+      Models/
+      Services/
 
   GlucoDesk.Infrastructure/
     Cgm/
@@ -65,6 +70,10 @@ src/
         Generators/
         Options/
         Providers/
+    Settings/
+      DependencyInjection/
+      Options/
+      Stores/
 
   GlucoDesk.Desktop/
     Bootstrap/
@@ -98,6 +107,9 @@ tests/
       DependencyInjection/
       Errors/
       Results/
+    Settings/
+      Models/
+      Services/
 
   GlucoDesk.Infrastructure.Tests/
     Cgm/
@@ -105,6 +117,10 @@ tests/
         DependencyInjection/
         Options/
         Providers/
+    Settings/
+      DependencyInjection/
+      Options/
+      Stores/
 
   GlucoDesk.Desktop.Tests/
     ViewModels/
@@ -151,9 +167,14 @@ Implemented:
 * Dashboard refresh options.
 * Lightweight glucose trend chart.
 * Dashboard chart point model.
+* Application settings model.
+* Application settings service abstraction and implementation.
+* Local JSON settings store.
+* Dependency injection registration for local settings infrastructure.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 * Unit tests for dashboard refresh options and dashboard view model behavior.
 * Unit tests for dashboard chart point validation.
+* Unit tests for application settings, settings service, local settings options, JSON store and DI registration.
 
 ## Architecture
 
@@ -166,12 +187,12 @@ GlucoDesk.Core
 
 GlucoDesk.Application
   Application contracts, provider abstractions, request/result models, dashboard models,
-  application-level errors and application services.
-  No dependency on concrete CGM providers.
+  settings models, application-level errors and application services.
+  No dependency on concrete CGM providers or storage implementations.
 
 GlucoDesk.Infrastructure
   Implementation layer for concrete providers, local storage, HTTP clients and platform integrations.
-  Currently includes the deterministic mock CGM provider.
+  Currently includes the deterministic mock CGM provider and local JSON settings storage.
 
 GlucoDesk.Desktop
   Avalonia desktop application.
@@ -179,7 +200,7 @@ GlucoDesk.Desktop
   auto-refresh behavior, lightweight glucose trend chart and a mock-powered dashboard preview.
 ```
 
-The goal is to keep the domain and application layers independent from concrete providers and UI frameworks.
+The goal is to keep the domain and application layers independent from concrete providers, storage implementations and UI frameworks.
 
 The current application flow is:
 
@@ -189,6 +210,16 @@ GlucoDesk.Desktop
     -> IGlucoseDataService
       -> ICgmLiveProvider / ICgmHistoricalProvider / ICgmMetadataProvider
         -> Mock / Nightscout / Dexcom
+```
+
+The current settings flow is:
+
+```text
+GlucoDesk.Desktop
+  -> IApplicationSettingsService
+    -> IApplicationSettingsStore
+      -> JsonApplicationSettingsStore
+        -> Local settings.json
 ```
 
 ## Domain model
@@ -224,6 +255,10 @@ The current application layer includes:
 * `ICgmMetadataProvider`
 * `IGlucoseDataService`
 * `GlucoseDataService`
+* `ApplicationSettings`
+* `IApplicationSettingsStore`
+* `IApplicationSettingsService`
+* `ApplicationSettingsService`
 * `ApplicationServiceCollectionExtensions`
 
 These contracts allow GlucoDesk to support multiple CGM data sources without coupling the UI or domain model to a specific provider.
@@ -236,6 +271,14 @@ The `IGlucoseDataService` acts as the application-level facade that future UI an
 * Historical readings.
 * Dashboard snapshots.
 
+The settings application layer currently supports:
+
+* Active live provider.
+* Active historical provider.
+* Preferred glucose unit.
+* Target range.
+* Dashboard refresh interval.
+
 ## Infrastructure model
 
 The current infrastructure layer includes:
@@ -244,6 +287,9 @@ The current infrastructure layer includes:
 * `MockGlucoseReadingGenerator`
 * `MockCgmProvider`
 * `MockCgmProviderServiceCollectionExtensions`
+* `LocalSettingsStorageOptions`
+* `JsonApplicationSettingsStore`
+* `LocalSettingsServiceCollectionExtensions`
 
 The mock provider implements:
 
@@ -260,7 +306,15 @@ It generates deterministic fake CGM readings that are useful for:
 * Demo videos.
 * Future demo mode.
 
+The local JSON settings store implements:
+
+* `IApplicationSettingsStore`
+
+It currently persists non-secret application settings to a local `settings.json` file.
+
 The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk will use Nightscout and/or Dexcom directly through their own provider implementations.
+
+The local JSON settings store is a foundation for user preferences. Future provider credentials and secrets must use a more secure storage strategy.
 
 ## Desktop model
 
@@ -336,6 +390,34 @@ User selects demo mode
 
 The application should clearly communicate the freshness and source of each reading.
 
+## Local settings strategy
+
+GlucoDesk now includes a local settings foundation.
+
+Current settings are represented by:
+
+* `ApplicationSettings`
+
+Current settings persistence is provided by:
+
+* `JsonApplicationSettingsStore`
+
+Default local settings path:
+
+```text
+%APPDATA%/GlucoDesk/settings.json on Windows-like environments
+ApplicationData/GlucoDesk/settings.json on macOS/Linux depending on the runtime environment
+```
+
+The local settings foundation is intended for non-secret preferences such as:
+
+* Active provider selection.
+* Preferred glucose unit.
+* Target range.
+* Dashboard refresh interval.
+
+Provider tokens, API secrets and OAuth credentials should not be stored in plain JSON in future production releases.
+
 ## Planned reporting and diary features
 
 A future milestone will add local history and monthly diabetes diary exports.
@@ -407,6 +489,8 @@ dotnet run --project src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
 The current desktop app uses the mock CGM provider and displays deterministic demo glucose data, including the latest value, status, auto-refresh state and a lightweight recent trend chart.
 
 The dashboard refreshes automatically every 30 seconds and can also be refreshed manually.
+
+The application also registers the local JSON settings store, although the settings screen is not implemented yet.
 
 ## Roadmap
 
