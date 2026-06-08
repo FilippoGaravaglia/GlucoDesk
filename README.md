@@ -5,8 +5,8 @@ GlucoDesk is a local-first, cross-platform desktop companion for visualizing CGM
 The project is designed around a provider-based architecture:
 
 * Mock provider for local development, tests, demos and future demo mode.
-* Nightscout provider for near real-time CGM visualization.
 * Dexcom Official API provider for delayed official historical data and metadata.
+* Nightscout provider for future near real-time CGM visualization.
 
 > GlucoDesk is not a medical device. It must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for Dexcom, Omnipod, Nightscout, or any approved medical application.
 
@@ -21,6 +21,7 @@ The project is designed around a provider-based architecture:
 * Clear separation between domain, application, infrastructure and UI concerns.
 * Support for fake demo data without exposing real personal glucose data.
 * Future support for local history, diabetes diary exports and reporting.
+* Future support for Dexcom Official API authorization and historical glucose data import.
 
 ## Tech stack
 
@@ -77,6 +78,12 @@ src/
 
   GlucoDesk.Infrastructure/
     Cgm/
+      Dexcom/
+        Authorization/
+        DependencyInjection/
+        Endpoints/
+        Enums/
+        Options/
       History/
         DependencyInjection/
         Options/
@@ -140,6 +147,11 @@ tests/
 
   GlucoDesk.Infrastructure.Tests/
     Cgm/
+      Dexcom/
+        Authorization/
+        DependencyInjection/
+        Endpoints/
+        Options/
       History/
         DependencyInjection/
         Options/
@@ -223,6 +235,12 @@ Implemented:
 * Local glucose history analytics request/result contracts.
 * Application-level glucose history analytics service.
 * Summary analytics over cached glucose history.
+* Dexcom Official API environment model.
+* Dexcom Official API options model.
+* Dexcom Official API endpoint resolution.
+* Dexcom OAuth authorization request model.
+* Dexcom OAuth authorization URL builder.
+* Dependency injection registration for Dexcom Official API infrastructure.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 * Unit tests for dashboard refresh options and dashboard view model behavior.
 * Unit tests for dashboard chart point validation.
@@ -231,6 +249,7 @@ Implemented:
 * Unit tests for glucose history request/result, history service, storage options, JSON history store and DI registration.
 * Unit tests for dashboard-to-history persistence behavior.
 * Unit tests for glucose history analytics request/result and service behavior.
+* Unit tests for Dexcom API options, endpoint resolution, authorization request validation, authorization URL generation and DI registration.
 
 ## Architecture
 
@@ -249,8 +268,8 @@ GlucoDesk.Application
 
 GlucoDesk.Infrastructure
   Implementation layer for concrete providers, local storage, HTTP clients and platform integrations.
-  Currently includes the deterministic mock CGM provider, local JSON settings storage
-  and local JSON glucose history storage.
+  Currently includes the deterministic mock CGM provider, local JSON settings storage,
+  local JSON glucose history storage and the first Dexcom Official API infrastructure foundation.
 
 GlucoDesk.Desktop
   Avalonia desktop application.
@@ -269,7 +288,7 @@ GlucoDesk.Desktop
   -> DashboardView / DashboardViewModel
     -> IGlucoseDataService
       -> ICgmLiveProvider / ICgmHistoricalProvider / ICgmMetadataProvider
-        -> Mock / Nightscout / Dexcom
+        -> Mock / Dexcom / Nightscout
 ```
 
 The current settings flow is:
@@ -336,6 +355,20 @@ Local glucose history
 ```
 
 The analytics layer reads from the application-level history service and remains independent from the concrete storage implementation.
+
+The current Dexcom Official API foundation flow is:
+
+```text
+DexcomApiEnvironment
+  -> IDexcomApiEndpointProvider
+    -> DexcomApiEndpoints
+
+DexcomAuthorizationRequest
+  -> IDexcomAuthorizationUrlBuilder
+    -> Dexcom OAuth authorization URI
+```
+
+This foundation does not yet perform OAuth token exchange and does not yet call Dexcom EGV endpoints.
 
 ## Domain model
 
@@ -427,6 +460,15 @@ The current infrastructure layer includes:
 * `LocalGlucoseHistoryStorageOptions`
 * `JsonGlucoseHistoryStore`
 * `LocalGlucoseHistoryServiceCollectionExtensions`
+* `DexcomApiEnvironment`
+* `DexcomApiOptions`
+* `DexcomApiEndpoints`
+* `IDexcomApiEndpointProvider`
+* `DexcomApiEndpointProvider`
+* `DexcomAuthorizationRequest`
+* `IDexcomAuthorizationUrlBuilder`
+* `DexcomAuthorizationUrlBuilder`
+* `DexcomOfficialApiServiceCollectionExtensions`
 
 The mock provider implements:
 
@@ -455,11 +497,21 @@ The local JSON glucose history store implements:
 
 It currently persists normalized glucose readings to a local `glucose-readings.json` file and de-duplicates readings by timestamp and provider.
 
-The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk will use Nightscout and/or Dexcom directly through their own provider implementations.
+The Dexcom Official API foundation currently provides:
+
+* Supported Dexcom API environment modeling.
+* Environment-specific endpoint resolution.
+* OAuth authorization request modeling.
+* OAuth authorization URL generation.
+* Dependency injection registration for Dexcom infrastructure services.
+
+The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk will use Dexcom and/or Nightscout directly through their own provider implementations.
 
 The local JSON settings store is a foundation for user preferences. Future provider credentials and secrets must use a more secure storage strategy.
 
 The local JSON glucose history store is a foundation for personal glucose history. Glucose history contains sensitive health data, so future production releases should evaluate encryption, retention settings, export controls and clear privacy documentation before storing real personal data extensively.
+
+The Dexcom Official API foundation does not yet store OAuth tokens and does not yet call Dexcom APIs. Future OAuth credentials and tokens must not be persisted in plain JSON.
 
 ## Desktop model
 
@@ -547,32 +599,34 @@ The chart highlights the configured target range and displays deterministic demo
 
 The current dashboard and settings screen use deterministic demo/local data and are not intended for treatment decisions.
 
+The Dexcom Official API foundation is currently available at infrastructure-service level and is not yet surfaced in the desktop UI.
+
 ## Provider strategy
 
 GlucoDesk is designed to support multiple data sources:
 
 ```text
-Nightscout
-  Intended for near real-time glucose visualization.
-
-Dexcom Official API
-  Intended for delayed official historical data and metadata.
-
 Mock provider
   Implemented for local development, tests, demos and future demo mode.
+
+Dexcom Official API
+  Intended for delayed official historical glucose data, metadata and future diary/report features.
+
+Nightscout
+  Intended for future near real-time glucose visualization when a user already has a Nightscout setup.
 ```
 
 Expected future runtime behavior:
 
 ```text
-User configures Nightscout
-  GlucoDesk uses the Nightscout provider for live or near real-time readings.
+User selects demo mode
+  GlucoDesk uses the mock provider with deterministic fake glucose data.
 
 User configures Dexcom Official API
   GlucoDesk uses the Dexcom provider for delayed official historical data and metadata.
 
-User selects demo mode
-  GlucoDesk uses the mock provider with deterministic fake glucose data.
+User configures Nightscout
+  GlucoDesk uses the Nightscout provider for live or near real-time readings.
 ```
 
 The application should clearly communicate the freshness and source of each reading.
@@ -709,6 +763,41 @@ This foundation will support future features such as:
 
 Analytics are currently descriptive only and must not be interpreted as treatment recommendations.
 
+## Dexcom Official API strategy
+
+GlucoDesk now includes the first Dexcom Official API foundation.
+
+Current Dexcom infrastructure supports:
+
+* Sandbox endpoint resolution.
+* Production US endpoint resolution.
+* Production EU endpoint resolution.
+* Production Japan endpoint resolution.
+* OAuth authorization request modeling.
+* OAuth authorization URL generation.
+* Dependency injection registration for Dexcom Official API infrastructure.
+
+The current Dexcom foundation does not yet:
+
+* Exchange OAuth authorization codes for tokens.
+* Refresh OAuth tokens.
+* Store OAuth tokens.
+* Call Dexcom EGV endpoints.
+* Map Dexcom EGV records to `GlucoseReading`.
+* Switch the runtime dashboard provider from Mock to Dexcom.
+
+The next Dexcom steps will introduce:
+
+* OAuth callback handling.
+* Authorization code exchange.
+* Refresh token handling.
+* Secure token storage strategy.
+* Dexcom EGV HTTP client.
+* Mapping from Dexcom EGV records to `GlucoseReading`.
+* Runtime provider switching from Mock to Dexcom Official.
+
+Dexcom Official API data is intended to be treated as delayed official historical data and metadata, not as a replacement for approved real-time diabetes applications.
+
 ## Planned reporting and diary features
 
 A future milestone will add local history UI, treatments/events and monthly diabetes diary exports.
@@ -743,7 +832,7 @@ Possible report contents:
 * Data source and data completeness information.
 * Local history completeness information.
 
-This feature will depend on local storage, Nightscout treatments/events and future reporting services.
+This feature will depend on local storage, Dexcom Official API data, optional Nightscout treatments/events and future reporting services.
 
 ## Development principles
 
@@ -754,6 +843,7 @@ This feature will depend on local storage, Nightscout treatments/events and futu
 * Do not log sensitive medical data or secrets.
 * Do not store provider secrets in plain text in future production releases.
 * Treat glucose history as sensitive health data.
+* Treat OAuth tokens as sensitive secrets.
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.
@@ -794,13 +884,15 @@ After every successful dashboard refresh, the app attempts to cache the latest a
 
 The local analytics foundation is currently available at application-service level and is not yet surfaced in the desktop UI.
 
+The Dexcom Official API foundation is currently available at infrastructure-service level and is not yet surfaced in the desktop UI.
+
 ## Roadmap
 
-* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation, local glucose history foundation, dashboard-to-history persistence and local history analytics foundation.
-* v0.2: Nightscout live provider.
-* v0.3: Analytics engine and compact widget.
-* v0.4: Dexcom Official API historical provider.
-* v0.5: Local history UI, treatments/events and monthly diabetes diary export.
+* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation, local glucose history foundation, dashboard-to-history persistence, local history analytics foundation and Dexcom Official API foundation.
+* v0.2: Dexcom Official API OAuth flow, token handling and delayed historical glucose provider.
+* v0.3: Runtime provider switching, history UI and compact widget.
+* v0.4: Nightscout provider for users who already have a Nightscout setup.
+* v0.5: Treatments/events, local history UI and monthly diabetes diary export.
 * v1.0: Production-ready cross-platform release.
 
 ## Medical disclaimer
