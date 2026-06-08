@@ -30,6 +30,7 @@ The project is designed around a provider-based architecture:
 * CommunityToolkit.Mvvm
 * xUnit
 * Microsoft.Extensions.DependencyInjection
+* Microsoft.Extensions.Http
 * System.Text.Json
 
 ## Repository structure
@@ -84,6 +85,11 @@ src/
         Endpoints/
         Enums/
         Options/
+        Tokens/
+          Clients/
+          Dtos/
+          Models/
+          Requests/
       History/
         DependencyInjection/
         Options/
@@ -152,6 +158,10 @@ tests/
         DependencyInjection/
         Endpoints/
         Options/
+        Tokens/
+          Clients/
+          Models/
+          Requests/
       History/
         DependencyInjection/
         Options/
@@ -240,7 +250,15 @@ Implemented:
 * Dexcom Official API endpoint resolution.
 * Dexcom OAuth authorization request model.
 * Dexcom OAuth authorization URL builder.
+* Dexcom OAuth token set model.
+* Dexcom authorization code token exchange request model.
+* Dexcom refresh token request model.
+* Dexcom OAuth token response DTO.
+* Dexcom OAuth token client foundation.
+* Dexcom OAuth authorization code exchange client foundation.
+* Dexcom OAuth refresh token client foundation.
 * Dependency injection registration for Dexcom Official API infrastructure.
+* Typed HTTP client registration for Dexcom OAuth token operations.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 * Unit tests for dashboard refresh options and dashboard view model behavior.
 * Unit tests for dashboard chart point validation.
@@ -250,6 +268,7 @@ Implemented:
 * Unit tests for dashboard-to-history persistence behavior.
 * Unit tests for glucose history analytics request/result and service behavior.
 * Unit tests for Dexcom API options, endpoint resolution, authorization request validation, authorization URL generation and DI registration.
+* Unit tests for Dexcom token models, token requests and token client behavior.
 
 ## Architecture
 
@@ -356,7 +375,7 @@ Local glucose history
 
 The analytics layer reads from the application-level history service and remains independent from the concrete storage implementation.
 
-The current Dexcom Official API foundation flow is:
+The current Dexcom Official API authorization foundation flow is:
 
 ```text
 DexcomApiEnvironment
@@ -368,7 +387,21 @@ DexcomAuthorizationRequest
     -> Dexcom OAuth authorization URI
 ```
 
-This foundation does not yet perform OAuth token exchange and does not yet call Dexcom EGV endpoints.
+The current Dexcom OAuth token foundation flow is:
+
+```text
+DexcomAuthorizationCodeTokenRequest
+  -> IDexcomTokenClient.ExchangeAuthorizationCodeAsync(...)
+    -> Dexcom /v3/oauth2/token
+      -> DexcomOAuthTokenSet
+
+DexcomRefreshTokenRequest
+  -> IDexcomTokenClient.RefreshAccessTokenAsync(...)
+    -> Dexcom /v3/oauth2/token
+      -> DexcomOAuthTokenSet
+```
+
+The Dexcom foundation can now build authorization URLs and contains the client foundation for token exchange and token refresh. It does not yet handle the local OAuth callback, persist tokens, call Dexcom EGV endpoints or switch the runtime dashboard provider from Mock to Dexcom.
 
 ## Domain model
 
@@ -468,6 +501,11 @@ The current infrastructure layer includes:
 * `DexcomAuthorizationRequest`
 * `IDexcomAuthorizationUrlBuilder`
 * `DexcomAuthorizationUrlBuilder`
+* `DexcomOAuthTokenSet`
+* `DexcomAuthorizationCodeTokenRequest`
+* `DexcomRefreshTokenRequest`
+* `IDexcomTokenClient`
+* `DexcomTokenClient`
 * `DexcomOfficialApiServiceCollectionExtensions`
 
 The mock provider implements:
@@ -503,7 +541,10 @@ The Dexcom Official API foundation currently provides:
 * Environment-specific endpoint resolution.
 * OAuth authorization request modeling.
 * OAuth authorization URL generation.
+* OAuth authorization code token exchange client foundation.
+* OAuth refresh token client foundation.
 * Dependency injection registration for Dexcom infrastructure services.
+* Typed HTTP client registration for Dexcom token operations.
 
 The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk will use Dexcom and/or Nightscout directly through their own provider implementations.
 
@@ -511,7 +552,7 @@ The local JSON settings store is a foundation for user preferences. Future provi
 
 The local JSON glucose history store is a foundation for personal glucose history. Glucose history contains sensitive health data, so future production releases should evaluate encryption, retention settings, export controls and clear privacy documentation before storing real personal data extensively.
 
-The Dexcom Official API foundation does not yet store OAuth tokens and does not yet call Dexcom APIs. Future OAuth credentials and tokens must not be persisted in plain JSON.
+The Dexcom Official API foundation does not yet store OAuth tokens and does not yet call Dexcom EGV APIs. Future OAuth credentials and tokens must not be persisted in plain JSON.
 
 ## Desktop model
 
@@ -775,12 +816,14 @@ Current Dexcom infrastructure supports:
 * Production Japan endpoint resolution.
 * OAuth authorization request modeling.
 * OAuth authorization URL generation.
+* OAuth authorization code token exchange client foundation.
+* OAuth refresh token client foundation.
 * Dependency injection registration for Dexcom Official API infrastructure.
+* Typed HTTP client registration for Dexcom OAuth token operations.
 
 The current Dexcom foundation does not yet:
 
-* Exchange OAuth authorization codes for tokens.
-* Refresh OAuth tokens.
+* Handle the local OAuth callback.
 * Store OAuth tokens.
 * Call Dexcom EGV endpoints.
 * Map Dexcom EGV records to `GlucoseReading`.
@@ -789,8 +832,6 @@ The current Dexcom foundation does not yet:
 The next Dexcom steps will introduce:
 
 * OAuth callback handling.
-* Authorization code exchange.
-* Refresh token handling.
 * Secure token storage strategy.
 * Dexcom EGV HTTP client.
 * Mapping from Dexcom EGV records to `GlucoseReading`.
@@ -844,6 +885,7 @@ This feature will depend on local storage, Dexcom Official API data, optional Ni
 * Do not store provider secrets in plain text in future production releases.
 * Treat glucose history as sensitive health data.
 * Treat OAuth tokens as sensitive secrets.
+* Treat Dexcom client secrets as sensitive secrets.
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.
@@ -889,8 +931,8 @@ The Dexcom Official API foundation is currently available at infrastructure-serv
 ## Roadmap
 
 * v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation, local glucose history foundation, dashboard-to-history persistence, local history analytics foundation and Dexcom Official API foundation.
-* v0.2: Dexcom Official API OAuth flow, token handling and delayed historical glucose provider.
-* v0.3: Runtime provider switching, history UI and compact widget.
+* v0.2: Dexcom Official API OAuth callback handling, token storage strategy, delayed historical glucose provider and runtime provider switching.
+* v0.3: History UI, reporting foundation and compact widget.
 * v0.4: Nightscout provider for users who already have a Nightscout setup.
 * v0.5: Treatments/events, local history UI and monthly diabetes diary export.
 * v1.0: Production-ready cross-platform release.
