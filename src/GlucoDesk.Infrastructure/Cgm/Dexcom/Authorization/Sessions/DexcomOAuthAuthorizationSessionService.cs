@@ -5,6 +5,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.States;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Options;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Clients;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Requests;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Stores;
 
 namespace GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.Sessions;
 
@@ -19,6 +20,7 @@ public sealed class DexcomOAuthAuthorizationSessionService : IDexcomOAuthAuthori
     private readonly IDexcomSystemBrowser _systemBrowser;
     private readonly IDexcomLocalOAuthCallbackListener _callbackListener;
     private readonly IDexcomTokenClient _tokenClient;
+    private readonly IDexcomOAuthTokenStore _tokenStore;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DexcomOAuthAuthorizationSessionService"/> class.
@@ -29,13 +31,15 @@ public sealed class DexcomOAuthAuthorizationSessionService : IDexcomOAuthAuthori
     /// <param name="systemBrowser">The system browser abstraction.</param>
     /// <param name="callbackListener">The local OAuth callback listener.</param>
     /// <param name="tokenClient">The Dexcom token client.</param>
+    /// <param name="tokenStore">The Dexcom OAuth token store.</param>
     public DexcomOAuthAuthorizationSessionService(
         DexcomApiOptions options,
         IDexcomOAuthStateGenerator stateGenerator,
         IDexcomAuthorizationUrlBuilder authorizationUrlBuilder,
         IDexcomSystemBrowser systemBrowser,
         IDexcomLocalOAuthCallbackListener callbackListener,
-        IDexcomTokenClient tokenClient)
+        IDexcomTokenClient tokenClient,
+        IDexcomOAuthTokenStore tokenStore)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(stateGenerator);
@@ -43,6 +47,7 @@ public sealed class DexcomOAuthAuthorizationSessionService : IDexcomOAuthAuthori
         ArgumentNullException.ThrowIfNull(systemBrowser);
         ArgumentNullException.ThrowIfNull(callbackListener);
         ArgumentNullException.ThrowIfNull(tokenClient);
+        ArgumentNullException.ThrowIfNull(tokenStore);
 
         _options = options;
         _stateGenerator = stateGenerator;
@@ -50,6 +55,7 @@ public sealed class DexcomOAuthAuthorizationSessionService : IDexcomOAuthAuthori
         _systemBrowser = systemBrowser;
         _callbackListener = callbackListener;
         _tokenClient = tokenClient;
+        _tokenStore = tokenStore;
     }
 
     /// <inheritdoc />
@@ -96,6 +102,15 @@ public sealed class DexcomOAuthAuthorizationSessionService : IDexcomOAuthAuthori
         if (tokenResult.IsFailure)
         {
             return Result<DexcomOAuthAuthorizationSessionResult>.Failure(tokenResult.Error);
+        }
+
+        var saveTokenResult = await _tokenStore
+            .SaveTokenSetAsync(tokenResult.Value, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (saveTokenResult.IsFailure)
+        {
+            return Result<DexcomOAuthAuthorizationSessionResult>.Failure(saveTokenResult.Error);
         }
 
         return Result<DexcomOAuthAuthorizationSessionResult>.Success(
