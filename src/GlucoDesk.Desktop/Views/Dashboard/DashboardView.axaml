@@ -45,6 +45,10 @@
             <TextBlock Text="{Binding AutoRefreshStatusText}"
                        Opacity="0.65"
                        TextAlignment="Right" />
+
+            <TextBlock Text="{Binding SettingsStatusText}"
+                       Opacity="0.55"
+                       TextAlignment="Right" />
           </StackPanel>
         </Grid>
 
@@ -112,9 +116,14 @@
 
         <StackPanel Spacing="8">
           <Grid ColumnDefinitions="*,Auto">
-            <TextBlock Text="Recent glucose trend"
-                       FontSize="16"
-                       FontWeight="SemiBold" />
+            <StackPanel Spacing="2">
+              <TextBlock Text="Recent glucose trend"
+                         FontSize="16"
+                         FontWeight="SemiBold" />
+
+              <TextBlock Text="{Binding TargetRangeText}"
+                         Opacity="0.65" />
+            </StackPanel>
 
             <TextBlock Grid.Column="1"
                        Text="{Binding ChartSummaryText}"
@@ -125,7 +134,10 @@
                   CornerRadius="12"
                   BorderThickness="1"
                   Padding="8">
-            <controls:GlucoseTrendChart Points="{Binding ChartPoints}" />
+            <controls:GlucoseTrendChart
+                Points="{Binding ChartPoints}"
+                TargetLowMgDl="{Binding TargetLowMgDl}"
+                TargetHighMgDl="{Binding TargetHighMgDl}" />
           </Border>
         </StackPanel>
 

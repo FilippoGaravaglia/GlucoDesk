@@ -10,8 +10,6 @@ namespace GlucoDesk.Desktop.Views.Dashboard.Controls;
 /// </summary>
 public sealed class GlucoseTrendChart : Control
 {
-    private const decimal TargetLowMgDl = 70m;
-    private const decimal TargetHighMgDl = 180m;
     private const double PlotPaddingLeft = 16;
     private const double PlotPaddingTop = 12;
     private const double PlotPaddingRight = 16;
@@ -41,9 +39,24 @@ public sealed class GlucoseTrendChart : Control
     public static readonly StyledProperty<IReadOnlyList<GlucoseChartPoint>?> PointsProperty =
         AvaloniaProperty.Register<GlucoseTrendChart, IReadOnlyList<GlucoseChartPoint>?>(nameof(Points));
 
+    /// <summary>
+    /// Defines the lower glucose target value expressed in mg/dL.
+    /// </summary>
+    public static readonly StyledProperty<decimal> TargetLowMgDlProperty =
+        AvaloniaProperty.Register<GlucoseTrendChart, decimal>(nameof(TargetLowMgDl), 70m);
+
+    /// <summary>
+    /// Defines the upper glucose target value expressed in mg/dL.
+    /// </summary>
+    public static readonly StyledProperty<decimal> TargetHighMgDlProperty =
+        AvaloniaProperty.Register<GlucoseTrendChart, decimal>(nameof(TargetHighMgDl), 180m);
+
     static GlucoseTrendChart()
     {
-        AffectsRender<GlucoseTrendChart>(PointsProperty);
+        AffectsRender<GlucoseTrendChart>(
+            PointsProperty,
+            TargetLowMgDlProperty,
+            TargetHighMgDlProperty);
     }
 
     /// <summary>
@@ -53,6 +66,24 @@ public sealed class GlucoseTrendChart : Control
     {
         get => GetValue(PointsProperty);
         set => SetValue(PointsProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the lower glucose target value expressed in mg/dL.
+    /// </summary>
+    public decimal TargetLowMgDl
+    {
+        get => GetValue(TargetLowMgDlProperty);
+        set => SetValue(TargetLowMgDlProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the upper glucose target value expressed in mg/dL.
+    /// </summary>
+    public decimal TargetHighMgDl
+    {
+        get => GetValue(TargetHighMgDlProperty);
+        set => SetValue(TargetHighMgDlProperty, value);
     }
 
     /// <inheritdoc />
@@ -71,10 +102,11 @@ public sealed class GlucoseTrendChart : Control
             .OrderBy(point => point.Timestamp)
             .ToArray() ?? [];
 
-        var scale = CalculateScale(points);
+        var targetRange = NormalizeTargetRange(TargetLowMgDl, TargetHighMgDl);
+        var scale = CalculateScale(points, targetRange);
 
         DrawGrid(context, plotArea);
-        DrawTargetRange(context, plotArea, scale);
+        DrawTargetRange(context, plotArea, scale, targetRange);
 
         if (points.Length == 0)
         {
@@ -105,19 +137,40 @@ public sealed class GlucoseTrendChart : Control
     }
 
     /// <summary>
+    /// Normalizes target range values to keep chart rendering safe.
+    /// </summary>
+    /// <param name="targetLowMgDl">The lower target value.</param>
+    /// <param name="targetHighMgDl">The upper target value.</param>
+    /// <returns>The normalized target range.</returns>
+    private static ChartTargetRange NormalizeTargetRange(
+        decimal targetLowMgDl,
+        decimal targetHighMgDl)
+    {
+        var normalizedLow = targetLowMgDl <= 0 ? 70m : targetLowMgDl;
+        var normalizedHigh = targetHighMgDl <= normalizedLow
+            ? normalizedLow + 1
+            : targetHighMgDl;
+
+        return new ChartTargetRange(normalizedLow, normalizedHigh);
+    }
+
+    /// <summary>
     /// Calculates the chart scale including the target range.
     /// </summary>
     /// <param name="points">The chart points.</param>
+    /// <param name="targetRange">The chart target range.</param>
     /// <returns>The calculated chart scale.</returns>
-    private static ChartScale CalculateScale(IReadOnlyList<GlucoseChartPoint> points)
+    private static ChartScale CalculateScale(
+        IReadOnlyList<GlucoseChartPoint> points,
+        ChartTargetRange targetRange)
     {
         var minimumValue = points.Count == 0
-            ? TargetLowMgDl
-            : Math.Min(points.Min(point => point.ValueMgDl), TargetLowMgDl);
+            ? targetRange.LowMgDl
+            : Math.Min(points.Min(point => point.ValueMgDl), targetRange.LowMgDl);
 
         var maximumValue = points.Count == 0
-            ? TargetHighMgDl
-            : Math.Max(points.Max(point => point.ValueMgDl), TargetHighMgDl);
+            ? targetRange.HighMgDl
+            : Math.Max(points.Max(point => point.ValueMgDl), targetRange.HighMgDl);
 
         var paddedMinimum = Math.Max(0, minimumValue - 20);
         var paddedMaximum = maximumValue + 20;
@@ -145,15 +198,20 @@ public sealed class GlucoseTrendChart : Control
     }
 
     /// <summary>
-    /// Draws the standard glucose target range.
+    /// Draws the configured glucose target range.
     /// </summary>
     /// <param name="context">The drawing context.</param>
     /// <param name="plotArea">The chart plot area.</param>
     /// <param name="scale">The chart scale.</param>
-    private static void DrawTargetRange(DrawingContext context, Rect plotArea, ChartScale scale)
+    /// <param name="targetRange">The chart target range.</param>
+    private static void DrawTargetRange(
+        DrawingContext context,
+        Rect plotArea,
+        ChartScale scale,
+        ChartTargetRange targetRange)
     {
-        var targetTop = MapValueToY(TargetHighMgDl, plotArea, scale);
-        var targetBottom = MapValueToY(TargetLowMgDl, plotArea, scale);
+        var targetTop = MapValueToY(targetRange.HighMgDl, plotArea, scale);
+        var targetBottom = MapValueToY(targetRange.LowMgDl, plotArea, scale);
 
         var targetRect = new Rect(
             plotArea.Left,
@@ -256,4 +314,6 @@ public sealed class GlucoseTrendChart : Control
     #endregion
 
     private sealed record ChartScale(decimal MinimumValue, decimal MaximumValue);
+
+    private sealed record ChartTargetRange(decimal LowMgDl, decimal HighMgDl);
 }

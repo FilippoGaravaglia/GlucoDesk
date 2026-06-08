@@ -6,6 +6,8 @@ using GlucoDesk.Application.Cgm.Readings.Results;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Application.Settings.Abstractions;
+using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
@@ -17,16 +19,58 @@ namespace GlucoDesk.Desktop.Tests.ViewModels.Dashboard;
 public sealed class DashboardViewModelTests
 {
     [Fact]
-    public void Constructor_ShouldExposeConfiguredAutoRefreshInterval()
+    public void Constructor_ShouldExposeDefaultFallbackAutoRefreshInterval()
     {
-        var options = new DashboardRefreshOptions(TimeSpan.FromSeconds(10));
-
         var viewModel = new DashboardViewModel(
             new FakeGlucoseDataService(),
-            options);
+            new FakeApplicationSettingsService(),
+            new DashboardRefreshOptions(TimeSpan.FromSeconds(10)));
 
         Assert.Equal(TimeSpan.FromSeconds(10), viewModel.AutoRefreshInterval);
         Assert.Equal("Auto-refresh every 10 second(s)", viewModel.AutoRefreshStatusText);
+    }
+
+    [Fact]
+    public async Task InitializeCommand_ShouldLoadDashboardConfigurationFromSettings()
+    {
+        var settings = new ApplicationSettings(
+            targetLowMgDl: 80,
+            targetHighMgDl: 160,
+            dashboardRefreshInterval: TimeSpan.FromSeconds(15));
+
+        var viewModel = new DashboardViewModel(
+            new FakeGlucoseDataService(),
+            new FakeApplicationSettingsService(Result<ApplicationSettings>.Success(settings)),
+            DashboardRefreshOptions.Default);
+
+        await viewModel.InitializeCommand.ExecuteAsync(null);
+
+        Assert.Equal(TimeSpan.FromSeconds(15), viewModel.AutoRefreshInterval);
+        Assert.Equal(80, viewModel.TargetLowMgDl);
+        Assert.Equal(160, viewModel.TargetHighMgDl);
+        Assert.Equal("Target range: 80-160 mg/dL", viewModel.TargetRangeText);
+        Assert.Equal("Settings loaded", viewModel.SettingsStatusText);
+        Assert.Equal("Auto-refresh every 15 second(s)", viewModel.AutoRefreshStatusText);
+    }
+
+    [Fact]
+    public async Task InitializeCommand_ShouldUseFallbackDashboardConfiguration_WhenSettingsFail()
+    {
+        var expectedError = new Error("Settings.Failed", "Unable to load settings.");
+
+        var viewModel = new DashboardViewModel(
+            new FakeGlucoseDataService(),
+            new FakeApplicationSettingsService(Result<ApplicationSettings>.Failure(expectedError)),
+            new DashboardRefreshOptions(TimeSpan.FromSeconds(20)));
+
+        await viewModel.InitializeCommand.ExecuteAsync(null);
+
+        Assert.Equal(TimeSpan.FromSeconds(20), viewModel.AutoRefreshInterval);
+        Assert.Equal(70, viewModel.TargetLowMgDl);
+        Assert.Equal(180, viewModel.TargetHighMgDl);
+        Assert.Equal("Target range: 70-180 mg/dL", viewModel.TargetRangeText);
+        Assert.Equal("Using default settings · Settings.Failed", viewModel.SettingsStatusText);
+        Assert.Equal("Auto-refresh every 20 second(s)", viewModel.AutoRefreshStatusText);
     }
 
     [Fact]
@@ -34,8 +78,10 @@ public sealed class DashboardViewModelTests
     {
         var viewModel = new DashboardViewModel(
             new FakeGlucoseDataService(),
+            new FakeApplicationSettingsService(),
             new DashboardRefreshOptions(TimeSpan.FromSeconds(10)));
 
+        await viewModel.InitializeCommand.ExecuteAsync(null);
         await viewModel.RefreshCommand.ExecuteAsync(null);
 
         Assert.False(viewModel.HasError);
@@ -57,8 +103,10 @@ public sealed class DashboardViewModelTests
 
         var viewModel = new DashboardViewModel(
             new FakeGlucoseDataService(Result<GlucoseDashboardSnapshot>.Failure(expectedError)),
+            new FakeApplicationSettingsService(),
             DashboardRefreshOptions.Default);
 
+        await viewModel.InitializeCommand.ExecuteAsync(null);
         await viewModel.RefreshCommand.ExecuteAsync(null);
 
         Assert.True(viewModel.HasError);
@@ -74,6 +122,10 @@ public sealed class DashboardViewModelTests
     {
         private readonly Result<GlucoseDashboardSnapshot> _dashboardResult;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FakeGlucoseDataService"/> class.
+        /// </summary>
+        /// <param name="dashboardResult">The optional dashboard result returned by the fake service.</param>
         public FakeGlucoseDataService(Result<GlucoseDashboardSnapshot>? dashboardResult = null)
         {
             _dashboardResult = dashboardResult ?? Result<GlucoseDashboardSnapshot>.Success(CreateSnapshot());
@@ -120,6 +172,34 @@ public sealed class DashboardViewModelTests
             CancellationToken cancellationToken)
         {
             return Task.FromResult(_dashboardResult);
+        }
+    }
+
+    private sealed class FakeApplicationSettingsService : IApplicationSettingsService
+    {
+        private readonly Result<ApplicationSettings> _settingsResult;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FakeApplicationSettingsService"/> class.
+        /// </summary>
+        /// <param name="settingsResult">The optional settings result returned by the fake service.</param>
+        public FakeApplicationSettingsService(Result<ApplicationSettings>? settingsResult = null)
+        {
+            _settingsResult = settingsResult ?? Result<ApplicationSettings>.Success(ApplicationSettings.Default);
+        }
+
+        /// <inheritdoc />
+        public Task<Result<ApplicationSettings>> GetSettingsAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_settingsResult);
+        }
+
+        /// <inheritdoc />
+        public Task<Result> SaveSettingsAsync(
+            ApplicationSettings settings,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Result.Success());
         }
     }
 
