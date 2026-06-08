@@ -82,6 +82,7 @@ src/
       Dexcom/
         Authorization/
           Callbacks/
+          Listeners/
           States/
         DependencyInjection/
         Endpoints/
@@ -158,6 +159,7 @@ tests/
       Dexcom/
         Authorization/
           Callbacks/
+          Listeners/
           States/
         DependencyInjection/
         Endpoints/
@@ -267,6 +269,11 @@ Implemented:
 * Dexcom OAuth callback parser.
 * Dexcom OAuth callback state validation.
 * Dexcom OAuth error callback handling.
+* Dexcom local OAuth callback listener options.
+* Dexcom local OAuth callback listener request/result models.
+* Dexcom local OAuth callback listener foundation.
+* Browser response handling for Dexcom OAuth callback completion.
+* Callback path validation for Dexcom local OAuth redirects.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
@@ -280,6 +287,7 @@ Implemented:
 * Unit tests for Dexcom API options, endpoint resolution, authorization request validation, authorization URL generation and DI registration.
 * Unit tests for Dexcom token models, token requests and token client behavior.
 * Unit tests for Dexcom OAuth state generation and callback parsing.
+* Unit tests for Dexcom local OAuth callback listener options, request/result models and listener behavior.
 
 ## Architecture
 
@@ -428,7 +436,23 @@ Dexcom callback URI
     -> DexcomOAuthCallbackResult
 ```
 
-The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, parse Dexcom OAuth callbacks, validate returned state values and contains the client foundation for token exchange and token refresh. It does not yet open the browser, start a local callback listener, persist OAuth state, persist tokens, call Dexcom EGV endpoints or switch the runtime dashboard provider from Mock to Dexcom.
+The current Dexcom local OAuth callback listener foundation flow is:
+
+```text
+DexcomLocalOAuthCallbackListenRequest
+  -> IDexcomLocalOAuthCallbackListener.ListenForCallbackAsync(...)
+    -> Local loopback HttpListener
+      -> Receive browser redirect
+      -> Validate callback path
+      -> IDexcomOAuthCallbackParser.ParseCallback(...)
+        -> Validate authorization code
+        -> Validate returned state
+        -> Handle OAuth error callbacks
+      -> Browser success/failure response
+      -> DexcomLocalOAuthCallbackListenResult
+```
+
+The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, parse Dexcom OAuth callbacks, validate returned state values, listen for a local loopback OAuth redirect and contains the client foundation for token exchange and token refresh. It does not yet open the browser, persist OAuth state, persist tokens, call Dexcom EGV endpoints or switch the runtime dashboard provider from Mock to Dexcom.
 
 ## Domain model
 
@@ -539,6 +563,11 @@ The current infrastructure layer includes:
 * `DexcomOAuthCallbackResult`
 * `IDexcomOAuthCallbackParser`
 * `DexcomOAuthCallbackParser`
+* `DexcomLocalOAuthCallbackOptions`
+* `DexcomLocalOAuthCallbackListenRequest`
+* `DexcomLocalOAuthCallbackListenResult`
+* `IDexcomLocalOAuthCallbackListener`
+* `DexcomLocalOAuthCallbackListener`
 * `DexcomOfficialApiServiceCollectionExtensions`
 
 The mock provider implements:
@@ -580,6 +609,9 @@ The Dexcom Official API foundation currently provides:
 * OAuth callback parsing.
 * OAuth callback state validation.
 * OAuth error callback handling.
+* Local loopback OAuth callback listening.
+* Callback path validation.
+* Browser success/failure response rendering after OAuth callback.
 * Dependency injection registration for Dexcom infrastructure services.
 * Typed HTTP client registration for Dexcom token operations.
 
@@ -859,13 +891,15 @@ Current Dexcom infrastructure supports:
 * OAuth callback parsing.
 * OAuth callback state validation.
 * OAuth error callback handling.
+* Local loopback OAuth callback listening.
+* Callback path validation.
+* Browser success/failure response rendering after OAuth callback.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 
 The current Dexcom foundation does not yet:
 
 * Open the browser for Dexcom login.
-* Start a local OAuth callback listener.
 * Persist the generated OAuth state between login start and callback.
 * Store OAuth tokens.
 * Call Dexcom EGV endpoints.
@@ -874,7 +908,8 @@ The current Dexcom foundation does not yet:
 
 The next Dexcom steps will introduce:
 
-* Local OAuth callback listener.
+* Dexcom OAuth authorization session service.
+* Browser opening coordination.
 * Secure token storage strategy.
 * Dexcom EGV HTTP client.
 * Mapping from Dexcom EGV records to `GlucoseReading`.
@@ -930,6 +965,7 @@ This feature will depend on local storage, Dexcom Official API data, optional Ni
 * Treat OAuth tokens as sensitive secrets.
 * Treat Dexcom client secrets as sensitive secrets.
 * Validate OAuth state values to protect against callback tampering and CSRF-style flows.
+* Use local OAuth callback listeners only on loopback HTTP redirect URIs.
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.
@@ -975,7 +1011,7 @@ The Dexcom Official API foundation is currently available at infrastructure-serv
 ## Roadmap
 
 * v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation, local glucose history foundation, dashboard-to-history persistence, local history analytics foundation and Dexcom Official API foundation.
-* v0.2: Dexcom Official API OAuth callback handling, token storage strategy, delayed historical glucose provider and runtime provider switching.
+* v0.2: Dexcom Official API OAuth session coordination, token storage strategy, delayed historical glucose provider and runtime provider switching.
 * v0.3: History UI, reporting foundation and compact widget.
 * v0.4: Nightscout provider for users who already have a Nightscout setup.
 * v0.5: Treatments/events, local history UI and monthly diabetes diary export.
