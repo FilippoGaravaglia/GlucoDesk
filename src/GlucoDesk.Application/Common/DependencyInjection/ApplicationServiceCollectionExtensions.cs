@@ -1,5 +1,7 @@
 using GlucoDesk.Application.Cgm.Services;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
+using GlucoDesk.Application.Settings.Abstractions;
+using GlucoDesk.Application.Settings.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -21,7 +23,9 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+
         services.AddScoped<IGlucoseDataService, GlucoseDataService>();
+        services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
 
         return services;
     }
