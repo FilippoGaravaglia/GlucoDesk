@@ -9,6 +9,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Endpoints;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Options;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Clients;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Stores;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GlucoDesk.Infrastructure.Tests.Cgm.Dexcom.DependencyInjection;
@@ -35,6 +36,7 @@ public sealed class DexcomOfficialApiServiceCollectionExtensionsTests
         var callbackListener = serviceProvider.GetRequiredService<IDexcomLocalOAuthCallbackListener>();
         var systemBrowser = serviceProvider.GetRequiredService<IDexcomSystemBrowser>();
         var authorizationSessionService = serviceProvider.GetRequiredService<IDexcomOAuthAuthorizationSessionService>();
+        var tokenStore = serviceProvider.GetRequiredService<IDexcomOAuthTokenStore>();
 
         Assert.NotNull(options);
         Assert.NotNull(endpointProvider);
@@ -47,6 +49,7 @@ public sealed class DexcomOfficialApiServiceCollectionExtensionsTests
         Assert.NotNull(callbackListener);
         Assert.NotNull(systemBrowser);
         Assert.NotNull(authorizationSessionService);
+        Assert.NotNull(tokenStore);
     }
 
     [Fact]

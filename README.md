@@ -95,6 +95,7 @@ src/
           Dtos/
           Models/
           Requests/
+          Stores/
       History/
         DependencyInjection/
         Options/
@@ -172,6 +173,7 @@ tests/
           Clients/
           Models/
           Requests/
+          Stores/
       History/
         DependencyInjection/
         Options/
@@ -282,6 +284,9 @@ Implemented:
 * Dexcom OAuth authorization session request/result models.
 * Dexcom OAuth authorization session service.
 * End-to-end Dexcom OAuth session orchestration foundation.
+* Dexcom OAuth token store abstraction.
+* In-memory Dexcom OAuth token store.
+* Dexcom authorization session token persistence into the configured token store.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
@@ -297,6 +302,7 @@ Implemented:
 * Unit tests for Dexcom OAuth state generation and callback parsing.
 * Unit tests for Dexcom local OAuth callback listener options, request/result models and listener behavior.
 * Unit tests for Dexcom OAuth authorization session behavior.
+* Unit tests for Dexcom OAuth token store behavior.
 
 ## Architecture
 
@@ -474,12 +480,29 @@ DexcomOAuthAuthorizationSessionRequest
             -> Validate OAuth state
             -> Extract authorization code
               -> IDexcomTokenClient.ExchangeAuthorizationCodeAsync(...)
-                -> DexcomOAuthAuthorizationSessionResult
+                -> DexcomOAuthTokenSet
+                  -> IDexcomOAuthTokenStore.SaveTokenSetAsync(...)
+                    -> DexcomOAuthAuthorizationSessionResult
 ```
 
-The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, open an authorization URI through a browser abstraction, listen for a local loopback OAuth redirect, parse Dexcom OAuth callbacks, validate returned state values and exchange authorization codes for tokens through the token client foundation.
+The current Dexcom OAuth token store foundation flow is:
 
-It does not yet persist OAuth state outside the in-memory authorization session flow, store OAuth tokens, call Dexcom EGV endpoints, map Dexcom EGV records to `GlucoseReading`, switch the runtime dashboard provider from Mock to Dexcom or surface Dexcom connection actions in the desktop UI.
+```text
+IDexcomOAuthTokenStore
+  -> SaveTokenSetAsync(...)
+  -> GetTokenSetAsync(...)
+  -> HasTokenSetAsync(...)
+  -> ClearTokenSetAsync(...)
+
+InMemoryDexcomOAuthTokenStore
+  -> Stores tokens only for the current application process
+  -> Does not persist tokens to disk
+  -> Intended as a safe foundation before platform-secure persistent storage
+```
+
+The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, open an authorization URI through a browser abstraction, listen for a local loopback OAuth redirect, parse Dexcom OAuth callbacks, validate returned state values, exchange authorization codes for tokens through the token client foundation and save the resulting token set into the configured token store.
+
+It does not yet store OAuth tokens in platform-secure persistent storage, restore tokens after application restart, refresh stored tokens automatically, call Dexcom EGV endpoints, map Dexcom EGV records to `GlucoseReading`, switch the runtime dashboard provider from Mock to Dexcom or surface Dexcom connection actions in the desktop UI.
 
 ## Domain model
 
@@ -601,6 +624,8 @@ The current infrastructure layer includes:
 * `DexcomOAuthAuthorizationSessionResult`
 * `IDexcomOAuthAuthorizationSessionService`
 * `DexcomOAuthAuthorizationSessionService`
+* `IDexcomOAuthTokenStore`
+* `InMemoryDexcomOAuthTokenStore`
 * `DexcomOfficialApiServiceCollectionExtensions`
 
 The mock provider implements:
@@ -648,6 +673,9 @@ The Dexcom Official API foundation currently provides:
 * System browser opening abstraction.
 * OAuth authorization session orchestration.
 * Coordination between state generation, authorization URL generation, browser opening, local callback listening and token exchange.
+* OAuth token store abstraction.
+* In-memory token storage for the current application process.
+* Token persistence after successful Dexcom OAuth authorization sessions.
 * Dependency injection registration for Dexcom infrastructure services.
 * Typed HTTP client registration for Dexcom token operations.
 
@@ -657,7 +685,9 @@ The local JSON settings store is a foundation for user preferences. Future provi
 
 The local JSON glucose history store is a foundation for personal glucose history. Glucose history contains sensitive health data, so future production releases should evaluate encryption, retention settings, export controls and clear privacy documentation before storing real personal data extensively.
 
-The Dexcom Official API foundation does not yet store OAuth tokens and does not yet call Dexcom EGV APIs. Future OAuth credentials and tokens must not be persisted in plain JSON.
+The current Dexcom OAuth token store abstraction is intentionally backed by an in-memory implementation only. This prevents writing access tokens and refresh tokens to disk in plain text while the secure persistent storage strategy is still being designed.
+
+Future persistent Dexcom OAuth token storage should use platform-secure storage, such as macOS Keychain, Windows Credential Manager, Linux Secret Service or an equivalent secure mechanism.
 
 ## Desktop model
 
@@ -933,13 +963,17 @@ Current Dexcom infrastructure supports:
 * System browser opening abstraction.
 * OAuth authorization session orchestration.
 * Coordination between state generation, authorization URL generation, browser opening, local callback listening and token exchange.
+* OAuth token store abstraction.
+* In-memory token storage for the current application process.
+* Token persistence after successful Dexcom OAuth authorization sessions.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 
 The current Dexcom foundation does not yet:
 
-* Persist the generated OAuth state outside the in-memory session flow.
-* Store OAuth tokens.
+* Store OAuth tokens in platform-secure persistent storage.
+* Restore tokens after application restart.
+* Refresh stored tokens automatically.
 * Call Dexcom EGV endpoints.
 * Map Dexcom EGV records to `GlucoseReading`.
 * Switch the runtime dashboard provider from Mock to Dexcom.
@@ -947,7 +981,8 @@ The current Dexcom foundation does not yet:
 
 The next Dexcom steps will introduce:
 
-* Secure token storage strategy.
+* Secure persistent token storage strategy.
+* Automatic token refresh using the stored refresh token.
 * Dexcom EGV HTTP client.
 * Mapping from Dexcom EGV records to `GlucoseReading`.
 * Runtime provider switching from Mock to Dexcom Official.
@@ -1005,6 +1040,9 @@ This feature will depend on local storage, Dexcom Official API data, optional Ni
 * Validate OAuth state values to protect against callback tampering and CSRF-style flows.
 * Use local OAuth callback listeners only on loopback HTTP redirect URIs.
 * Keep OAuth authorization session orchestration testable through abstractions.
+* Keep token storage behind an abstraction.
+* Never persist OAuth access tokens or refresh tokens to plain JSON.
+* Prefer platform-secure storage for future persistent token storage.
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.

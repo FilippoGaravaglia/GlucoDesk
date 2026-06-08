@@ -11,6 +11,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Options;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Clients;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Requests;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Stores;
 
 namespace GlucoDesk.Infrastructure.Tests.Cgm.Dexcom.Authorization.Sessions;
 
@@ -48,6 +49,9 @@ public sealed class DexcomOAuthAuthorizationSessionServiceTests
 
         Assert.Equal("authorization-code", dependencies.TokenClient.LastAuthorizationCodeRequest?.AuthorizationCode);
         Assert.Equal("client-secret", dependencies.TokenClient.LastAuthorizationCodeRequest?.ClientSecret);
+
+        var savedTokenSet = Assert.IsType<DexcomOAuthTokenSet>(dependencies.TokenStore.LastSavedTokenSet);
+        Assert.Equal("access-token", savedTokenSet.AccessToken);
     }
 
     [Fact]
@@ -67,6 +71,7 @@ public sealed class DexcomOAuthAuthorizationSessionServiceTests
         Assert.Equal("Dexcom.BrowserOpenFailed", result.Error.Code);
         Assert.Null(dependencies.CallbackListener.LastRequest);
         Assert.Null(dependencies.TokenClient.LastAuthorizationCodeRequest);
+        Assert.Null(dependencies.TokenStore.LastSavedTokenSet);
     }
 
     [Fact]
@@ -85,6 +90,7 @@ public sealed class DexcomOAuthAuthorizationSessionServiceTests
         Assert.True(result.IsFailure);
         Assert.Equal("Dexcom.OAuthStateMismatch", result.Error.Code);
         Assert.Null(dependencies.TokenClient.LastAuthorizationCodeRequest);
+        Assert.Null(dependencies.TokenStore.LastSavedTokenSet);
     }
 
     [Fact]
@@ -102,6 +108,27 @@ public sealed class DexcomOAuthAuthorizationSessionServiceTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("Dexcom.TokenExchangeFailed", result.Error.Code);
+        Assert.Null(dependencies.TokenStore.LastSavedTokenSet);
+    }
+
+    [Fact]
+    public async Task StartAuthorizationSessionAsync_ShouldReturnFailure_WhenTokenStoreFails()
+    {
+        var dependencies = CreateDependencies();
+        dependencies.TokenStore.SaveResult = Result.Failure(
+            new Error("Dexcom.TokenStoreSaveFailed", "Unable to store token set."));
+
+        var service = CreateService(dependencies);
+
+        var result = await service.StartAuthorizationSessionAsync(
+            new DexcomOAuthAuthorizationSessionRequest("client-secret"),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Dexcom.TokenStoreSaveFailed", result.Error.Code);
+
+        var savedTokenSet = Assert.IsType<DexcomOAuthTokenSet>(dependencies.TokenStore.LastSavedTokenSet);
+        Assert.Equal("access-token", savedTokenSet.AccessToken);
     }
 
     [Fact]
@@ -131,7 +158,8 @@ public sealed class DexcomOAuthAuthorizationSessionServiceTests
             dependencies.AuthorizationUrlBuilder,
             dependencies.Browser,
             dependencies.CallbackListener,
-            dependencies.TokenClient);
+            dependencies.TokenClient,
+            dependencies.TokenStore);
     }
 
     /// <summary>
@@ -145,7 +173,8 @@ public sealed class DexcomOAuthAuthorizationSessionServiceTests
             new FakeAuthorizationUrlBuilder(),
             new FakeSystemBrowser(),
             new FakeCallbackListener(),
-            new FakeTokenClient());
+            new FakeTokenClient(),
+            new FakeTokenStore());
     }
 
     /// <summary>
@@ -181,7 +210,8 @@ public sealed class DexcomOAuthAuthorizationSessionServiceTests
         FakeAuthorizationUrlBuilder AuthorizationUrlBuilder,
         FakeSystemBrowser Browser,
         FakeCallbackListener CallbackListener,
-        FakeTokenClient TokenClient);
+        FakeTokenClient TokenClient,
+        FakeTokenStore TokenStore);
 
     private sealed class FakeStateGenerator : IDexcomOAuthStateGenerator
     {
@@ -295,6 +325,55 @@ public sealed class DexcomOAuthAuthorizationSessionServiceTests
             CancellationToken cancellationToken)
         {
             return Task.FromResult(Result<DexcomOAuthTokenSet>.Success(CreateTokenSet()));
+        }
+    }
+
+    private sealed class FakeTokenStore : IDexcomOAuthTokenStore
+    {
+        /// <summary>
+        /// Gets or sets the token save result.
+        /// </summary>
+        public Result SaveResult { get; set; } = Result.Success();
+
+        /// <summary>
+        /// Gets the last saved token set.
+        /// </summary>
+        public DexcomOAuthTokenSet? LastSavedTokenSet { get; private set; }
+
+        /// <inheritdoc />
+        public Task<Result> SaveTokenSetAsync(
+            DexcomOAuthTokenSet tokenSet,
+            CancellationToken cancellationToken)
+        {
+            LastSavedTokenSet = tokenSet;
+
+            return Task.FromResult(SaveResult);
+        }
+
+        /// <inheritdoc />
+        public Task<Result<DexcomOAuthTokenSet>> GetTokenSetAsync(CancellationToken cancellationToken)
+        {
+            if (LastSavedTokenSet is null)
+            {
+                return Task.FromResult(Result<DexcomOAuthTokenSet>.Failure(
+                    new Error("Dexcom.TokenStoreEmpty", "No token set is stored.")));
+            }
+
+            return Task.FromResult(Result<DexcomOAuthTokenSet>.Success(LastSavedTokenSet));
+        }
+
+        /// <inheritdoc />
+        public Task<Result<bool>> HasTokenSetAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Result<bool>.Success(LastSavedTokenSet is not null));
+        }
+
+        /// <inheritdoc />
+        public Task<Result> ClearTokenSetAsync(CancellationToken cancellationToken)
+        {
+            LastSavedTokenSet = null;
+
+            return Task.FromResult(Result.Success());
         }
     }
 
