@@ -7,6 +7,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.States;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Endpoints;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Options;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Clients;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Services;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Stores;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -36,6 +37,7 @@ public static class DexcomOfficialApiServiceCollectionExtensions
         services.TryAddSingleton(options);
         services.TryAddSingleton(DexcomOAuthStateOptions.Default);
         services.TryAddSingleton(DexcomLocalOAuthCallbackOptions.Default);
+        services.TryAddSingleton(DexcomOAuthTokenRefreshOptions.Default);
         services.TryAddSingleton<IDexcomApiEndpointProvider, DexcomApiEndpointProvider>();
         services.TryAddSingleton<IDexcomAuthorizationUrlBuilder, DexcomAuthorizationUrlBuilder>();
         services.TryAddSingleton<IDexcomOAuthStateGenerator, DexcomOAuthStateGenerator>();
@@ -43,6 +45,7 @@ public static class DexcomOfficialApiServiceCollectionExtensions
         services.TryAddSingleton<IDexcomLocalOAuthCallbackListener, DexcomLocalOAuthCallbackListener>();
         services.TryAddSingleton<IDexcomSystemBrowser, DexcomSystemBrowser>();
         services.TryAddSingleton<IDexcomOAuthTokenStore, InMemoryDexcomOAuthTokenStore>();
+        services.TryAddSingleton<IDexcomOAuthTokenService, DexcomOAuthTokenService>();
         services.TryAddSingleton<IDexcomOAuthAuthorizationSessionService, DexcomOAuthAuthorizationSessionService>();
 
         services.AddHttpClient<IDexcomTokenClient, DexcomTokenClient>();
