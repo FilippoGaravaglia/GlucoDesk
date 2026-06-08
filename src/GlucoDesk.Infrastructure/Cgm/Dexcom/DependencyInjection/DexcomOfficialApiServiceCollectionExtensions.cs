@@ -1,4 +1,6 @@
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.Callbacks;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.States;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Endpoints;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Options;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Clients;
@@ -28,8 +30,11 @@ public static class DexcomOfficialApiServiceCollectionExtensions
 
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton(options);
+        services.TryAddSingleton(DexcomOAuthStateOptions.Default);
         services.TryAddSingleton<IDexcomApiEndpointProvider, DexcomApiEndpointProvider>();
         services.TryAddSingleton<IDexcomAuthorizationUrlBuilder, DexcomAuthorizationUrlBuilder>();
+        services.TryAddSingleton<IDexcomOAuthStateGenerator, DexcomOAuthStateGenerator>();
+        services.TryAddSingleton<IDexcomOAuthCallbackParser, DexcomOAuthCallbackParser>();
 
         services.AddHttpClient<IDexcomTokenClient, DexcomTokenClient>();
 

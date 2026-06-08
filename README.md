@@ -81,6 +81,8 @@ src/
     Cgm/
       Dexcom/
         Authorization/
+          Callbacks/
+          States/
         DependencyInjection/
         Endpoints/
         Enums/
@@ -155,6 +157,8 @@ tests/
     Cgm/
       Dexcom/
         Authorization/
+          Callbacks/
+          States/
         DependencyInjection/
         Endpoints/
         Options/
@@ -257,6 +261,12 @@ Implemented:
 * Dexcom OAuth token client foundation.
 * Dexcom OAuth authorization code exchange client foundation.
 * Dexcom OAuth refresh token client foundation.
+* Dexcom OAuth state generation options.
+* Secure Dexcom OAuth state generator.
+* Dexcom OAuth callback validation result model.
+* Dexcom OAuth callback parser.
+* Dexcom OAuth callback state validation.
+* Dexcom OAuth error callback handling.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
@@ -269,6 +279,7 @@ Implemented:
 * Unit tests for glucose history analytics request/result and service behavior.
 * Unit tests for Dexcom API options, endpoint resolution, authorization request validation, authorization URL generation and DI registration.
 * Unit tests for Dexcom token models, token requests and token client behavior.
+* Unit tests for Dexcom OAuth state generation and callback parsing.
 
 ## Architecture
 
@@ -401,7 +412,23 @@ DexcomRefreshTokenRequest
       -> DexcomOAuthTokenSet
 ```
 
-The Dexcom foundation can now build authorization URLs and contains the client foundation for token exchange and token refresh. It does not yet handle the local OAuth callback, persist tokens, call Dexcom EGV endpoints or switch the runtime dashboard provider from Mock to Dexcom.
+The current Dexcom OAuth callback foundation flow is:
+
+```text
+IDexcomOAuthStateGenerator
+  -> Generate secure state
+    -> DexcomAuthorizationRequest.State
+      -> Dexcom authorization URL
+
+Dexcom callback URI
+  -> IDexcomOAuthCallbackParser.ParseCallback(...)
+    -> Validate authorization code
+    -> Validate returned state
+    -> Handle OAuth error callbacks
+    -> DexcomOAuthCallbackResult
+```
+
+The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, parse Dexcom OAuth callbacks, validate returned state values and contains the client foundation for token exchange and token refresh. It does not yet open the browser, start a local callback listener, persist OAuth state, persist tokens, call Dexcom EGV endpoints or switch the runtime dashboard provider from Mock to Dexcom.
 
 ## Domain model
 
@@ -506,6 +533,12 @@ The current infrastructure layer includes:
 * `DexcomRefreshTokenRequest`
 * `IDexcomTokenClient`
 * `DexcomTokenClient`
+* `DexcomOAuthStateOptions`
+* `IDexcomOAuthStateGenerator`
+* `DexcomOAuthStateGenerator`
+* `DexcomOAuthCallbackResult`
+* `IDexcomOAuthCallbackParser`
+* `DexcomOAuthCallbackParser`
 * `DexcomOfficialApiServiceCollectionExtensions`
 
 The mock provider implements:
@@ -543,6 +576,10 @@ The Dexcom Official API foundation currently provides:
 * OAuth authorization URL generation.
 * OAuth authorization code token exchange client foundation.
 * OAuth refresh token client foundation.
+* Secure OAuth state generation.
+* OAuth callback parsing.
+* OAuth callback state validation.
+* OAuth error callback handling.
 * Dependency injection registration for Dexcom infrastructure services.
 * Typed HTTP client registration for Dexcom token operations.
 
@@ -818,12 +855,18 @@ Current Dexcom infrastructure supports:
 * OAuth authorization URL generation.
 * OAuth authorization code token exchange client foundation.
 * OAuth refresh token client foundation.
+* Secure OAuth state generation.
+* OAuth callback parsing.
+* OAuth callback state validation.
+* OAuth error callback handling.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 
 The current Dexcom foundation does not yet:
 
-* Handle the local OAuth callback.
+* Open the browser for Dexcom login.
+* Start a local OAuth callback listener.
+* Persist the generated OAuth state between login start and callback.
 * Store OAuth tokens.
 * Call Dexcom EGV endpoints.
 * Map Dexcom EGV records to `GlucoseReading`.
@@ -831,7 +874,7 @@ The current Dexcom foundation does not yet:
 
 The next Dexcom steps will introduce:
 
-* OAuth callback handling.
+* Local OAuth callback listener.
 * Secure token storage strategy.
 * Dexcom EGV HTTP client.
 * Mapping from Dexcom EGV records to `GlucoseReading`.
@@ -886,6 +929,7 @@ This feature will depend on local storage, Dexcom Official API data, optional Ni
 * Treat glucose history as sensitive health data.
 * Treat OAuth tokens as sensitive secrets.
 * Treat Dexcom client secrets as sensitive secrets.
+* Validate OAuth state values to protect against callback tampering and CSRF-style flows.
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.

@@ -1,4 +1,6 @@
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.Callbacks;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.States;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Endpoints;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Enums;
@@ -23,11 +25,17 @@ public sealed class DexcomOfficialApiServiceCollectionExtensionsTests
         var endpointProvider = serviceProvider.GetRequiredService<IDexcomApiEndpointProvider>();
         var authorizationUrlBuilder = serviceProvider.GetRequiredService<IDexcomAuthorizationUrlBuilder>();
         var tokenClient = serviceProvider.GetRequiredService<IDexcomTokenClient>();
+        var stateOptions = serviceProvider.GetRequiredService<DexcomOAuthStateOptions>();
+        var stateGenerator = serviceProvider.GetRequiredService<IDexcomOAuthStateGenerator>();
+        var callbackParser = serviceProvider.GetRequiredService<IDexcomOAuthCallbackParser>();
 
         Assert.NotNull(options);
         Assert.NotNull(endpointProvider);
         Assert.NotNull(authorizationUrlBuilder);
         Assert.NotNull(tokenClient);
+        Assert.NotNull(stateOptions);
+        Assert.NotNull(stateGenerator);
+        Assert.NotNull(callbackParser);
     }
 
     [Fact]
