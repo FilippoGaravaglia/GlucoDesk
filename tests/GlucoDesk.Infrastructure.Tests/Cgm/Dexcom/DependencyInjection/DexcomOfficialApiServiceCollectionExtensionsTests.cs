@@ -1,6 +1,8 @@
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.Browsers;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.Callbacks;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.Listeners;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.Sessions;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Authorization.States;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Endpoints;
@@ -31,6 +33,8 @@ public sealed class DexcomOfficialApiServiceCollectionExtensionsTests
         var callbackParser = serviceProvider.GetRequiredService<IDexcomOAuthCallbackParser>();
         var callbackListenerOptions = serviceProvider.GetRequiredService<DexcomLocalOAuthCallbackOptions>();
         var callbackListener = serviceProvider.GetRequiredService<IDexcomLocalOAuthCallbackListener>();
+        var systemBrowser = serviceProvider.GetRequiredService<IDexcomSystemBrowser>();
+        var authorizationSessionService = serviceProvider.GetRequiredService<IDexcomOAuthAuthorizationSessionService>();
 
         Assert.NotNull(options);
         Assert.NotNull(endpointProvider);
@@ -41,6 +45,8 @@ public sealed class DexcomOfficialApiServiceCollectionExtensionsTests
         Assert.NotNull(callbackParser);
         Assert.NotNull(callbackListenerOptions);
         Assert.NotNull(callbackListener);
+        Assert.NotNull(systemBrowser);
+        Assert.NotNull(authorizationSessionService);
     }
 
     [Fact]
