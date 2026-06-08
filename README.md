@@ -208,12 +208,16 @@ Implemented:
 * Application-level glucose history service.
 * Local JSON glucose history store.
 * Dependency injection registration for local glucose history infrastructure.
+* Dashboard glucose history persistence.
+* Non-blocking local history cache update after dashboard refresh.
+* Dashboard history status text.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 * Unit tests for dashboard refresh options and dashboard view model behavior.
 * Unit tests for dashboard chart point validation.
 * Unit tests for application settings, settings service, settings change notifier, local settings options, JSON store and DI registration.
 * Unit tests for settings view model load/save behavior.
 * Unit tests for glucose history request/result, history service, storage options, JSON history store and DI registration.
+* Unit tests for dashboard-to-history persistence behavior.
 
 ## Architecture
 
@@ -240,7 +244,7 @@ GlucoDesk.Desktop
   Currently includes the initial desktop shell, dashboard view model,
   settings view model, auto-refresh behavior, lightweight glucose trend chart,
   settings-backed dashboard configuration, live settings propagation,
-  local settings screen and a mock-powered dashboard preview.
+  local settings screen, dashboard-to-history persistence and a mock-powered dashboard preview.
 ```
 
 The goal is to keep the domain and application layers independent from concrete providers, storage implementations and UI frameworks.
@@ -295,14 +299,16 @@ SettingsViewModel
 The current local glucose history flow is:
 
 ```text
-GlucoseReading
-  -> IGlucoseHistoryService
-    -> IGlucoseHistoryStore
-      -> JsonGlucoseHistoryStore
-        -> Local glucose-readings.json
+Dashboard refresh
+  -> IGlucoseDataService.GetDashboardSnapshotAsync(...)
+    -> DashboardViewModel
+      -> IGlucoseHistoryService.SaveReadingsAsync(...)
+        -> IGlucoseHistoryStore
+          -> JsonGlucoseHistoryStore
+            -> Local glucose-readings.json
 ```
 
-The local history foundation is not yet connected to automatic dashboard persistence. It is the storage and application-service foundation for future historical analysis, provider reconciliation and diary exports.
+After every successful dashboard refresh, GlucoDesk attempts to cache the latest and recent glucose readings into local history. History persistence is intentionally non-blocking from a product perspective: a history save failure updates the dashboard history status text, but it does not fail the dashboard refresh.
 
 ## Domain model
 
@@ -453,6 +459,7 @@ Current dashboard preview displays:
 * Recent readings count.
 * Auto-refresh status.
 * Settings status.
+* History status.
 * Configured glucose target range.
 * Lightweight recent glucose trend chart.
 * Chart summary with reading count and min/max glucose values.
@@ -477,7 +484,7 @@ The dashboard supports automatic refresh using a UI-thread dispatcher timer.
 
 The dashboard loads local application settings before starting the automatic refresh timer. The configured dashboard refresh interval and glucose target range are applied to the dashboard view model and chart.
 
-After settings are saved successfully, the dashboard can now receive an in-process settings change notification and update its configuration without restarting the application.
+After settings are saved successfully, the dashboard can receive an in-process settings change notification and update its configuration without restarting the application.
 
 Live settings propagation currently updates:
 
@@ -491,6 +498,10 @@ Live settings propagation currently updates:
 
 The `DashboardView` listens for `AutoRefreshInterval` changes and updates the running dispatcher timer interval accordingly.
 
+After every successful dashboard refresh, the dashboard attempts to persist the latest and recent glucose readings into local glucose history. History persistence is non-blocking from a product perspective: a history save failure updates the dashboard history status text but does not fail the dashboard refresh.
+
+The dashboard history status text currently communicates whether local history was updated, disabled, had no readings to cache, or failed with an application-level error code.
+
 The current default refresh interval is:
 
 ```text
@@ -502,8 +513,6 @@ The dashboard includes a lightweight custom Avalonia trend chart based on recent
 The chart highlights the configured target range and displays deterministic demo data while the app runs with the mock provider.
 
 The current dashboard and settings screen use deterministic demo/local data and are not intended for treatment decisions.
-
-The local glucose history foundation is currently registered in the application and infrastructure layers, but it is not yet surfaced in the desktop UI.
 
 ## Provider strategy
 
@@ -585,7 +594,7 @@ Provider tokens, API secrets and OAuth credentials should not be stored in plain
 
 ## Local history strategy
 
-GlucoDesk now includes a local glucose history foundation.
+GlucoDesk now includes a local glucose history foundation connected to dashboard refreshes.
 
 Current local history contracts are represented by:
 
@@ -615,14 +624,18 @@ The local history layer is intended to support future features such as:
 
 The JSON history store currently persists normalized glucose readings locally and de-duplicates readings by timestamp and provider.
 
+The dashboard currently attempts to persist the latest and recent readings into local history after every successful refresh. Readings are de-duplicated before being sent to the history service, and the history store also performs storage-level de-duplication.
+
 The current history store can:
 
 * Save glucose readings.
 * Merge new readings with existing readings.
-* De-duplicate readings by timestamp and provider.
+* De-uplicate readings by timestamp and provider.
 * Query readings by date range.
 * Return empty results when no history file exists.
 * Return application-level errors when the history file contains invalid JSON or invalid glucose readings.
+
+History persistence failures do not break the dashboard refresh flow. They are surfaced through the dashboard history status text.
 
 Glucose history contains sensitive health data. Future production releases should evaluate encryption, retention settings, export controls and clear privacy documentation before using real personal data extensively.
 
@@ -678,6 +691,7 @@ This feature will depend on local storage, Nightscout treatments/events and futu
 * Keep desktop behavior testable through view models and application services.
 * Prefer lightweight UI components before introducing external UI dependencies.
 * Use in-process events only for local application coordination, not for cross-process or external integration.
+* Keep persistence failures non-blocking when they should not break the user-facing dashboard experience.
 
 ## Running build and tests
 
@@ -697,7 +711,7 @@ From the repository root:
 dotnet run --project src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
 ```
 
-The current desktop app uses the mock CGM provider and displays deterministic demo glucose data, including the latest value, status, auto-refresh state, settings status and a lightweight recent trend chart.
+The current desktop app uses the mock CGM provider and displays deterministic demo glucose data, including the latest value, status, auto-refresh state, settings status, history status and a lightweight recent trend chart.
 
 The dashboard refreshes automatically using the configured local settings interval and can also be refreshed manually.
 
@@ -705,11 +719,11 @@ The application includes a settings screen for editing non-secret local preferen
 
 After saving settings, the dashboard can update its target range and refresh interval without restarting the app.
 
-The local glucose history foundation is registered, but the UI does not yet automatically persist dashboard readings into history.
+After every successful dashboard refresh, the app attempts to cache the latest and recent readings into local glucose history.
 
 ## Roadmap
 
-* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation and local glucose history foundation.
+* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation, local glucose history foundation and dashboard-to-history persistence.
 * v0.2: Nightscout live provider.
 * v0.3: Analytics engine and compact widget.
 * v0.4: Dexcom Official API historical provider.

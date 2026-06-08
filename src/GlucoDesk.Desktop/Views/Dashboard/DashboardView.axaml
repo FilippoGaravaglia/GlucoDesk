@@ -49,6 +49,10 @@
             <TextBlock Text="{Binding SettingsStatusText}"
                        Opacity="0.55"
                        TextAlignment="Right" />
+            
+            <TextBlock Text="{Binding HistoryStatusText}"
+                        Opacity="0.55"
+                        TextAlignment="Right" />
           </StackPanel>
         </Grid>
 

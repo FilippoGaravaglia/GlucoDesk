@@ -1,5 +1,8 @@
 using GlucoDesk.Application.Cgm.Dashboard.Requests;
 using GlucoDesk.Application.Cgm.Dashboard.Results;
+using GlucoDesk.Application.Cgm.History.Requests;
+using GlucoDesk.Application.Cgm.History.Results;
+using GlucoDesk.Application.Cgm.History.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Metadata;
 using GlucoDesk.Application.Cgm.Readings.Requests;
 using GlucoDesk.Application.Cgm.Readings.Results;
@@ -140,6 +143,46 @@ public sealed class DashboardViewModelTests
         Assert.Equal("Auto-refresh every 20 second(s)", viewModel.AutoRefreshStatusText);
     }
 
+    [Fact]
+    public async Task RefreshCommand_ShouldPersistDashboardReadingsToHistory_WhenHistoryServiceIsConfigured()
+    {
+        var historyService = new FakeGlucoseHistoryService();
+
+        var viewModel = new DashboardViewModel(
+            new FakeGlucoseDataService(),
+            new FakeApplicationSettingsService(),
+            DashboardRefreshOptions.Default,
+            settingsChangeNotifier: null,
+            historyService);
+
+        await viewModel.InitializeCommand.ExecuteAsync(null);
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.Equal(3, historyService.SavedReadings.Count);
+        Assert.Equal("History updated: 3 reading(s) cached", viewModel.HistoryStatusText);
+    }
+
+    [Fact]
+    public async Task RefreshCommand_ShouldNotFailDashboard_WhenHistoryPersistenceFails()
+    {
+        var historyService = new FakeGlucoseHistoryService(
+            Result.Failure(new Error("History.SaveFailed", "Unable to save history.")));
+
+        var viewModel = new DashboardViewModel(
+            new FakeGlucoseDataService(),
+            new FakeApplicationSettingsService(),
+            DashboardRefreshOptions.Default,
+            settingsChangeNotifier: null,
+            historyService);
+
+        await viewModel.InitializeCommand.ExecuteAsync(null);
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.HasError);
+        Assert.Equal("History update failed · History.SaveFailed", viewModel.HistoryStatusText);
+        Assert.Equal("Mock CGM Provider", viewModel.ProviderDisplayName);
+    }
+
     #region Helpers
 
     private static readonly DateTimeOffset FixedNow = new(2026, 6, 7, 10, 0, 0, TimeSpan.Zero);
@@ -275,6 +318,43 @@ public sealed class DashboardViewModelTests
             TrendDirection.Flat,
             CgmProviderKind.Mock,
             GlucoseDataFreshness.NearRealTime);
+    }
+
+    private sealed class FakeGlucoseHistoryService : IGlucoseHistoryService
+    {
+        private readonly Result _saveResult;
+    
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FakeGlucoseHistoryService"/> class.
+        /// </summary>
+        /// <param name="saveResult">The optional save result.</param>
+        public FakeGlucoseHistoryService(Result? saveResult = null)
+        {
+            _saveResult = saveResult ?? Result.Success();
+        }
+    
+        /// <summary>
+        /// Gets the saved glucose readings.
+        /// </summary>
+        public IReadOnlyCollection<GlucoseReading> SavedReadings { get; private set; } = [];
+    
+        /// <inheritdoc />
+        public Task<Result> SaveReadingsAsync(
+            IReadOnlyCollection<GlucoseReading> readings,
+            CancellationToken cancellationToken)
+        {
+            SavedReadings = readings;
+    
+            return Task.FromResult(_saveResult);
+        }
+    
+        /// <inheritdoc />
+        public Task<Result<GlucoseHistoryResult>> GetReadingsAsync(
+            GlucoseHistoryRequest request,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Result<GlucoseHistoryResult>.Success(new GlucoseHistoryResult([])));
+        }
     }
 
     #endregion
