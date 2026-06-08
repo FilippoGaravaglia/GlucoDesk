@@ -2,6 +2,7 @@ using GlucoDesk.Application.Common.DependencyInjection;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Main;
+using GlucoDesk.Desktop.ViewModels.Settings;
 using GlucoDesk.Desktop.Views.Main;
 using GlucoDesk.Infrastructure.Cgm.Mock.DependencyInjection;
 using GlucoDesk.Infrastructure.Settings.DependencyInjection;
@@ -48,6 +49,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddTransient<MainWindow>();
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
+        services.AddTransient<SettingsViewModel>();
     }
 
     #endregion

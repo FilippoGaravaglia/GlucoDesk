@@ -1,0 +1,127 @@
+<UserControl
+    x:Class="GlucoDesk.Desktop.Views.Settings.SettingsView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <ScrollViewer>
+    <Grid Margin="32"
+          RowDefinitions="Auto,*"
+          RowSpacing="24">
+
+      <StackPanel Grid.Row="0"
+                  Spacing="8">
+        <TextBlock Text="Settings"
+                   FontSize="34"
+                   FontWeight="SemiBold" />
+
+        <TextBlock Text="Configure local non-secret GlucoDesk preferences."
+                   FontSize="16"
+                   Opacity="0.75" />
+      </StackPanel>
+
+      <Border Grid.Row="1"
+              Padding="28"
+              CornerRadius="16"
+              BorderThickness="1">
+        <StackPanel Spacing="22">
+
+          <StackPanel Spacing="8">
+            <TextBlock Text="CGM providers"
+                       FontSize="18"
+                       FontWeight="SemiBold" />
+
+            <TextBlock Text="Provider selection currently persists preferences only. Runtime provider switching will be introduced in a future step."
+                       TextWrapping="Wrap"
+                       Opacity="0.65" />
+
+            <Grid ColumnDefinitions="*,*"
+                  ColumnSpacing="20">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Live provider"
+                           Opacity="0.75" />
+
+                <ComboBox ItemsSource="{Binding ProviderOptions}"
+                          SelectedItem="{Binding SelectedLiveProvider}" />
+              </StackPanel>
+
+              <StackPanel Grid.Column="1"
+                          Spacing="6">
+                <TextBlock Text="Historical provider"
+                           Opacity="0.75" />
+
+                <ComboBox ItemsSource="{Binding ProviderOptions}"
+                          SelectedItem="{Binding SelectedHistoricalProvider}" />
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+
+          <StackPanel Spacing="8">
+            <TextBlock Text="Glucose preferences"
+                       FontSize="18"
+                       FontWeight="SemiBold" />
+
+            <Grid ColumnDefinitions="*,*,*"
+                  ColumnSpacing="20">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Preferred unit"
+                           Opacity="0.75" />
+
+                <ComboBox ItemsSource="{Binding PreferredUnitOptions}"
+                          SelectedItem="{Binding SelectedPreferredUnit}" />
+              </StackPanel>
+
+              <StackPanel Grid.Column="1"
+                          Spacing="6">
+                <TextBlock Text="Target low mg/dL"
+                           Opacity="0.75" />
+
+                <TextBox Text="{Binding TargetLowMgDlText}" />
+              </StackPanel>
+
+              <StackPanel Grid.Column="2"
+                          Spacing="6">
+                <TextBlock Text="Target high mg/dL"
+                           Opacity="0.75" />
+
+                <TextBox Text="{Binding TargetHighMgDlText}" />
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+
+          <StackPanel Spacing="8">
+            <TextBlock Text="Dashboard"
+                       FontSize="18"
+                       FontWeight="SemiBold" />
+
+            <StackPanel Spacing="6">
+              <TextBlock Text="Refresh interval seconds"
+                         Opacity="0.75" />
+
+              <TextBox Text="{Binding DashboardRefreshIntervalSecondsText}"
+                       Width="220"
+                       HorizontalAlignment="Left" />
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel Spacing="8">
+            <Button Content="Save settings"
+                    Command="{Binding SaveCommand}"
+                    HorizontalAlignment="Left" />
+
+            <TextBlock Text="{Binding StatusMessage}"
+                       Opacity="0.75" />
+
+            <TextBlock Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding HasError}"
+                       TextWrapping="Wrap"
+                       FontWeight="SemiBold" />
+          </StackPanel>
+
+          <TextBlock Text="GlucoDesk currently stores only non-secret preferences in local JSON. Provider tokens and OAuth secrets must use secure storage in future production releases."
+                     TextWrapping="Wrap"
+                     Opacity="0.6" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </ScrollViewer>
+</UserControl>
