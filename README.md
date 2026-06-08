@@ -60,6 +60,7 @@ src/
       Results/
     Settings/
       Abstractions/
+      Events/
       Models/
       Services/
 
@@ -130,6 +131,7 @@ tests/
       Dashboard/
         Chart/
         Options/
+      Main/
       Settings/
 
 docs/
@@ -181,10 +183,13 @@ Implemented:
 * Settings screen foundation.
 * Desktop navigation between dashboard and settings.
 * Editable non-secret local settings form.
+* In-process settings change notification.
+* Live dashboard update after settings save.
+* Automatic dashboard timer interval update after settings changes.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 * Unit tests for dashboard refresh options and dashboard view model behavior.
 * Unit tests for dashboard chart point validation.
-* Unit tests for application settings, settings service, local settings options, JSON store and DI registration.
+* Unit tests for application settings, settings service, settings change notifier, local settings options, JSON store and DI registration.
 * Unit tests for settings view model load/save behavior.
 
 ## Architecture
@@ -198,7 +203,7 @@ GlucoDesk.Core
 
 GlucoDesk.Application
   Application contracts, provider abstractions, request/result models, dashboard models,
-  settings models, application-level errors and application services.
+  settings models, in-process settings notifications, application-level errors and application services.
   No dependency on concrete CGM providers or storage implementations.
 
 GlucoDesk.Infrastructure
@@ -209,7 +214,8 @@ GlucoDesk.Desktop
   Avalonia desktop application.
   Currently includes the initial desktop shell, dashboard view model,
   settings view model, auto-refresh behavior, lightweight glucose trend chart,
-  settings-backed dashboard configuration, local settings screen and a mock-powered dashboard preview.
+  settings-backed dashboard configuration, live settings propagation,
+  local settings screen and a mock-powered dashboard preview.
 ```
 
 The goal is to keep the domain and application layers independent from concrete providers, storage implementations and UI frameworks.
@@ -247,6 +253,20 @@ Local settings.json
         -> GlucoseTrendChart target range
 ```
 
+The current live settings propagation flow is:
+
+```text
+SettingsViewModel
+  -> IApplicationSettingsService.SaveSettingsAsync(...)
+    -> IApplicationSettingsStore.SaveAsync(...)
+    -> IApplicationSettingsChangeNotifier.NotifySettingsChanged(...)
+      -> DashboardViewModel
+        -> Apply new refresh interval
+        -> Apply new glucose target range
+        -> Notify DashboardView about AutoRefreshInterval change
+          -> Update DispatcherTimer interval
+```
+
 ## Domain model
 
 The current core glucose domain includes:
@@ -281,9 +301,12 @@ The current application layer includes:
 * `IGlucoseDataService`
 * `GlucoseDataService`
 * `ApplicationSettings`
+* `ApplicationSettingsChangedEventArgs`
 * `IApplicationSettingsStore`
 * `IApplicationSettingsService`
+* `IApplicationSettingsChangeNotifier`
 * `ApplicationSettingsService`
+* `ApplicationSettingsChangeNotifier`
 * `ApplicationServiceCollectionExtensions`
 
 These contracts allow GlucoDesk to support multiple CGM data sources without coupling the UI or domain model to a specific provider.
@@ -303,6 +326,9 @@ The settings application layer currently supports:
 * Preferred glucose unit.
 * Target range.
 * Dashboard refresh interval.
+* In-process settings change notifications after successful saves.
+
+The in-process settings change notifier allows desktop view models to react to settings changes without coupling the settings screen directly to the dashboard.
 
 ## Infrastructure model
 
@@ -377,7 +403,7 @@ Current dashboard preview displays:
 * Chart summary with reading count and min/max glucose values.
 * Error state, when present.
 
-The desktop shell now includes a simple navigation area with dashboard and settings sections.
+The desktop shell includes a simple navigation area with dashboard and settings sections.
 
 The settings section can load and save non-secret local preferences through the application settings service.
 
@@ -392,9 +418,23 @@ Current settings screen supports editing:
 
 Provider selection currently persists preferences only. Runtime provider switching will be introduced in a future step.
 
-The dashboard currently supports automatic refresh using a UI-thread dispatcher timer.
+The dashboard supports automatic refresh using a UI-thread dispatcher timer.
 
 The dashboard loads local application settings before starting the automatic refresh timer. The configured dashboard refresh interval and glucose target range are applied to the dashboard view model and chart.
+
+After settings are saved successfully, the dashboard can now receive an in-process settings change notification and update its configuration without restarting the application.
+
+Live settings propagation currently updates:
+
+* Dashboard refresh interval.
+* Dashboard auto-refresh status text.
+* Lower glucose target.
+* Upper glucose target.
+* Target range text.
+* Chart target range.
+* Dashboard settings status text.
+
+The `DashboardView` listens for `AutoRefreshInterval` changes and updates the running dispatcher timer interval accordingly.
 
 The current default refresh interval is:
 
@@ -466,13 +506,23 @@ The local settings foundation is intended for non-secret preferences such as:
 
 The settings screen currently allows users to edit and save these non-secret preferences.
 
-The dashboard currently reads local settings during initialization and applies:
+The dashboard reads local settings during initialization and applies:
 
 * Dashboard refresh interval.
 * Lower glucose target.
 * Upper glucose target.
 * Target range text.
 * Chart target range.
+
+After a successful settings save, the application settings service emits an in-process settings change notification.
+
+The dashboard currently reacts to settings changes and applies:
+
+* New dashboard refresh interval.
+* New glucose target range.
+* Updated target range text.
+* Updated chart target range.
+* Updated settings status text.
 
 Provider tokens, API secrets and OAuth credentials should not be stored in plain JSON in future production releases.
 
@@ -525,6 +575,7 @@ This feature will depend on local storage, Nightscout treatments/events and futu
 * Keep mock/demo data clearly separated from real provider data.
 * Keep desktop behavior testable through view models and application services.
 * Prefer lightweight UI components before introducing external UI dependencies.
+* Use in-process events only for local application coordination, not for cross-process or external integration.
 
 ## Running build and tests
 
@@ -550,9 +601,11 @@ The dashboard refreshes automatically using the configured local settings interv
 
 The application includes a settings screen for editing non-secret local preferences.
 
+After saving settings, the dashboard can update its target range and refresh interval without restarting the app.
+
 ## Roadmap
 
-* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings and settings screen.
+* v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen and live settings propagation.
 * v0.2: Nightscout live provider.
 * v0.3: Analytics engine and compact widget.
 * v0.4: Dexcom Official API historical provider.

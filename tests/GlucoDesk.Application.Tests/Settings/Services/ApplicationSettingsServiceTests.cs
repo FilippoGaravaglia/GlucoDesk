@@ -33,6 +33,24 @@ public sealed class ApplicationSettingsServiceTests
         Assert.Equal(settings, store.SavedSettings);
     }
 
+    [Fact]
+    public async Task SaveSettingsAsync_ShouldNotifySettingsChanged_WhenSaveSucceeds()
+    {
+        var settings = new ApplicationSettings(dashboardRefreshInterval: TimeSpan.FromSeconds(45));
+        var store = new FakeApplicationSettingsStore(ApplicationSettings.Default);
+        var notifier = new ApplicationSettingsChangeNotifier();
+        ApplicationSettings? notifiedSettings = null;
+    
+        notifier.SettingsChanged += (_, eventArgs) => notifiedSettings = eventArgs.Settings;
+    
+        var service = new ApplicationSettingsService(store, notifier);
+    
+        var result = await service.SaveSettingsAsync(settings, CancellationToken.None);
+    
+        Assert.True(result.IsSuccess);
+        Assert.Equal(settings, notifiedSettings);
+    }
+
     #region Helpers
 
     private sealed class FakeApplicationSettingsStore : IApplicationSettingsStore

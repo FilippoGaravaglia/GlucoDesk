@@ -5,6 +5,7 @@ using GlucoDesk.Application.Cgm.Dashboard.Results;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
+using GlucoDesk.Application.Settings.Events;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
@@ -18,10 +19,11 @@ namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 /// <summary>
 /// Represents the dashboard view model used by the desktop shell.
 /// </summary>
-public sealed partial class DashboardViewModel : ViewModelBase
+public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 {
     private readonly IGlucoseDataService _glucoseDataService;
     private readonly IApplicationSettingsService _settingsService;
+    private readonly IApplicationSettingsChangeNotifier? _settingsChangeNotifier;
     private readonly DashboardRefreshOptions _refreshOptions;
 
     private bool _isInitialized;
@@ -84,10 +86,12 @@ public sealed partial class DashboardViewModel : ViewModelBase
     /// <param name="glucoseDataService">The glucose data service.</param>
     /// <param name="settingsService">The application settings service.</param>
     /// <param name="refreshOptions">The optional dashboard refresh fallback options.</param>
+    /// <param name="settingsChangeNotifier">The optional application settings change notifier.</param>
     public DashboardViewModel(
         IGlucoseDataService glucoseDataService,
         IApplicationSettingsService settingsService,
-        DashboardRefreshOptions? refreshOptions = null)
+        DashboardRefreshOptions? refreshOptions = null,
+        IApplicationSettingsChangeNotifier? settingsChangeNotifier = null)
     {
         ArgumentNullException.ThrowIfNull(glucoseDataService);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -95,7 +99,13 @@ public sealed partial class DashboardViewModel : ViewModelBase
         _glucoseDataService = glucoseDataService;
         _settingsService = settingsService;
         _refreshOptions = refreshOptions ?? DashboardRefreshOptions.Default;
+        _settingsChangeNotifier = settingsChangeNotifier;
         _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
+
+        if (_settingsChangeNotifier is not null)
+        {
+            _settingsChangeNotifier.SettingsChanged += OnSettingsChanged;
+        }
 
         AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
     }
@@ -176,7 +186,31 @@ public sealed partial class DashboardViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Releases event subscriptions owned by the dashboard view model.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_settingsChangeNotifier is not null)
+        {
+            _settingsChangeNotifier.SettingsChanged -= OnSettingsChanged;
+        }
+    }
+
     #region Helpers
+
+    /// <summary>
+    /// Handles application settings change notifications.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="eventArgs">The settings changed event arguments.</param>
+    private void OnSettingsChanged(
+        object? sender,
+        ApplicationSettingsChangedEventArgs eventArgs)
+    {
+        ApplySettings(eventArgs.Settings);
+        SettingsStatusText = "Settings updated";
+    }
 
     /// <summary>
     /// Applies application settings to the dashboard view model.
