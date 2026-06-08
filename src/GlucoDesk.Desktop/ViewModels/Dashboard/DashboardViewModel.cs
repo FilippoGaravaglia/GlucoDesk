@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Application.Cgm.Dashboard.Requests;
 using GlucoDesk.Application.Cgm.Dashboard.Results;
+using GlucoDesk.Application.Cgm.History.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
@@ -24,6 +25,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IGlucoseDataService _glucoseDataService;
     private readonly IApplicationSettingsService _settingsService;
     private readonly IApplicationSettingsChangeNotifier? _settingsChangeNotifier;
+    private readonly IGlucoseHistoryService? _glucoseHistoryService;
     private readonly DashboardRefreshOptions _refreshOptions;
 
     private bool _isInitialized;
@@ -72,6 +74,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private string _settingsStatusText = "Settings not loaded";
 
     [ObservableProperty]
+    private string _historyStatusText = "History not updated";
+
+    [ObservableProperty]
     private string? _errorMessage;
 
     [ObservableProperty]
@@ -87,11 +92,13 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// <param name="settingsService">The application settings service.</param>
     /// <param name="refreshOptions">The optional dashboard refresh fallback options.</param>
     /// <param name="settingsChangeNotifier">The optional application settings change notifier.</param>
+    /// <param name="glucoseHistoryService">The optional glucose history service.</param>
     public DashboardViewModel(
         IGlucoseDataService glucoseDataService,
         IApplicationSettingsService settingsService,
         DashboardRefreshOptions? refreshOptions = null,
-        IApplicationSettingsChangeNotifier? settingsChangeNotifier = null)
+        IApplicationSettingsChangeNotifier? settingsChangeNotifier = null,
+        IGlucoseHistoryService? glucoseHistoryService = null)
     {
         ArgumentNullException.ThrowIfNull(glucoseDataService);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -100,6 +107,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         _settingsService = settingsService;
         _refreshOptions = refreshOptions ?? DashboardRefreshOptions.Default;
         _settingsChangeNotifier = settingsChangeNotifier;
+        _glucoseHistoryService = glucoseHistoryService;
         _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
 
         if (_settingsChangeNotifier is not null)
@@ -170,6 +178,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             }
 
             ApplySnapshot(result.Value);
+            await PersistSnapshotToHistoryAsync(result.Value, cancellationToken);
+
             AutoRefreshStatusText = $"Last refresh: {DateTimeOffset.Now:HH:mm:ss}";
         }
         catch (OperationCanceledException)
@@ -276,6 +286,73 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         RecentReadingsCountText = $"{snapshot.RecentReadings.Count} readings";
 
         UpdateChart(snapshot.RecentReadings, targetRange);
+    }
+
+    /// <summary>
+    /// Persists dashboard snapshot readings into local glucose history.
+    /// </summary>
+    /// <param name="snapshot">The dashboard snapshot.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task PersistSnapshotToHistoryAsync(
+        GlucoseDashboardSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        if (_glucoseHistoryService is null)
+        {
+            HistoryStatusText = "History disabled";
+            return;
+        }
+
+        var readingsToPersist = BuildReadingsToPersist(snapshot);
+
+        if (readingsToPersist.Count == 0)
+        {
+            HistoryStatusText = "No readings to cache";
+            return;
+        }
+
+        var result = await _glucoseHistoryService
+            .SaveReadingsAsync(readingsToPersist, cancellationToken);
+
+        HistoryStatusText = result.IsSuccess
+            ? $"History updated: {readingsToPersist.Count} reading(s) cached"
+            : $"History update failed · {result.Error.Code}";
+    }
+
+    /// <summary>
+    /// Builds the list of readings to persist from a dashboard snapshot.
+    /// </summary>
+    /// <param name="snapshot">The dashboard snapshot.</param>
+    /// <returns>The readings to persist.</returns>
+    private static IReadOnlyCollection<GlucoseReading> BuildReadingsToPersist(
+        GlucoseDashboardSnapshot snapshot)
+    {
+        var readings = snapshot.RecentReadings
+            .ToList();
+
+        if (snapshot.LatestReading is not null)
+        {
+            readings.Add(snapshot.LatestReading);
+        }
+
+        return readings
+            .GroupBy(BuildReadingIdentityKey, StringComparer.Ordinal)
+            .Select(group => group.Last())
+            .OrderBy(reading => reading.Timestamp)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Builds a stable identity key for a glucose reading.
+    /// </summary>
+    /// <param name="reading">The glucose reading.</param>
+    /// <returns>The reading identity key.</returns>
+    private static string BuildReadingIdentityKey(GlucoseReading reading)
+    {
+        return string.Join(
+            "|",
+            reading.Timestamp.ToUniversalTime().Ticks,
+            reading.Provider);
     }
 
     /// <summary>
