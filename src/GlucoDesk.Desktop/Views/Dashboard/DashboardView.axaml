@@ -1,7 +1,8 @@
 <UserControl
     x:Class="GlucoDesk.Desktop.Views.Dashboard.DashboardView"
     xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:GlucoDesk.Desktop.Views.Dashboard.Controls">
 
   <Grid RowDefinitions="Auto,*"
         Margin="32"
@@ -108,6 +109,25 @@
                        FontSize="18" />
           </StackPanel>
         </Grid>
+
+        <StackPanel Spacing="8">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="Recent glucose trend"
+                       FontSize="16"
+                       FontWeight="SemiBold" />
+
+            <TextBlock Grid.Column="1"
+                       Text="{Binding ChartSummaryText}"
+                       Opacity="0.65" />
+          </Grid>
+
+          <Border Height="180"
+                  CornerRadius="12"
+                  BorderThickness="1"
+                  Padding="8">
+            <controls:GlucoseTrendChart Points="{Binding ChartPoints}" />
+          </Border>
+        </StackPanel>
 
         <TextBlock Text="{Binding ErrorMessage}"
                    IsVisible="{Binding HasError}"

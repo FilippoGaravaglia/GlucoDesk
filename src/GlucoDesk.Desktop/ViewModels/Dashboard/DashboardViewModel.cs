@@ -5,8 +5,10 @@ using GlucoDesk.Application.Cgm.Dashboard.Results;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Desktop.ViewModels.Common;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
@@ -39,6 +41,12 @@ public sealed partial class DashboardViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _recentReadingsCountText = "0 readings";
+
+    [ObservableProperty]
+    private IReadOnlyList<GlucoseChartPoint> _chartPoints = [];
+
+    [ObservableProperty]
+    private string _chartSummaryText = "No chart data";
 
     [ObservableProperty]
     private string _autoRefreshStatusText = "Auto-refresh not started";
@@ -129,7 +137,11 @@ public sealed partial class DashboardViewModel : ViewModelBase
     {
         ProviderDisplayName = snapshot.Metadata.DisplayName;
         LatestValueText = snapshot.LatestReading?.Value.ToString() ?? "—";
-        TrendText = snapshot.LatestReading is null ? "No trend" : FormatTrend(snapshot.LatestReading.Trend);
+
+        TrendText = snapshot.LatestReading is null
+            ? "No trend"
+            : FormatTrend(snapshot.LatestReading.Trend);
+
         FreshnessText = snapshot.LatestReading is null
             ? FormatFreshness(snapshot.Metadata.ExpectedFreshness)
             : FormatFreshness(snapshot.LatestReading.Freshness);
@@ -143,6 +155,8 @@ public sealed partial class DashboardViewModel : ViewModelBase
             : FormatStatus(snapshot.LatestReading.GetStatus(GlucoseRange.StandardMgDl), snapshot.IsLatestReadingStale);
 
         RecentReadingsCountText = $"{snapshot.RecentReadings.Count} readings";
+
+        UpdateChart(snapshot.RecentReadings);
     }
 
     /// <summary>
@@ -165,6 +179,56 @@ public sealed partial class DashboardViewModel : ViewModelBase
         HasError = true;
         ErrorMessage = exception.Message;
         StatusText = "Unexpected error";
+    }
+
+    /// <summary>
+    /// Updates the dashboard chart using the recent readings included in the snapshot.
+    /// </summary>
+    /// <param name="readings">The recent glucose readings.</param>
+    private void UpdateChart(IReadOnlyCollection<GlucoseReading> readings)
+    {
+        var chartPoints = readings
+            .OrderBy(reading => reading.Timestamp)
+            .Select(CreateChartPoint)
+            .ToArray();
+
+        ChartPoints = chartPoints;
+        ChartSummaryText = BuildChartSummary(chartPoints);
+    }
+
+    /// <summary>
+    /// Creates a chart point from a glucose reading.
+    /// </summary>
+    /// <param name="reading">The glucose reading.</param>
+    /// <returns>The chart point.</returns>
+    private static GlucoseChartPoint CreateChartPoint(GlucoseReading reading)
+    {
+        var normalizedValue = reading.Value.Unit == GlucoseUnit.MgDl
+            ? reading.Value
+            : reading.Value.ConvertTo(GlucoseUnit.MgDl);
+
+        return new GlucoseChartPoint(
+            reading.Timestamp,
+            normalizedValue.Amount,
+            reading.GetStatus(GlucoseRange.StandardMgDl));
+    }
+
+    /// <summary>
+    /// Builds a display-friendly chart summary.
+    /// </summary>
+    /// <param name="chartPoints">The chart points.</param>
+    /// <returns>The chart summary.</returns>
+    private static string BuildChartSummary(IReadOnlyCollection<GlucoseChartPoint> chartPoints)
+    {
+        if (chartPoints.Count == 0)
+        {
+            return "No chart data";
+        }
+
+        var minimumValue = chartPoints.Min(point => point.ValueMgDl);
+        var maximumValue = chartPoints.Max(point => point.ValueMgDl);
+
+        return $"{chartPoints.Count} readings · {minimumValue:0}-{maximumValue:0} mg/dL";
     }
 
     /// <summary>
