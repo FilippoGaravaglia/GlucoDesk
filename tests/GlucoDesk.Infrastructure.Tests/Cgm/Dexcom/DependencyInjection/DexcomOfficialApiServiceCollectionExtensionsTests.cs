@@ -3,6 +3,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Endpoints;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Options;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Tokens.Clients;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GlucoDesk.Infrastructure.Tests.Cgm.Dexcom.DependencyInjection;
@@ -21,10 +22,12 @@ public sealed class DexcomOfficialApiServiceCollectionExtensionsTests
         var options = serviceProvider.GetRequiredService<DexcomApiOptions>();
         var endpointProvider = serviceProvider.GetRequiredService<IDexcomApiEndpointProvider>();
         var authorizationUrlBuilder = serviceProvider.GetRequiredService<IDexcomAuthorizationUrlBuilder>();
+        var tokenClient = serviceProvider.GetRequiredService<IDexcomTokenClient>();
 
         Assert.NotNull(options);
         Assert.NotNull(endpointProvider);
         Assert.NotNull(authorizationUrlBuilder);
+        Assert.NotNull(tokenClient);
     }
 
     [Fact]
