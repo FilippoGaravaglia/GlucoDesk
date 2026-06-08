@@ -2,13 +2,61 @@
     x:Class="GlucoDesk.Desktop.Views.Main.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:dashboard="clr-namespace:GlucoDesk.Desktop.Views.Dashboard"
+    xmlns:dashboardViews="clr-namespace:GlucoDesk.Desktop.Views.Dashboard"
+    xmlns:dashboardViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Dashboard"
+    xmlns:settingsViews="clr-namespace:GlucoDesk.Desktop.Views.Settings"
+    xmlns:settingsViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Settings"
     Title="GlucoDesk"
-    Width="980"
-    Height="680"
-    MinWidth="760"
-    MinHeight="520">
+    Width="1180"
+    Height="760"
+    MinWidth="920"
+    MinHeight="620">
 
-  <dashboard:DashboardView DataContext="{Binding Dashboard}" />
+  <Window.DataTemplates>
+    <DataTemplate DataType="{x:Type dashboardViewModels:DashboardViewModel}">
+      <dashboardViews:DashboardView />
+    </DataTemplate>
 
+    <DataTemplate DataType="{x:Type settingsViewModels:SettingsViewModel}">
+      <settingsViews:SettingsView />
+    </DataTemplate>
+  </Window.DataTemplates>
+
+  <Grid ColumnDefinitions="220,*">
+
+    <Border Grid.Column="0"
+            Padding="20"
+            BorderThickness="0,0,1,0">
+      <StackPanel Spacing="18">
+
+        <StackPanel Spacing="4">
+          <TextBlock Text="GlucoDesk"
+                     FontSize="22"
+                     FontWeight="SemiBold" />
+
+          <TextBlock Text="Desktop companion"
+                     Opacity="0.6" />
+        </StackPanel>
+
+        <StackPanel Spacing="8">
+          <Button Content="Dashboard"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Left"
+                  Command="{Binding ShowDashboardCommand}" />
+
+          <Button Content="Settings"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Left"
+                  Command="{Binding ShowSettingsCommand}" />
+        </StackPanel>
+
+        <TextBlock Text="Not a medical device. Do not use for treatment decisions."
+                   TextWrapping="Wrap"
+                   Opacity="0.55" />
+      </StackPanel>
+    </Border>
+
+    <ContentControl Grid.Column="1"
+                    Content="{Binding CurrentContent}" />
+  </Grid>
 </Window>
