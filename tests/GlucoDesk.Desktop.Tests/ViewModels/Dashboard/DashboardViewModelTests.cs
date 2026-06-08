@@ -45,6 +45,8 @@ public sealed class DashboardViewModelTests
         Assert.Equal("Near real-time", viewModel.FreshnessText);
         Assert.Equal("In range", viewModel.StatusText);
         Assert.Equal("2 readings", viewModel.RecentReadingsCountText);
+        Assert.Equal(2, viewModel.ChartPoints.Count);
+        Assert.Equal("2 readings · 123-123 mg/dL", viewModel.ChartSummaryText);
         Assert.StartsWith("Last refresh:", viewModel.AutoRefreshStatusText, StringComparison.Ordinal);
     }
 
