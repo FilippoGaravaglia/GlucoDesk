@@ -7,6 +7,7 @@ using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Settings.Selections;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
@@ -20,7 +21,10 @@ namespace GlucoDesk.Desktop.ViewModels.Settings;
 /// </summary>
 public sealed partial class SettingsViewModel : ViewModelBase
 {
+    private readonly IReadOnlyCollection<IDexcomDesktopConnectionService> _dexcomDesktopConnectionServices;
+
     private readonly IApplicationSettingsService _settingsService;
+    
     private readonly IReadOnlyCollection<ICgmMetadataProvider> _metadataProviders;
 
     private readonly IReadOnlyCollection<IDexcomConnectionStatusService> _dexcomConnectionStatusServices;
@@ -64,22 +68,30 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _dexcomConnectionStatusText = "Dexcom: status not checked";
 
+    [ObservableProperty]
+    private bool _canConnectDexcom;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
     /// <param name="settingsService">The application settings service.</param>
     /// <param name="metadataProviders">The registered CGM metadata providers.</param>
     /// <param name="dexcomConnectionStatusServices">The registered Dexcom connection status services.</param>
+    /// <param name="dexcomDesktopConnectionServices">The registered desktop Dexcom connection services.</param>
     public SettingsViewModel(
         IApplicationSettingsService settingsService,
         IEnumerable<ICgmMetadataProvider>? metadataProviders = null,
-        IEnumerable<IDexcomConnectionStatusService>? dexcomConnectionStatusServices = null)
+        IEnumerable<IDexcomConnectionStatusService>? dexcomConnectionStatusServices = null,
+        IEnumerable<IDexcomDesktopConnectionService>? dexcomDesktopConnectionServices = null)
     {
         ArgumentNullException.ThrowIfNull(settingsService);
 
         _settingsService = settingsService;
         _metadataProviders = metadataProviders?.ToArray() ?? [];
         _dexcomConnectionStatusServices = dexcomConnectionStatusServices?.ToArray() ?? [];
+        _dexcomDesktopConnectionServices = dexcomDesktopConnectionServices?.ToArray() ?? [];
+
+        CanConnectDexcom = _dexcomDesktopConnectionServices.Count > 0;
 
         ProviderOptions = BuildProviderOptions(
             new HashSet<CgmProviderKind>
@@ -203,6 +215,62 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Starts the Dexcom desktop connection flow.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task ConnectDexcomAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var connectionService = _dexcomDesktopConnectionServices.FirstOrDefault();
+
+        if (connectionService is null)
+        {
+            ApplyValidationFailure("Dexcom is not configured in the current desktop runtime.");
+            return;
+        }
+
+        IsBusy = true;
+        HasError = false;
+        ErrorMessage = null;
+        StatusMessage = "Starting Dexcom connection...";
+
+        try
+        {
+            var result = await connectionService
+                .ConnectAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (result.IsFailure)
+            {
+                ApplyFailure(result, "Unable to connect Dexcom");
+                return;
+            }
+
+            await RefreshDexcomConnectionStatusAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            StatusMessage = "Dexcom connected. Select Dexcom as provider and save settings to use real readings.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Dexcom connection cancelled";
+        }
+        catch (Exception exception)
+        {
+            ApplyUnexpectedFailure(exception, "Unexpected error while connecting Dexcom");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
     /// <summary>
     /// Refreshes the provider availability options from registered metadata providers.

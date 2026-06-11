@@ -44,6 +44,11 @@
                         Opacity="0.75"
                         FontWeight="SemiBold" />
 
+            <Button Content="Connect Dexcom"
+                        Command="{Binding ConnectDexcomCommand}"
+                        IsVisible="{Binding CanConnectDexcom}"
+                        HorizontalAlignment="Left" />
+
             <Grid ColumnDefinitions="*,*"
                   ColumnSpacing="20">
               <StackPanel Spacing="6">
