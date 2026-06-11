@@ -90,6 +90,7 @@ src/
         Egvs/
           Clients/
           Dtos/
+          Mappers/
           Requests/
         Endpoints/
         Enums/
@@ -175,6 +176,7 @@ tests/
         Egvs/
           Clients/
           Dtos/
+          Mappers/
           Requests/
         Endpoints/
         Options/
@@ -310,6 +312,15 @@ Implemented:
 * Dexcom EGV HTTP client foundation.
 * Authorized Dexcom EGV API request execution through `IDexcomOAuthTokenService`.
 * HTTP-level Dexcom EGV response handling.
+* Dexcom EGV mapper abstraction.
+* Dexcom EGV mapper foundation.
+* Mapping from Dexcom EGV records to normalized `GlucoseReading` values.
+* Dexcom EGV timestamp mapping from `systemTime` to UTC `DateTimeOffset`.
+* Dexcom glucose value and unit mapping to `GlucoseValue`.
+* Dexcom trend mapping to `TrendDirection`.
+* Dexcom provider mapping to `CgmProviderKind`.
+* Dexcom freshness mapping to delayed glucose data.
+* Dexcom device metadata mapping.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 * Typed HTTP client registration for Dexcom EGV operations.
@@ -329,6 +340,7 @@ Implemented:
 * Unit tests for Dexcom OAuth token store behavior.
 * Unit tests for Dexcom OAuth token refresh service behavior.
 * Unit tests for Dexcom EGV request validation, DTO deserialization and HTTP client behavior.
+* Unit tests for Dexcom EGV mapper behavior.
 
 ## Architecture
 
@@ -554,9 +566,24 @@ DexcomEgvRequest
               -> Return raw Dexcom EGV response DTO
 ```
 
-The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, open an authorization URI through a browser abstraction, listen for a local loopback OAuth redirect, parse Dexcom OAuth callbacks, validate returned state values, exchange authorization codes for tokens through the token client foundation, save the resulting token set into the configured token store, retrieve a valid access token by refreshing the stored token set when necessary and execute authorized Dexcom EGV HTTP requests.
+The current Dexcom EGV mapper foundation flow is:
 
-It does not yet store OAuth tokens in platform-secure persistent storage, restore tokens after application restart, map Dexcom EGV records to `GlucoseReading`, expose a Dexcom provider through the application-level CGM provider abstractions, switch the runtime dashboard provider from Mock to Dexcom or surface Dexcom connection actions in the desktop UI.
+```text
+DexcomEgvResponseDto
+  -> IDexcomEgvMapper.MapResponse(...)
+    -> For each DexcomEgvRecordDto
+      -> Parse systemTime as UTC DateTimeOffset
+      -> Map value and unit to GlucoseValue
+      -> Map trend to TrendDirection
+      -> Map Dexcom environment to CgmProviderKind
+      -> Mark freshness as Delayed
+      -> Build optional device metadata
+      -> Return normalized GlucoseReading
+```
+
+The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, open an authorization URI through a browser abstraction, listen for a local loopback OAuth redirect, parse Dexcom OAuth callbacks, validate returned state values, exchange authorization codes for tokens through the token client foundation, save the resulting token set into the configured token store, retrieve a valid access token by refreshing the stored token set when necessary, execute authorized Dexcom EGV HTTP requests and map raw Dexcom EGV records into normalized GlucoDesk domain readings.
+
+It does not yet store OAuth tokens in platform-secure persistent storage, restore tokens after application restart, expose a Dexcom provider through the application-level CGM provider abstractions, switch the runtime dashboard provider from Mock to Dexcom or surface Dexcom connection actions in the desktop UI.
 
 ## Domain model
 
@@ -690,6 +717,8 @@ The current infrastructure layer includes:
 * `DexcomEgvRecordDto`
 * `IDexcomEgvClient`
 * `DexcomEgvClient`
+* `IDexcomEgvMapper`
+* `DexcomEgvMapper`
 * `DexcomOfficialApiServiceCollectionExtensions`
 
 The mock provider implements:
@@ -748,6 +777,12 @@ The Dexcom Official API foundation currently provides:
 * Dexcom EGV response DTOs.
 * Authorized EGV API calls through `IDexcomOAuthTokenService`.
 * HTTP-level Dexcom EGV response handling.
+* Mapping raw Dexcom EGV records into normalized GlucoDesk domain readings.
+* Dexcom trend mapping to `TrendDirection`.
+* Dexcom provider mapping to `CgmProviderKind`.
+* Dexcom unit mapping to `GlucoseUnit`.
+* Dexcom timestamp mapping from `systemTime` to UTC `DateTimeOffset`.
+* Dexcom device metadata mapping.
 * Dependency injection registration for Dexcom infrastructure services.
 * Typed HTTP client registration for Dexcom token operations.
 * Typed HTTP client registration for Dexcom EGV operations.
@@ -764,7 +799,7 @@ Future persistent Dexcom OAuth token storage should use platform-secure storage,
 
 The Dexcom OAuth token service is intended to be the only infrastructure component used by Dexcom API clients when they need an access token. EGV clients request a valid token from `IDexcomOAuthTokenService` instead of reading directly from the token store.
 
-The Dexcom EGV client currently returns raw Dexcom DTOs. Mapping into `GlucoseReading` is intentionally deferred to a dedicated mapper step so that timestamp parsing, trend mapping, status handling and unit normalization can be tested independently.
+The Dexcom EGV client returns raw Dexcom DTOs. The Dexcom EGV mapper is responsible for converting those raw DTOs into normalized `GlucoseReading` values while keeping timestamp parsing, trend mapping, status handling and unit normalization independently testable.
 
 ## Desktop model
 
@@ -1051,6 +1086,12 @@ Current Dexcom infrastructure supports:
 * Dexcom EGV response DTOs.
 * Authorized EGV API calls through `IDexcomOAuthTokenService`.
 * HTTP-level Dexcom EGV response handling.
+* Mapping raw Dexcom EGV records into normalized GlucoDesk domain readings.
+* Dexcom trend mapping to `TrendDirection`.
+* Dexcom provider mapping to `CgmProviderKind`.
+* Dexcom unit mapping to `GlucoseUnit`.
+* Dexcom timestamp mapping from `systemTime` to UTC `DateTimeOffset`.
+* Dexcom device metadata mapping.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 * Typed HTTP client registration for Dexcom EGV operations.
@@ -1059,15 +1100,12 @@ The current Dexcom foundation does not yet:
 
 * Store OAuth tokens in platform-secure persistent storage.
 * Restore tokens after application restart.
-* Map Dexcom EGV records to `GlucoseReading`.
 * Expose a Dexcom provider through the application-level CGM provider abstractions.
 * Switch the runtime dashboard provider from Mock to Dexcom.
 * Surface Dexcom connection actions in the desktop UI.
 
 The next Dexcom steps will introduce:
 
-* Dexcom EGV mapper.
-* Mapping from Dexcom EGV records to `GlucoseReading`.
 * Dexcom historical provider implementation.
 * Runtime provider switching from Mock to Dexcom Official.
 * Secure persistent token storage strategy.
@@ -1131,6 +1169,7 @@ This feature will depend on local storage, Dexcom Official API data, optional Ni
 * Retrieve Dexcom access tokens through `IDexcomOAuthTokenService` instead of reading directly from the token store.
 * Keep Dexcom EGV HTTP access behind `IDexcomEgvClient`.
 * Keep Dexcom DTO parsing separate from domain mapping.
+* Keep Dexcom EGV mapping behind `IDexcomEgvMapper`.
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.
@@ -1176,7 +1215,7 @@ The Dexcom Official API foundation is currently available at infrastructure-serv
 ## Roadmap
 
 * v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation, local glucose history foundation, dashboard-to-history persistence, local history analytics foundation and Dexcom Official API foundation.
-* v0.2: Dexcom Official API OAuth session coordination, token storage strategy, token refresh service, EGV HTTP client, delayed historical glucose provider and runtime provider switching.
+* v0.2: Dexcom Official API OAuth session coordination, token storage strategy, token refresh service, EGV HTTP client, EGV mapper, delayed historical glucose provider and runtime provider switching.
 * v0.3: History UI, reporting foundation and compact widget.
 * v0.4: Nightscout provider for users who already have a Nightscout setup.
 * v0.5: Treatments/events, local history UI and monthly diabetes diary export.
