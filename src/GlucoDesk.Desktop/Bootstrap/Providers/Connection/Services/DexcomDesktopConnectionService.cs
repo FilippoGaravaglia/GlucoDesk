@@ -11,7 +11,7 @@ namespace GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 /// </summary>
 public sealed class DexcomDesktopConnectionService : IDexcomDesktopConnectionService
 {
-    private static readonly TimeSpan DefaultAuthorizationTimeout = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan DefaultAuthorizationTimeout = TimeSpan.FromMinutes(10);
 
     private readonly IDexcomOAuthAuthorizationSessionService _authorizationSessionService;
     private readonly DesktopDexcomProviderOptions _dexcomOptions;

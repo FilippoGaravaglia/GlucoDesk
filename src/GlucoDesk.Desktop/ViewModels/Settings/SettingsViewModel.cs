@@ -217,7 +217,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     #region Helpers
 
     /// <summary>
-    /// Starts the Dexcom desktop connection flow.
+    /// Starts the Dexcom desktop connection flow and selects Dexcom as the active provider when the connection succeeds.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     [RelayCommand]
@@ -243,20 +243,49 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         try
         {
-            var result = await connectionService
+            var connectionResult = await connectionService
                 .ConnectAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (result.IsFailure)
+            if (connectionResult.IsFailure)
             {
-                ApplyFailure(result, "Unable to connect Dexcom");
+                ApplyFailure(connectionResult, "Unable to connect Dexcom");
+                return;
+            }
+
+            await RefreshProviderAvailabilityAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var providerSelectionResult = SelectAvailableDexcomProvider();
+
+            if (providerSelectionResult.IsFailure)
+            {
+                ApplyFailure(providerSelectionResult, "Unable to select Dexcom provider");
+                return;
+            }
+
+            var settings = CreateSettingsFromForm(out var validationMessage);
+
+            if (settings is null)
+            {
+                ApplyValidationFailure(validationMessage ?? "Dexcom provider selection is invalid.");
+                return;
+            }
+
+            var saveResult = await _settingsService
+                .SaveSettingsAsync(settings, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (saveResult.IsFailure)
+            {
+                ApplyFailure(saveResult, "Unable to save Dexcom provider settings");
                 return;
             }
 
             await RefreshDexcomConnectionStatusAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            StatusMessage = "Dexcom connected. Select Dexcom as provider and save settings to use real readings.";
+            StatusMessage = "Dexcom connected and selected. Dashboard will use Dexcom on next refresh.";
         }
         catch (OperationCanceledException)
         {
@@ -692,6 +721,48 @@ public sealed partial class SettingsViewModel : ViewModelBase
         }
 
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// Selects the currently available Dexcom provider for both live and historical readings.
+    /// </summary>
+    /// <returns>The operation result.</returns>
+    private Result SelectAvailableDexcomProvider()
+    {
+        var dexcomProvider = FindAvailableDexcomProviderOption();
+    
+        if (dexcomProvider is null)
+        {
+            return Result.Failure(
+                new Application.Common.Errors.Error(
+                    "Dexcom.ProviderUnavailable",
+                    "Dexcom is connected but no Dexcom provider is available in the current desktop runtime."));
+        }
+    
+        SelectedLiveProvider = dexcomProvider;
+        SelectedHistoricalProvider = dexcomProvider;
+    
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Finds the available Dexcom provider option in the current provider options.
+    /// </summary>
+    /// <returns>The available Dexcom provider option, or null when unavailable.</returns>
+    private ProviderSelectionItem? FindAvailableDexcomProviderOption()
+    {
+        return ProviderOptions.FirstOrDefault(provider =>
+            provider.IsAvailable && IsDexcomProviderKind(provider.Kind));
+    }
+
+    /// <summary>
+    /// Checks whether the provider kind represents a Dexcom provider.
+    /// </summary>
+    /// <param name="kind">The provider kind.</param>
+    /// <returns>True when the provider kind is a Dexcom provider; otherwise false.</returns>
+    private static bool IsDexcomProviderKind(CgmProviderKind kind)
+    {
+        return kind is CgmProviderKind.DexcomSandbox or CgmProviderKind.DexcomOfficial;
     }
 
     #endregion

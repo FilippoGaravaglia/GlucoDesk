@@ -286,12 +286,13 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
-    public async Task ConnectDexcomCommand_ShouldConnectDexcom_WhenDexcomConnectionServiceSucceeds()
+    public async Task ConnectDexcomCommand_ShouldConnectSelectAndSaveDexcom_WhenDexcomConnectionServiceSucceeds()
     {
+        var settingsService = new FakeApplicationSettingsService();
         var connectionService = new FakeDexcomDesktopConnectionService();
 
         var viewModel = new SettingsViewModel(
-            new FakeApplicationSettingsService(),
+            settingsService,
             [
                 new FakeMetadataProvider(CgmProviderKind.Mock, "Mock"),
                 new FakeMetadataProvider(CgmProviderKind.DexcomSandbox, "Dexcom Sandbox")
@@ -303,9 +304,14 @@ public sealed class SettingsViewModelTests
 
         Assert.False(viewModel.HasError);
         Assert.True(connectionService.WasCalled);
+        Assert.Equal(CgmProviderKind.DexcomSandbox, viewModel.SelectedLiveProvider?.Kind);
+        Assert.Equal(CgmProviderKind.DexcomSandbox, viewModel.SelectedHistoricalProvider?.Kind);
+        Assert.NotNull(settingsService.SavedSettings);
+        Assert.Equal(CgmProviderKind.DexcomSandbox, settingsService.SavedSettings.ActiveLiveProvider);
+        Assert.Equal(CgmProviderKind.DexcomSandbox, settingsService.SavedSettings.HistoricalProvider);
         Assert.Equal("Dexcom: connected.", viewModel.DexcomConnectionStatusText);
         Assert.Equal(
-            "Dexcom connected. Select Dexcom as provider and save settings to use real readings.",
+            "Dexcom connected and selected. Dashboard will use Dexcom on next refresh.",
             viewModel.StatusMessage);
     }
 
@@ -333,6 +339,59 @@ public sealed class SettingsViewModelTests
         Assert.True(connectionService.WasCalled);
         Assert.Equal("Unable to connect Dexcom", viewModel.StatusMessage);
         Assert.Equal("Dexcom.BrowserOpenFailed: Unable to open browser.", viewModel.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task ConnectDexcomCommand_ShouldExposeFailure_WhenDexcomConnectSucceedsButProviderIsUnavailable()
+    {
+        var settingsService = new FakeApplicationSettingsService();
+        var connectionService = new FakeDexcomDesktopConnectionService();
+
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            [new FakeMetadataProvider(CgmProviderKind.Mock, "Mock")],
+            [new FakeDexcomConnectionStatusService(DexcomConnectionState.Connected)],
+            [connectionService]);
+
+        await viewModel.ConnectDexcomCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.True(connectionService.WasCalled);
+        Assert.Null(settingsService.SavedSettings);
+        Assert.Equal("Unable to select Dexcom provider", viewModel.StatusMessage);
+        Assert.Equal(
+            "Dexcom.ProviderUnavailable: Dexcom is connected but no Dexcom provider is available in the current desktop runtime.",
+            viewModel.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task ConnectDexcomCommand_ShouldExposeFailure_WhenSavingDexcomSettingsFails()
+    {
+        var settingsService = new FakeApplicationSettingsService
+        {
+            SaveResult = Result.Failure(
+                new Error("Settings.SaveFailed", "Unable to save settings."))
+        };
+
+        var connectionService = new FakeDexcomDesktopConnectionService();
+
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            [
+                new FakeMetadataProvider(CgmProviderKind.Mock, "Mock"),
+                new FakeMetadataProvider(CgmProviderKind.DexcomSandbox, "Dexcom Sandbox")
+            ],
+            [new FakeDexcomConnectionStatusService(DexcomConnectionState.Connected)],
+            [connectionService]);
+
+        await viewModel.ConnectDexcomCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.True(connectionService.WasCalled);
+        Assert.NotNull(settingsService.SavedSettings);
+        Assert.Equal(CgmProviderKind.DexcomSandbox, settingsService.SavedSettings.ActiveLiveProvider);
+        Assert.Equal("Unable to save Dexcom provider settings", viewModel.StatusMessage);
+        Assert.Equal("Settings.SaveFailed: Unable to save settings.", viewModel.ErrorMessage);
     }
 
     #region Helpers
@@ -392,6 +451,7 @@ public sealed class SettingsViewModelTests
     private sealed class FakeApplicationSettingsService : IApplicationSettingsService
     {
         private readonly Result<ApplicationSettings> _loadResult;
+        public Result SaveResult { get; set; } = Result.Success();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FakeApplicationSettingsService"/> class.
@@ -419,8 +479,8 @@ public sealed class SettingsViewModelTests
             CancellationToken cancellationToken)
         {
             SavedSettings = settings;
-
-            return Task.FromResult(Result.Success());
+        
+            return Task.FromResult(SaveResult);
         }
     }
 
