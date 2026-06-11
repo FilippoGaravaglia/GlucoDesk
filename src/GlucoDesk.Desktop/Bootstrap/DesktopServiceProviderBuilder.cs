@@ -5,7 +5,7 @@ using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.ViewModels.Settings;
 using GlucoDesk.Desktop.Views.Main;
 using GlucoDesk.Infrastructure.Cgm.History.DependencyInjection;
-using GlucoDesk.Infrastructure.Cgm.Mock.DependencyInjection;
+using GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
 using GlucoDesk.Infrastructure.Settings.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,7 +25,7 @@ internal static class DesktopServiceProviderBuilder
         var services = new ServiceCollection();
 
         services.AddGlucoDeskApplication();
-        services.AddMockCgmProvider();
+        services.AddDesktopCgmProviders();
         services.AddJsonApplicationSettingsStore();
         services.AddJsonGlucoseHistoryStore();
         services.AddDesktopShell();
