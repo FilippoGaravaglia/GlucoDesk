@@ -95,6 +95,9 @@ src/
         Endpoints/
         Enums/
         Options/
+        Providers/
+          DependencyInjection/
+          Options/
         Tokens/
           Clients/
           Dtos/
@@ -180,6 +183,9 @@ tests/
           Requests/
         Endpoints/
         Options/
+        Providers/
+          DependencyInjection/
+          Options/
         Tokens/
           Clients/
           Models/
@@ -321,6 +327,13 @@ Implemented:
 * Dexcom provider mapping to `CgmProviderKind`.
 * Dexcom freshness mapping to delayed glucose data.
 * Dexcom device metadata mapping.
+* Dexcom Official CGM provider options.
+* Dexcom Official CGM provider foundation.
+* Dexcom Official CGM provider dependency injection registration.
+* Dexcom Official provider metadata support.
+* Dexcom latest delayed reading retrieval foundation.
+* Dexcom recent delayed readings retrieval foundation.
+* Dexcom historical readings retrieval foundation.
 * Dependency injection registration for Dexcom Official API infrastructure.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 * Typed HTTP client registration for Dexcom EGV operations.
@@ -341,6 +354,8 @@ Implemented:
 * Unit tests for Dexcom OAuth token refresh service behavior.
 * Unit tests for Dexcom EGV request validation, DTO deserialization and HTTP client behavior.
 * Unit tests for Dexcom EGV mapper behavior.
+* Unit tests for Dexcom Official CGM provider behavior.
+* Unit tests for Dexcom Official CGM provider dependency injection registration.
 
 ## Architecture
 
@@ -360,7 +375,7 @@ GlucoDesk.Application
 GlucoDesk.Infrastructure
   Implementation layer for concrete providers, local storage, HTTP clients and platform integrations.
   Currently includes the deterministic mock CGM provider, local JSON settings storage,
-  local JSON glucose history storage and the first Dexcom Official API infrastructure foundation.
+  local JSON glucose history storage and the Dexcom Official API infrastructure foundation.
 
 GlucoDesk.Desktop
   Avalonia desktop application.
@@ -581,9 +596,37 @@ DexcomEgvResponseDto
       -> Return normalized GlucoseReading
 ```
 
-The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, open an authorization URI through a browser abstraction, listen for a local loopback OAuth redirect, parse Dexcom OAuth callbacks, validate returned state values, exchange authorization codes for tokens through the token client foundation, save the resulting token set into the configured token store, retrieve a valid access token by refreshing the stored token set when necessary, execute authorized Dexcom EGV HTTP requests and map raw Dexcom EGV records into normalized GlucoDesk domain readings.
+The current Dexcom Official CGM provider foundation flow is:
 
-It does not yet store OAuth tokens in platform-secure persistent storage, restore tokens after application restart, expose a Dexcom provider through the application-level CGM provider abstractions, switch the runtime dashboard provider from Mock to Dexcom or surface Dexcom connection actions in the desktop UI.
+```text
+DexcomOfficialCgmProvider
+  -> ICgmLiveProvider
+  -> ICgmHistoricalProvider
+  -> ICgmMetadataProvider
+
+GetLatestReadingAsync(...)
+  -> Build recent lookback request
+  -> IDexcomEgvClient.GetEgvsAsync(...)
+  -> IDexcomEgvMapper.MapResponse(...)
+  -> Return latest delayed GlucoseReading
+
+GetRecentReadingsAsync(...)
+  -> IDexcomEgvClient.GetEgvsAsync(...)
+  -> IDexcomEgvMapper.MapResponse(...)
+  -> Return delayed recent GlucoseReading collection
+
+GetReadingsAsync(...)
+  -> IDexcomEgvClient.GetEgvsAsync(...)
+  -> IDexcomEgvMapper.MapResponse(...)
+  -> Return delayed historical GlucoseReading collection
+
+GetMetadataAsync(...)
+  -> Return Dexcom provider metadata
+```
+
+The Dexcom foundation can now build authorization URLs, generate secure OAuth state values, open an authorization URI through a browser abstraction, listen for a local loopback OAuth redirect, parse Dexcom OAuth callbacks, validate returned state values, exchange authorization codes for tokens through the token client foundation, save the resulting token set into the configured token store, retrieve a valid access token by refreshing the stored token set when necessary, execute authorized Dexcom EGV HTTP requests, map raw Dexcom EGV records into normalized GlucoDesk domain readings and expose a Dexcom Official CGM provider through the application-level provider interfaces.
+
+It does not yet store OAuth tokens in platform-secure persistent storage, restore tokens after application restart, switch the runtime dashboard provider from Mock to Dexcom or surface Dexcom connection actions in the desktop UI.
 
 ## Domain model
 
@@ -719,6 +762,9 @@ The current infrastructure layer includes:
 * `DexcomEgvClient`
 * `IDexcomEgvMapper`
 * `DexcomEgvMapper`
+* `DexcomCgmProviderOptions`
+* `DexcomOfficialCgmProvider`
+* `DexcomOfficialCgmProviderServiceCollectionExtensions`
 * `DexcomOfficialApiServiceCollectionExtensions`
 
 The mock provider implements:
@@ -735,6 +781,19 @@ It generates deterministic fake CGM readings that are useful for:
 * README screenshots.
 * Demo videos.
 * Future demo mode.
+
+The Dexcom Official CGM provider implements:
+
+* `ICgmLiveProvider`
+* `ICgmHistoricalProvider`
+* `ICgmMetadataProvider`
+
+It uses:
+
+* `IDexcomEgvClient`
+* `IDexcomEgvMapper`
+* `DexcomApiOptions`
+* `DexcomCgmProviderOptions`
 
 The local JSON settings store implements:
 
@@ -783,7 +842,13 @@ The Dexcom Official API foundation currently provides:
 * Dexcom unit mapping to `GlucoseUnit`.
 * Dexcom timestamp mapping from `systemTime` to UTC `DateTimeOffset`.
 * Dexcom device metadata mapping.
+* Dexcom Official CGM provider implementation behind application-level provider interfaces.
+* Delayed latest reading retrieval through Dexcom EGV data.
+* Delayed recent readings retrieval through Dexcom EGV data.
+* Historical readings retrieval through Dexcom EGV data.
+* Provider metadata for Dexcom sandbox and production environments.
 * Dependency injection registration for Dexcom infrastructure services.
+* Dependency injection registration for the Dexcom Official CGM provider.
 * Typed HTTP client registration for Dexcom token operations.
 * Typed HTTP client registration for Dexcom EGV operations.
 
@@ -800,6 +865,8 @@ Future persistent Dexcom OAuth token storage should use platform-secure storage,
 The Dexcom OAuth token service is intended to be the only infrastructure component used by Dexcom API clients when they need an access token. EGV clients request a valid token from `IDexcomOAuthTokenService` instead of reading directly from the token store.
 
 The Dexcom EGV client returns raw Dexcom DTOs. The Dexcom EGV mapper is responsible for converting those raw DTOs into normalized `GlucoseReading` values while keeping timestamp parsing, trend mapping, status handling and unit normalization independently testable.
+
+The Dexcom Official CGM provider is the first concrete Dexcom provider implementation exposed through GlucoDesk application-level provider abstractions. It is intentionally not yet wired into the desktop runtime provider selection.
 
 ## Desktop model
 
@@ -887,7 +954,7 @@ The chart highlights the configured target range and displays deterministic demo
 
 The current dashboard and settings screen use deterministic demo/local data and are not intended for treatment decisions.
 
-The Dexcom Official API foundation is currently available at infrastructure-service level and is not yet surfaced in the desktop UI.
+The Dexcom Official API foundation and Dexcom Official CGM provider are currently available at infrastructure-service level and are not yet surfaced in the desktop UI.
 
 ## Provider strategy
 
@@ -898,7 +965,9 @@ Mock provider
   Implemented for local development, tests, demos and future demo mode.
 
 Dexcom Official API
-  Intended for delayed official historical glucose data, metadata and future diary/report features.
+  Implemented at infrastructure provider level for delayed official historical glucose data,
+  metadata and future diary/report features.
+  Not yet connected to the desktop runtime provider selection.
 
 Nightscout
   Intended for future near real-time glucose visualization when a user already has a Nightscout setup.
@@ -1053,7 +1122,7 @@ Analytics are currently descriptive only and must not be interpreted as treatmen
 
 ## Dexcom Official API strategy
 
-GlucoDesk now includes the first Dexcom Official API foundation.
+GlucoDesk now includes a Dexcom Official API foundation and a Dexcom Official CGM provider foundation.
 
 Current Dexcom infrastructure supports:
 
@@ -1092,7 +1161,13 @@ Current Dexcom infrastructure supports:
 * Dexcom unit mapping to `GlucoseUnit`.
 * Dexcom timestamp mapping from `systemTime` to UTC `DateTimeOffset`.
 * Dexcom device metadata mapping.
+* Dexcom Official CGM provider implementation behind application-level provider interfaces.
+* Delayed latest reading retrieval through Dexcom EGV data.
+* Delayed recent readings retrieval through Dexcom EGV data.
+* Historical readings retrieval through Dexcom EGV data.
+* Provider metadata for Dexcom sandbox and production environments.
 * Dependency injection registration for Dexcom Official API infrastructure.
+* Dependency injection registration for the Dexcom Official CGM provider.
 * Typed HTTP client registration for Dexcom OAuth token operations.
 * Typed HTTP client registration for Dexcom EGV operations.
 
@@ -1100,14 +1175,13 @@ The current Dexcom foundation does not yet:
 
 * Store OAuth tokens in platform-secure persistent storage.
 * Restore tokens after application restart.
-* Expose a Dexcom provider through the application-level CGM provider abstractions.
 * Switch the runtime dashboard provider from Mock to Dexcom.
 * Surface Dexcom connection actions in the desktop UI.
 
 The next Dexcom steps will introduce:
 
-* Dexcom historical provider implementation.
-* Runtime provider switching from Mock to Dexcom Official.
+* Runtime provider selection.
+* Dashboard provider switching from Mock to Dexcom Official.
 * Secure persistent token storage strategy.
 * Desktop UI actions for connecting and disconnecting Dexcom.
 
@@ -1170,6 +1244,7 @@ This feature will depend on local storage, Dexcom Official API data, optional Ni
 * Keep Dexcom EGV HTTP access behind `IDexcomEgvClient`.
 * Keep Dexcom DTO parsing separate from domain mapping.
 * Keep Dexcom EGV mapping behind `IDexcomEgvMapper`.
+* Keep provider implementations behind `ICgmLiveProvider`, `ICgmHistoricalProvider` and `ICgmMetadataProvider`.
 * Keep directories organized by business area and type.
 * Add XML documentation to public contracts and interfaces.
 * Keep private helper methods documented and grouped under `#region Helpers`.
@@ -1210,12 +1285,12 @@ After every successful dashboard refresh, the app attempts to cache the latest a
 
 The local analytics foundation is currently available at application-service level and is not yet surfaced in the desktop UI.
 
-The Dexcom Official API foundation is currently available at infrastructure-service level and is not yet surfaced in the desktop UI.
+The Dexcom Official API foundation and Dexcom Official CGM provider are currently available at infrastructure-service level and are not yet surfaced in the desktop UI.
 
 ## Roadmap
 
 * v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation, local glucose history foundation, dashboard-to-history persistence, local history analytics foundation and Dexcom Official API foundation.
-* v0.2: Dexcom Official API OAuth session coordination, token storage strategy, token refresh service, EGV HTTP client, EGV mapper, delayed historical glucose provider and runtime provider switching.
+* v0.2: Dexcom Official API OAuth session coordination, token storage strategy, token refresh service, EGV HTTP client, EGV mapper, Dexcom Official CGM provider, delayed historical glucose provider and runtime provider switching.
 * v0.3: History UI, reporting foundation and compact widget.
 * v0.4: Nightscout provider for users who already have a Nightscout setup.
 * v0.5: Treatments/events, local history UI and monthly diabetes diary export.
