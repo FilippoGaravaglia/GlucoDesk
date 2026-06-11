@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GlucoDesk.Application.Cgm.Providers.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
@@ -17,6 +18,10 @@ namespace GlucoDesk.Desktop.ViewModels.Settings;
 public sealed partial class SettingsViewModel : ViewModelBase
 {
     private readonly IApplicationSettingsService _settingsService;
+    private readonly IReadOnlyCollection<ICgmMetadataProvider> _metadataProviders;
+
+    [ObservableProperty]
+    private IReadOnlyList<ProviderSelectionItem> _providerOptions = [];
 
     [ObservableProperty]
     private ProviderSelectionItem? _selectedLiveProvider;
@@ -26,6 +31,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private GlucoseUnitSelectionItem? _selectedPreferredUnit;
+
+    [ObservableProperty]
+    private string _providerAvailabilityStatusText = "Provider availability not checked";
 
     [ObservableProperty]
     private string _targetLowMgDlText = "70";
@@ -52,24 +60,29 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
     /// <param name="settingsService">The application settings service.</param>
-    public SettingsViewModel(IApplicationSettingsService settingsService)
+    /// <param name="metadataProviders">The registered CGM metadata providers.</param>
+    public SettingsViewModel(
+        IApplicationSettingsService settingsService,
+        IEnumerable<ICgmMetadataProvider>? metadataProviders = null)
     {
         ArgumentNullException.ThrowIfNull(settingsService);
 
         _settingsService = settingsService;
+        _metadataProviders = metadataProviders?.ToArray() ?? [];
 
-        ProviderOptions = BuildProviderOptions();
+        ProviderOptions = BuildProviderOptions(
+        new HashSet<CgmProviderKind>
+        {
+            CgmProviderKind.Mock
+        });
         PreferredUnitOptions = BuildPreferredUnitOptions();
 
-        SelectedLiveProvider = ProviderOptions[0];
-        SelectedHistoricalProvider = ProviderOptions[0];
+        SelectedLiveProvider = FindAvailableProviderOptionOrFallback(CgmProviderKind.Mock);
+        SelectedHistoricalProvider = FindAvailableProviderOptionOrFallback(CgmProviderKind.Mock);
         SelectedPreferredUnit = PreferredUnitOptions[0];
-    }
 
-    /// <summary>
-    /// Gets the available CGM provider options.
-    /// </summary>
-    public IReadOnlyList<ProviderSelectionItem> ProviderOptions { get; }
+        ProviderAvailabilityStatusText = BuildProviderAvailabilityStatusText(ProviderOptions);
+    }
 
     /// <summary>
     /// Gets the available glucose unit options.
@@ -95,6 +108,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         try
         {
+            await RefreshProviderAvailabilityAsync(cancellationToken);
+
             var result = await _settingsService.GetSettingsAsync(cancellationToken);
 
             if (result.IsFailure)
@@ -103,8 +118,11 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 return;
             }
 
-            ApplySettings(result.Value);
-            StatusMessage = "Settings loaded";
+            var usedProviderFallback = ApplySettings(result.Value);
+
+            StatusMessage = usedProviderFallback
+                ? "Settings loaded. Unavailable providers were replaced with Mock."
+                : "Settings loaded";
         }
         catch (OperationCanceledException)
         {
@@ -155,7 +173,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 return;
             }
 
-            StatusMessage = "Settings saved. Restart or reload the dashboard to apply all changes.";
+            StatusMessage = "Settings saved. Dashboard will use the selected provider on next refresh.";
         }
         catch (OperationCanceledException)
         {
@@ -174,19 +192,42 @@ public sealed partial class SettingsViewModel : ViewModelBase
     #region Helpers
 
     /// <summary>
+    /// Refreshes the provider availability options from registered metadata providers.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task RefreshProviderAvailabilityAsync(CancellationToken cancellationToken)
+    {
+        var availableProviders = await GetAvailableProviderKindsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        ProviderOptions = BuildProviderOptions(availableProviders);
+        ProviderAvailabilityStatusText = BuildProviderAvailabilityStatusText(ProviderOptions);
+    }
+
+    /// <summary>
     /// Applies loaded application settings to the editable form.
     /// </summary>
     /// <param name="settings">The loaded application settings.</param>
-    private void ApplySettings(ApplicationSettings settings)
+    /// <returns>True when an unavailable provider was replaced by the Mock provider; otherwise false.</returns>
+    private bool ApplySettings(ApplicationSettings settings)
     {
-        SelectedLiveProvider = FindProviderOption(settings.ActiveLiveProvider);
-        SelectedHistoricalProvider = FindProviderOption(settings.HistoricalProvider);
+        var liveProvider = FindAvailableProviderOptionOrFallback(settings.ActiveLiveProvider);
+        var historicalProvider = FindAvailableProviderOptionOrFallback(settings.HistoricalProvider);
+
+        var usedProviderFallback =
+            liveProvider.Kind != settings.ActiveLiveProvider
+            || historicalProvider.Kind != settings.HistoricalProvider;
+
+        SelectedLiveProvider = liveProvider;
+        SelectedHistoricalProvider = historicalProvider;
         SelectedPreferredUnit = FindPreferredUnitOption(settings.PreferredUnit);
 
         TargetLowMgDlText = settings.TargetLowMgDl.ToString(CultureInfo.InvariantCulture);
         TargetHighMgDlText = settings.TargetHighMgDl.ToString(CultureInfo.InvariantCulture);
         DashboardRefreshIntervalSecondsText = ((int)settings.DashboardRefreshInterval.TotalSeconds)
             .ToString(CultureInfo.InvariantCulture);
+
+        return usedProviderFallback;
     }
 
     /// <summary>
@@ -204,9 +245,21 @@ public sealed partial class SettingsViewModel : ViewModelBase
             return null;
         }
 
+        if (!SelectedLiveProvider.IsAvailable)
+        {
+            validationMessage = $"Live provider '{SelectedLiveProvider.DisplayName}' is not available. Configure it before selecting it.";
+            return null;
+        }
+
         if (SelectedHistoricalProvider is null)
         {
             validationMessage = "Select a historical provider.";
+            return null;
+        }
+
+        if (!SelectedHistoricalProvider.IsAvailable)
+        {
+            validationMessage = $"Historical provider '{SelectedHistoricalProvider.DisplayName}' is not available. Configure it before selecting it.";
             return null;
         }
 
@@ -248,6 +301,64 @@ public sealed partial class SettingsViewModel : ViewModelBase
         {
             validationMessage = exception.Message;
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets currently available provider kinds from registered metadata providers.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The available provider kinds.</returns>
+    private async Task<IReadOnlySet<CgmProviderKind>> GetAvailableProviderKindsAsync(
+        CancellationToken cancellationToken)
+    {
+        var availableProviderKinds = new HashSet<CgmProviderKind>
+        {
+            CgmProviderKind.Mock
+        };
+
+        foreach (var metadataProvider in _metadataProviders)
+        {
+            var metadataResult = await GetMetadataSafelyAsync(metadataProvider, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (metadataResult.IsFailure)
+            {
+                continue;
+            }
+
+            availableProviderKinds.Add(metadataResult.Value.ProviderKind);
+        }
+
+        return availableProviderKinds;
+    }
+
+    /// <summary>
+    /// Gets provider metadata while ignoring provider metadata failures.
+    /// </summary>
+    /// <param name="metadataProvider">The metadata provider.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The provider metadata result.</returns>
+    private static async Task<Result<Application.Cgm.Providers.Metadata.CgmProviderMetadata>> GetMetadataSafelyAsync(
+        ICgmMetadataProvider metadataProvider,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await metadataProvider
+                .GetMetadataAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            return Result<Application.Cgm.Providers.Metadata.CgmProviderMetadata>.Failure(
+                new Application.Common.Errors.Error(
+                    "Settings.ProviderMetadataUnavailable",
+                    exception.Message));
         }
     }
 
@@ -307,14 +418,20 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Finds a provider option by provider kind.
+    /// Finds an available provider option by provider kind or falls back to Mock.
     /// </summary>
     /// <param name="kind">The provider kind.</param>
-    /// <returns>The matching provider option.</returns>
-    private ProviderSelectionItem FindProviderOption(CgmProviderKind kind)
+    /// <returns>The matching available provider option, or Mock.</returns>
+    private ProviderSelectionItem FindAvailableProviderOptionOrFallback(CgmProviderKind kind)
     {
-        return ProviderOptions.FirstOrDefault(option => option.Kind == kind)
-            ?? ProviderOptions[0];
+        var option = ProviderOptions.FirstOrDefault(candidate => candidate.Kind == kind);
+
+        if (option is { IsAvailable: true })
+        {
+            return option;
+        }
+
+        return ProviderOptions.First(candidate => candidate.Kind == CgmProviderKind.Mock);
     }
 
     /// <summary>
@@ -349,14 +466,55 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// <summary>
     /// Builds selectable provider options from the CGM provider enum.
     /// </summary>
+    /// <param name="availableProviderKinds">The available provider kinds.</param>
     /// <returns>The selectable provider options.</returns>
-    private static IReadOnlyList<ProviderSelectionItem> BuildProviderOptions()
+    private static IReadOnlyList<ProviderSelectionItem> BuildProviderOptions(
+        IReadOnlySet<CgmProviderKind> availableProviderKinds)
     {
         return Enum
             .GetValues<CgmProviderKind>()
             .Where(kind => kind != CgmProviderKind.Unknown)
-            .Select(kind => new ProviderSelectionItem(kind, FormatEnumName(kind.ToString())))
+            .Select(kind => BuildProviderOption(kind, availableProviderKinds))
             .ToArray();
+    }
+
+    /// <summary>
+    /// Builds a selectable provider option.
+    /// </summary>
+    /// <param name="kind">The provider kind.</param>
+    /// <param name="availableProviderKinds">The available provider kinds.</param>
+    /// <returns>The selectable provider option.</returns>
+    private static ProviderSelectionItem BuildProviderOption(
+        CgmProviderKind kind,
+        IReadOnlySet<CgmProviderKind> availableProviderKinds)
+    {
+        var isAvailable = availableProviderKinds.Contains(kind);
+
+        return new ProviderSelectionItem(
+            kind,
+            FormatEnumName(kind.ToString()),
+            isAvailable,
+            isAvailable
+                ? "Provider is available."
+                : "Provider is not configured in the current desktop runtime.");
+    }
+
+    /// <summary>
+    /// Builds a display-friendly provider availability status text.
+    /// </summary>
+    /// <param name="providerOptions">The provider options.</param>
+    /// <returns>The provider availability status text.</returns>
+    private static string BuildProviderAvailabilityStatusText(
+        IReadOnlyCollection<ProviderSelectionItem> providerOptions)
+    {
+        var availableProviders = providerOptions
+            .Where(provider => provider.IsAvailable)
+            .Select(provider => provider.DisplayName)
+            .ToArray();
+
+        return availableProviders.Length == 0
+            ? "No CGM provider is currently available."
+            : $"Available providers: {string.Join(", ", availableProviders)}.";
     }
 
     /// <summary>
