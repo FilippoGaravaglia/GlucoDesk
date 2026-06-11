@@ -12,9 +12,13 @@ public sealed record ProviderSelectionItem
     /// </summary>
     /// <param name="kind">The CGM provider kind.</param>
     /// <param name="displayName">The provider display name.</param>
+    /// <param name="isAvailable">Whether the provider is currently available in the desktop runtime.</param>
+    /// <param name="availabilityMessage">The provider availability message.</param>
     public ProviderSelectionItem(
         CgmProviderKind kind,
-        string displayName)
+        string displayName,
+        bool isAvailable = true,
+        string? availabilityMessage = null)
     {
         if (kind == CgmProviderKind.Unknown)
         {
@@ -28,6 +32,10 @@ public sealed record ProviderSelectionItem
 
         Kind = kind;
         DisplayName = displayName.Trim();
+        IsAvailable = isAvailable;
+        AvailabilityMessage = string.IsNullOrWhiteSpace(availabilityMessage)
+            ? BuildDefaultAvailabilityMessage(isAvailable)
+            : availabilityMessage.Trim();
     }
 
     /// <summary>
@@ -40,9 +48,42 @@ public sealed record ProviderSelectionItem
     /// </summary>
     public string DisplayName { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether the provider is currently available in the desktop runtime.
+    /// </summary>
+    public bool IsAvailable { get; }
+
+    /// <summary>
+    /// Gets the provider availability message.
+    /// </summary>
+    public string AvailabilityMessage { get; }
+
+    /// <summary>
+    /// Gets the provider display label used by selection controls.
+    /// </summary>
+    public string DisplayLabel => IsAvailable
+        ? DisplayName
+        : $"{DisplayName} (not configured)";
+
     /// <inheritdoc />
     public override string ToString()
     {
-        return DisplayName;
+        return DisplayLabel;
     }
+
+    #region Helpers
+
+    /// <summary>
+    /// Builds a default provider availability message.
+    /// </summary>
+    /// <param name="isAvailable">Whether the provider is available.</param>
+    /// <returns>The default availability message.</returns>
+    private static string BuildDefaultAvailabilityMessage(bool isAvailable)
+    {
+        return isAvailable
+            ? "Provider is available."
+            : "Provider is not configured in the current desktop runtime.";
+    }
+
+    #endregion
 }

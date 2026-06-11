@@ -30,9 +30,14 @@
                        FontSize="18"
                        FontWeight="SemiBold" />
 
-            <TextBlock Text="Provider selection currently persists preferences only. Runtime provider switching will be introduced in a future step."
+            <TextBlock Text="Only providers available in the current desktop runtime can be selected safely. Mock is always available; Dexcom requires explicit configuration."
                        TextWrapping="Wrap"
                        Opacity="0.65" />
+
+            <TextBlock Text="{Binding ProviderAvailabilityStatusText}"
+                       TextWrapping="Wrap"
+                       Opacity="0.75"
+                       FontWeight="SemiBold" />
 
             <Grid ColumnDefinitions="*,*"
                   ColumnSpacing="20">
