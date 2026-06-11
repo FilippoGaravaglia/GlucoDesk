@@ -2,76 +2,135 @@ using GlucoDesk.Application.Cgm.Dashboard.Requests;
 using GlucoDesk.Application.Cgm.Dashboard.Results;
 using GlucoDesk.Application.Cgm.Providers.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Metadata;
+using GlucoDesk.Application.Cgm.Providers.Resolution.Abstractions;
+using GlucoDesk.Application.Cgm.Providers.Resolution.Models;
 using GlucoDesk.Application.Cgm.Readings.Requests;
 using GlucoDesk.Application.Cgm.Readings.Results;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GlucoDesk.Application.Cgm.Services;
 
 /// <summary>
-/// Provides application-level operations for retrieving glucose data from configured CGM providers.
+/// Provides application-level glucose data operations.
 /// </summary>
 public sealed class GlucoseDataService : IGlucoseDataService
 {
-    private readonly ICgmLiveProvider _liveProvider;
-    private readonly ICgmHistoricalProvider _historicalProvider;
-    private readonly ICgmMetadataProvider _metadataProvider;
+    private readonly ICgmProviderResolver _providerResolver;
     private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GlucoseDataService"/> class.
     /// </summary>
-    /// <param name="liveProvider">The configured live CGM provider.</param>
-    /// <param name="historicalProvider">The configured historical CGM provider.</param>
-    /// <param name="metadataProvider">The configured metadata CGM provider.</param>
+    /// <param name="providerResolver">The CGM provider resolver.</param>
+    /// <param name="timeProvider">The time provider.</param>
+    [ActivatorUtilitiesConstructor]
+    public GlucoseDataService(
+        ICgmProviderResolver providerResolver,
+        TimeProvider? timeProvider = null)
+    {
+        ArgumentNullException.ThrowIfNull(providerResolver);
+
+        _providerResolver = providerResolver;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GlucoseDataService"/> class.
+    /// </summary>
+    /// <param name="liveProvider">The live CGM provider.</param>
+    /// <param name="historicalProvider">The historical CGM provider.</param>
+    /// <param name="metadataProvider">The provider metadata provider.</param>
     /// <param name="timeProvider">The time provider.</param>
     public GlucoseDataService(
         ICgmLiveProvider liveProvider,
         ICgmHistoricalProvider historicalProvider,
         ICgmMetadataProvider metadataProvider,
         TimeProvider? timeProvider = null)
+        : this(
+            new StaticCgmProviderResolver(
+                liveProvider,
+                historicalProvider,
+                metadataProvider),
+            timeProvider)
     {
-        ArgumentNullException.ThrowIfNull(liveProvider);
-        ArgumentNullException.ThrowIfNull(historicalProvider);
-        ArgumentNullException.ThrowIfNull(metadataProvider);
-
-        _liveProvider = liveProvider;
-        _historicalProvider = historicalProvider;
-        _metadataProvider = metadataProvider;
-        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <inheritdoc />
-    public Task<Result<CgmProviderMetadata>> GetProviderMetadataAsync(CancellationToken cancellationToken)
+    public async Task<Result<CgmProviderMetadata>> GetProviderMetadataAsync(
+        CancellationToken cancellationToken)
     {
-        return _metadataProvider.GetMetadataAsync(cancellationToken);
+        var providerResolutionResult = await _providerResolver
+            .ResolveActiveLiveProviderAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (providerResolutionResult.IsFailure)
+        {
+            return Result<CgmProviderMetadata>.Failure(providerResolutionResult.Error);
+        }
+
+        return Result<CgmProviderMetadata>.Success(providerResolutionResult.Value.Metadata);
     }
 
     /// <inheritdoc />
-    public Task<Result<LatestGlucoseReadingResult>> GetLatestReadingAsync(CancellationToken cancellationToken)
+    public async Task<Result<LatestGlucoseReadingResult>> GetLatestReadingAsync(
+        CancellationToken cancellationToken)
     {
-        return _liveProvider.GetLatestReadingAsync(cancellationToken);
+        var providerResolutionResult = await _providerResolver
+            .ResolveActiveLiveProviderAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (providerResolutionResult.IsFailure)
+        {
+            return Result<LatestGlucoseReadingResult>.Failure(providerResolutionResult.Error);
+        }
+
+        return await providerResolutionResult.Value.LiveProvider
+            .GetLatestReadingAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public Task<Result<GlucoseReadingsResult>> GetRecentReadingsAsync(
+    public async Task<Result<GlucoseReadingsResult>> GetRecentReadingsAsync(
         GlucoseReadingsRequest request,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return _liveProvider.GetRecentReadingsAsync(request, cancellationToken);
+        var providerResolutionResult = await _providerResolver
+            .ResolveActiveLiveProviderAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (providerResolutionResult.IsFailure)
+        {
+            return Result<GlucoseReadingsResult>.Failure(providerResolutionResult.Error);
+        }
+
+        return await providerResolutionResult.Value.LiveProvider
+            .GetRecentReadingsAsync(request, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public Task<Result<GlucoseReadingsResult>> GetHistoricalReadingsAsync(
+    public async Task<Result<GlucoseReadingsResult>> GetHistoricalReadingsAsync(
         GlucoseReadingsRequest request,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return _historicalProvider.GetReadingsAsync(request, cancellationToken);
+        var providerResolutionResult = await _providerResolver
+            .ResolveActiveHistoricalProviderAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (providerResolutionResult.IsFailure)
+        {
+            return Result<GlucoseReadingsResult>.Failure(providerResolutionResult.Error);
+        }
+
+        return await providerResolutionResult.Value.HistoricalProvider
+            .GetReadingsAsync(request, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -83,16 +142,16 @@ public sealed class GlucoseDataService : IGlucoseDataService
 
         var snapshotCreatedAt = _timeProvider.GetUtcNow();
 
-        var metadataResult = await _metadataProvider
-            .GetMetadataAsync(cancellationToken)
+        var providerResolutionResult = await _providerResolver
+            .ResolveActiveLiveProviderAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        if (metadataResult.IsFailure)
+        if (providerResolutionResult.IsFailure)
         {
-            return Result<GlucoseDashboardSnapshot>.Failure(metadataResult.Error);
+            return Result<GlucoseDashboardSnapshot>.Failure(providerResolutionResult.Error);
         }
 
-        var latestReadingResult = await _liveProvider
+        var latestReadingResult = await providerResolutionResult.Value.LiveProvider
             .GetLatestReadingAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -106,7 +165,7 @@ public sealed class GlucoseDataService : IGlucoseDataService
             snapshotCreatedAt,
             request.MaxReadings);
 
-        var recentReadingsResult = await _liveProvider
+        var recentReadingsResult = await providerResolutionResult.Value.LiveProvider
             .GetRecentReadingsAsync(recentReadingsRequest, cancellationToken)
             .ConfigureAwait(false);
 
@@ -117,7 +176,7 @@ public sealed class GlucoseDataService : IGlucoseDataService
 
         var snapshot = BuildDashboardSnapshot(
             request,
-            metadataResult.Value,
+            providerResolutionResult.Value,
             latestReadingResult.Value,
             recentReadingsResult.Value,
             snapshotCreatedAt);
@@ -131,26 +190,93 @@ public sealed class GlucoseDataService : IGlucoseDataService
     /// Builds the dashboard snapshot from provider results.
     /// </summary>
     /// <param name="request">The dashboard request.</param>
-    /// <param name="metadata">The provider metadata.</param>
+    /// <param name="providerResolution">The resolved live provider.</param>
     /// <param name="latestReadingResult">The latest reading result.</param>
     /// <param name="recentReadingsResult">The recent readings result.</param>
     /// <param name="snapshotCreatedAt">The snapshot creation timestamp.</param>
     /// <returns>The glucose dashboard snapshot.</returns>
     private static GlucoseDashboardSnapshot BuildDashboardSnapshot(
         GlucoseDashboardRequest request,
-        CgmProviderMetadata metadata,
+        CgmLiveProviderResolution providerResolution,
         LatestGlucoseReadingResult latestReadingResult,
         GlucoseReadingsResult recentReadingsResult,
         DateTimeOffset snapshotCreatedAt)
     {
         return new GlucoseDashboardSnapshot(
-            metadata,
+            providerResolution.Metadata,
             latestReadingResult.Reading,
             recentReadingsResult.Readings,
             latestReadingResult.RetrievedAt,
             recentReadingsResult.RetrievedAt,
             snapshotCreatedAt,
             request.StaleThreshold);
+    }
+
+    private sealed class StaticCgmProviderResolver : ICgmProviderResolver
+    {
+        private readonly ICgmLiveProvider _liveProvider;
+        private readonly ICgmHistoricalProvider _historicalProvider;
+        private readonly ICgmMetadataProvider _metadataProvider;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StaticCgmProviderResolver"/> class.
+        /// </summary>
+        /// <param name="liveProvider">The live provider.</param>
+        /// <param name="historicalProvider">The historical provider.</param>
+        /// <param name="metadataProvider">The metadata provider.</param>
+        public StaticCgmProviderResolver(
+            ICgmLiveProvider liveProvider,
+            ICgmHistoricalProvider historicalProvider,
+            ICgmMetadataProvider metadataProvider)
+        {
+            ArgumentNullException.ThrowIfNull(liveProvider);
+            ArgumentNullException.ThrowIfNull(historicalProvider);
+            ArgumentNullException.ThrowIfNull(metadataProvider);
+
+            _liveProvider = liveProvider;
+            _historicalProvider = historicalProvider;
+            _metadataProvider = metadataProvider;
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<CgmLiveProviderResolution>> ResolveActiveLiveProviderAsync(
+            CancellationToken cancellationToken)
+        {
+            var metadataResult = await _metadataProvider
+                .GetMetadataAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (metadataResult.IsFailure)
+            {
+                return Result<CgmLiveProviderResolution>.Failure(metadataResult.Error);
+            }
+
+            return Result<CgmLiveProviderResolution>.Success(
+                new CgmLiveProviderResolution(
+                    metadataResult.Value,
+                    _liveProvider,
+                    _metadataProvider));
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<CgmHistoricalProviderResolution>> ResolveActiveHistoricalProviderAsync(
+            CancellationToken cancellationToken)
+        {
+            var metadataResult = await _metadataProvider
+                .GetMetadataAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (metadataResult.IsFailure)
+            {
+                return Result<CgmHistoricalProviderResolution>.Failure(metadataResult.Error);
+            }
+
+            return Result<CgmHistoricalProviderResolution>.Success(
+                new CgmHistoricalProviderResolution(
+                    metadataResult.Value,
+                    _historicalProvider,
+                    _metadataProvider));
+        }
     }
 
     #endregion

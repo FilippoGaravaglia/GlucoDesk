@@ -2,6 +2,8 @@ using GlucoDesk.Application.Cgm.History.Analytics.Services;
 using GlucoDesk.Application.Cgm.History.Analytics.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Services;
 using GlucoDesk.Application.Cgm.History.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Providers.Resolution.Abstractions;
+using GlucoDesk.Application.Cgm.Providers.Resolution.Services;
 using GlucoDesk.Application.Cgm.Services;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Settings.Abstractions;
@@ -29,10 +31,14 @@ public static class ApplicationServiceCollectionExtensions
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
         services.TryAddSingleton<IApplicationSettingsChangeNotifier, ApplicationSettingsChangeNotifier>();
 
-        services.AddScoped<IGlucoseDataService, GlucoseDataService>();
+        services.AddScoped<IGlucoseDataService>(serviceProvider =>
+        new GlucoseDataService(
+            serviceProvider.GetRequiredService<ICgmProviderResolver>(),
+        serviceProvider.GetRequiredService<TimeProvider>()));
         services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
         services.AddScoped<IGlucoseHistoryService, GlucoseHistoryService>();
         services.AddScoped<IGlucoseHistoryAnalyticsService, GlucoseHistoryAnalyticsService>();
+        services.AddScoped<ICgmProviderResolver, CgmProviderResolver>();
 
         return services;
     }

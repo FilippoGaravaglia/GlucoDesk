@@ -5,11 +5,14 @@ using GlucoDesk.Application.Cgm.History.Results;
 using GlucoDesk.Application.Cgm.History.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Metadata;
+using GlucoDesk.Application.Cgm.Providers.Resolution.Abstractions;
 using GlucoDesk.Application.Cgm.Readings.Requests;
 using GlucoDesk.Application.Cgm.Readings.Results;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Common.DependencyInjection;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Application.Settings.Abstractions;
+using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
@@ -28,18 +31,23 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         services.AddSingleton<ICgmHistoricalProvider, FakeCgmProvider>();
         services.AddSingleton<ICgmMetadataProvider, FakeCgmProvider>();
         services.AddSingleton<IGlucoseHistoryStore, FakeGlucoseHistoryStore>();
+        services.AddSingleton<IApplicationSettingsStore, FakeApplicationSettingsStore>();
 
         services.AddGlucoDeskApplication();
 
         using var serviceProvider = services.BuildServiceProvider();
 
+        var providerResolver = serviceProvider.GetRequiredService<ICgmProviderResolver>();
         var glucoseDataService = serviceProvider.GetRequiredService<IGlucoseDataService>();
         var glucoseHistoryService = serviceProvider.GetRequiredService<IGlucoseHistoryService>();
         var glucoseHistoryAnalyticsService = serviceProvider.GetRequiredService<IGlucoseHistoryAnalyticsService>();
+        var applicationSettingsService = serviceProvider.GetRequiredService<IApplicationSettingsService>();
 
+        Assert.NotNull(providerResolver);
         Assert.NotNull(glucoseDataService);
         Assert.NotNull(glucoseHistoryService);
         Assert.NotNull(glucoseHistoryAnalyticsService);
+        Assert.NotNull(applicationSettingsService);
     }
 
     [Fact]
@@ -129,6 +137,23 @@ public sealed class ApplicationServiceCollectionExtensionsTests
             CancellationToken cancellationToken)
         {
             return Task.FromResult(Result<GlucoseHistoryResult>.Success(new GlucoseHistoryResult([])));
+        }
+    }
+
+    private sealed class FakeApplicationSettingsStore : IApplicationSettingsStore
+    {
+        /// <inheritdoc />
+        public Task<Result<ApplicationSettings>> LoadAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Result<ApplicationSettings>.Success(ApplicationSettings.Default));
+        }
+
+        /// <inheritdoc />
+        public Task<Result> SaveAsync(
+            ApplicationSettings settings,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Result.Success());
         }
     }
 
