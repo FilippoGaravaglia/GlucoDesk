@@ -9,6 +9,9 @@ using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Settings.Selections;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -19,6 +22,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
 {
     private readonly IApplicationSettingsService _settingsService;
     private readonly IReadOnlyCollection<ICgmMetadataProvider> _metadataProviders;
+
+    private readonly IReadOnlyCollection<IDexcomConnectionStatusService> _dexcomConnectionStatusServices;
 
     [ObservableProperty]
     private IReadOnlyList<ProviderSelectionItem> _providerOptions = [];
@@ -56,25 +61,32 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isBusy;
 
+    [ObservableProperty]
+    private string _dexcomConnectionStatusText = "Dexcom: status not checked";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
     /// <param name="settingsService">The application settings service.</param>
     /// <param name="metadataProviders">The registered CGM metadata providers.</param>
+    /// <param name="dexcomConnectionStatusServices">The registered Dexcom connection status services.</param>
     public SettingsViewModel(
         IApplicationSettingsService settingsService,
-        IEnumerable<ICgmMetadataProvider>? metadataProviders = null)
+        IEnumerable<ICgmMetadataProvider>? metadataProviders = null,
+        IEnumerable<IDexcomConnectionStatusService>? dexcomConnectionStatusServices = null)
     {
         ArgumentNullException.ThrowIfNull(settingsService);
 
         _settingsService = settingsService;
         _metadataProviders = metadataProviders?.ToArray() ?? [];
+        _dexcomConnectionStatusServices = dexcomConnectionStatusServices?.ToArray() ?? [];
 
         ProviderOptions = BuildProviderOptions(
-        new HashSet<CgmProviderKind>
-        {
-            CgmProviderKind.Mock
-        });
+            new HashSet<CgmProviderKind>
+            {
+                CgmProviderKind.Mock
+            });
+
         PreferredUnitOptions = BuildPreferredUnitOptions();
 
         SelectedLiveProvider = FindAvailableProviderOptionOrFallback(CgmProviderKind.Mock);
@@ -109,6 +121,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         try
         {
             await RefreshProviderAvailabilityAsync(cancellationToken);
+            await RefreshDexcomConnectionStatusAsync(cancellationToken);
 
             var result = await _settingsService.GetSettingsAsync(cancellationToken);
 
@@ -202,6 +215,61 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         ProviderOptions = BuildProviderOptions(availableProviders);
         ProviderAvailabilityStatusText = BuildProviderAvailabilityStatusText(ProviderOptions);
+    }
+
+    /// <summary>
+    /// Refreshes the Dexcom connection status text.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task RefreshDexcomConnectionStatusAsync(CancellationToken cancellationToken)
+    {
+        var connectionStatusService = _dexcomConnectionStatusServices.FirstOrDefault();
+
+        if (connectionStatusService is null)
+        {
+            DexcomConnectionStatusText = "Dexcom: not configured in this desktop runtime.";
+            return;
+        }
+
+        var statusResult = await connectionStatusService
+            .GetConnectionStatusAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        DexcomConnectionStatusText = statusResult.IsSuccess
+            ? BuildDexcomConnectionStatusText(statusResult.Value)
+            : $"Dexcom: status unavailable ({statusResult.Error.Code}).";
+    }
+
+    /// <summary>
+    /// Builds the Dexcom connection status text shown in the settings screen.
+    /// </summary>
+    /// <param name="status">The Dexcom connection status.</param>
+    /// <returns>The Dexcom connection status text.</returns>
+    private static string BuildDexcomConnectionStatusText(DexcomConnectionStatus status)
+    {
+        return status.State switch
+        {
+            DexcomConnectionState.ProviderNotRegistered =>
+                "Dexcom: not configured in this desktop runtime.",
+
+            DexcomConnectionState.TokenMissing =>
+                "Dexcom: configured, not connected.",
+
+            DexcomConnectionState.Connected =>
+                "Dexcom: connected.",
+
+            DexcomConnectionState.AccessTokenRefreshRequired =>
+                "Dexcom: token refresh required before reading data.",
+
+            DexcomConnectionState.RefreshTokenExpired =>
+                "Dexcom: authorization expired. Reconnect Dexcom.",
+
+            DexcomConnectionState.TokenStoreUnavailable =>
+                "Dexcom: token store unavailable.",
+
+            _ =>
+                "Dexcom: status unknown."
+        };
     }
 
     /// <summary>
