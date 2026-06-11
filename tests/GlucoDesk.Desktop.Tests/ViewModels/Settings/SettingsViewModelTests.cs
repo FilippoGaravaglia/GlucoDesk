@@ -9,6 +9,8 @@ using GlucoDesk.Desktop.ViewModels.Settings;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Models;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Settings;
 
@@ -240,12 +242,132 @@ public sealed class SettingsViewModelTests
         Assert.Equal(expectedStatusText, viewModel.DexcomConnectionStatusText);
     }
 
+    [Fact]
+    public async Task LoadCommand_ShouldDisableDexcomConnect_WhenDesktopConnectionServiceIsNotRegistered()
+    {
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(),
+            [new FakeMetadataProvider(CgmProviderKind.Mock, "Mock")]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.CanConnectDexcom);
+    }
+
+    [Fact]
+    public async Task LoadCommand_ShouldEnableDexcomConnect_WhenDesktopConnectionServiceIsRegistered()
+    {
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(),
+            [
+                new FakeMetadataProvider(CgmProviderKind.Mock, "Mock"),
+                new FakeMetadataProvider(CgmProviderKind.DexcomSandbox, "Dexcom Sandbox")
+            ],
+            [new FakeDexcomConnectionStatusService(DexcomConnectionState.TokenMissing)],
+            [new FakeDexcomDesktopConnectionService()]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.CanConnectDexcom);
+    }
+
+    [Fact]
+    public async Task ConnectDexcomCommand_ShouldExposeValidationError_WhenDexcomConnectionServiceIsNotRegistered()
+    {
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(),
+            [new FakeMetadataProvider(CgmProviderKind.Mock, "Mock")]);
+
+        await viewModel.ConnectDexcomCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.Equal("Settings validation failed", viewModel.StatusMessage);
+        Assert.Equal("Dexcom is not configured in the current desktop runtime.", viewModel.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task ConnectDexcomCommand_ShouldConnectDexcom_WhenDexcomConnectionServiceSucceeds()
+    {
+        var connectionService = new FakeDexcomDesktopConnectionService();
+
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(),
+            [
+                new FakeMetadataProvider(CgmProviderKind.Mock, "Mock"),
+                new FakeMetadataProvider(CgmProviderKind.DexcomSandbox, "Dexcom Sandbox")
+            ],
+            [new FakeDexcomConnectionStatusService(DexcomConnectionState.Connected)],
+            [connectionService]);
+
+        await viewModel.ConnectDexcomCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.HasError);
+        Assert.True(connectionService.WasCalled);
+        Assert.Equal("Dexcom: connected.", viewModel.DexcomConnectionStatusText);
+        Assert.Equal(
+            "Dexcom connected. Select Dexcom as provider and save settings to use real readings.",
+            viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ConnectDexcomCommand_ShouldExposeFailure_WhenDexcomConnectionServiceFails()
+    {
+        var connectionService = new FakeDexcomDesktopConnectionService
+        {
+            Result = Result<DexcomDesktopConnectionResult>.Failure(
+                new Error("Dexcom.BrowserOpenFailed", "Unable to open browser."))
+        };  
+
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(),
+            [
+                new FakeMetadataProvider(CgmProviderKind.Mock, "Mock"),
+                new FakeMetadataProvider(CgmProviderKind.DexcomSandbox, "Dexcom Sandbox")
+            ],
+            [new FakeDexcomConnectionStatusService(DexcomConnectionState.TokenMissing)],
+            [connectionService]);   
+
+        await viewModel.ConnectDexcomCommand.ExecuteAsync(null);    
+
+        Assert.True(viewModel.HasError);
+        Assert.True(connectionService.WasCalled);
+        Assert.Equal("Unable to connect Dexcom", viewModel.StatusMessage);
+        Assert.Equal("Dexcom.BrowserOpenFailed: Unable to open browser.", viewModel.ErrorMessage);
+    }
+
     #region Helpers
+
+    private sealed class FakeDexcomDesktopConnectionService : IDexcomDesktopConnectionService
+    {
+        /// <summary>
+        /// Gets or sets the connection result.
+        /// </summary>
+        public Result<DexcomDesktopConnectionResult> Result { get; set; } =
+            Result<DexcomDesktopConnectionResult>.Success(
+                new DexcomDesktopConnectionResult(
+                    DateTimeOffset.Parse("2026-01-01T10:00:00Z"),
+                    DateTimeOffset.Parse("2026-01-01T11:00:00Z"),
+                    DateTimeOffset.Parse("2026-01-31T10:00:00Z")));
+
+        /// <summary>
+        /// Gets a value indicating whether the service was called.
+        /// </summary>
+        public bool WasCalled { get; private set; }
+
+        /// <inheritdoc />
+        public Task<Result<DexcomDesktopConnectionResult>> ConnectAsync(
+            CancellationToken cancellationToken)
+        {
+            WasCalled = true;
+
+            return Task.FromResult(Result);
+        }
+    }
 
     private sealed class FakeDexcomConnectionStatusService : IDexcomConnectionStatusService
     {
         private readonly DexcomConnectionState _state;
-    
+
         /// <summary>
         /// Initializes a new instance of the <see cref="FakeDexcomConnectionStatusService"/> class.
         /// </summary>
@@ -254,7 +376,7 @@ public sealed class SettingsViewModelTests
         {
             _state = state;
         }
-    
+
         /// <inheritdoc />
         public Task<Result<DexcomConnectionStatus>> GetConnectionStatusAsync(
             CancellationToken cancellationToken)

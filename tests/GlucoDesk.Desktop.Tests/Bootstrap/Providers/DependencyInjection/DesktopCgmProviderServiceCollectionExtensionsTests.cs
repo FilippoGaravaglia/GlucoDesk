@@ -5,6 +5,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Providers;
 using GlucoDesk.Infrastructure.Cgm.Mock.Providers;
 using Microsoft.Extensions.DependencyInjection;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 
 namespace GlucoDesk.Desktop.Tests.Bootstrap.Providers.DependencyInjection;
 
@@ -31,6 +32,10 @@ public sealed class DesktopCgmProviderServiceCollectionExtensionsTests
             .GetServices<ICgmMetadataProvider>()
             .ToArray();
 
+        var desktopConnectionServices = serviceProvider
+            .GetServices<IDexcomDesktopConnectionService>()
+            .ToArray();
+
         Assert.Single(liveProviders);
         Assert.Single(historicalProviders);
         Assert.Single(metadataProviders);
@@ -38,6 +43,8 @@ public sealed class DesktopCgmProviderServiceCollectionExtensionsTests
         Assert.IsType<MockCgmProvider>(liveProviders[0]);
         Assert.IsType<MockCgmProvider>(historicalProviders[0]);
         Assert.IsType<MockCgmProvider>(metadataProviders[0]);
+
+        Assert.Empty(desktopConnectionServices);
     }
 
     [Fact]
@@ -61,6 +68,10 @@ public sealed class DesktopCgmProviderServiceCollectionExtensionsTests
             .GetServices<ICgmMetadataProvider>()
             .ToArray();
 
+        var desktopConnectionServices = serviceProvider
+            .GetServices<IDexcomDesktopConnectionService>()
+            .ToArray();
+
         Assert.Equal(2, liveProviders.Length);
         Assert.Equal(2, historicalProviders.Length);
         Assert.Equal(2, metadataProviders.Length);
@@ -73,6 +84,9 @@ public sealed class DesktopCgmProviderServiceCollectionExtensionsTests
 
         Assert.Contains(metadataProviders, provider => provider is MockCgmProvider);
         Assert.Contains(metadataProviders, provider => provider is DexcomOfficialCgmProvider);
+
+        Assert.Single(desktopConnectionServices);
+        Assert.IsType<DexcomDesktopConnectionService>(desktopConnectionServices[0]);
     }
 
     [Fact]
