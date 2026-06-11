@@ -6,6 +6,9 @@ using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Settings;
 
@@ -107,15 +110,15 @@ public sealed class SettingsViewModelTests
         var viewModel = new SettingsViewModel(
             settingsService,
             [new FakeMetadataProvider(CgmProviderKind.Mock, "Mock")]);
-    
+
         await viewModel.LoadCommand.ExecuteAsync(null);
-    
+
         viewModel.TargetLowMgDlText = "75";
         viewModel.TargetHighMgDlText = "170";
         viewModel.DashboardRefreshIntervalSecondsText = "60";
-    
+
         await viewModel.SaveCommand.ExecuteAsync(null);
-    
+
         Assert.False(viewModel.HasError);
         Assert.NotNull(settingsService.SavedSettings);
         Assert.Equal(CgmProviderKind.Mock, settingsService.SavedSettings.ActiveLiveProvider);
@@ -200,7 +203,69 @@ public sealed class SettingsViewModelTests
         Assert.Equal("Settings.LoadFailed: Unable to load settings.", viewModel.ErrorMessage);
     }
 
+    [Fact]
+    public async Task LoadCommand_ShouldShowDexcomNotConfigured_WhenConnectionStatusServiceIsNotRegistered()
+    {
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(),
+            [new FakeMetadataProvider(CgmProviderKind.Mock, "Mock")]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal(
+            "Dexcom: not configured in this desktop runtime.",
+            viewModel.DexcomConnectionStatusText);
+    }
+
+    [Theory]
+    [InlineData(DexcomConnectionState.TokenMissing, "Dexcom: configured, not connected.")]
+    [InlineData(DexcomConnectionState.Connected, "Dexcom: connected.")]
+    [InlineData(DexcomConnectionState.AccessTokenRefreshRequired, "Dexcom: token refresh required before reading data.")]
+    [InlineData(DexcomConnectionState.RefreshTokenExpired, "Dexcom: authorization expired. Reconnect Dexcom.")]
+    [InlineData(DexcomConnectionState.TokenStoreUnavailable, "Dexcom: token store unavailable.")]
+    public async Task LoadCommand_ShouldShowDexcomConnectionStatus_WhenConnectionStatusServiceIsRegistered(
+        DexcomConnectionState state,
+        string expectedStatusText)
+    {
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(),
+            [
+                new FakeMetadataProvider(CgmProviderKind.Mock, "Mock"),
+                new FakeMetadataProvider(CgmProviderKind.DexcomSandbox, "Dexcom Sandbox")
+            ],
+            [new FakeDexcomConnectionStatusService(state)]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        Assert.Equal(expectedStatusText, viewModel.DexcomConnectionStatusText);
+    }
+
     #region Helpers
+
+    private sealed class FakeDexcomConnectionStatusService : IDexcomConnectionStatusService
+    {
+        private readonly DexcomConnectionState _state;
+    
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FakeDexcomConnectionStatusService"/> class.
+        /// </summary>
+        /// <param name="state">The Dexcom connection state.</param>
+        public FakeDexcomConnectionStatusService(DexcomConnectionState state)
+        {
+            _state = state;
+        }
+    
+        /// <inheritdoc />
+        public Task<Result<DexcomConnectionStatus>> GetConnectionStatusAsync(
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Result<DexcomConnectionStatus>.Success(
+                new DexcomConnectionStatus(
+                    _state,
+                    DateTimeOffset.Parse("2026-01-01T10:00:00Z"),
+                    "Dexcom test status.")));
+        }
+    }
 
     private sealed class FakeApplicationSettingsService : IApplicationSettingsService
     {

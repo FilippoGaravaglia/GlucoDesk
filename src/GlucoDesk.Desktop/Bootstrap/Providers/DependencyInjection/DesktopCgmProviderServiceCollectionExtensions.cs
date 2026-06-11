@@ -3,6 +3,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Providers.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.Mock.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.DependencyInjection;
 
 namespace GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
 
@@ -35,6 +36,8 @@ public static class DesktopCgmProviderServiceCollectionExtensions
             services.AddDexcomOfficialCgmProvider(
                 effectiveDexcomOptions.ToApiOptions(),
                 effectiveDexcomOptions.ToProviderOptions());
+            
+            services.AddDexcomConnectionStatus();
         }
 
         return services;

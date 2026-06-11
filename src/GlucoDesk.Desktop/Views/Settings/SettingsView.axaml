@@ -39,6 +39,11 @@
                        Opacity="0.75"
                        FontWeight="SemiBold" />
 
+            <TextBlock Text="{Binding DexcomConnectionStatusText}"
+                        TextWrapping="Wrap"
+                        Opacity="0.75"
+                        FontWeight="SemiBold" />
+
             <Grid ColumnDefinitions="*,*"
                   ColumnSpacing="20">
               <StackPanel Spacing="6">
