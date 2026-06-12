@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -185,9 +186,38 @@ public sealed class DexcomEgvClient : IDexcomEgvClient
     /// <returns>The application error.</returns>
     private static Error BuildHttpFailure(HttpResponseMessage response)
     {
-        return new Error(
-            "Dexcom.EgvRequestFailed",
-            $"Dexcom EGV request failed with HTTP status code {(int)response.StatusCode}.");
+        return response.StatusCode switch
+        {
+            HttpStatusCode.Unauthorized => new Error(
+                "Dexcom.EgvUnauthorized",
+                "Dexcom rejected the current authorization."),
+    
+            HttpStatusCode.Forbidden => new Error(
+                "Dexcom.EgvForbidden",
+                "Dexcom denied access to EGV data."),
+    
+            HttpStatusCode.TooManyRequests => new Error(
+                "Dexcom.EgvRateLimited",
+                "Dexcom rate limit was reached."),
+    
+            _ when IsServerError(response.StatusCode) => new Error(
+                "Dexcom.EgvServerUnavailable",
+                $"Dexcom EGV service returned HTTP status code {(int)response.StatusCode}."),
+    
+            _ => new Error(
+                "Dexcom.EgvRequestFailed",
+                $"Dexcom EGV request failed with HTTP status code {(int)response.StatusCode}.")
+        };
+    }
+
+    /// <summary>
+    /// Checks whether the status code represents a server-side failure.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code.</param>
+    /// <returns>True when the status code is a server-side failure; otherwise false.</returns>
+    private static bool IsServerError(HttpStatusCode statusCode)
+    {
+        return (int)statusCode >= 500;
     }
 
     /// <summary>
