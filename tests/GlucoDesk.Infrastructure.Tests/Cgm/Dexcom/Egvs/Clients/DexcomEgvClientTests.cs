@@ -141,30 +141,38 @@ public sealed class DexcomEgvClientTests
         Assert.Null(handler.LastRequest);
     }
 
-    [Fact]
-    public async Task GetEgvsAsync_ShouldReturnFailure_WhenHttpResponseIsNotSuccessful()
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized, "Dexcom.EgvUnauthorized")]
+    [InlineData(HttpStatusCode.Forbidden, "Dexcom.EgvForbidden")]
+    [InlineData(HttpStatusCode.TooManyRequests, "Dexcom.EgvRateLimited")]
+    [InlineData(HttpStatusCode.InternalServerError, "Dexcom.EgvServerUnavailable")]
+    [InlineData(HttpStatusCode.BadGateway, "Dexcom.EgvServerUnavailable")]
+    [InlineData(HttpStatusCode.ServiceUnavailable, "Dexcom.EgvServerUnavailable")]
+    [InlineData(HttpStatusCode.BadRequest, "Dexcom.EgvRequestFailed")]
+    public async Task GetEgvsAsync_ShouldReturnSpecificFailure_WhenHttpResponseIsNotSuccessful(
+        HttpStatusCode statusCode,
+        string expectedErrorCode)
     {
         var tokenService = new FakeTokenService
         {
             AccessTokenResult = Result<DexcomAccessTokenResult>.Success(
                 new DexcomAccessTokenResult(CreateTokenSet("access-token"), wasRefreshed: false))
         };
-
+    
         var handler = new CapturingHttpMessageHandler(
-            new HttpResponseMessage(HttpStatusCode.Unauthorized));
-
+            new HttpResponseMessage(statusCode));
+    
         var client = CreateClient(handler, tokenService);
-
+    
         var result = await client.GetEgvsAsync(
             new DexcomEgvRequest(
                 "client-secret",
                 FixedNow.AddHours(-2),
                 FixedNow),
             CancellationToken.None);
-
+    
         Assert.True(result.IsFailure);
-        Assert.Equal("Dexcom.EgvRequestFailed", result.Error.Code);
-        Assert.Contains("401", result.Error.Message);
+        Assert.Equal(expectedErrorCode, result.Error.Code);
     }
 
     [Fact]

@@ -114,7 +114,9 @@ public sealed class DashboardViewModelTests
         await viewModel.RefreshCommand.ExecuteAsync(null);
 
         Assert.True(viewModel.HasError);
-        Assert.Equal("Dashboard.Failed: Unable to build dashboard.", viewModel.ErrorMessage);
+        Assert.Equal(
+            "Unable to build dashboard. (Dashboard.Failed)",
+            viewModel.ErrorMessage);
         Assert.Equal("Unable to refresh glucose data", viewModel.StatusText);
     }
 

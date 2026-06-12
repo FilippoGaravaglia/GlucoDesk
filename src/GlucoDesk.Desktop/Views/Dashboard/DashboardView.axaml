@@ -53,6 +53,12 @@
             <TextBlock Text="{Binding HistoryStatusText}"
                         Opacity="0.55"
                         TextAlignment="Right" />
+
+            <TextBlock Text="{Binding DataSourceStatusText}"
+                        TextWrapping="Wrap"
+                        Opacity="0.65"
+                        TextAlignment="Right"
+                        MaxWidth="360" />
           </StackPanel>
         </Grid>
 

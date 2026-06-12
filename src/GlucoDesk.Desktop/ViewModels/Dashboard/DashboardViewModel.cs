@@ -14,6 +14,7 @@ using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -84,6 +85,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty]
     private bool _isBusy;
+
+    [ObservableProperty]
+    private string _dataSourceStatusText = "Data source not checked";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
@@ -265,6 +269,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         var targetRange = CreateTargetRange();
 
         ProviderDisplayName = snapshot.Metadata.DisplayName;
+        DataSourceStatusText = BuildDataSourceStatusText(snapshot);
         LatestValueText = snapshot.LatestReading?.Value.ToString() ?? "—";
 
         TrendText = snapshot.LatestReading is null
@@ -286,6 +291,27 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         RecentReadingsCountText = $"{snapshot.RecentReadings.Count} readings";
 
         UpdateChart(snapshot.RecentReadings, targetRange);
+    }
+
+    /// <summary>
+    /// Builds a data source status message for a successful dashboard snapshot.
+    /// </summary>
+    /// <param name="snapshot">The dashboard snapshot.</param>
+    /// <returns>The data source status message.</returns>
+    private static string BuildDataSourceStatusText(GlucoseDashboardSnapshot snapshot)
+    {
+        var freshnessText = snapshot.LatestReading is null
+            ? FormatFreshness(snapshot.Metadata.ExpectedFreshness)
+            : FormatFreshness(snapshot.LatestReading.Freshness);
+
+        if (snapshot.LatestReading is null)
+        {
+            return $"{snapshot.Metadata.DisplayName} returned no current glucose reading.";
+        }
+
+        return snapshot.IsLatestReadingStale
+            ? $"{snapshot.Metadata.DisplayName} returned {freshnessText.ToLowerInvariant()} stale data."
+            : $"{snapshot.Metadata.DisplayName} returned {freshnessText.ToLowerInvariant()} data.";
     }
 
     /// <summary>
@@ -356,14 +382,17 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    /// Applies a failed result to the view model.
+    /// Applies a failed dashboard refresh result to the view model using a user-facing presentation.
     /// </summary>
     /// <param name="result">The failed result.</param>
     private void ApplyFailure(Result<GlucoseDashboardSnapshot> result)
     {
+        var presentation = DashboardRefreshErrorPresenter.Present(result.Error);
+
         HasError = true;
-        ErrorMessage = $"{result.Error.Code}: {result.Error.Message}";
-        StatusText = "Unable to refresh glucose data";
+        ErrorMessage = presentation.FullMessage;
+        StatusText = presentation.StatusText;
+        DataSourceStatusText = presentation.Message;
     }
 
     /// <summary>
@@ -375,6 +404,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         HasError = true;
         ErrorMessage = exception.Message;
         StatusText = "Unexpected error";
+        DataSourceStatusText = "An unexpected dashboard error occurred.";
     }
 
     /// <summary>
