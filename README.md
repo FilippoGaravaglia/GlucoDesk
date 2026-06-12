@@ -6,7 +6,7 @@ The project is designed around a provider-based architecture:
 
 * Mock provider for local development, automated tests, demos and future demo mode.
 * Dexcom Official API provider for delayed official glucose data, historical readings and metadata.
-* Nightscout provider foundation for near real-time CGM visualization through a third-party Nightscout setup.
+* Nightscout provider for near real-time CGM visualization through a third-party Nightscout setup.
 
 > GlucoDesk is not a medical device. It must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for Dexcom, Omnipod, Nightscout, or any approved medical application.
 
@@ -22,7 +22,7 @@ The project is designed around a provider-based architecture:
 * Clear separation between domain, application, infrastructure and UI concerns.
 * Support for fake demo data without exposing real personal glucose data.
 * Support for delayed official Dexcom data through the Dexcom Official API.
-* Foundation for near real-time third-party CGM visualization through Nightscout.
+* Support for near real-time third-party CGM visualization through Nightscout.
 * Future support for local history, diabetes diary exports and reporting.
 
 ## Tech stack
@@ -431,6 +431,12 @@ Implemented:
 * Nightscout freshness mapping to near real-time glucose data.
 * Nightscout CGM provider foundation.
 * Nightscout CGM provider dependency injection registration.
+* Desktop Nightscout provider bootstrap options.
+* Optional Nightscout provider registration through environment variables.
+* Nightscout provider availability in the settings screen when configured.
+* Nightscout as selectable provider in settings.
+* Nightscout dashboard error presentation mapping.
+* User-facing dashboard error mapping for common Nightscout failures.
 * Unit tests for application contracts, glucose data service, mock provider options, provider behavior and DI registration.
 * Unit tests for dashboard refresh options and dashboard view model behavior.
 * Unit tests for dashboard chart point validation.
@@ -458,6 +464,9 @@ Implemented:
 * Unit tests for Dexcom desktop connection action.
 * Unit tests for Dexcom active provider selection after connection.
 * Unit tests for Nightscout options, requests, DTOs, HTTP client, mapper, provider and DI registration.
+* Unit tests for desktop Nightscout provider options.
+* Unit tests for desktop Nightscout provider registration.
+* Unit tests for Nightscout dashboard refresh error presentation.
 
 ## Architecture
 
@@ -477,14 +486,15 @@ GlucoDesk.Application
 GlucoDesk.Infrastructure
   Implementation layer for concrete providers, local storage, HTTP clients and platform integrations.
   Currently includes the deterministic mock CGM provider, local JSON settings storage,
-  local JSON glucose history storage, Dexcom Official API infrastructure and Nightscout provider foundation.
+  local JSON glucose history storage, Dexcom Official API infrastructure and Nightscout provider infrastructure.
 
 GlucoDesk.Desktop
   Avalonia desktop application.
   Currently includes the desktop shell, dashboard view model, settings view model,
   auto-refresh behavior, lightweight glucose trend chart, settings-backed dashboard configuration,
   live settings propagation, dashboard-to-history persistence, provider availability,
-  Dexcom connection status, Dexcom connect action and dashboard error presentation.
+  Dexcom connection status, Dexcom connect action, Nightscout runtime provider registration
+  and dashboard error presentation.
 ```
 
 The goal is to keep the domain and application layers independent from concrete providers, storage implementations and UI frameworks.
@@ -529,11 +539,13 @@ DesktopServiceProviderBuilder
       -> Dexcom provider options from environment variables
       -> Dexcom connection status service
       -> Dexcom desktop connection service
+    -> Nightscout provider registered only when explicitly enabled
+      -> Nightscout options from environment variables
+      -> Nightscout entries HTTP client
+      -> Nightscout CGM provider
 ```
 
-Dexcom is not hardcoded into the desktop runtime. It is registered only when the current process is started with the required Dexcom environment variables.
-
-Nightscout is currently implemented at infrastructure-provider level. Desktop runtime configuration for Nightscout will be introduced in a future step.
+Dexcom and Nightscout are not hardcoded into the desktop runtime. They are registered only when the current process is started with the required environment variables.
 
 The current dashboard configuration flow is:
 
@@ -602,7 +614,7 @@ Dashboard refresh failure
       -> Technical error code
 ```
 
-The dashboard maps common Dexcom and provider errors to clear user-facing messages instead of exposing only raw low-level errors.
+The dashboard maps common Dexcom, Nightscout and provider errors to clear user-facing messages instead of exposing only raw low-level errors.
 
 ## Dexcom architecture
 
@@ -809,6 +821,19 @@ Dexcom OAuth tokens are currently stored only in memory. Closing the app clears 
 
 ## Nightscout architecture
 
+The current Nightscout provider flow is:
+
+```text
+DesktopServiceProviderBuilder
+  -> AddDesktopCgmProviders(...)
+    -> DesktopNightscoutProviderOptions.FromEnvironmentVariables()
+      -> NightscoutOptions
+        -> AddNightscoutCgmProvider(...)
+          -> INightscoutEntriesClient
+          -> INightscoutEntryMapper
+          -> NightscoutCgmProvider
+```
+
 The current Nightscout provider foundation flow is:
 
 ```text
@@ -826,7 +851,7 @@ NightscoutEntriesRequest
           -> GlucoseReading collection
 ```
 
-The current Nightscout CGM provider foundation flow is:
+The current Nightscout CGM provider flow is:
 
 ```text
 NightscoutCgmProvider
@@ -854,7 +879,9 @@ GetMetadataAsync(...)
   -> Return Nightscout provider metadata
 ```
 
-Nightscout is currently implemented at infrastructure-provider level. Desktop runtime configuration, settings availability and dashboard selection for Nightscout will be introduced in a future step.
+Nightscout is implemented at infrastructure-provider level and can be registered in the desktop runtime through environment variables.
+
+When Nightscout is configured at startup, the settings screen can show Nightscout as an available provider. Selecting Nightscout as active live provider makes the dashboard read near real-time entries from the configured Nightscout instance.
 
 Nightscout data is treated as near real-time provider data. GlucoDesk must clearly communicate that Nightscout is a third-party source and must not present it as official Dexcom real-time data.
 
@@ -1117,10 +1144,12 @@ The Dexcom Official API foundation currently provides:
 * Typed HTTP client registration for Dexcom EGV operations.
 * Connection status inspection through the configured Dexcom token store.
 
-The Nightscout provider foundation currently provides:
+The Nightscout provider currently provides:
 
 * Nightscout provider option modeling.
 * Nightscout authentication strategy modeling.
+* Desktop Nightscout provider bootstrap options.
+* Nightscout desktop runtime registration through environment variables.
 * Nightscout entries request modeling.
 * Nightscout entries DTO modeling.
 * Nightscout entries HTTP client foundation.
@@ -1140,7 +1169,7 @@ The Nightscout provider foundation currently provides:
 * Dependency injection registration for the Nightscout CGM provider.
 * Typed HTTP client registration for Nightscout entries operations.
 
-The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk uses Dexcom and future Nightscout runtime configuration directly through their own provider implementations.
+The mock provider is not intended to sit between real providers and the UI. In a real user configuration, GlucoDesk uses Dexcom and Nightscout directly through their own provider implementations.
 
 The local JSON settings store is a foundation for user preferences. Provider credentials and secrets must not be stored in plain JSON in future production releases.
 
@@ -1162,6 +1191,7 @@ The current desktop layer includes:
 
 * `DesktopServiceProviderBuilder`
 * `DesktopDexcomProviderOptions`
+* `DesktopNightscoutProviderOptions`
 * `DesktopCgmProviderServiceCollectionExtensions`
 * `DexcomDesktopConnectionResult`
 * `IDexcomDesktopConnectionService`
@@ -1183,9 +1213,11 @@ The current desktop layer includes:
 
 The desktop app uses the application-level `IGlucoseDataService`, which resolves the active provider at runtime through `ICgmProviderResolver`.
 
-Mock is always registered and remains the safe default provider. Dexcom can be registered at desktop startup through environment variables. When Dexcom is configured, connected and selected, the dashboard uses the Dexcom provider instead of the mock provider.
+Mock is always registered and remains the safe default provider.
 
-Nightscout is currently implemented at infrastructure-provider level. Desktop runtime configuration for Nightscout will be introduced in the next provider integration step.
+Dexcom can be registered at desktop startup through environment variables. When Dexcom is configured, connected and selected, the dashboard uses the Dexcom provider instead of the mock provider.
+
+Nightscout can be registered at desktop startup through environment variables. When Nightscout is configured and selected, the dashboard uses the Nightscout provider to read near real-time entries from the configured Nightscout instance.
 
 Current dashboard preview displays:
 
@@ -1203,7 +1235,7 @@ Current dashboard preview displays:
 * Configured glucose target range.
 * Lightweight recent glucose trend chart.
 * Chart summary with reading count and min/max glucose values.
-* User-facing provider/Dexcom error messages.
+* User-facing provider/Dexcom/Nightscout error messages.
 * Technical error code in error states.
 
 The desktop shell includes a simple navigation area with dashboard and settings sections.
@@ -1219,15 +1251,19 @@ Current settings screen supports editing:
 * Target high value in mg/dL.
 * Dashboard refresh interval in seconds.
 
-Provider selection now participates in runtime provider switching.
+Provider selection participates in runtime provider switching.
 
-The settings screen shows which providers are available in the current desktop runtime. Mock is always available. Dexcom providers are shown as unavailable unless Dexcom is explicitly configured and registered at startup.
+The settings screen shows which providers are available in the current desktop runtime. Mock is always available. Dexcom providers are shown as unavailable unless Dexcom is explicitly configured and registered at startup. Nightscout is shown as unavailable unless Nightscout is explicitly configured and registered at startup.
 
 Unavailable providers remain visible for transparency, but saving settings with an unavailable provider selected is blocked by validation.
 
 When Dexcom is configured in the desktop runtime, the settings screen shows the Dexcom connection status and exposes a Connect Dexcom action. After a successful OAuth connection, GlucoDesk automatically selects the available Dexcom provider for both live and historical readings and saves those non-secret provider preferences locally.
 
+When Nightscout is configured in the desktop runtime, the settings screen can show Nightscout as an available provider. Selecting Nightscout as active live provider makes the dashboard read near real-time entries from the configured Nightscout instance.
+
 The Dexcom Official API foundation and Dexcom Official CGM provider are surfaced in the desktop UI when Dexcom is configured through environment variables. The settings screen can start the Dexcom OAuth flow, receive the local callback, store the token set in memory, show connection status and select Dexcom as the active provider.
+
+The Nightscout CGM provider is surfaced in the desktop UI when Nightscout is configured through environment variables. The settings screen can select Nightscout as active provider without storing Nightscout secrets in local settings JSON.
 
 The dashboard supports automatic refresh using a UI-thread dispatcher timer.
 
@@ -1280,8 +1316,9 @@ Dexcom Official API
   Can be connected from the settings screen through the Dexcom OAuth flow.
 
 Nightscout
-  Implemented at infrastructure provider level for near real-time CGM visualization.
-  Desktop runtime configuration will be introduced in the next step.
+  Implemented for near real-time CGM visualization through a user-owned Nightscout setup.
+  Registered only when Nightscout environment variables are provided.
+  Can be selected from the settings screen when configured.
 ```
 
 Current runtime behavior:
@@ -1291,7 +1328,7 @@ Dexcom not configured
   -> Mock is available.
   -> Dexcom is shown as not configured.
   -> Connect Dexcom is hidden.
-  -> Dashboard uses Mock.
+  -> Dashboard uses Mock unless another available provider is selected.
 
 Dexcom configured but not connected
   -> Mock and Dexcom are available.
@@ -1309,9 +1346,19 @@ Dexcom connection lost after app restart
   -> Token set is lost because storage is currently in-memory only.
   -> Dexcom must be connected again until platform-secure persistent token storage is introduced.
 
+Nightscout not configured
+  -> Nightscout is shown as not configured or unavailable.
+  -> Saving settings with Nightscout selected is blocked.
+  -> Dashboard uses Mock unless another available provider is selected.
+
 Nightscout configured
-  -> Nightscout provider registration at desktop runtime is planned next.
-  -> Nightscout is intended to provide near real-time readings from a user-owned Nightscout setup.
+  -> Mock and Nightscout are available.
+  -> Nightscout can be selected as live and/or historical provider.
+  -> Dashboard reads near real-time entries from the configured Nightscout instance on next refresh.
+
+Nightscout request fails
+  -> Dashboard shows a user-facing Nightscout error.
+  -> GlucoDesk does not silently replace the failed Nightscout refresh with mock data.
 ```
 
 The application should clearly communicate the freshness and source of each reading.
@@ -1367,6 +1414,8 @@ The dashboard reacts to settings changes and applies:
 * Updated settings status text.
 
 Provider tokens, API secrets and OAuth credentials must not be stored in plain JSON in future production releases.
+
+Nightscout endpoint and authentication values are currently provided through environment variables. They must not be stored in local settings JSON.
 
 ## Local history strategy
 
@@ -1535,7 +1584,7 @@ Dexcom Official API data is intended to be treated as delayed official glucose d
 
 ## Nightscout strategy
 
-GlucoDesk includes a Nightscout provider foundation.
+GlucoDesk includes a Nightscout provider and desktop runtime configuration foundation.
 
 Current Nightscout infrastructure supports:
 
@@ -1559,23 +1608,62 @@ Current Nightscout infrastructure supports:
 * Nightscout CGM provider implementation behind application-level provider interfaces.
 * Dependency injection registration for the Nightscout CGM provider.
 * Typed HTTP client registration for Nightscout entries operations.
+* Desktop runtime configuration through environment variables.
+* Settings provider availability for Nightscout.
+* Nightscout selection as active live and historical provider.
+* Dashboard refresh through Nightscout when selected.
+* User-facing Nightscout dashboard error mapping.
+
+Current Nightscout desktop configuration is environment-variable based.
+
+Supported variables:
+
+```bash
+export GLUCODESK_NIGHTSCOUT_ENABLED=true
+export GLUCODESK_NIGHTSCOUT_BASE_URI="https://your-nightscout-site.example"
+export GLUCODESK_NIGHTSCOUT_DISPLAY_NAME="Nightscout"
+export GLUCODESK_NIGHTSCOUT_AUTH_MODE="None"
+export GLUCODESK_NIGHTSCOUT_LATEST_LOOKBACK_MINUTES=20
+export GLUCODESK_NIGHTSCOUT_REQUEST_TIMEOUT_SECONDS=15
+export GLUCODESK_NIGHTSCOUT_MAX_READINGS_PER_REQUEST=288
+```
+
+Supported authentication modes:
+
+```text
+None
+ApiSecretSha1Header
+AccessTokenQueryString
+```
+
+For SHA1 api-secret header authentication:
+
+```bash
+export GLUCODESK_NIGHTSCOUT_AUTH_MODE="ApiSecretSha1Header"
+export GLUCODESK_NIGHTSCOUT_API_SECRET_SHA1="your-sha1-hashed-api-secret"
+```
+
+For access-token query-string authentication:
+
+```bash
+export GLUCODESK_NIGHTSCOUT_AUTH_MODE="AccessTokenQueryString"
+export GLUCODESK_NIGHTSCOUT_ACCESS_TOKEN="your-nightscout-access-token"
+```
 
 The current Nightscout foundation does not yet:
 
-* Register Nightscout in the desktop runtime through environment variables.
-* Show Nightscout provider availability in the settings screen.
-* Allow selecting Nightscout as the active live provider from the desktop UI.
 * Provide a dedicated Nightscout configuration UI.
 * Persist Nightscout secrets through a secure storage strategy.
+* Validate a Nightscout connection from the settings screen before saving.
+* Provide a Nightscout Disconnect/Reconfigure UX.
+* Import Nightscout treatments/events.
 
 The next Nightscout steps will introduce:
 
-* Desktop Nightscout runtime configuration.
-* Settings provider availability for Nightscout.
-* Nightscout selection as active live provider.
-* Dashboard refresh through Nightscout entries.
-* User-facing Nightscout dashboard error mapping.
-* Clear source labeling for third-party near real-time data.
+* A safer provider diagnostics experience.
+* Better validation around wrong Nightscout URLs and authentication failures.
+* Optional dedicated Nightscout configuration UX.
+* Future treatments/events support for diary exports.
 
 Nightscout data is intended for personal visualization from a user-owned Nightscout setup. GlucoDesk must clearly communicate that Nightscout is a third-party data source.
 
@@ -1641,6 +1729,8 @@ This feature will depend on local storage, Dexcom Official API data, optional Ni
 * Keep Nightscout DTO parsing separate from domain mapping.
 * Keep Nightscout entry mapping behind `INightscoutEntryMapper`.
 * Keep provider implementations behind `ICgmLiveProvider`, `ICgmHistoricalProvider` and `ICgmMetadataProvider`.
+* Keep provider runtime registration explicit.
+* Keep provider secrets outside local JSON settings.
 * Do not silently hide a real-provider failure behind mock data.
 * Make the active data source visible in the dashboard.
 * Make provider availability and account connection status separate concepts.
@@ -1678,12 +1768,16 @@ dotnet run --project src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
 
 The desktop app starts with Mock as the safe default provider.
 
-Without Dexcom environment variables, the settings screen shows:
+Without Dexcom or Nightscout environment variables, the settings screen shows only Mock as available:
 
 ```text
 Available providers: Mock.
 Dexcom: not configured in this desktop runtime.
 ```
+
+Nightscout remains visible as an unavailable provider in the provider selection list when supported by the settings screen, but saving settings with Nightscout selected is blocked unless Nightscout is configured in the current desktop runtime.
+
+### Run with Dexcom Sandbox
 
 To enable Dexcom Sandbox for local development, start the app from a shell that contains the required environment variables:
 
@@ -1715,7 +1809,60 @@ Dexcom Sandbox data is simulated and is intended for integration testing. It is 
 
 At this stage, Dexcom OAuth tokens are stored only in memory for the current application process. Closing the app clears the Dexcom connection until platform-secure persistent token storage is introduced.
 
-Nightscout desktop runtime configuration is planned for the next provider integration step. The Nightscout infrastructure provider foundation is already available behind application-level provider abstractions.
+### Run with Nightscout
+
+To enable Nightscout for local development, start the app from a shell that contains the required Nightscout environment variables:
+
+```bash
+export GLUCODESK_NIGHTSCOUT_ENABLED=true
+export GLUCODESK_NIGHTSCOUT_BASE_URI="https://your-nightscout-site.example"
+export GLUCODESK_NIGHTSCOUT_DISPLAY_NAME="Nightscout"
+export GLUCODESK_NIGHTSCOUT_AUTH_MODE="None"
+export GLUCODESK_NIGHTSCOUT_LATEST_LOOKBACK_MINUTES=20
+export GLUCODESK_NIGHTSCOUT_REQUEST_TIMEOUT_SECONDS=15
+export GLUCODESK_NIGHTSCOUT_MAX_READINGS_PER_REQUEST=288
+
+dotnet run --project src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
+```
+
+When Nightscout is configured, the settings screen can show Nightscout as an available provider.
+
+Expected provider availability:
+
+```text
+Available providers: Mock, Nightscout.
+```
+
+To use Nightscout:
+
+```text
+Open Settings
+Select Nightscout as live provider
+Optionally select Nightscout as historical provider
+Save settings
+Return to Dashboard
+Refresh now
+```
+
+The dashboard uses the selected provider on the next refresh.
+
+If the Nightscout instance requires authentication, use one of the supported authentication modes.
+
+For SHA1 api-secret header authentication:
+
+```bash
+export GLUCODESK_NIGHTSCOUT_AUTH_MODE="ApiSecretSha1Header"
+export GLUCODESK_NIGHTSCOUT_API_SECRET_SHA1="your-sha1-hashed-api-secret"
+```
+
+For access-token query-string authentication:
+
+```bash
+export GLUCODESK_NIGHTSCOUT_AUTH_MODE="AccessTokenQueryString"
+export GLUCODESK_NIGHTSCOUT_ACCESS_TOKEN="your-nightscout-access-token"
+```
+
+Nightscout secrets must not be committed or stored in plain JSON settings.
 
 ## Current limitations
 
@@ -1724,7 +1871,10 @@ Nightscout desktop runtime configuration is planned for the next provider integr
 * Dexcom connection is lost after app restart.
 * Disconnect/Reconnect Dexcom UX is not implemented yet.
 * Dexcom production real-account testing is not completed yet.
-* Nightscout is implemented at infrastructure-provider level but not yet surfaced in desktop runtime configuration.
+* Nightscout is configured through environment variables only.
+* Dedicated Nightscout configuration UI is not implemented yet.
+* Nightscout secrets are not persisted through secure storage yet.
+* Nightscout treatments/events are not implemented yet.
 * Long-term local glucose history privacy controls are not production-grade yet.
 * No installer or packaged release artifacts are available yet.
 * No compact widget is available yet.
@@ -1736,7 +1886,7 @@ Nightscout desktop runtime configuration is planned for the next provider integr
 * v0.1: Mock provider, application glucose data service, desktop shell, auto-refresh dashboard, lightweight trend chart, local settings, settings screen, live settings propagation, local glucose history foundation, dashboard-to-history persistence and local history analytics foundation.
 * v0.2: Dexcom Official API OAuth foundation, local callback listener, token client, in-memory token store, token refresh service, EGV HTTP client, EGV mapper and Dexcom Official CGM provider.
 * v0.3: Runtime provider resolution, desktop provider switching, settings provider availability, Dexcom connection status, Dexcom connect action, active Dexcom provider selection and dashboard provider error hardening.
-* v0.4: Nightscout provider foundation, desktop Nightscout configuration, secure persistent token storage, Disconnect/Reconnect Dexcom actions and improved dashboard stale/empty-data states.
+* v0.4: Nightscout provider foundation, desktop Nightscout runtime configuration, Nightscout provider selection, Nightscout dashboard error presentation, secure persistent token storage, Disconnect/Reconnect Dexcom actions and improved dashboard stale/empty-data states.
 * v0.5: Real-account Dexcom production testing, History UI, reporting foundation and compact widget.
 * v0.6: Treatments/events, local history UI and monthly diabetes diary export.
 * v1.0: Production-ready cross-platform release.

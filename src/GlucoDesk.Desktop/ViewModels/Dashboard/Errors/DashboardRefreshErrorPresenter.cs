@@ -86,6 +86,47 @@ public static class DashboardRefreshErrorPresenter
                     "Dexcom returned glucose data that GlucoDesk could not process safely.",
                     error.Code),
 
+            "Nightscout.EntriesUnauthorized" => new DashboardRefreshErrorPresentation(
+                "Nightscout authorization required",
+                "Nightscout rejected the current authorization. Check the configured Nightscout secret or access token.",
+                error.Code),
+
+            "Nightscout.EntriesForbidden" => new DashboardRefreshErrorPresentation(
+                "Nightscout access denied",
+                "Nightscout denied access to glucose entries. Verify the configured Nightscout permissions.",
+                error.Code),
+
+            "Nightscout.EntriesRateLimited" => new DashboardRefreshErrorPresentation(
+                "Nightscout rate limit reached",
+                "Nightscout is temporarily rate limiting requests. Wait a few minutes before refreshing again.",
+                error.Code),
+
+            "Nightscout.EntriesServerUnavailable" => new DashboardRefreshErrorPresentation(
+                "Nightscout temporarily unavailable",
+                "Nightscout is currently unavailable or returned a server error. Try again later.",
+                error.Code),
+
+            "Nightscout.EntriesNetworkError" => new DashboardRefreshErrorPresentation(
+                "Nightscout network error",
+                "GlucoDesk could not complete the Nightscout entries request due to a network problem.",
+                error.Code),
+
+            "Nightscout.EntriesRequestTimeout" => new DashboardRefreshErrorPresentation(
+                "Nightscout request timed out",
+                "The Nightscout entries request took too long. Try refreshing again.",
+                error.Code),
+
+            "Nightscout.EntriesInvalidResponse"
+                or "Nightscout.EntriesNull"
+                or "Nightscout.EntryNull"
+                or "Nightscout.EntryMissingTimestamp"
+                or "Nightscout.EntryInvalidDate"
+                or "Nightscout.EntryMissingSgv"
+                or "Nightscout.EntryInvalidSgv" => new DashboardRefreshErrorPresentation(
+                    "Nightscout returned unreadable data",
+                    "Nightscout returned glucose data that GlucoDesk could not process safely.",
+                    error.Code),
+
             "Cgm.LiveProviderUnavailable"
                 or "Cgm.LiveProviderNotFound"
                 or "Cgm.HistoricalProviderUnavailable"
@@ -97,6 +138,11 @@ public static class DashboardRefreshErrorPresenter
             _ when IsDexcomError(error.Code) => new DashboardRefreshErrorPresentation(
                 "Dexcom refresh failed",
                 "GlucoDesk could not refresh Dexcom glucose data. Check the Dexcom connection in Settings and try again.",
+                error.Code),
+
+            _ when IsNightscoutError(error.Code) => new DashboardRefreshErrorPresentation(
+                "Nightscout refresh failed",
+                "GlucoDesk could not refresh Nightscout glucose data. Check the Nightscout configuration and try again.",
                 error.Code),
 
             _ => new DashboardRefreshErrorPresentation(
@@ -116,6 +162,16 @@ public static class DashboardRefreshErrorPresenter
     private static bool IsDexcomError(string errorCode)
     {
         return errorCode.StartsWith("Dexcom.", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Checks whether the supplied error code belongs to the Nightscout integration.
+    /// </summary>
+    /// <param name="errorCode">The error code.</param>
+    /// <returns>True when the error is a Nightscout error; otherwise false.</returns>
+    private static bool IsNightscoutError(string errorCode)
+    {
+        return errorCode.StartsWith("Nightscout.", StringComparison.OrdinalIgnoreCase);
     }
 
     #endregion

@@ -55,6 +55,37 @@ public sealed class DashboardRefreshErrorPresenterTests
         "Cgm.LiveProviderUnavailable",
         "Selected provider unavailable",
         "The selected CGM provider is not available in the current desktop runtime. Open Settings and select an available provider.")]
+    
+    [InlineData(
+        "Nightscout.EntriesUnauthorized",
+        "Nightscout authorization required",
+        "Nightscout rejected the current authorization. Check the configured Nightscout secret or access token.")]
+
+    [InlineData(
+        "Nightscout.EntriesForbidden",
+        "Nightscout access denied",
+        "Nightscout denied access to glucose entries. Verify the configured Nightscout permissions.")]  
+
+    [InlineData(
+        "Nightscout.EntriesRateLimited",
+        "Nightscout rate limit reached",
+        "Nightscout is temporarily rate limiting requests. Wait a few minutes before refreshing again.")]   
+
+    [InlineData(
+        "Nightscout.EntriesServerUnavailable",
+        "Nightscout temporarily unavailable",
+        "Nightscout is currently unavailable or returned a server error. Try again later.")]    
+
+    [InlineData(
+        "Nightscout.EntriesNetworkError",
+        "Nightscout network error",
+        "GlucoDesk could not complete the Nightscout entries request due to a network problem.")]   
+
+    [InlineData(
+        "Nightscout.EntriesRequestTimeout",
+        "Nightscout request timed out",
+        "The Nightscout entries request took too long. Try refreshing again.")]
+
     public void Present_ShouldMapKnownErrors(
         string errorCode,
         string expectedStatusText,
@@ -99,5 +130,18 @@ public sealed class DashboardRefreshErrorPresenterTests
             () => DashboardRefreshErrorPresenter.Present(null!));
 
         Assert.Equal("error", exception.ParamName);
+    }
+
+    [Fact]
+    public void Present_ShouldMapUnknownNightscoutErrorsToGenericNightscoutMessage()
+    {
+        var presentation = DashboardRefreshErrorPresenter.Present(
+            new Error("Nightscout.SomeNewError", "Technical Nightscout message."));
+    
+        Assert.Equal("Nightscout refresh failed", presentation.StatusText);
+        Assert.Equal(
+            "GlucoDesk could not refresh Nightscout glucose data. Check the Nightscout configuration and try again.",
+            presentation.Message);
+        Assert.Equal("Nightscout.SomeNewError", presentation.TechnicalCode);
     }
 }

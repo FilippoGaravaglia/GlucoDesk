@@ -1,11 +1,12 @@
 using GlucoDesk.Application.Cgm.Providers.Abstractions;
+using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
 using GlucoDesk.Desktop.Bootstrap.Providers.Options;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Providers;
 using GlucoDesk.Infrastructure.Cgm.Mock.Providers;
 using Microsoft.Extensions.DependencyInjection;
-using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 
 namespace GlucoDesk.Desktop.Tests.Bootstrap.Providers.DependencyInjection;
 
@@ -16,7 +17,9 @@ public sealed class DesktopCgmProviderServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
 
-        services.AddDesktopCgmProviders(DesktopDexcomProviderOptions.Disabled);
+        services.AddDesktopCgmProviders(
+            dexcomOptions: DesktopDexcomProviderOptions.Disabled,
+            nightscoutOptions: CreateDisabledNightscoutOptions());
 
         using var serviceProvider = services.BuildServiceProvider();
 
@@ -52,7 +55,9 @@ public sealed class DesktopCgmProviderServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
 
-        services.AddDesktopCgmProviders(CreateEnabledDexcomOptions());
+        services.AddDesktopCgmProviders(
+            dexcomOptions: CreateEnabledDexcomOptions(),
+            nightscoutOptions: CreateDisabledNightscoutOptions());
 
         using var serviceProvider = services.BuildServiceProvider();
 
@@ -90,12 +95,49 @@ public sealed class DesktopCgmProviderServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public async Task AddDesktopCgmProviders_ShouldRegisterNightscoutProvider_WhenNightscoutIsEnabled()
+    {
+        var services = new ServiceCollection();
+
+        services.AddDesktopCgmProviders(
+            dexcomOptions: DesktopDexcomProviderOptions.Disabled,
+            nightscoutOptions: new DesktopNightscoutProviderOptions(
+                true,
+                new Uri("https://example-nightscout.test")));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var metadataProviders = serviceProvider
+            .GetServices<ICgmMetadataProvider>()
+            .ToArray();
+
+        var metadataResults = new List<CgmProviderKind>();
+
+        foreach (var provider in metadataProviders)
+        {
+            var metadataResult = await provider.GetMetadataAsync(CancellationToken.None);
+
+            if (metadataResult.IsSuccess)
+            {
+                metadataResults.Add(metadataResult.Value.ProviderKind);
+            }
+        }
+
+        Assert.Contains(CgmProviderKind.Mock, metadataResults);
+        Assert.Contains(CgmProviderKind.Nightscout, metadataResults);
+        Assert.DoesNotContain(CgmProviderKind.DexcomSandbox, metadataResults);
+        Assert.DoesNotContain(CgmProviderKind.DexcomOfficial, metadataResults);
+    }
+
+    [Fact]
     public void AddDesktopCgmProviders_ShouldRejectNullServices()
     {
         IServiceCollection services = null!;
 
         var exception = Assert.Throws<ArgumentNullException>(
-            () => services.AddDesktopCgmProviders(DesktopDexcomProviderOptions.Disabled));
+            () => services.AddDesktopCgmProviders(
+                dexcomOptions: DesktopDexcomProviderOptions.Disabled,
+                nightscoutOptions: CreateDisabledNightscoutOptions()));
 
         Assert.Equal("services", exception.ParamName);
     }
@@ -115,6 +157,15 @@ public sealed class DesktopCgmProviderServiceCollectionExtensionsTests
             clientSecret: "client-secret",
             redirectUri: new Uri("http://127.0.0.1:51234/callback"),
             scopes: ["egv", "offline_access"]);
+    }
+
+    /// <summary>
+    /// Creates disabled Nightscout desktop provider options for tests.
+    /// </summary>
+    /// <returns>The disabled Nightscout desktop provider options.</returns>
+    private static DesktopNightscoutProviderOptions CreateDisabledNightscoutOptions()
+    {
+        return new DesktopNightscoutProviderOptions(false, null);
     }
 
     #endregion
