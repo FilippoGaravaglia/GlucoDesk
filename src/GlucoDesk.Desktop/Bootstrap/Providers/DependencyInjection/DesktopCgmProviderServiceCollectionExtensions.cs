@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.DependencyInjection;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
+using GlucoDesk.Infrastructure.Cgm.Nightscout.DependencyInjection;
 
 namespace GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
 
@@ -14,19 +15,20 @@ namespace GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
 public static class DesktopCgmProviderServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers desktop CGM providers.
+    /// Adds desktop CGM providers to the service collection.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="dexcomOptions">The optional Dexcom provider options.</param>
+    /// <param name="nightscoutOptions">The optional Nightscout provider options.</param>
     /// <returns>The updated service collection.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when services is null.</exception>
     public static IServiceCollection AddDesktopCgmProviders(
         this IServiceCollection services,
-        DesktopDexcomProviderOptions? dexcomOptions = null)
+        DesktopDexcomProviderOptions? dexcomOptions = null,
+        DesktopNightscoutProviderOptions? nightscoutOptions = null)
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+        services.TryAddSingleton(TimeProvider.System);
 
         services.AddMockCgmProvider();
 
@@ -35,14 +37,24 @@ public static class DesktopCgmProviderServiceCollectionExtensions
         if (effectiveDexcomOptions.IsEnabled)
         {
             services.TryAddSingleton(effectiveDexcomOptions);
-        
+
             services.AddDexcomOfficialCgmProvider(
                 effectiveDexcomOptions.ToApiOptions(),
                 effectiveDexcomOptions.ToProviderOptions());
-        
+
             services.AddDexcomConnectionStatus();
-        
+
             services.TryAddScoped<IDexcomDesktopConnectionService, DexcomDesktopConnectionService>();
+        }
+
+        var effectiveNightscoutOptions = nightscoutOptions ?? DesktopNightscoutProviderOptions.FromEnvironmentVariables();
+
+        if (effectiveNightscoutOptions.IsEnabled)
+        {
+            services.TryAddSingleton(effectiveNightscoutOptions);
+
+            services.AddNightscoutCgmProvider(
+                effectiveNightscoutOptions.ToNightscoutOptions());
         }
 
         return services;

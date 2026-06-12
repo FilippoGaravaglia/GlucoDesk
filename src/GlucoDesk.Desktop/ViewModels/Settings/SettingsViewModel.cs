@@ -3,6 +3,8 @@ using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Application.Cgm.Providers.Abstractions;
+using GlucoDesk.Application.Cgm.Providers.Metadata;
+using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
@@ -21,13 +23,18 @@ namespace GlucoDesk.Desktop.ViewModels.Settings;
 /// </summary>
 public sealed partial class SettingsViewModel : ViewModelBase
 {
-    private readonly IReadOnlyCollection<IDexcomDesktopConnectionService> _dexcomDesktopConnectionServices;
+    private static readonly IReadOnlyList<CgmProviderKind> SupportedProviderKinds =
+    [
+        CgmProviderKind.Mock,
+        CgmProviderKind.Nightscout,
+        CgmProviderKind.DexcomSandbox,
+        CgmProviderKind.DexcomOfficial
+    ];
 
     private readonly IApplicationSettingsService _settingsService;
-    
     private readonly IReadOnlyCollection<ICgmMetadataProvider> _metadataProviders;
-
     private readonly IReadOnlyCollection<IDexcomConnectionStatusService> _dexcomConnectionStatusServices;
+    private readonly IReadOnlyCollection<IDexcomDesktopConnectionService> _dexcomDesktopConnectionServices;
 
     [ObservableProperty]
     private IReadOnlyList<ProviderSelectionItem> _providerOptions = [];
@@ -132,10 +139,15 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         try
         {
-            await RefreshProviderAvailabilityAsync(cancellationToken);
-            await RefreshDexcomConnectionStatusAsync(cancellationToken);
+            await RefreshProviderAvailabilityAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-            var result = await _settingsService.GetSettingsAsync(cancellationToken);
+            await RefreshDexcomConnectionStatusAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var result = await _settingsService
+                .GetSettingsAsync(cancellationToken)
+                .ConfigureAwait(false);
 
             if (result.IsFailure)
             {
@@ -190,7 +202,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         try
         {
-            var result = await _settingsService.SaveSettingsAsync(settings, cancellationToken);
+            var result = await _settingsService
+                .SaveSettingsAsync(settings, cancellationToken)
+                .ConfigureAwait(false);
 
             if (result.IsFailure)
             {
@@ -504,7 +518,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// <param name="metadataProvider">The metadata provider.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The provider metadata result.</returns>
-    private static async Task<Result<Application.Cgm.Providers.Metadata.CgmProviderMetadata>> GetMetadataSafelyAsync(
+    private static async Task<Result<CgmProviderMetadata>> GetMetadataSafelyAsync(
         ICgmMetadataProvider metadataProvider,
         CancellationToken cancellationToken)
     {
@@ -520,8 +534,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
-            return Result<Application.Cgm.Providers.Metadata.CgmProviderMetadata>.Failure(
-                new Application.Common.Errors.Error(
+            return Result<CgmProviderMetadata>.Failure(
+                new Error(
                     "Settings.ProviderMetadataUnavailable",
                     exception.Message));
         }
@@ -629,16 +643,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Builds selectable provider options from the CGM provider enum.
+    /// Builds selectable provider options from the supported CGM provider kinds.
     /// </summary>
     /// <param name="availableProviderKinds">The available provider kinds.</param>
     /// <returns>The selectable provider options.</returns>
     private static IReadOnlyList<ProviderSelectionItem> BuildProviderOptions(
         IReadOnlySet<CgmProviderKind> availableProviderKinds)
     {
-        return Enum
-            .GetValues<CgmProviderKind>()
-            .Where(kind => kind != CgmProviderKind.Unknown)
+        return SupportedProviderKinds
             .Select(kind => BuildProviderOption(kind, availableProviderKinds))
             .ToArray();
     }
@@ -730,18 +742,18 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private Result SelectAvailableDexcomProvider()
     {
         var dexcomProvider = FindAvailableDexcomProviderOption();
-    
+
         if (dexcomProvider is null)
         {
             return Result.Failure(
-                new Application.Common.Errors.Error(
+                new Error(
                     "Dexcom.ProviderUnavailable",
                     "Dexcom is connected but no Dexcom provider is available in the current desktop runtime."));
         }
-    
+
         SelectedLiveProvider = dexcomProvider;
         SelectedHistoricalProvider = dexcomProvider;
-    
+
         return Result.Success();
     }
 
