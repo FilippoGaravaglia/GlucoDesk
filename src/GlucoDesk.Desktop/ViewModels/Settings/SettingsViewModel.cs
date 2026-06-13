@@ -16,6 +16,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
+using GlucoDesk.Desktop.ViewModels.Settings.Providers;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -86,6 +87,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _canTestNightscoutConnection;
 
+    [ObservableProperty]
+    private bool _canUseNightscoutProvider;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
@@ -126,6 +130,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         SelectedPreferredUnit = PreferredUnitOptions[0];
 
         ProviderAvailabilityStatusText = BuildProviderAvailabilityStatusText(ProviderOptions);
+        UpdateNightscoutProviderActionAvailability();
     }
 
     /// <summary>
@@ -244,6 +249,105 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Selects Nightscout as both live and historical provider and saves the settings.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task UseNightscoutAsActiveProviderAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        HasError = false;
+        ErrorMessage = null;
+        StatusMessage = "Selecting Nightscout provider...";
+
+        try
+        {
+            await RefreshProviderAvailabilityAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var providerSelectionResult = SelectAvailableNightscoutProvider();
+
+            if (providerSelectionResult.IsFailure)
+            {
+                ApplyFailure(providerSelectionResult, "Unable to select Nightscout provider");
+                return;
+            }
+
+            var settings = CreateSettingsFromForm(out var validationMessage);
+
+            if (settings is null)
+            {
+                ApplyValidationFailure(validationMessage ?? "Nightscout provider selection is invalid.");
+                return;
+            }
+
+            var saveResult = await _settingsService
+                .SaveSettingsAsync(settings, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (saveResult.IsFailure)
+            {
+                ApplyFailure(saveResult, "Unable to save Nightscout provider settings");
+                return;
+            }
+
+            RefreshNightscoutConnectionStatus();
+
+            StatusMessage = "Nightscout selected. Dashboard will use Nightscout on next refresh.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Nightscout provider selection cancelled";
+        }
+        catch (Exception exception)
+        {
+            ApplyUnexpectedFailure(exception, "Unexpected error while selecting Nightscout provider");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Updates the availability of the Nightscout activation action.
+    /// </summary>
+    private void UpdateNightscoutProviderActionAvailability()
+    {
+        CanUseNightscoutProvider = ProviderActivationSelector.CanActivate(
+            ProviderOptions,
+            CgmProviderKind.Nightscout);
+    }
+
+    /// <summary>
+    /// Selects the available Nightscout provider option for both live and historical readings.
+    /// </summary>
+    /// <returns>The operation result.</returns>
+    private Result SelectAvailableNightscoutProvider()
+    {
+        var nightscoutProviderResult = ProviderActivationSelector.SelectAvailableProvider(
+            ProviderOptions,
+            CgmProviderKind.Nightscout,
+            "Nightscout.ProviderUnavailable",
+            "Nightscout is not available in the current desktop runtime.");
+    
+        if (nightscoutProviderResult.IsFailure)
+        {
+            return Result.Failure(nightscoutProviderResult.Error);
+        }
+    
+        SelectedLiveProvider = nightscoutProviderResult.Value;
+        SelectedHistoricalProvider = nightscoutProviderResult.Value;
+    
+        return Result.Success();
+    }
 
     /// <summary>
     /// Tests the configured Nightscout desktop connection.
@@ -416,6 +520,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         ProviderOptions = BuildProviderOptions(availableProviders);
         ProviderAvailabilityStatusText = BuildProviderAvailabilityStatusText(ProviderOptions);
+        UpdateNightscoutProviderActionAvailability();
     }
 
     /// <summary>

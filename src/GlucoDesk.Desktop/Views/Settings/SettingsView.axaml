@@ -53,6 +53,11 @@
                     Command="{Binding TestNightscoutConnectionCommand}"
                     IsVisible="{Binding CanTestNightscoutConnection}"
                     HorizontalAlignment="Left" />
+                
+            <Button Content="Use Nightscout as active provider"
+                    Command="{Binding UseNightscoutAsActiveProviderCommand}"
+                    IsVisible="{Binding CanUseNightscoutProvider}"
+                    HorizontalAlignment="Left" />
           </StackPanel>
 
             <Button Content="Connect Dexcom"
