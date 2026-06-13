@@ -15,6 +15,7 @@ using GlucoDesk.Desktop.ViewModels.Settings.Selections;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -35,6 +36,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private readonly IReadOnlyCollection<ICgmMetadataProvider> _metadataProviders;
     private readonly IReadOnlyCollection<IDexcomConnectionStatusService> _dexcomConnectionStatusServices;
     private readonly IReadOnlyCollection<IDexcomDesktopConnectionService> _dexcomDesktopConnectionServices;
+    private readonly IReadOnlyCollection<INightscoutDesktopConnectionService> _nightscoutDesktopConnectionServices;
 
     [ObservableProperty]
     private IReadOnlyList<ProviderSelectionItem> _providerOptions = [];
@@ -78,6 +80,12 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _canConnectDexcom;
 
+    [ObservableProperty]
+    private string _nightscoutConnectionStatusText = "Nightscout: status not checked";
+    
+    [ObservableProperty]
+    private bool _canTestNightscoutConnection;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
@@ -85,11 +93,13 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// <param name="metadataProviders">The registered CGM metadata providers.</param>
     /// <param name="dexcomConnectionStatusServices">The registered Dexcom connection status services.</param>
     /// <param name="dexcomDesktopConnectionServices">The registered desktop Dexcom connection services.</param>
+    /// <param name="nightscoutDesktopConnectionServices">The registered desktop Nightscout connection services.</param>
     public SettingsViewModel(
         IApplicationSettingsService settingsService,
         IEnumerable<ICgmMetadataProvider>? metadataProviders = null,
         IEnumerable<IDexcomConnectionStatusService>? dexcomConnectionStatusServices = null,
-        IEnumerable<IDexcomDesktopConnectionService>? dexcomDesktopConnectionServices = null)
+        IEnumerable<IDexcomDesktopConnectionService>? dexcomDesktopConnectionServices = null,
+        IEnumerable<INightscoutDesktopConnectionService>? nightscoutDesktopConnectionServices = null)
     {
         ArgumentNullException.ThrowIfNull(settingsService);
 
@@ -97,8 +107,11 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _metadataProviders = metadataProviders?.ToArray() ?? [];
         _dexcomConnectionStatusServices = dexcomConnectionStatusServices?.ToArray() ?? [];
         _dexcomDesktopConnectionServices = dexcomDesktopConnectionServices?.ToArray() ?? [];
+        _nightscoutDesktopConnectionServices = nightscoutDesktopConnectionServices?.ToArray() ?? [];
 
         CanConnectDexcom = _dexcomDesktopConnectionServices.Count > 0;
+        CanTestNightscoutConnection = _nightscoutDesktopConnectionServices.Count > 0;
+        NightscoutConnectionStatusText = BuildInitialNightscoutConnectionStatusText();
 
         ProviderOptions = BuildProviderOptions(
             new HashSet<CgmProviderKind>
@@ -144,6 +157,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
             await RefreshDexcomConnectionStatusAsync(cancellationToken)
                 .ConfigureAwait(false);
+
+            RefreshNightscoutConnectionStatus();
 
             var result = await _settingsService
                 .GetSettingsAsync(cancellationToken)
@@ -229,6 +244,81 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Tests the configured Nightscout desktop connection.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task TestNightscoutConnectionAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
+
+        if (connectionService is null)
+        {
+            ApplyValidationFailure("Nightscout is not configured in the current desktop runtime.");
+            return;
+        }
+
+        IsBusy = true;
+        HasError = false;
+        ErrorMessage = null;
+        StatusMessage = "Testing Nightscout connection...";
+
+        try
+        {
+            var status = await connectionService
+                .TestConnectionAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            NightscoutConnectionStatusText = status.Message;
+            StatusMessage = status.IsConnected
+                ? "Nightscout connection test succeeded."
+                : "Nightscout connection test completed with warnings.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Nightscout connection test cancelled";
+        }
+        catch (Exception exception)
+        {
+            ApplyUnexpectedFailure(exception, "Unexpected error while testing Nightscout connection");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the Nightscout configuration status text.
+    /// </summary>
+    private void RefreshNightscoutConnectionStatus()
+    {
+        var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
+
+        NightscoutConnectionStatusText = connectionService is null
+            ? "Nightscout: not configured in this desktop runtime."
+            : connectionService.GetConfigurationStatus().Message;
+    }
+
+    /// <summary>
+    /// Builds the initial Nightscout connection status text.
+    /// </summary>
+    /// <returns>The initial Nightscout connection status text.</returns>
+    private string BuildInitialNightscoutConnectionStatusText()
+    {
+        var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
+
+        return connectionService is null
+            ? "Nightscout: not configured in this desktop runtime."
+            : connectionService.GetConfigurationStatus().Message;
+    }
 
     /// <summary>
     /// Starts the Dexcom desktop connection flow and selects Dexcom as the active provider when the connection succeeds.

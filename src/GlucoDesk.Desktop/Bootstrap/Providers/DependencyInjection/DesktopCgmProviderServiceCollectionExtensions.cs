@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.DependencyInjection;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 using GlucoDesk.Infrastructure.Cgm.Nightscout.DependencyInjection;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
 
 namespace GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
 
@@ -52,9 +53,11 @@ public static class DesktopCgmProviderServiceCollectionExtensions
         if (effectiveNightscoutOptions.IsEnabled)
         {
             services.TryAddSingleton(effectiveNightscoutOptions);
-
+        
             services.AddNightscoutCgmProvider(
                 effectiveNightscoutOptions.ToNightscoutOptions());
+        
+            services.AddHttpClient<INightscoutDesktopConnectionService, NightscoutDesktopConnectionService>();
         }
 
         return services;

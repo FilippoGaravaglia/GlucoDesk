@@ -44,6 +44,17 @@
                         Opacity="0.75"
                         FontWeight="SemiBold" />
 
+            <StackPanel Spacing="8">
+            <TextBlock Text="{Binding NightscoutConnectionStatusText}"
+                       TextWrapping="Wrap"
+                       Opacity="0.75" />
+
+            <Button Content="Test Nightscout connection"
+                    Command="{Binding TestNightscoutConnectionCommand}"
+                    IsVisible="{Binding CanTestNightscoutConnection}"
+                    HorizontalAlignment="Left" />
+          </StackPanel>
+
             <Button Content="Connect Dexcom"
                         Command="{Binding ConnectDexcomCommand}"
                         IsVisible="{Binding CanConnectDexcom}"
