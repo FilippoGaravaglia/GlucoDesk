@@ -95,6 +95,39 @@
                       </StackPanel>
         </Border>
 
+        <Border Padding="16"
+        CornerRadius="14"
+        BorderThickness="1"
+        BorderBrush="#334155"
+        Background="#0F172A">
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0"
+                    Text="{Binding DataHealthTitle}"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center" />
+
+          <Border Grid.Column="1"
+                  Padding="10,4"
+                  CornerRadius="999"
+                  Background="#1F2937"
+                  BorderThickness="1"
+                  BorderBrush="#475569"
+                  VerticalAlignment="Center">
+            <TextBlock Text="{Binding DataHealthBadgeText}"
+                      FontSize="12"
+                      FontWeight="SemiBold" />
+          </Border>
+        </Grid>
+
+        <TextBlock Text="{Binding DataHealthMessage}"
+                  TextWrapping="Wrap"
+                  Opacity="0.72"
+                  FontSize="13" />
+      </StackPanel>
+      </Border>
+
         <Grid ColumnDefinitions="*,*"
               RowDefinitions="Auto,Auto,Auto"
               ColumnSpacing="24"

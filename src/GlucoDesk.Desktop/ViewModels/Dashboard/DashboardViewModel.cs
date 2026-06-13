@@ -16,6 +16,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
+using GlucoDesk.Desktop.ViewModels.Dashboard.DataHealth;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -104,6 +105,24 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty]
     private bool _isMockProviderActive = true;
+
+    [ObservableProperty]
+    private string _dataHealthTitle = "Demo data active";
+
+    [ObservableProperty]
+    private string _dataHealthMessage = "The dashboard is currently showing Mock provider data.";
+
+    [ObservableProperty]
+    private string _dataHealthBadgeText = "Demo";
+
+    [ObservableProperty]
+    private bool _isDataStale;
+
+    [ObservableProperty]
+    private bool _isDataUnavailable;
+
+    [ObservableProperty]
+    private bool _isShowingRealProviderData;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
@@ -230,6 +249,52 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     #region Helpers
 
     /// <summary>
+    /// Applies the data health presentation to the dashboard.
+    /// </summary>
+    /// <param name="providerKind">The active provider kind.</param>
+    /// <param name="freshness">The glucose data freshness.</param>
+    /// <param name="readingCount">The number of recent readings.</param>
+    private void ApplyDataHealth(
+        CgmProviderKind providerKind,
+        GlucoseDataFreshness freshness,
+        int readingCount)
+    {
+        var presentation = DashboardDataHealthPresenter.Present(
+            providerKind,
+            freshness,
+            readingCount,
+            false,
+            null);
+
+        ApplyDataHealthPresentation(presentation);
+    }
+
+    /// <summary>
+    /// Applies the provider error data health presentation to the dashboard.
+    /// </summary>
+    /// <param name="providerErrorMessage">The provider error message.</param>
+    private void ApplyProviderErrorDataHealth(string? providerErrorMessage)
+    {
+        var presentation = DashboardDataHealthPresenter.PresentProviderError(providerErrorMessage);
+    
+        ApplyDataHealthPresentation(presentation);
+    }
+
+    /// <summary>
+    /// Applies a data health presentation to the dashboard.
+    /// </summary>
+    /// <param name="presentation">The data health presentation.</param>
+    private void ApplyDataHealthPresentation(DashboardDataHealthPresentation presentation)
+    {
+        DataHealthTitle = presentation.Title;
+        DataHealthMessage = presentation.Message;
+        DataHealthBadgeText = presentation.BadgeText;
+        IsDataStale = presentation.IsDataStale;
+        IsDataUnavailable = presentation.IsDataUnavailable;
+        IsShowingRealProviderData = presentation.IsShowingRealProviderData;
+    }
+
+    /// <summary>
     /// Handles application settings change notifications.
     /// </summary>
     /// <param name="sender">The event sender.</param>
@@ -291,6 +356,11 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         ApplyProviderStatus(
             snapshot.Metadata.ProviderKind,
             snapshot.LatestReading?.Freshness ?? snapshot.Metadata.ExpectedFreshness);
+
+        ApplyDataHealth(
+            snapshot.Metadata.ProviderKind,
+            snapshot.LatestReading?.Freshness ?? snapshot.Metadata.ExpectedFreshness,
+            snapshot.RecentReadings.Count);
 
         TrendText = snapshot.LatestReading is null
             ? "No trend"
@@ -431,6 +501,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         ErrorMessage = presentation.FullMessage;
         StatusText = presentation.StatusText;
         DataSourceStatusText = presentation.Message;
+
+        ApplyProviderErrorDataHealth(DataSourceStatusText);
     }
 
     /// <summary>
@@ -443,6 +515,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         ErrorMessage = exception.Message;
         StatusText = "Unexpected error";
         DataSourceStatusText = "An unexpected dashboard error occurred.";
+
+        ApplyProviderErrorDataHealth("An unexpected dashboard error occurred.");
     }
 
     /// <summary>
