@@ -15,6 +15,7 @@ using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -88,6 +89,21 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty]
     private string _dataSourceStatusText = "Data source not checked";
+
+    [ObservableProperty]
+    private string _providerStatusTitle = "Using Mock data";
+
+    [ObservableProperty]
+    private string _providerStatusMessage = "Mock is the active live provider. Configure and select Dexcom or Nightscout in Settings to use real glucose data.";
+
+    [ObservableProperty]
+    private string _providerStatusBadgeText = "Mock";
+
+    [ObservableProperty]
+    private bool _isRealProviderActive;
+
+    [ObservableProperty]
+    private bool _isMockProviderActive = true;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
@@ -272,6 +288,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         DataSourceStatusText = BuildDataSourceStatusText(snapshot);
         LatestValueText = snapshot.LatestReading?.Value.ToString() ?? "—";
 
+        ApplyProviderStatus(
+            snapshot.Metadata.ProviderKind,
+            snapshot.LatestReading?.Freshness ?? snapshot.Metadata.ExpectedFreshness);
+
         TrendText = snapshot.LatestReading is null
             ? "No trend"
             : FormatTrend(snapshot.LatestReading.Trend);
@@ -291,6 +311,24 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         RecentReadingsCountText = $"{snapshot.RecentReadings.Count} readings";
 
         UpdateChart(snapshot.RecentReadings, targetRange);
+    }
+
+    /// <summary>
+    /// Applies the provider status presentation to the dashboard.
+    /// </summary>
+    /// <param name="providerKind">The active provider kind.</param>
+    /// <param name="freshness">The glucose data freshness.</param>
+    private void ApplyProviderStatus(
+        CgmProviderKind providerKind,
+        GlucoseDataFreshness freshness)
+    {
+        var presentation = DashboardProviderStatusPresenter.Present(providerKind, freshness);
+    
+        ProviderStatusTitle = presentation.Title;
+        ProviderStatusMessage = presentation.Message;
+        ProviderStatusBadgeText = presentation.BadgeText;
+        IsRealProviderActive = presentation.IsRealProvider;
+        IsMockProviderActive = presentation.IsMockProvider;
     }
 
     /// <summary>

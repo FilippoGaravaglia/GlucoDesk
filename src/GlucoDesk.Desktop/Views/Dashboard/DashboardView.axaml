@@ -49,18 +49,51 @@
             <TextBlock Text="{Binding SettingsStatusText}"
                        Opacity="0.55"
                        TextAlignment="Right" />
-            
+
             <TextBlock Text="{Binding HistoryStatusText}"
-                        Opacity="0.55"
-                        TextAlignment="Right" />
+                       Opacity="0.55"
+                       TextAlignment="Right" />
 
             <TextBlock Text="{Binding DataSourceStatusText}"
-                        TextWrapping="Wrap"
-                        Opacity="0.65"
-                        TextAlignment="Right"
-                        MaxWidth="360" />
+                       TextWrapping="Wrap"
+                       Opacity="0.65"
+                       TextAlignment="Right"
+                       MaxWidth="360" />
           </StackPanel>
         </Grid>
+
+        <Border Padding="16"
+                      CornerRadius="14"
+                      BorderThickness="1"
+                      BorderBrush="#334155"
+                      Background="#111827">
+                      <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Grid.Column="0"
+                                     Text="{Binding ProviderStatusTitle}"
+                                     FontSize="16"
+                                     FontWeight="SemiBold"
+                                     VerticalAlignment="Center" />
+
+                          <Border Grid.Column="1"
+                                  Padding="10,4"
+                                  CornerRadius="999"
+                                  Background="#1F2937"
+                                  BorderThickness="1"
+                                  BorderBrush="#475569"
+                                  VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ProviderStatusBadgeText}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold" />
+                          </Border>
+                        </Grid>
+
+                        <TextBlock Text="{Binding ProviderStatusMessage}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.72"
+                                   FontSize="13" />
+                      </StackPanel>
+        </Border>
 
         <Grid ColumnDefinitions="*,*"
               RowDefinitions="Auto,Auto,Auto"
@@ -156,7 +189,12 @@
                    TextWrapping="Wrap"
                    FontWeight="SemiBold" />
 
-        <TextBlock Text="Demo data provided by the Mock CGM provider. GlucoDesk is not a medical device and must not be used for treatment decisions."
+        <TextBlock Text="Demo data is currently provided by the Mock CGM provider. Configure and select Dexcom or Nightscout in Settings to use real provider data."
+                   IsVisible="{Binding IsMockProviderActive}"
+                   TextWrapping="Wrap"
+                   Opacity="0.65" />
+
+        <TextBlock Text="GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications."
                    TextWrapping="Wrap"
                    Opacity="0.65" />
       </StackPanel>
