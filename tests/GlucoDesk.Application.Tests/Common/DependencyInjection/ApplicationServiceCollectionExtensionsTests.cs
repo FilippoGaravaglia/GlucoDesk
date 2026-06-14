@@ -124,6 +124,21 @@ public sealed class ApplicationServiceCollectionExtensionsTests
     private sealed class FakeGlucoseHistoryStore : IGlucoseHistoryStore
     {
         /// <inheritdoc />
+        public Task<Result<GlucoseHistorySaveResult>> SaveReadingsWithSummaryAsync(
+            IReadOnlyCollection<GlucoseReading> readings,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(
+                Result<GlucoseHistorySaveResult>.Success(
+                    new GlucoseHistorySaveResult(
+                        CgmProviderKind.Unknown,
+                        readings.Count,
+                        readings.Count,
+                        0,
+                        readings.Count)));
+        }
+
+        /// <inheritdoc />
         public Task<Result> SaveReadingsAsync(
             IReadOnlyCollection<GlucoseReading> readings,
             CancellationToken cancellationToken)

@@ -83,6 +83,21 @@ public sealed class GlucoseHistoryAnalyticsServiceTests
     {
         private readonly Result<GlucoseHistoryResult> _result;
 
+        /// <inheritdoc />
+        public Task<Result<GlucoseHistorySaveResult>> SaveReadingsWithSummaryAsync(
+            IReadOnlyCollection<GlucoseReading> readings,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(
+                Result<GlucoseHistorySaveResult>.Success(
+                    new GlucoseHistorySaveResult(
+                        CgmProviderKind.Unknown,
+                        readings.Count,
+                        readings.Count,
+                        0,
+                        readings.Count)));
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="FakeGlucoseHistoryService"/> class.
         /// </summary>

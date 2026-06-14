@@ -17,6 +17,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.DataHealth;
+using GlucoDesk.Application.Cgm.History.Results;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -249,6 +250,26 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     #region Helpers
 
     /// <summary>
+    /// Builds the dashboard history status text from a detailed history save result.
+    /// </summary>
+    /// <param name="result">The history save result.</param>
+    /// <returns>The dashboard history status text.</returns>
+    private static string BuildHistoryStatusText(GlucoseHistorySaveResult result)
+    {
+        if (result.IncomingReadingsCount == 0)
+        {
+            return $"History updated: no incoming reading(s), {result.StoredReadingsCount} stored.";
+        }
+    
+        if (result.AddedReadingsCount == 0)
+        {
+            return $"History updated: 0 new reading(s), {result.DuplicateReadingsCount} duplicate(s), {result.StoredReadingsCount} stored.";
+        }
+    
+        return $"History updated: {result.AddedReadingsCount} new reading(s), {result.DuplicateReadingsCount} duplicate(s), {result.StoredReadingsCount} stored.";
+    }
+
+    /// <summary>
     /// Applies the data health presentation to the dashboard.
     /// </summary>
     /// <param name="providerKind">The active provider kind.</param>
@@ -446,10 +467,11 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         }
 
         var result = await _glucoseHistoryService
-            .SaveReadingsAsync(readingsToPersist, cancellationToken);
+            .SaveReadingsWithSummaryAsync(readingsToPersist, cancellationToken)
+            .ConfigureAwait(false);
 
         HistoryStatusText = result.IsSuccess
-            ? $"History updated: {readingsToPersist.Count} reading(s) cached"
+            ? BuildHistoryStatusText(result.Value)
             : $"History update failed · {result.Error.Code}";
     }
 

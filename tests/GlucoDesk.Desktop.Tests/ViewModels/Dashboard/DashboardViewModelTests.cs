@@ -161,14 +161,18 @@ public sealed class DashboardViewModelTests
         await viewModel.RefreshCommand.ExecuteAsync(null);
 
         Assert.Equal(3, historyService.SavedReadings.Count);
-        Assert.Equal("History updated: 3 reading(s) cached", viewModel.HistoryStatusText);
+        Assert.Equal("History updated: 3 new reading(s), 0 duplicate(s), 3 stored.", viewModel.HistoryStatusText);
     }
 
     [Fact]
     public async Task RefreshCommand_ShouldNotFailDashboard_WhenHistoryPersistenceFails()
     {
-        var historyService = new FakeGlucoseHistoryService(
-            Result.Failure(new Error("History.SaveFailed", "Unable to save history.")));
+        var historyService = new FakeGlucoseHistoryService
+        {
+            SaveReadingsWithSummaryResult =
+                Result<GlucoseHistorySaveResult>.Failure(
+                    new Error("History.SaveFailed", "Unable to save glucose history."))
+        };
 
         var viewModel = new DashboardViewModel(
             new FakeGlucoseDataService(),
@@ -325,7 +329,55 @@ public sealed class DashboardViewModelTests
     private sealed class FakeGlucoseHistoryService : IGlucoseHistoryService
     {
         private readonly Result _saveResult;
+
+        /// <summary>
+        /// Gets the readings saved through the detailed history save method.
+        /// </summary>
+        public IReadOnlyCollection<GlucoseReading> SavedReadingsWithSummary { get; private set; } = [];
+
+        /// <summary>
+        /// Gets or sets the detailed history save result returned by the fake service.
+        /// </summary>
+        public Result<GlucoseHistorySaveResult>? SaveReadingsWithSummaryResult { get; set; }
+
+        /// <summary>
+        /// Gets the saved readings.
+        /// </summary>
+        public IReadOnlyCollection<GlucoseReading> SavedReadings { get; private set; } = [];
+        
+        /// <summary>
+        /// Gets or sets the save result returned by the fake service.
+        /// </summary>
+        public Result SaveResult { get; set; } = Result.Success();
     
+        /// <inheritdoc />
+        public Task<Result<GlucoseHistorySaveResult>> SaveReadingsWithSummaryAsync(
+            IReadOnlyCollection<GlucoseReading> readings,
+            CancellationToken cancellationToken)
+        {
+            SavedReadings = readings;
+            SavedReadingsWithSummary = readings;
+
+            if (SaveReadingsWithSummaryResult is not null)
+            {
+                return Task.FromResult(SaveReadingsWithSummaryResult);
+            }
+
+            if (SaveResult.IsFailure)
+            {
+                return Task.FromResult(Result<GlucoseHistorySaveResult>.Failure(SaveResult.Error));
+            }
+
+            var result = new GlucoseHistorySaveResult(
+                readings.FirstOrDefault()?.Provider ?? CgmProviderKind.Unknown,
+                readings.Count,
+                readings.Count,
+                0,
+                readings.Count);
+
+            return Task.FromResult(Result<GlucoseHistorySaveResult>.Success(result));
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="FakeGlucoseHistoryService"/> class.
         /// </summary>
@@ -334,20 +386,15 @@ public sealed class DashboardViewModelTests
         {
             _saveResult = saveResult ?? Result.Success();
         }
-    
-        /// <summary>
-        /// Gets the saved glucose readings.
-        /// </summary>
-        public IReadOnlyCollection<GlucoseReading> SavedReadings { get; private set; } = [];
-    
+       
         /// <inheritdoc />
         public Task<Result> SaveReadingsAsync(
             IReadOnlyCollection<GlucoseReading> readings,
             CancellationToken cancellationToken)
         {
             SavedReadings = readings;
-    
-            return Task.FromResult(_saveResult);
+
+            return Task.FromResult(SaveResult);
         }
     
         /// <inheritdoc />
