@@ -10,46 +10,84 @@
       <Grid RowDefinitions="Auto,*"
             Margin="28"
             RowSpacing="24"
-            MaxWidth="1480"
+            MaxWidth="1520"
             HorizontalAlignment="Stretch">
 
-        <StackPanel Grid.Row="0"
-                    Spacing="8">
-          <TextBlock Text="GlucoDesk"
-                     Classes="page-title" />
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,Auto"
+              ColumnSpacing="24">
+          <StackPanel Spacing="8">
+            <TextBlock Text="GlucoDesk"
+                       Classes="page-title" />
 
-          <TextBlock Text="Local-first CGM desktop companion"
-                     Classes="secondary"
-                     FontSize="16" />
-        </StackPanel>
+            <TextBlock Text="Real-time glucose awareness for your desktop workflow"
+                       Classes="secondary"
+                       FontSize="16" />
+          </StackPanel>
+
+          <Border Grid.Column="1"
+                  Classes="badge-accent"
+                  VerticalAlignment="Top">
+            <TextBlock Text="Desktop companion"
+                       FontSize="12"
+                       FontWeight="SemiBold" />
+          </Border>
+        </Grid>
 
         <StackPanel Grid.Row="1"
                     Spacing="20">
 
-          <Border Classes="surface-card-strong">
+          <Border Classes="hero-card">
             <Grid ColumnDefinitions="*,Auto"
-                  ColumnSpacing="24">
-              <StackPanel Spacing="6"
-                          MinWidth="320">
-                <TextBlock Text="Current glucose"
-                           Classes="metric-label" />
+                  ColumnSpacing="28">
 
-                <TextBlock Text="{Binding LatestValueText}"
-                           FontSize="56"
-                           FontWeight="Bold" />
+              <StackPanel Spacing="18">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="CURRENT GLUCOSE"
+                             Classes="eyebrow" />
 
-                <TextBlock Text="{Binding DataSourceStatusText}"
-                           TextWrapping="Wrap"
-                           Classes="muted"
-                           MaxWidth="680" />
+                  <TextBlock Text="{Binding LatestValueText}"
+                             Classes="hero-value" />
+
+                  <TextBlock Text="{Binding DataSourceStatusText}"
+                             Classes="secondary"
+                             FontSize="14"
+                             TextWrapping="Wrap"
+                             MaxWidth="720" />
+                </StackPanel>
+
+                <WrapPanel Orientation="Horizontal">
+                  <Border Classes="badge-accent"
+                          Margin="0,0,10,10">
+                    <TextBlock Text="{Binding StatusText}"
+                               FontSize="12"
+                               FontWeight="SemiBold" />
+                  </Border>
+
+                  <Border Classes="badge"
+                          Margin="0,0,10,10">
+                    <TextBlock Text="{Binding TrendText}"
+                               FontSize="12"
+                               FontWeight="SemiBold" />
+                  </Border>
+
+                  <Border Classes="badge"
+                          Margin="0,0,10,10">
+                    <TextBlock Text="{Binding FreshnessText}"
+                               FontSize="12"
+                               FontWeight="SemiBold" />
+                  </Border>
+                </WrapPanel>
               </StackPanel>
 
               <StackPanel Grid.Column="1"
-                          Spacing="8"
+                          Spacing="10"
                           VerticalAlignment="Top"
-                          HorizontalAlignment="Right">
+                          HorizontalAlignment="Right"
+                          MinWidth="280">
                 <Button Content="Refresh now"
-                        Command="{Binding RefreshCommand}" />
+                        Command="{Binding RefreshCommand}"
+                        HorizontalAlignment="Right" />
 
                 <TextBlock Text="{Binding AutoRefreshStatusText}"
                            Classes="muted"
@@ -63,200 +101,194 @@
                            Classes="muted"
                            TextAlignment="Right"
                            TextWrapping="Wrap"
-                           MaxWidth="460" />
+                           MaxWidth="420" />
               </StackPanel>
             </Grid>
           </Border>
 
-          <Border Classes="surface-card">
-            <StackPanel Spacing="8">
-              <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           Text="{Binding ProviderStatusTitle}"
-                           Classes="section-title"
-                           VerticalAlignment="Center" />
+          <Grid ColumnDefinitions="*,*"
+                ColumnSpacing="20">
 
-                <Border Grid.Column="1"
-                        Classes="badge"
-                        VerticalAlignment="Center">
-                  <TextBlock Text="{Binding ProviderStatusBadgeText}"
-                             FontSize="12"
-                             FontWeight="SemiBold" />
-                </Border>
-              </Grid>
+            <Border Grid.Column="0"
+                    Classes="surface-card">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Grid.Column="0"
+                             Text="{Binding ProviderStatusTitle}"
+                             Classes="section-title"
+                             VerticalAlignment="Center" />
 
-              <TextBlock Text="{Binding ProviderStatusMessage}"
-                         TextWrapping="Wrap"
-                         Classes="secondary"
-                         FontSize="13" />
-            </StackPanel>
-          </Border>
+                  <Border Grid.Column="1"
+                          Classes="badge"
+                          VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ProviderStatusBadgeText}"
+                               FontSize="12"
+                               FontWeight="SemiBold" />
+                  </Border>
+                </Grid>
 
-          <Border Classes="surface-card">
-            <StackPanel Spacing="8">
-              <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           Text="{Binding DataHealthTitle}"
-                           Classes="section-title"
-                           VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ProviderStatusMessage}"
+                           TextWrapping="Wrap"
+                           Classes="secondary"
+                           FontSize="13" />
+              </StackPanel>
+            </Border>
 
-                <Border Grid.Column="1"
-                        Classes="badge"
-                        VerticalAlignment="Center">
-                  <TextBlock Text="{Binding DataHealthBadgeText}"
-                             FontSize="12"
-                             FontWeight="SemiBold" />
-                </Border>
-              </Grid>
+            <Border Grid.Column="1"
+                    Classes="surface-card">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Grid.Column="0"
+                             Text="{Binding DataHealthTitle}"
+                             Classes="section-title"
+                             VerticalAlignment="Center" />
 
-              <TextBlock Text="{Binding DataHealthMessage}"
-                         TextWrapping="Wrap"
-                         Classes="secondary"
-                         FontSize="13" />
-            </StackPanel>
-          </Border>
+                  <Border Grid.Column="1"
+                          Classes="badge"
+                          VerticalAlignment="Center">
+                    <TextBlock Text="{Binding DataHealthBadgeText}"
+                               FontSize="12"
+                               FontWeight="SemiBold" />
+                  </Border>
+                </Grid>
 
-          <Border Classes="surface-card">
-            <StackPanel Spacing="14">
-              <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           Text="Statistics"
-                           Classes="section-title"
-                           VerticalAlignment="Center" />
+                <TextBlock Text="{Binding DataHealthMessage}"
+                           TextWrapping="Wrap"
+                           Classes="secondary"
+                           FontSize="13" />
+              </StackPanel>
+            </Border>
+          </Grid>
 
-                <Border Grid.Column="1"
-                        Classes="badge"
-                        VerticalAlignment="Center">
-                  <TextBlock Text="{Binding StatisticsReadingsAnalyzedText}"
-                             FontSize="12"
-                             FontWeight="SemiBold" />
-                </Border>
-              </Grid>
+          <Grid ColumnDefinitions="1.05*,0.95*"
+                ColumnSpacing="20">
 
-              <TextBlock Text="{Binding StatisticsStatusText}"
-                         TextWrapping="Wrap"
-                         Classes="secondary"
-                         FontSize="13" />
-
-              <WrapPanel Orientation="Horizontal">
-                <Border Classes="metric-card"
-                        Margin="0,0,12,12">
+            <Border Grid.Column="0"
+                    Classes="surface-card-strong">
+              <StackPanel Spacing="16">
+                <Grid ColumnDefinitions="*,Auto">
                   <StackPanel Spacing="4">
-                    <TextBlock Text="Average"
-                               Classes="metric-label" />
-                    <TextBlock Text="{Binding StatisticsAverageGlucoseText}"
-                               Classes="metric-value" />
+                    <TextBlock Text="Statistics"
+                               Classes="section-title" />
+
+                    <TextBlock Text="{Binding StatisticsStatusText}"
+                               TextWrapping="Wrap"
+                               Classes="secondary"
+                               FontSize="13" />
                   </StackPanel>
-                </Border>
 
-                <Border Classes="metric-card"
-                        Margin="0,0,12,12">
-                  <StackPanel Spacing="4">
-                    <TextBlock Text="In range"
-                               Classes="metric-label" />
-                    <TextBlock Text="{Binding StatisticsTimeInRangeText}"
-                               Classes="metric-value" />
-                  </StackPanel>
-                </Border>
+                  <Border Grid.Column="1"
+                          Classes="badge-accent"
+                          VerticalAlignment="Top">
+                    <TextBlock Text="{Binding StatisticsReadingsAnalyzedText}"
+                               FontSize="12"
+                               FontWeight="SemiBold" />
+                  </Border>
+                </Grid>
 
-                <Border Classes="metric-card"
-                        Margin="0,0,12,12">
-                  <StackPanel Spacing="4">
-                    <TextBlock Text="Below"
-                               Classes="metric-label" />
-                    <TextBlock Text="{Binding StatisticsBelowRangeText}"
-                               Classes="metric-value" />
-                  </StackPanel>
-                </Border>
+                <WrapPanel Orientation="Horizontal">
+                  <Border Classes="metric-card-large"
+                          Margin="0,0,12,12">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Average"
+                                 Classes="metric-label" />
+                      <TextBlock Text="{Binding StatisticsAverageGlucoseText}"
+                                 Classes="metric-value" />
+                    </StackPanel>
+                  </Border>
 
-                <Border Classes="metric-card"
-                        Margin="0,0,12,12">
-                  <StackPanel Spacing="4">
-                    <TextBlock Text="Above"
-                               Classes="metric-label" />
-                    <TextBlock Text="{Binding StatisticsAboveRangeText}"
-                               Classes="metric-value" />
-                  </StackPanel>
-                </Border>
-              </WrapPanel>
+                  <Border Classes="metric-card-large"
+                          Margin="0,0,12,12">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Time in range"
+                                 Classes="metric-label" />
+                      <TextBlock Text="{Binding StatisticsTimeInRangeText}"
+                                 Classes="metric-value" />
+                    </StackPanel>
+                  </Border>
 
-              <TextBlock Text="{Binding StatisticsTargetRangeText}"
-                         TextWrapping="Wrap"
-                         Classes="muted"
-                         FontSize="12" />
-            </StackPanel>
-          </Border>
+                  <Border Classes="metric-card-large"
+                          Margin="0,0,12,12">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Below range"
+                                 Classes="metric-label" />
+                      <TextBlock Text="{Binding StatisticsBelowRangeText}"
+                                 Classes="metric-value" />
+                    </StackPanel>
+                  </Border>
 
-          <Border Classes="surface-card">
-            <WrapPanel Orientation="Horizontal">
-              <Border Classes="metric-card"
-                      Margin="0,0,12,12">
+                  <Border Classes="metric-card-large"
+                          Margin="0,0,12,12">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Above range"
+                                 Classes="metric-label" />
+                      <TextBlock Text="{Binding StatisticsAboveRangeText}"
+                                 Classes="metric-value" />
+                    </StackPanel>
+                  </Border>
+                </WrapPanel>
+
+                <TextBlock Text="{Binding StatisticsTargetRangeText}"
+                           TextWrapping="Wrap"
+                           Classes="muted"
+                           FontSize="12" />
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Classes="surface-card">
+              <StackPanel Spacing="16">
                 <StackPanel Spacing="4">
-                  <TextBlock Text="Trend"
-                             Classes="metric-label" />
-                  <TextBlock Text="{Binding TrendText}"
-                             Classes="metric-value" />
-                </StackPanel>
-              </Border>
+                  <TextBlock Text="Reading context"
+                             Classes="section-title" />
 
-              <Border Classes="metric-card"
-                      Margin="0,0,12,12">
-                <StackPanel Spacing="4">
-                  <TextBlock Text="Status"
-                             Classes="metric-label" />
-                  <TextBlock Text="{Binding StatusText}"
-                             Classes="metric-value" />
-                </StackPanel>
-              </Border>
-
-              <Border Classes="metric-card"
-                      Margin="0,0,12,12">
-                <StackPanel Spacing="4">
-                  <TextBlock Text="Provider"
-                             Classes="metric-label" />
-                  <TextBlock Text="{Binding ProviderDisplayName}"
-                             Classes="metric-value"
+                  <TextBlock Text="Operational snapshot for the current dashboard refresh."
+                             Classes="secondary"
+                             FontSize="13"
                              TextWrapping="Wrap" />
                 </StackPanel>
-              </Border>
 
-              <Border Classes="metric-card"
-                      Margin="0,0,12,12">
-                <StackPanel Spacing="4">
-                  <TextBlock Text="Freshness"
-                             Classes="metric-label" />
-                  <TextBlock Text="{Binding FreshnessText}"
-                             Classes="metric-value" />
-                </StackPanel>
-              </Border>
+                <WrapPanel Orientation="Horizontal">
+                  <Border Classes="metric-card"
+                          Margin="0,0,12,12">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Provider"
+                                 Classes="metric-label" />
+                      <TextBlock Text="{Binding ProviderDisplayName}"
+                                 Classes="metric-value"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
 
-              <Border Classes="metric-card"
-                      Margin="0,0,12,12">
-                <StackPanel Spacing="4">
-                  <TextBlock Text="Last updated"
-                             Classes="metric-label" />
-                  <TextBlock Text="{Binding LastUpdatedText}"
-                             Classes="metric-value" />
-                </StackPanel>
-              </Border>
+                  <Border Classes="metric-card"
+                          Margin="0,0,12,12">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Recent readings"
+                                 Classes="metric-label" />
+                      <TextBlock Text="{Binding RecentReadingsCountText}"
+                                 Classes="metric-value" />
+                    </StackPanel>
+                  </Border>
 
-              <Border Classes="metric-card"
-                      Margin="0,0,12,12">
-                <StackPanel Spacing="4">
-                  <TextBlock Text="Recent readings"
-                             Classes="metric-label" />
-                  <TextBlock Text="{Binding RecentReadingsCountText}"
-                             Classes="metric-value" />
-                </StackPanel>
-              </Border>
-            </WrapPanel>
-          </Border>
+                  <Border Classes="metric-card"
+                          Margin="0,0,12,12">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Last updated"
+                                 Classes="metric-label" />
+                      <TextBlock Text="{Binding LastUpdatedText}"
+                                 Classes="metric-value" />
+                    </StackPanel>
+                  </Border>
+                </WrapPanel>
+              </StackPanel>
+            </Border>
+          </Grid>
 
-          <Border Classes="surface-card">
-            <StackPanel Spacing="12">
+          <Border Classes="surface-card-strong">
+            <StackPanel Spacing="16">
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="16">
-                <StackPanel Spacing="2">
+                <StackPanel Spacing="4">
                   <TextBlock Text="Recent glucose trend"
                              Classes="section-title" />
 
@@ -264,18 +296,26 @@
                              Classes="muted" />
                 </StackPanel>
 
-                <TextBlock Grid.Column="1"
-                           Text="{Binding ChartSummaryText}"
-                           Classes="muted"
-                           TextAlignment="Right" />
+                <StackPanel Grid.Column="1"
+                            Spacing="4"
+                            HorizontalAlignment="Right">
+                  <TextBlock Text="{Binding ChartSummaryText}"
+                             Classes="secondary"
+                             TextAlignment="Right" />
+
+                  <TextBlock Text="{Binding LatestValueText}"
+                             Classes="muted"
+                             FontSize="12"
+                             TextAlignment="Right" />
+                </StackPanel>
               </Grid>
 
-              <Border Height="220"
-                      CornerRadius="16"
+              <Border Height="260"
+                      CornerRadius="18"
                       BorderThickness="1"
                       BorderBrush="{StaticResource GlucoDesk.Brush.Border}"
-                      Background="#07111F"
-                      Padding="10">
+                      Background="#04101F"
+                      Padding="12">
                 <controls:GlucoseTrendChart
                     Points="{Binding ChartPoints}"
                     TargetLowMgDl="{Binding TargetLowMgDl}"
@@ -293,15 +333,21 @@
 
           <Border Classes="surface-card"
                   IsVisible="{Binding IsMockProviderActive}">
-            <TextBlock Text="Demo data is currently provided by the Mock CGM provider. Configure and select Dexcom or Nightscout in Settings to use real provider data."
-                       TextWrapping="Wrap"
-                       Classes="secondary" />
+            <StackPanel Spacing="6">
+              <TextBlock Text="Demo mode active"
+                         Classes="section-title" />
+
+              <TextBlock Text="Demo data is currently provided by the Mock CGM provider. Configure and select Dexcom or Nightscout in Settings to use real provider data."
+                         TextWrapping="Wrap"
+                         Classes="secondary" />
+            </StackPanel>
           </Border>
 
-          <TextBlock Text="GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications."
-                     TextWrapping="Wrap"
-                     Classes="muted"
-                     Margin="2,0,2,24" />
+          <Border Classes="surface-card">
+            <TextBlock Text="GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications."
+                       TextWrapping="Wrap"
+                       Classes="muted" />
+          </Border>
 
         </StackPanel>
       </Grid>
