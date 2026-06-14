@@ -23,7 +23,7 @@
     </DataTemplate>
   </Window.DataTemplates>
 
-  <Grid ColumnDefinitions="260,*"
+  <Grid ColumnDefinitions="280,*"
         Background="{StaticResource GlucoDesk.Brush.AppBackground}">
 
     <Border Grid.Column="0"
@@ -34,13 +34,18 @@
         <StackPanel Grid.Row="0"
                     Spacing="24">
 
-          <StackPanel Spacing="6">
-            <TextBlock Text="GlucoDesk"
-                       Classes="sidebar-brand" />
+        <StackPanel Spacing="10">
+          <Image Source="avares://GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png"
+                Width="228"
+                Height="64"
+                Stretch="Uniform"
+                HorizontalAlignment="Left"
+                Margin="0,2,0,0" />
 
-            <TextBlock Text="Desktop companion"
-                       Classes="sidebar-subtitle" />
-          </StackPanel>
+          <TextBlock Text="Desktop companion"
+                    Classes="sidebar-subtitle"
+                    Margin="4,0,0,0" />
+        </StackPanel>
 
           <StackPanel Spacing="10">
             <Button Content="Dashboard"
@@ -49,7 +54,7 @@
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
                     Command="{Binding ShowDashboardCommand}" />
-            
+
             <Button Content="Settings"
                     Classes="nav-button"
                     Classes.accent="{Binding IsSettingsSelected}"

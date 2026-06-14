@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AvaloniaResource Include="Assets/**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\GlucoDesk.Core\GlucoDesk.Core.csproj" />
     <ProjectReference Include="..\GlucoDesk.Application\GlucoDesk.Application.csproj" />
     <ProjectReference Include="..\GlucoDesk.Infrastructure\GlucoDesk.Infrastructure.csproj" />
