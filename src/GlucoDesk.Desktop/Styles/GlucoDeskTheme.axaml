@@ -3,33 +3,38 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
   <Styles.Resources>
-    <SolidColorBrush x:Key="GlucoDesk.Brush.AppBackground" Color="#030712" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.AppBackgroundSoft" Color="#050B18" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.AppBackground" Color="#EFF6FF" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.AppBackgroundSoft" Color="#F8FBFF" />
 
-    <SolidColorBrush x:Key="GlucoDesk.Brush.Surface" Color="#0B1220" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceSoft" Color="#0F172A" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceStrong" Color="#111827" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceElevated" Color="#101B2F" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceHero" Color="#0B1630" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.Surface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceSoft" Color="#F1F7FF" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceStrong" Color="#EAF3FF" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceElevated" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceHero" Color="#E0F2FE" />
 
-    <SolidColorBrush x:Key="GlucoDesk.Brush.Border" Color="#26364F" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.BorderStrong" Color="#334155" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.BorderAccent" Color="#155E75" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.Border" Color="#C7DDF5" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.BorderStrong" Color="#93C5FD" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.BorderAccent" Color="#38BDF8" />
 
-    <SolidColorBrush x:Key="GlucoDesk.Brush.TextPrimary" Color="#F8FAFC" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.TextSecondary" Color="#CBD5E1" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.TextMuted" Color="#94A3B8" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.TextPrimary" Color="#0F172A" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.TextSecondary" Color="#334155" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.TextMuted" Color="#64748B" />
 
-    <SolidColorBrush x:Key="GlucoDesk.Brush.Accent" Color="#38BDF8" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.AccentStrong" Color="#0EA5E9" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.AccentSoft" Color="#082F49" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.Accent" Color="#0284C7" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.AccentStrong" Color="#0369A1" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.AccentSoft" Color="#DBEAFE" />
 
-    <SolidColorBrush x:Key="GlucoDesk.Brush.Success" Color="#22C55E" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.SuccessSoft" Color="#052E16" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.Warning" Color="#F59E0B" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.WarningSoft" Color="#451A03" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.Danger" Color="#EF4444" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.DangerSoft" Color="#450A0A" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.Teal" Color="#0D9488" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.TealSoft" Color="#CCFBF1" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.Indigo" Color="#4F46E5" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.IndigoSoft" Color="#E0E7FF" />
+
+    <SolidColorBrush x:Key="GlucoDesk.Brush.Success" Color="#16A34A" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.SuccessSoft" Color="#DCFCE7" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.Warning" Color="#D97706" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.WarningSoft" Color="#FEF3C7" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.Danger" Color="#DC2626" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.DangerSoft" Color="#FEE2E2" />
   </Styles.Resources>
 
   <Style Selector="TextBlock">
@@ -79,29 +84,45 @@
     <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
   </Style>
 
+  <Style Selector="TextBlock.sidebar-brand">
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="FontSize" Value="22" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="TextBlock.sidebar-subtitle">
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextMuted}" />
+    <Setter Property="FontSize" Value="14" />
+  </Style>
+
+  <Style Selector="TextBlock.sidebar-note">
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+
   <Style Selector="Border.page-shell">
     <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AppBackground}" />
   </Style>
 
   <Style Selector="Border.surface-card">
     <Setter Property="Padding" Value="18" />
-    <Setter Property="CornerRadius" Value="20" />
+    <Setter Property="CornerRadius" Value="22" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Border}" />
-    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceSoft}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.Surface}" />
   </Style>
 
   <Style Selector="Border.surface-card-strong">
     <Setter Property="Padding" Value="22" />
-    <Setter Property="CornerRadius" Value="24" />
+    <Setter Property="CornerRadius" Value="26" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderStrong}" />
-    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceStrong}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.Surface}" />
   </Style>
 
   <Style Selector="Border.hero-card">
-    <Setter Property="Padding" Value="24" />
-    <Setter Property="CornerRadius" Value="26" />
+    <Setter Property="Padding" Value="26" />
+    <Setter Property="CornerRadius" Value="30" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
     <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceHero}" />
@@ -109,19 +130,28 @@
 
   <Style Selector="Border.metric-card">
     <Setter Property="Padding" Value="16" />
-    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="CornerRadius" Value="18" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Border}" />
-    <Setter Property="Background" Value="#071426" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceSoft}" />
     <Setter Property="MinWidth" Value="180" />
   </Style>
 
   <Style Selector="Border.metric-card-large">
     <Setter Property="Padding" Value="18" />
-    <Setter Property="CornerRadius" Value="18" />
+    <Setter Property="CornerRadius" Value="20" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Border}" />
-    <Setter Property="Background" Value="#08172B" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceSoft}" />
+    <Setter Property="MinWidth" Value="220" />
+  </Style>
+
+  <Style Selector="Border.metric-card-accent">
+    <Setter Property="Padding" Value="18" />
+    <Setter Property="CornerRadius" Value="20" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentSoft}" />
     <Setter Property="MinWidth" Value="220" />
   </Style>
 
@@ -129,37 +159,164 @@
     <Setter Property="Padding" Value="10,4" />
     <Setter Property="CornerRadius" Value="999" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BorderBrush" Value="#475569" />
-    <Setter Property="Background" Value="#1F2937" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Border}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceSoft}" />
   </Style>
 
   <Style Selector="Border.badge-accent">
     <Setter Property="Padding" Value="10,4" />
     <Setter Property="CornerRadius" Value="999" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BorderBrush" Value="#0284C7" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
     <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentSoft}" />
+  </Style>
+
+  <Style Selector="Border.badge-success">
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="#86EFAC" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SuccessSoft}" />
+  </Style>
+
+  <Style Selector="Border.app-sidebar">
+    <Setter Property="Background" Value="#DFF4FF" />
+    <Setter Property="BorderBrush" Value="#BAE6FD" />
+    <Setter Property="BorderThickness" Value="0,0,1,0" />
+  </Style>
+
+  <Style Selector="Border.sidebar-note-card">
+    <Setter Property="Padding" Value="14" />
+    <Setter Property="CornerRadius" Value="18" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="#BFDBFE" />
+    <Setter Property="Background" Value="#F8FBFF" />
   </Style>
 
   <Style Selector="Button">
     <Setter Property="Padding" Value="14,8" />
     <Setter Property="CornerRadius" Value="12" />
     <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.Accent}" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Button:pointerover">
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+  </Style>
+
+  <Style Selector="Button:disabled">
+    <Setter Property="Background" Value="#E2E8F0" />
+    <Setter Property="Foreground" Value="#64748B" />
+    <Setter Property="BorderBrush" Value="#CBD5E1" />
+  </Style>
+
+  <Style Selector="Button.nav-button">
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="BorderBrush" Value="#BFDBFE" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="14,10" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.nav-button:pointerover">
+    <Setter Property="Background" Value="#DBEAFE" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+    <Setter Property="BorderBrush" Value="#60A5FA" />
+  </Style>
+
+  <Style Selector="Button.nav-button.accent">
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.Accent}" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+  </Style>
+
+  <Style Selector="Button.nav-button.accent:pointerover">
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
   </Style>
 
   <Style Selector="TextBox">
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="12" />
     <Setter Property="Padding" Value="12,8" />
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="TextBox:pointerover">
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
+  </Style>
+
+  <Style Selector="TextBox:focus">
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Accent}" />
   </Style>
 
   <Style Selector="ComboBox">
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="12" />
     <Setter Property="Padding" Value="12,8" />
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="ComboBox:pointerover">
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
+  </Style>
+
+  <Style Selector="ComboBox:focus">
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Accent}" />
+  </Style>
+
+  <Style Selector="ComboBoxItem">
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+    <Setter Property="Padding" Value="12,8" />
+  </Style>
+
+  <Style Selector="ComboBoxItem:pointerover">
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentSoft}" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+  </Style>
+
+  <Style Selector="ComboBoxItem:selected">
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.Accent}" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
   </Style>
 
   <Style Selector="ListBoxItem">
     <Setter Property="CornerRadius" Value="10" />
     <Setter Property="Padding" Value="10,8" />
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+  </Style>
+
+  <Style Selector="ListBoxItem:pointerover">
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentSoft}" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+  </Style>
+
+  <Style Selector="ListBoxItem:selected">
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.Accent}" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
   </Style>
 
 </Styles>

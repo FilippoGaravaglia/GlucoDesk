@@ -12,7 +12,10 @@ namespace GlucoDesk.Desktop.ViewModels.Main;
 public sealed partial class MainWindowViewModel : ViewModelBase
 {
     [ObservableProperty]
-    private bool _isDashboardSelected = true;
+    private ViewModelBase _currentContent = null!;
+
+    [ObservableProperty]
+    private bool _isDashboardSelected;
 
     [ObservableProperty]
     private bool _isSettingsSelected;
@@ -31,7 +34,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
         Dashboard = dashboard;
         Settings = settings;
-        CurrentContent = dashboard;
+
+        SelectSection(Dashboard);
     }
 
     /// <summary>
@@ -43,11 +47,6 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     /// Gets the settings view model.
     /// </summary>
     public SettingsViewModel Settings { get; }
-
-    /// <summary>
-    /// Gets the currently selected content view model.
-    /// </summary>
-    public ViewModelBase CurrentContent { get; private set; }
 
     /// <summary>
     /// Selects the dashboard section.
@@ -70,16 +69,16 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     #region Helpers
 
     /// <summary>
-    /// Selects the active main window section.
+    /// Selects the active main window section and updates navigation state.
     /// </summary>
     /// <param name="selectedContent">The selected content view model.</param>
     private void SelectSection(ViewModelBase selectedContent)
     {
+        ArgumentNullException.ThrowIfNull(selectedContent);
+
         CurrentContent = selectedContent;
         IsDashboardSelected = ReferenceEquals(selectedContent, Dashboard);
         IsSettingsSelected = ReferenceEquals(selectedContent, Settings);
-
-        OnPropertyChanged(nameof(CurrentContent));
     }
 
     #endregion
