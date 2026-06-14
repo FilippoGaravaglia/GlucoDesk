@@ -25,6 +25,35 @@ public sealed class GlucoseHistoryServiceTests
     }
 
     [Fact]
+    public async Task SaveReadingsWithSummaryAsync_ShouldDelegateToStore()
+    {
+        var readings = new[]
+        {
+            CreateReading(new DateTimeOffset(2026, 6, 14, 10, 0, 0, TimeSpan.Zero))
+        };
+
+        var expectedResult = new GlucoseHistorySaveResult(
+            CgmProviderKind.Mock,
+            1,
+            1,
+            0,
+            1);
+
+        var store = new FakeGlucoseHistoryStore
+        {
+            SaveWithSummaryResult = Result<GlucoseHistorySaveResult>.Success(expectedResult)
+        };
+
+        var service = new GlucoseHistoryService(store);
+
+        var result = await service.SaveReadingsWithSummaryAsync(readings, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(expectedResult, result.Value);
+        Assert.Single(store.SavedReadingsWithSummary);
+    }
+
+    [Fact]
     public async Task GetReadingsAsync_ShouldDelegateToStore()
     {
         var store = new FakeGlucoseHistoryStore();
@@ -40,12 +69,32 @@ public sealed class GlucoseHistoryServiceTests
 
     #region Helpers
 
+    /// <summary>
+    /// Fake glucose history store used by application service tests.
+    /// </summary>
     private sealed class FakeGlucoseHistoryStore : IGlucoseHistoryStore
     {
         /// <summary>
         /// Gets the saved readings.
         /// </summary>
         public IReadOnlyCollection<GlucoseReading> SavedReadings { get; private set; } = [];
+
+        /// <summary>
+        /// Gets the readings saved through the detailed summary method.
+        /// </summary>
+        public IReadOnlyCollection<GlucoseReading> SavedReadingsWithSummary { get; private set; } = [];
+
+        /// <summary>
+        /// Gets or sets the detailed save result returned by the fake store.
+        /// </summary>
+        public Result<GlucoseHistorySaveResult> SaveWithSummaryResult { get; set; } =
+            Result<GlucoseHistorySaveResult>.Success(
+                new GlucoseHistorySaveResult(
+                    CgmProviderKind.Unknown,
+                    0,
+                    0,
+                    0,
+                    0));
 
         /// <summary>
         /// Gets the last history request.
@@ -60,6 +109,16 @@ public sealed class GlucoseHistoryServiceTests
             SavedReadings = readings;
 
             return Task.FromResult(Result.Success());
+        }
+
+        /// <inheritdoc />
+        public Task<Result<GlucoseHistorySaveResult>> SaveReadingsWithSummaryAsync(
+            IReadOnlyCollection<GlucoseReading> readings,
+            CancellationToken cancellationToken)
+        {
+            SavedReadingsWithSummary = readings;
+
+            return Task.FromResult(SaveWithSummaryResult);
         }
 
         /// <inheritdoc />

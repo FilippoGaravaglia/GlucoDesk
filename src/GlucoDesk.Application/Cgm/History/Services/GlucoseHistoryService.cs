@@ -36,6 +36,16 @@ public sealed class GlucoseHistoryService : IGlucoseHistoryService
     }
 
     /// <inheritdoc />
+    public Task<Result<GlucoseHistorySaveResult>> SaveReadingsWithSummaryAsync(
+        IReadOnlyCollection<GlucoseReading> readings,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(readings);
+
+        return _historyStore.SaveReadingsWithSummaryAsync(readings, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<Result<GlucoseHistoryResult>> GetReadingsAsync(
         GlucoseHistoryRequest request,
         CancellationToken cancellationToken)

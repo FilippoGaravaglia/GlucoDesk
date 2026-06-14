@@ -21,6 +21,16 @@ public interface IGlucoseHistoryStore
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Saves glucose readings into local history and returns a detailed save summary.
+    /// </summary>
+    /// <param name="readings">The glucose readings to save.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The detailed save operation result.</returns>
+    Task<Result<GlucoseHistorySaveResult>> SaveReadingsWithSummaryAsync(
+        IReadOnlyCollection<GlucoseReading> readings,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gets glucose readings from local history.
     /// </summary>
     /// <param name="request">The history request.</param>

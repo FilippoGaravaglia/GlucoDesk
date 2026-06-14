@@ -38,11 +38,30 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
         IReadOnlyCollection<GlucoseReading> readings,
         CancellationToken cancellationToken)
     {
+        var result = await SaveReadingsWithSummaryAsync(readings, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.IsSuccess
+            ? Result.Success()
+            : Result.Failure(result.Error);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<GlucoseHistorySaveResult>> SaveReadingsWithSummaryAsync(
+        IReadOnlyCollection<GlucoseReading> readings,
+        CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(readings);
 
         if (readings.Count == 0)
         {
-            return Result.Success();
+            return Result<GlucoseHistorySaveResult>.Success(
+                new GlucoseHistorySaveResult(
+                    CgmProviderKind.Unknown,
+                    0,
+                    0,
+                    0,
+                    GetStoredReadingsCountSafely()));
         }
 
         try
@@ -50,34 +69,75 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
             var existingDocuments = await LoadDocumentsAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            var newDocuments = readings
-                .Select(GlucoseHistoryDocument.FromReading);
-
-            var mergedDocuments = existingDocuments
-                .Concat(newDocuments)
+            var existingDocumentsByKey = existingDocuments
                 .GroupBy(document => document.BuildIdentityKey(), StringComparer.Ordinal)
-                .Select(group => group.Last())
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Last(),
+                    StringComparer.Ordinal);
+
+            var incomingDocuments = readings
+                .Select(GlucoseHistoryDocument.FromReading)
+                .ToArray();
+
+            var providerKind = ResolveBatchProviderKind(incomingDocuments);
+
+            var incomingDistinctDocumentsByKey = incomingDocuments
+                .GroupBy(document => document.BuildIdentityKey(), StringComparer.Ordinal)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Last(),
+                    StringComparer.Ordinal);
+
+            var incomingDuplicateCount = incomingDocuments.Length - incomingDistinctDocumentsByKey.Count;
+
+            var addedReadingsCount = 0;
+            var existingDuplicateCount = 0;
+
+            foreach (var incomingDocument in incomingDistinctDocumentsByKey)
+            {
+                if (existingDocumentsByKey.ContainsKey(incomingDocument.Key))
+                {
+                    existingDuplicateCount++;
+                }
+                else
+                {
+                    addedReadingsCount++;
+                }
+
+                existingDocumentsByKey[incomingDocument.Key] = incomingDocument.Value;
+            }
+
+            var mergedDocuments = existingDocumentsByKey.Values
                 .OrderBy(document => document.Timestamp)
+                .ThenBy(document => document.ProviderKind.ToString(), StringComparer.Ordinal)
                 .ToArray();
 
             await SaveDocumentsAsync(mergedDocuments, cancellationToken)
                 .ConfigureAwait(false);
 
-            return Result.Success();
+            var saveResult = new GlucoseHistorySaveResult(
+                providerKind,
+                incomingDocuments.Length,
+                addedReadingsCount,
+                incomingDuplicateCount + existingDuplicateCount,
+                mergedDocuments.Length);
+
+            return Result<GlucoseHistorySaveResult>.Success(saveResult);
         }
         catch (JsonException)
         {
-            return Result.Failure(
+            return Result<GlucoseHistorySaveResult>.Failure(
                 new Error("History.InvalidFormat", "The glucose history file contains invalid JSON."));
         }
         catch (ArgumentException)
         {
-            return Result.Failure(
+            return Result<GlucoseHistorySaveResult>.Failure(
                 new Error("History.InvalidContent", "The glucose history file contains invalid glucose readings."));
         }
         catch (Exception exception) when (IsStorageException(exception))
         {
-            return Result.Failure(
+            return Result<GlucoseHistorySaveResult>.Failure(
                 new Error("History.SaveFailed", "Unable to save glucose history."));
         }
     }
@@ -102,6 +162,7 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
             var readings = documents
                 .Where(document => document.Timestamp >= request.From && document.Timestamp <= request.To)
                 .OrderBy(document => document.Timestamp)
+                .ThenBy(document => document.ProviderKind.ToString(), StringComparer.Ordinal)
                 .Select(document => document.ToReading())
                 .ToArray();
 
@@ -172,6 +233,55 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
         }
 
         File.Move(temporaryFilePath, _options.HistoryFilePath, overwrite: true);
+    }
+
+    /// <summary>
+    /// Gets the current stored readings count without failing the empty-readings save path.
+    /// </summary>
+    /// <returns>The stored readings count.</returns>
+    private int GetStoredReadingsCountSafely()
+    {
+        try
+        {
+            if (!File.Exists(_options.HistoryFilePath))
+            {
+                return 0;
+            }
+
+            var json = File.ReadAllText(_options.HistoryFilePath);
+            var documents = JsonSerializer.Deserialize<IReadOnlyCollection<GlucoseHistoryDocument>>(
+                json,
+                SerializerOptions);
+
+            return documents?.Count ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Resolves the provider kind represented by an incoming batch.
+    /// </summary>
+    /// <param name="documents">The incoming documents.</param>
+    /// <returns>The provider kind, or Unknown when the batch contains multiple providers.</returns>
+    private static CgmProviderKind ResolveBatchProviderKind(
+        IReadOnlyCollection<GlucoseHistoryDocument> documents)
+    {
+        if (documents.Count == 0)
+        {
+            return CgmProviderKind.Unknown;
+        }
+
+        var distinctProviders = documents
+            .Select(document => document.ProviderKind)
+            .Distinct()
+            .ToArray();
+
+        return distinctProviders.Length == 1
+            ? distinctProviders[0]
+            : CgmProviderKind.Unknown;
     }
 
     /// <summary>
@@ -271,7 +381,7 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
         public static GlucoseHistoryDocument FromReading(GlucoseReading reading)
         {
             ArgumentNullException.ThrowIfNull(reading);
-        
+
             return new GlucoseHistoryDocument
             {
                 Timestamp = reading.Timestamp,
