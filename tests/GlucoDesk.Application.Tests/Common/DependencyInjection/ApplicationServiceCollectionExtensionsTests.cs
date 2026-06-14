@@ -9,6 +9,7 @@ using GlucoDesk.Application.Cgm.Providers.Resolution.Abstractions;
 using GlucoDesk.Application.Cgm.Readings.Requests;
 using GlucoDesk.Application.Cgm.Readings.Results;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
 using GlucoDesk.Application.Common.DependencyInjection;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
@@ -41,12 +42,14 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         var glucoseDataService = serviceProvider.GetRequiredService<IGlucoseDataService>();
         var glucoseHistoryService = serviceProvider.GetRequiredService<IGlucoseHistoryService>();
         var glucoseHistoryAnalyticsService = serviceProvider.GetRequiredService<IGlucoseHistoryAnalyticsService>();
+        var glucoseStatisticsService = serviceProvider.GetRequiredService<IGlucoseStatisticsService>();
         var applicationSettingsService = serviceProvider.GetRequiredService<IApplicationSettingsService>();
 
         Assert.NotNull(providerResolver);
         Assert.NotNull(glucoseDataService);
         Assert.NotNull(glucoseHistoryService);
         Assert.NotNull(glucoseHistoryAnalyticsService);
+        Assert.NotNull(glucoseStatisticsService);
         Assert.NotNull(applicationSettingsService);
     }
 
@@ -63,6 +66,9 @@ public sealed class ApplicationServiceCollectionExtensionsTests
 
     #region Helpers
 
+    /// <summary>
+    /// Fake CGM provider used by dependency injection tests.
+    /// </summary>
     private sealed class FakeCgmProvider : ICgmLiveProvider, ICgmHistoricalProvider, ICgmMetadataProvider
     {
         /// <inheritdoc />
@@ -121,6 +127,9 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         #endregion
     }
 
+    /// <summary>
+    /// Fake glucose history store used by dependency injection tests.
+    /// </summary>
     private sealed class FakeGlucoseHistoryStore : IGlucoseHistoryStore
     {
         /// <inheritdoc />
@@ -155,6 +164,9 @@ public sealed class ApplicationServiceCollectionExtensionsTests
         }
     }
 
+    /// <summary>
+    /// Fake application settings store used by dependency injection tests.
+    /// </summary>
     private sealed class FakeApplicationSettingsStore : IApplicationSettingsStore
     {
         /// <inheritdoc />
