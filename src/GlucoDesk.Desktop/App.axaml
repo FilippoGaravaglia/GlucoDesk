@@ -6,5 +6,6 @@
 
   <Application.Styles>
     <FluentTheme />
+    <StyleInclude Source="avares://GlucoDesk.Desktop/Styles/GlucoDeskTheme.axaml" />
   </Application.Styles>
 </Application>
