@@ -10,7 +10,8 @@
     Width="1180"
     Height="760"
     MinWidth="920"
-    MinHeight="620">
+    MinHeight="620"
+    Background="{StaticResource GlucoDesk.Brush.AppBackground}">
 
   <Window.DataTemplates>
     <DataTemplate DataType="{x:Type dashboardViewModels:DashboardViewModel}">
@@ -22,38 +23,72 @@
     </DataTemplate>
   </Window.DataTemplates>
 
-  <Grid ColumnDefinitions="220,*">
+  <Grid ColumnDefinitions="260,*"
+        Background="{StaticResource GlucoDesk.Brush.AppBackground}">
 
     <Border Grid.Column="0"
-            Padding="20"
-            BorderThickness="0,0,1,0">
-      <StackPanel Spacing="18">
+            Classes="app-sidebar"
+            Padding="22">
+      <Grid RowDefinitions="Auto,*,Auto">
 
-        <StackPanel Spacing="4">
-          <TextBlock Text="GlucoDesk"
-                     FontSize="22"
-                     FontWeight="SemiBold" />
+        <StackPanel Grid.Row="0"
+                    Spacing="24">
 
-          <TextBlock Text="Desktop companion"
-                     Opacity="0.6" />
+          <StackPanel Spacing="6">
+            <TextBlock Text="GlucoDesk"
+                       Classes="sidebar-brand" />
+
+            <TextBlock Text="Desktop companion"
+                       Classes="sidebar-subtitle" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <Button Content="Dashboard"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsDashboardSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowDashboardCommand}" />
+            
+            <Button Content="Settings"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsSettingsSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowSettingsCommand}" />
+          </StackPanel>
         </StackPanel>
 
-        <StackPanel Spacing="8">
-          <Button Content="Dashboard"
-                  HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Left"
-                  Command="{Binding ShowDashboardCommand}" />
+        <StackPanel Grid.Row="2"
+                    Spacing="12">
 
-          <Button Content="Settings"
-                  HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Left"
-                  Command="{Binding ShowSettingsCommand}" />
+          <Border Classes="sidebar-note-card">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Companion mode"
+                         FontWeight="SemiBold"
+                         Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+
+              <TextBlock Text="Private, local-first desktop experience for glucose awareness."
+                         TextWrapping="Wrap"
+                         Classes="sidebar-note" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="sidebar-note-card"
+                  Background="{StaticResource GlucoDesk.Brush.IndigoSoft}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Safety notice"
+                         FontWeight="SemiBold"
+                         Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
+
+              <TextBlock Text="Not a medical device. Do not use for treatment decisions."
+                         TextWrapping="Wrap"
+                         Classes="sidebar-note" />
+            </StackPanel>
+          </Border>
+
         </StackPanel>
-
-        <TextBlock Text="Not a medical device. Do not use for treatment decisions."
-                   TextWrapping="Wrap"
-                   Opacity="0.55" />
-      </StackPanel>
+      </Grid>
     </Border>
 
     <ContentControl Grid.Column="1"
