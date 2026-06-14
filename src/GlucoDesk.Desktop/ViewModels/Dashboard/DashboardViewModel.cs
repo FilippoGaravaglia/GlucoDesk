@@ -18,6 +18,9 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.DataHealth;
 using GlucoDesk.Application.Cgm.History.Results;
+using GlucoDesk.Application.Cgm.Statistics.Requests;
+using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -30,6 +33,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IApplicationSettingsService _settingsService;
     private readonly IApplicationSettingsChangeNotifier? _settingsChangeNotifier;
     private readonly IGlucoseHistoryService? _glucoseHistoryService;
+    private readonly IGlucoseStatisticsService? _glucoseStatisticsService;
     private readonly DashboardRefreshOptions _refreshOptions;
 
     private bool _isInitialized;
@@ -79,6 +83,33 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty]
     private string _historyStatusText = "History not updated";
+
+    [ObservableProperty]
+    private string _statisticsStatusText = "Statistics are not available in the current desktop runtime.";
+
+    [ObservableProperty]
+    private string _statisticsAverageGlucoseText = "—";
+
+    [ObservableProperty]
+    private string _statisticsTimeInRangeText = "—";
+
+    [ObservableProperty]
+    private string _statisticsBelowRangeText = "—";
+
+    [ObservableProperty]
+    private string _statisticsAboveRangeText = "—";
+
+    [ObservableProperty]
+    private string _statisticsReadingsAnalyzedText = "—";
+
+    [ObservableProperty]
+    private string _statisticsTargetRangeText = "Target range: —";
+
+    [ObservableProperty]
+    private bool _isStatisticsEnabled;
+
+    [ObservableProperty]
+    private bool _hasStatisticsData;
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -133,12 +164,14 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// <param name="refreshOptions">The optional dashboard refresh fallback options.</param>
     /// <param name="settingsChangeNotifier">The optional application settings change notifier.</param>
     /// <param name="glucoseHistoryService">The optional glucose history service.</param>
+    /// <param name="glucoseStatisticsService">The glucose statistics service.</param>
     public DashboardViewModel(
         IGlucoseDataService glucoseDataService,
         IApplicationSettingsService settingsService,
         DashboardRefreshOptions? refreshOptions = null,
         IApplicationSettingsChangeNotifier? settingsChangeNotifier = null,
-        IGlucoseHistoryService? glucoseHistoryService = null)
+        IGlucoseHistoryService? glucoseHistoryService = null,
+        IGlucoseStatisticsService? glucoseStatisticsService = null)
     {
         ArgumentNullException.ThrowIfNull(glucoseDataService);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -149,6 +182,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         _settingsChangeNotifier = settingsChangeNotifier;
         _glucoseHistoryService = glucoseHistoryService;
         _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
+
+        _glucoseStatisticsService = glucoseStatisticsService;
+        IsStatisticsEnabled = _glucoseStatisticsService is not null;
+        ApplyStatisticsPresentation(DashboardStatisticsPresenter.Disabled());
 
         if (_settingsChangeNotifier is not null)
         {
@@ -220,6 +257,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             ApplySnapshot(result.Value);
             await PersistSnapshotToHistoryAsync(result.Value, cancellationToken);
 
+            await RefreshStatisticsAsync(result.Value, cancellationToken)
+                .ConfigureAwait(false);
+
             AutoRefreshStatusText = $"Last refresh: {DateTimeOffset.Now:HH:mm:ss}";
         }
         catch (OperationCanceledException)
@@ -250,6 +290,86 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     #region Helpers
 
     /// <summary>
+    /// Refreshes dashboard statistics from local glucose history.
+    /// </summary>
+    /// <param name="snapshot">The dashboard snapshot.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task RefreshStatisticsAsync(
+        GlucoseDashboardSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        if (_glucoseStatisticsService is null)
+        {
+            IsStatisticsEnabled = false;
+            ApplyStatisticsPresentation(DashboardStatisticsPresenter.Disabled());
+            return;
+        }
+
+        IsStatisticsEnabled = true;
+
+        var targetRange = GlucoseStatisticsTargetRange.DefaultMgDl();
+        var request = BuildStatisticsRequest(snapshot, targetRange);
+
+        var result = await _glucoseStatisticsService
+            .CalculateAsync(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (result.IsFailure)
+        {
+            ApplyStatisticsPresentation(DashboardStatisticsPresenter.Failed(result.Error.Code));
+            return;
+        }
+
+        var presentation = DashboardStatisticsPresenter.Present(result.Value, targetRange);
+
+        ApplyStatisticsPresentation(presentation);
+    }
+
+    /// <summary>
+    /// Builds the statistics request for the current dashboard snapshot.
+    /// </summary>
+    /// <param name="snapshot">The dashboard snapshot.</param>
+    /// <param name="targetRange">The target range.</param>
+    /// <returns>The statistics request.</returns>
+    private static GlucoseStatisticsRequest BuildStatisticsRequest(
+        GlucoseDashboardSnapshot snapshot,
+        GlucoseStatisticsTargetRange targetRange)
+    {
+        var from = snapshot.RecentReadings.Count > 0
+            ? snapshot.RecentReadings.Min(reading => reading.Timestamp)
+            : snapshot.SnapshotCreatedAt.AddHours(-12);
+
+        var to = snapshot.SnapshotCreatedAt;
+
+        if (to <= from)
+        {
+            to = from.AddMinutes(1);
+        }
+
+        return new GlucoseStatisticsRequest(
+            from,
+            to,
+            targetRange,
+            includeMockData: snapshot.Metadata.ProviderKind is CgmProviderKind.Mock);
+    }
+
+    /// <summary>
+    /// Applies a statistics presentation to the dashboard.
+    /// </summary>
+    /// <param name="presentation">The statistics presentation.</param>
+    private void ApplyStatisticsPresentation(DashboardStatisticsPresentation presentation)
+    {
+        StatisticsStatusText = presentation.StatusText;
+        StatisticsAverageGlucoseText = presentation.AverageGlucoseText;
+        StatisticsTimeInRangeText = presentation.TimeInRangeText;
+        StatisticsBelowRangeText = presentation.BelowRangeText;
+        StatisticsAboveRangeText = presentation.AboveRangeText;
+        StatisticsReadingsAnalyzedText = presentation.ReadingsAnalyzedText;
+        StatisticsTargetRangeText = presentation.TargetRangeText;
+        HasStatisticsData = presentation.HasStatisticsData;
+    }
+
+    /// <summary>
     /// Builds the dashboard history status text from a detailed history save result.
     /// </summary>
     /// <param name="result">The history save result.</param>
@@ -260,12 +380,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         {
             return $"History updated: no incoming reading(s), {result.StoredReadingsCount} stored.";
         }
-    
+
         if (result.AddedReadingsCount == 0)
         {
             return $"History updated: 0 new reading(s), {result.DuplicateReadingsCount} duplicate(s), {result.StoredReadingsCount} stored.";
         }
-    
+
         return $"History updated: {result.AddedReadingsCount} new reading(s), {result.DuplicateReadingsCount} duplicate(s), {result.StoredReadingsCount} stored.";
     }
 
