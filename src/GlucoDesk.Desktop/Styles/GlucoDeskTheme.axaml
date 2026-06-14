@@ -10,7 +10,7 @@
     <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceSoft" Color="#F1F7FF" />
     <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceStrong" Color="#EAF3FF" />
     <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceElevated" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceHero" Color="#E0F2FE" />
+    <SolidColorBrush x:Key="GlucoDesk.Brush.SurfaceHero" Color="#DDF6FF" />
 
     <SolidColorBrush x:Key="GlucoDesk.Brush.Border" Color="#C7DDF5" />
     <SolidColorBrush x:Key="GlucoDesk.Brush.BorderStrong" Color="#93C5FD" />
@@ -35,6 +35,22 @@
     <SolidColorBrush x:Key="GlucoDesk.Brush.WarningSoft" Color="#FEF3C7" />
     <SolidColorBrush x:Key="GlucoDesk.Brush.Danger" Color="#DC2626" />
     <SolidColorBrush x:Key="GlucoDesk.Brush.DangerSoft" Color="#FEE2E2" />
+
+    <LinearGradientBrush x:Key="GlucoDesk.Brush.HeroGradient"
+                         StartPoint="0%,0%"
+                         EndPoint="100%,100%">
+      <GradientStop Color="#DDF6FF" Offset="0" />
+      <GradientStop Color="#E0E7FF" Offset="0.55" />
+      <GradientStop Color="#F8FBFF" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="GlucoDesk.Brush.SidebarGradient"
+                         StartPoint="0%,0%"
+                         EndPoint="100%,100%">
+      <GradientStop Color="#DDF6FF" Offset="0" />
+      <GradientStop Color="#EAF3FF" Offset="0.55" />
+      <GradientStop Color="#F8FBFF" Offset="1" />
+    </LinearGradientBrush>
   </Styles.Resources>
 
   <Style Selector="TextBlock">
@@ -62,7 +78,7 @@
   </Style>
 
   <Style Selector="TextBlock.hero-value">
-    <Setter Property="FontSize" Value="64" />
+    <Setter Property="FontSize" Value="68" />
     <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
   </Style>
@@ -104,6 +120,27 @@
     <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AppBackground}" />
   </Style>
 
+  <Style Selector="Border.app-sidebar">
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SidebarGradient}" />
+    <Setter Property="BorderBrush" Value="#BAE6FD" />
+    <Setter Property="BorderThickness" Value="0,0,1,0" />
+  </Style>
+
+  <Style Selector="Border.sidebar-note-card">
+    <Setter Property="Padding" Value="14" />
+    <Setter Property="CornerRadius" Value="18" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="#BFDBFE" />
+    <Setter Property="Background" Value="#F8FBFF" />
+  </Style>
+
+  <Style Selector="Border.brand-mark">
+    <Setter Property="Width" Value="42" />
+    <Setter Property="Height" Value="42" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.Accent}" />
+  </Style>
+
   <Style Selector="Border.surface-card">
     <Setter Property="Padding" Value="18" />
     <Setter Property="CornerRadius" Value="22" />
@@ -121,11 +158,11 @@
   </Style>
 
   <Style Selector="Border.hero-card">
-    <Setter Property="Padding" Value="26" />
-    <Setter Property="CornerRadius" Value="30" />
+    <Setter Property="Padding" Value="28" />
+    <Setter Property="CornerRadius" Value="32" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
-    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceHero}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.HeroGradient}" />
   </Style>
 
   <Style Selector="Border.metric-card">
@@ -177,20 +214,6 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="#86EFAC" />
     <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SuccessSoft}" />
-  </Style>
-
-  <Style Selector="Border.app-sidebar">
-    <Setter Property="Background" Value="#DFF4FF" />
-    <Setter Property="BorderBrush" Value="#BAE6FD" />
-    <Setter Property="BorderThickness" Value="0,0,1,0" />
-  </Style>
-
-  <Style Selector="Border.sidebar-note-card">
-    <Setter Property="Padding" Value="14" />
-    <Setter Property="CornerRadius" Value="18" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BorderBrush" Value="#BFDBFE" />
-    <Setter Property="Background" Value="#F8FBFF" />
   </Style>
 
   <Style Selector="Button">
