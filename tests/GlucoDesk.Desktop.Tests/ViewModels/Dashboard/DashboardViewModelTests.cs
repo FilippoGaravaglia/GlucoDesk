@@ -17,6 +17,9 @@ using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
+using GlucoDesk.Application.Cgm.Statistics.Requests;
+using GlucoDesk.Application.Cgm.Statistics.Results;
+using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Dashboard;
 
@@ -189,7 +192,78 @@ public sealed class DashboardViewModelTests
         Assert.Equal("Mock CGM Provider", viewModel.ProviderDisplayName);
     }
 
+    [Fact]
+    public async Task RefreshCommand_ShouldUpdateStatistics_WhenStatisticsServiceIsConfigured()
+    {
+        var glucoseDataService = new FakeGlucoseDataService();
+        var historyService = new FakeGlucoseHistoryService();
+        var statisticsService = new FakeGlucoseStatisticsService();
+
+        var viewModel = new DashboardViewModel(
+            glucoseDataService: glucoseDataService,
+            settingsService: new FakeApplicationSettingsService(),
+            refreshOptions: DashboardRefreshOptions.Default,
+            settingsChangeNotifier: null,
+            glucoseHistoryService: historyService,
+            glucoseStatisticsService: statisticsService);
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.IsStatisticsEnabled);
+        Assert.True(viewModel.HasStatisticsData);
+        Assert.Equal("120 mg/dL", viewModel.StatisticsAverageGlucoseText);
+        Assert.Equal("100%", viewModel.StatisticsTimeInRangeText);
+        Assert.Equal("0%", viewModel.StatisticsBelowRangeText);
+        Assert.Equal("0%", viewModel.StatisticsAboveRangeText);
+        Assert.Equal("3 analyzed", viewModel.StatisticsReadingsAnalyzedText);
+        Assert.NotNull(statisticsService.LastRequest);
+    }
+
     #region Helpers
+
+    /// <summary>
+    /// Fake glucose statistics service used by dashboard view model tests.
+    /// </summary>
+    private sealed class FakeGlucoseStatisticsService : IGlucoseStatisticsService
+    {
+        /// <summary>
+        /// Gets or sets the statistics result returned by the fake service.
+        /// </summary>
+        public Result<GlucoseStatisticsResult> StatisticsResult { get; set; } =
+            Result<GlucoseStatisticsResult>.Success(
+                new GlucoseStatisticsResult(
+                    new DateTimeOffset(2026, 6, 14, 8, 0, 0, TimeSpan.Zero),
+                    new DateTimeOffset(2026, 6, 14, 9, 0, 0, TimeSpan.Zero),
+                    GlucoseUnit.MgDl,
+                    includeMockData: true,
+                    loadedReadingsCount: 3,
+                    analyzedReadingsCount: 3,
+                    ignoredMockReadingsCount: 0,
+                    ignoredDifferentUnitReadingsCount: 0,
+                    averageGlucose: 120,
+                    minimumGlucose: 100,
+                    maximumGlucose: 140,
+                    belowRangeCount: 0,
+                    inRangeCount: 3,
+                    aboveRangeCount: 0,
+                    firstReadingAt: new DateTimeOffset(2026, 6, 14, 8, 0, 0, TimeSpan.Zero),
+                    lastReadingAt: new DateTimeOffset(2026, 6, 14, 9, 0, 0, TimeSpan.Zero)));
+
+        /// <summary>
+        /// Gets the last statistics request.
+        /// </summary>
+        public GlucoseStatisticsRequest? LastRequest { get; private set; }
+
+        /// <inheritdoc />
+        public Task<Result<GlucoseStatisticsResult>> CalculateAsync(
+            GlucoseStatisticsRequest request,
+            CancellationToken cancellationToken)
+        {
+            LastRequest = request;
+
+            return Task.FromResult(StatisticsResult);
+        }
+    }
 
     private static readonly DateTimeOffset FixedNow = new(2026, 6, 7, 10, 0, 0, TimeSpan.Zero);
 
