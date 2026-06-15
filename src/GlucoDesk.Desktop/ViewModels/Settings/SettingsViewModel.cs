@@ -625,7 +625,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
             : 300;
     }
 
-    /// <summary>
+   /// <summary>
     /// Creates application settings from the editable form values.
     /// </summary>
     /// <param name="validationMessage">The validation error message when settings cannot be created.</param>
@@ -690,7 +690,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 SelectedPreferredUnit.Unit,
                 targetLowMgDl,
                 targetHighMgDl,
-                TimeSpan.FromSeconds(refreshIntervalSeconds));
+                TimeSpan.FromSeconds(refreshIntervalSeconds),
+                NormalizeChartMaximumMgDl(SelectedChartMaximumMgDl));
         }
         catch (ArgumentException exception)
         {

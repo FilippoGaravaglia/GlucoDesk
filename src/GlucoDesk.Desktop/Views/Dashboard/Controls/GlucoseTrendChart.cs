@@ -11,12 +11,15 @@ namespace GlucoDesk.Desktop.Views.Dashboard.Controls;
 /// </summary>
 public sealed class GlucoseTrendChart : Control
 {
-    private const double PlotPaddingLeft = 56;
-    private const double PlotPaddingTop = 20;
+    private const double PlotPaddingLeft = 64;
+    private const double PlotPaddingTop = 42;
     private const double PlotPaddingRight = 22;
     private const double PlotPaddingBottom = 38;
     private const double AxisLabelFontSize = 11;
     private const double TargetLabelFontSize = 10;
+    private const double YAxisLabelGap = 10;
+    private const double YAxisUnitTopOffset = 28;
+    private const double YAxisTopTickExtraOffset = 14;
 
     private static readonly IBrush PlotBackgroundBrush = new SolidColorBrush(
         Color.FromArgb(150, 248, 251, 255));
@@ -360,8 +363,8 @@ public sealed class GlucoseTrendChart : Control
         {
             return [40m, 80m, 120m, 160m, 200m, 240m, 280m, 320m, 360m, 400m];
         }
-    
-        return [40m, 80m, 120m, 160m, 200m, 240m, 280m, 300m];
+
+        return [40m, 80m, 120m, 160m, 200m, 240m, 300m];
     }
 
     /// <summary>
@@ -484,17 +487,30 @@ public sealed class GlucoseTrendChart : Control
         ChartScale scale,
         IReadOnlyList<decimal> yTicks)
     {
+        var unitText = CreateText("mg/dL", AxisTextBrush, TargetLabelFontSize);
+
+        context.DrawText(
+            unitText,
+            new Point(
+                plotArea.Left - unitText.Width - YAxisLabelGap,
+                Math.Max(0, plotArea.Top - 26)));
+
         foreach (var tick in yTicks)
         {
             var label = decimal.ToInt32(tick).ToString(CultureInfo.InvariantCulture);
             var text = CreateText(label, AxisTextBrush, AxisLabelFontSize);
-            var y = MapValueToY(tick, plotArea, scale) - (text.Height / 2);
 
-            context.DrawText(text, new Point(plotArea.Left - text.Width - 8, y));
+            var y = ClampAxisLabelY(
+                MapValueToY(tick, plotArea, scale) - (text.Height / 2),
+                text.Height,
+                plotArea);
+
+            context.DrawText(
+                text,
+                new Point(
+                    plotArea.Left - text.Width - YAxisLabelGap,
+                    y));
         }
-
-        var unitText = CreateText("mg/dL", AxisTextBrush, TargetLabelFontSize);
-        context.DrawText(unitText, new Point(plotArea.Left - unitText.Width - 8, plotArea.Top - 14));
     }
 
     /// <summary>
@@ -518,6 +534,24 @@ public sealed class GlucoseTrendChart : Control
 
             context.DrawText(text, new Point(x, plotArea.Bottom + 10));
         }
+    }
+
+    /// <summary>
+    /// Keeps Y axis labels inside the visible plot area.
+    /// </summary>
+    /// <param name="labelY">The desired label Y coordinate.</param>
+    /// <param name="labelHeight">The label height.</param>
+    /// <param name="plotArea">The chart plot area.</param>
+    /// <returns>The clamped label Y coordinate.</returns>
+    private static double ClampAxisLabelY(
+        double labelY,
+        double labelHeight,
+        Rect plotArea)
+    {
+        return Math.Clamp(
+            labelY,
+            plotArea.Top,
+            plotArea.Bottom - labelHeight);
     }
 
     /// <summary>
