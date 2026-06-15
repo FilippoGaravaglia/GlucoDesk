@@ -87,10 +87,10 @@ public sealed class DashboardViewModelTests
             new FakeGlucoseDataService(),
             new FakeApplicationSettingsService(),
             new DashboardRefreshOptions(TimeSpan.FromSeconds(10)));
-
+    
         await viewModel.InitializeCommand.ExecuteAsync(null);
         await viewModel.RefreshCommand.ExecuteAsync(null);
-
+    
         Assert.False(viewModel.HasError);
         Assert.Equal("Mock CGM Provider", viewModel.ProviderDisplayName);
         Assert.Equal("123 mg/dL", viewModel.LatestValueText);
@@ -99,7 +99,7 @@ public sealed class DashboardViewModelTests
         Assert.Equal("In range", viewModel.StatusText);
         Assert.Equal("2 readings", viewModel.RecentReadingsCountText);
         Assert.Equal(2, viewModel.ChartPoints.Count);
-        Assert.Equal("2 readings · 123-123 mg/dL", viewModel.ChartSummaryText);
+        Assert.Equal("Last 3H · 2 readings · 123-123 mg/dL", viewModel.ChartSummaryText);
         Assert.StartsWith("Last refresh:", viewModel.AutoRefreshStatusText, StringComparison.Ordinal);
     }
 
@@ -267,61 +267,95 @@ public sealed class DashboardViewModelTests
 
     private static readonly DateTimeOffset FixedNow = new(2026, 6, 7, 10, 0, 0, TimeSpan.Zero);
 
-    private sealed class FakeGlucoseDataService : IGlucoseDataService
+   private sealed class FakeGlucoseDataService : IGlucoseDataService
+{
+    private readonly Result<GlucoseDashboardSnapshot>? _dashboardResult;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FakeGlucoseDataService"/> class.
+    /// </summary>
+    /// <param name="dashboardResult">The optional dashboard result returned by the fake service.</param>
+    public FakeGlucoseDataService(Result<GlucoseDashboardSnapshot>? dashboardResult = null)
     {
-        private readonly Result<GlucoseDashboardSnapshot> _dashboardResult;
+        _dashboardResult = dashboardResult;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FakeGlucoseDataService"/> class.
-        /// </summary>
-        /// <param name="dashboardResult">The optional dashboard result returned by the fake service.</param>
-        public FakeGlucoseDataService(Result<GlucoseDashboardSnapshot>? dashboardResult = null)
-        {
-            _dashboardResult = dashboardResult ?? Result<GlucoseDashboardSnapshot>.Success(CreateSnapshot());
-        }
+    /// <inheritdoc />
+    public Task<Result<CgmProviderMetadata>> GetProviderMetadataAsync(CancellationToken cancellationToken)
+    {
+        return Task.FromResult(Result<CgmProviderMetadata>.Success(CreateMetadata()));
+    }
 
-        /// <inheritdoc />
-        public Task<Result<CgmProviderMetadata>> GetProviderMetadataAsync(CancellationToken cancellationToken)
-        {
-            return Task.FromResult(Result<CgmProviderMetadata>.Success(CreateMetadata()));
-        }
+    public Task<Result<LatestGlucoseReadingResult>> GetLatestReadingAsync(CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+    
+        return Task.FromResult(Result<LatestGlucoseReadingResult>.Success(
+            new LatestGlucoseReadingResult(CreateReading(now), now)));
+    }
 
-        /// <inheritdoc />
-        public Task<Result<LatestGlucoseReadingResult>> GetLatestReadingAsync(CancellationToken cancellationToken)
-        {
-            return Task.FromResult(Result<LatestGlucoseReadingResult>.Success(
-                new LatestGlucoseReadingResult(CreateReading(FixedNow), FixedNow)));
-        }
+    /// <inheritdoc />
+    public Task<Result<GlucoseReadingsResult>> GetRecentReadingsAsync(
+        GlucoseReadingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
 
-        /// <inheritdoc />
-        public Task<Result<GlucoseReadingsResult>> GetRecentReadingsAsync(
-            GlucoseReadingsRequest request,
-            CancellationToken cancellationToken)
-        {
-            return Task.FromResult(Result<GlucoseReadingsResult>.Success(
-                new GlucoseReadingsResult(
-                    [
-                        CreateReading(FixedNow.AddMinutes(-10)),
-                        CreateReading(FixedNow.AddMinutes(-5))
-                    ],
-                    FixedNow)));
-        }
+        return Task.FromResult(Result<GlucoseReadingsResult>.Success(
+            new GlucoseReadingsResult(
+                [
+                    CreateReading(now.AddMinutes(-10)),
+                    CreateReading(now.AddMinutes(-5))
+                ],
+                now)));
+    }
 
-        /// <inheritdoc />
-        public Task<Result<GlucoseReadingsResult>> GetHistoricalReadingsAsync(
-            GlucoseReadingsRequest request,
-            CancellationToken cancellationToken)
-        {
-            return GetRecentReadingsAsync(request, cancellationToken);
-        }
+    /// <inheritdoc />
+    public Task<Result<GlucoseReadingsResult>> GetHistoricalReadingsAsync(
+        GlucoseReadingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        return GetRecentReadingsAsync(request, cancellationToken);
+    }
 
-        /// <inheritdoc />
-        public Task<Result<GlucoseDashboardSnapshot>> GetDashboardSnapshotAsync(
-            GlucoseDashboardRequest request,
-            CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public Task<Result<GlucoseDashboardSnapshot>> GetDashboardSnapshotAsync(
+        GlucoseDashboardRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (_dashboardResult is not null)
         {
             return Task.FromResult(_dashboardResult);
         }
+
+        return Task.FromResult(Result<GlucoseDashboardSnapshot>.Success(CreateLiveSnapshot()));
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Creates a dashboard snapshot with timestamps relative to the current time.
+    /// </summary>
+    /// <returns>The dashboard snapshot.</returns>
+    private static GlucoseDashboardSnapshot CreateLiveSnapshot()
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new GlucoseDashboardSnapshot(
+            metadata: CreateMetadata(),
+            latestReading: CreateReading(now),
+            recentReadings:
+            [
+                CreateReading(now.AddMinutes(-10)),
+                CreateReading(now.AddMinutes(-5))
+            ],
+            latestReadingRetrievedAt: now,
+            recentReadingsRetrievedAt: now,
+            snapshotCreatedAt: now,
+            staleThreshold: TimeSpan.FromMilliseconds(50));
+    }
+
+        #endregion
     }
 
     private sealed class FakeApplicationSettingsService : IApplicationSettingsService

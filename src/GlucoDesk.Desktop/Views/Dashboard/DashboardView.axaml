@@ -319,10 +319,10 @@
           </Grid>
 
           <Border Classes="surface-card-strong">
-            <StackPanel Spacing="16">
+            <StackPanel Spacing="18">
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="16">
-                <StackPanel Spacing="4">
+                <StackPanel Spacing="5">
                   <TextBlock Text="Recent glucose trend"
                              Classes="section-title" />
 
@@ -331,8 +331,34 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1"
-                            Spacing="4"
+                            Spacing="8"
                             HorizontalAlignment="Right">
+                  <WrapPanel Orientation="Horizontal"
+                             HorizontalAlignment="Right">
+                    <Button Content="3H"
+                            Command="{Binding SelectThreeHourChartWindowCommand}"
+                            Classes="nav-button"
+                            Classes.accent="{Binding IsThreeHourChartWindowSelected}"
+                            MinWidth="48"
+                            Padding="12,8"
+                            Margin="0,0,8,0" />
+
+                    <Button Content="6H"
+                            Command="{Binding SelectSixHourChartWindowCommand}"
+                            Classes="nav-button"
+                            Classes.accent="{Binding IsSixHourChartWindowSelected}"
+                            MinWidth="48"
+                            Padding="12,8"
+                            Margin="0,0,8,0" />
+
+                    <Button Content="12H"
+                            Command="{Binding SelectTwelveHourChartWindowCommand}"
+                            Classes="nav-button"
+                            Classes.accent="{Binding IsTwelveHourChartWindowSelected}"
+                            MinWidth="54"
+                            Padding="12,8" />
+                  </WrapPanel>
+
                   <TextBlock Text="{Binding ChartSummaryText}"
                              Classes="secondary"
                              TextAlignment="Right" />
@@ -344,8 +370,8 @@
                 </StackPanel>
               </Grid>
 
-              <Border Height="260"
-                      CornerRadius="20"
+              <Border Height="340"
+                      CornerRadius="22"
                       BorderThickness="1"
                       BorderBrush="{StaticResource GlucoDesk.Brush.Border}"
                       Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
@@ -353,7 +379,9 @@
                 <controls:GlucoseTrendChart
                     Points="{Binding ChartPoints}"
                     TargetLowMgDl="{Binding TargetLowMgDl}"
-                    TargetHighMgDl="{Binding TargetHighMgDl}" />
+                    TargetHighMgDl="{Binding TargetHighMgDl}"
+                    WindowHours="{Binding SelectedChartWindowHours}"
+                    MaxVisibleMgDl="{Binding ChartMaximumMgDl}" />
               </Border>
             </StackPanel>
           </Border>

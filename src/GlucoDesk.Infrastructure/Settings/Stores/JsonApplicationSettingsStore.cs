@@ -19,6 +19,11 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
     private readonly LocalSettingsStorageOptions _options;
 
     /// <summary>
+    /// Gets or initializes the maximum chart value expressed in mg/dL.
+    /// </summary>
+    public int ChartMaximumMgDl { get; init; } = 300;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="JsonApplicationSettingsStore"/> class.
     /// </summary>
     /// <param name="options">The local settings storage options.</param>
@@ -176,19 +181,15 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
         /// </summary>
         public GlucoseUnit PreferredUnit { get; init; } = GlucoseUnit.MgDl;
 
-        /// <summary>
-        /// Gets the lower glucose target expressed in mg/dL.
-        /// </summary>
         public int TargetLowMgDl { get; init; } = 70;
-
-        /// <summary>
-        /// Gets the upper glucose target expressed in mg/dL.
-        /// </summary>
+        
         public int TargetHighMgDl { get; init; } = 180;
-
+        
         /// <summary>
-        /// Gets the dashboard refresh interval.
+        /// Gets or initializes the maximum chart value expressed in mg/dL.
         /// </summary>
+        public int ChartMaximumMgDl { get; init; } = 300;
+        
         public TimeSpan DashboardRefreshInterval { get; init; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
@@ -207,7 +208,8 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
                 PreferredUnit = settings.PreferredUnit,
                 TargetLowMgDl = settings.TargetLowMgDl,
                 TargetHighMgDl = settings.TargetHighMgDl,
-                DashboardRefreshInterval = settings.DashboardRefreshInterval
+                DashboardRefreshInterval = settings.DashboardRefreshInterval,
+                ChartMaximumMgDl = settings.ChartMaximumMgDl
             };
         }
 
@@ -217,13 +219,27 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
         /// <returns>The application settings.</returns>
         public ApplicationSettings ToApplicationSettings()
         {
+            
             return new ApplicationSettings(
                 ActiveLiveProvider,
                 HistoricalProvider,
                 PreferredUnit,
                 TargetLowMgDl,
                 TargetHighMgDl,
-                DashboardRefreshInterval);
+                DashboardRefreshInterval,
+                NormalizeChartMaximumMgDl(ChartMaximumMgDl));
+        }
+
+        /// <summary>
+        /// Normalizes persisted chart maximum values to supported options.
+        /// </summary>
+        /// <param name="chartMaximumMgDl">The persisted chart maximum value.</param>
+        /// <returns>The normalized chart maximum value.</returns>
+        private static int NormalizeChartMaximumMgDl(int chartMaximumMgDl)
+        {
+            return chartMaximumMgDl is 400
+                ? 400
+                : 300;
         }
     }
 }

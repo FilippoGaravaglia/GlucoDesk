@@ -2,8 +2,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Application.Cgm.Dashboard.Requests;
 using GlucoDesk.Application.Cgm.Dashboard.Results;
+using GlucoDesk.Application.Cgm.History.Results;
 using GlucoDesk.Application.Cgm.History.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Statistics.Requests;
+using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Events;
@@ -13,13 +16,10 @@ using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
-using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
-using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
-using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.DataHealth;
-using GlucoDesk.Application.Cgm.History.Results;
-using GlucoDesk.Application.Cgm.Statistics.Requests;
-using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
@@ -29,6 +29,10 @@ namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 /// </summary>
 public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 {
+    private const int ThreeHourChartWindow = 3;
+    private const int SixHourChartWindow = 6;
+    private const int TwelveHourChartWindow = 12;
+
     private readonly IGlucoseDataService _glucoseDataService;
     private readonly IApplicationSettingsService _settingsService;
     private readonly IApplicationSettingsChangeNotifier? _settingsChangeNotifier;
@@ -38,6 +42,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     private bool _isInitialized;
     private TimeSpan _autoRefreshInterval;
+    private IReadOnlyList<GlucoseChartPoint> _allChartPoints = [];
 
     [ObservableProperty]
     private string _providerDisplayName = "Not loaded";
@@ -67,10 +72,25 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private string _chartSummaryText = "No chart data";
 
     [ObservableProperty]
+    private int _selectedChartWindowHours = ThreeHourChartWindow;
+
+    [ObservableProperty]
+    private bool _isThreeHourChartWindowSelected = true;
+
+    [ObservableProperty]
+    private bool _isSixHourChartWindowSelected;
+
+    [ObservableProperty]
+    private bool _isTwelveHourChartWindowSelected;
+
+    [ObservableProperty]
     private decimal _targetLowMgDl = 70m;
 
     [ObservableProperty]
     private decimal _targetHighMgDl = 180m;
+
+    [ObservableProperty]
+    private int _chartMaximumMgDl = 300;
 
     [ObservableProperty]
     private string _targetRangeText = "Target range: 70-180 mg/dL";
@@ -277,6 +297,33 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
+    /// Selects the three-hour chart window.
+    /// </summary>
+    [RelayCommand]
+    private void SelectThreeHourChartWindow()
+    {
+        SelectChartWindow(ThreeHourChartWindow);
+    }
+
+    /// <summary>
+    /// Selects the six-hour chart window.
+    /// </summary>
+    [RelayCommand]
+    private void SelectSixHourChartWindow()
+    {
+        SelectChartWindow(SixHourChartWindow);
+    }
+
+    /// <summary>
+    /// Selects the twelve-hour chart window.
+    /// </summary>
+    [RelayCommand]
+    private void SelectTwelveHourChartWindow()
+    {
+        SelectChartWindow(TwelveHourChartWindow);
+    }
+
+    /// <summary>
     /// Releases event subscriptions owned by the dashboard view model.
     /// </summary>
     public void Dispose()
@@ -307,7 +354,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         IsStatisticsEnabled = true;
 
-        var targetRange = GlucoseStatisticsTargetRange.DefaultMgDl();
+        var targetRange = CreateStatisticsTargetRange();
         var request = BuildStatisticsRequest(snapshot, targetRange);
 
         var result = await _glucoseStatisticsService
@@ -417,7 +464,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private void ApplyProviderErrorDataHealth(string? providerErrorMessage)
     {
         var presentation = DashboardDataHealthPresenter.PresentProviderError(providerErrorMessage);
-    
+
         ApplyDataHealthPresentation(presentation);
     }
 
@@ -459,6 +506,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         TargetLowMgDl = settings.TargetLowMgDl;
         TargetHighMgDl = settings.TargetHighMgDl;
+        ChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
         TargetRangeText = $"Target range: {settings.TargetLowMgDl}-{settings.TargetHighMgDl} mg/dL";
 
         AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
@@ -476,6 +524,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         TargetLowMgDl = 70m;
         TargetHighMgDl = 180m;
+        ChartMaximumMgDl = 300;
         TargetRangeText = "Target range: 70-180 mg/dL";
 
         AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
@@ -534,7 +583,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         GlucoseDataFreshness freshness)
     {
         var presentation = DashboardProviderStatusPresenter.Present(providerKind, freshness);
-    
+
         ProviderStatusTitle = presentation.Title;
         ProviderStatusMessage = presentation.Message;
         ProviderStatusBadgeText = presentation.BadgeText;
@@ -670,13 +719,93 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         IReadOnlyCollection<GlucoseReading> readings,
         GlucoseRange targetRange)
     {
-        var chartPoints = readings
+        _allChartPoints = readings
             .OrderBy(reading => reading.Timestamp)
             .Select(reading => CreateChartPoint(reading, targetRange))
             .ToArray();
 
-        ChartPoints = chartPoints;
-        ChartSummaryText = BuildChartSummary(chartPoints);
+        ApplySelectedChartWindowToChart();
+    }
+
+    /// <summary>
+    /// Selects the chart time window and updates the visible chart points.
+    /// </summary>
+    /// <param name="windowHours">The selected chart window in hours.</param>
+    private void SelectChartWindow(int windowHours)
+    {
+        SelectedChartWindowHours = NormalizeChartWindowHours(windowHours);
+        ApplyChartWindowSelectionState(SelectedChartWindowHours);
+        ApplySelectedChartWindowToChart();
+    }
+
+    /// <summary>
+    /// Applies the currently selected chart window to the visible chart points.
+    /// </summary>
+    private void ApplySelectedChartWindowToChart()
+    {
+        var filteredChartPoints = FilterChartPointsByWindow(
+            _allChartPoints,
+            SelectedChartWindowHours);
+
+        ChartPoints = filteredChartPoints;
+        ChartSummaryText = BuildChartSummary(filteredChartPoints, SelectedChartWindowHours);
+    }
+
+    /// <summary>
+    /// Applies the selected chart window visual state.
+    /// </summary>
+    /// <param name="windowHours">The selected chart window in hours.</param>
+    private void ApplyChartWindowSelectionState(int windowHours)
+    {
+        IsThreeHourChartWindowSelected = windowHours == ThreeHourChartWindow;
+        IsSixHourChartWindowSelected = windowHours == SixHourChartWindow;
+        IsTwelveHourChartWindowSelected = windowHours == TwelveHourChartWindow;
+    }
+
+    /// <summary>
+    /// Filters chart points using the selected time window relative to the current time.
+    /// </summary>
+    /// <param name="chartPoints">The full chart point collection.</param>
+    /// <param name="windowHours">The selected chart window in hours.</param>
+    /// <returns>The filtered chart points.</returns>
+    private static IReadOnlyList<GlucoseChartPoint> FilterChartPointsByWindow(
+        IReadOnlyCollection<GlucoseChartPoint> chartPoints,
+        int windowHours)
+    {
+        if (chartPoints.Count == 0)
+        {
+            return [];
+        }
+
+        var normalizedWindowHours = NormalizeChartWindowHours(windowHours);
+        var windowEndUtc = DateTimeOffset.UtcNow;
+        var windowStartUtc = windowEndUtc.AddHours(-normalizedWindowHours);
+
+        return chartPoints
+            .Where(point =>
+            {
+                var timestampUtc = point.Timestamp.ToUniversalTime();
+
+                return timestampUtc >= windowStartUtc &&
+                    timestampUtc <= windowEndUtc;
+            })
+            .OrderBy(point => point.Timestamp)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Normalizes chart window values to supported options.
+    /// </summary>
+    /// <param name="windowHours">The requested chart window in hours.</param>
+    /// <returns>The normalized chart window in hours.</returns>
+    private static int NormalizeChartWindowHours(int windowHours)
+    {
+        return windowHours switch
+        {
+            SixHourChartWindow => SixHourChartWindow,
+            TwelveHourChartWindow => TwelveHourChartWindow,
+            _ => ThreeHourChartWindow
+        };
     }
 
     /// <summary>
@@ -711,21 +840,50 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
+    /// Creates the active statistics target range from dashboard settings.
+    /// </summary>
+    /// <returns>The active statistics target range.</returns>
+    private GlucoseStatisticsTargetRange CreateStatisticsTargetRange()
+    {
+        return new GlucoseStatisticsTargetRange(
+            TargetLowMgDl,
+            TargetHighMgDl,
+            GlucoseUnit.MgDl);
+    }
+
+    /// <summary>
+    /// Normalizes chart maximum values to supported options.
+    /// </summary>
+    /// <param name="chartMaximumMgDl">The requested chart maximum value.</param>
+    /// <returns>The normalized chart maximum value.</returns>
+    private static int NormalizeChartMaximumMgDl(int chartMaximumMgDl)
+    {
+        return chartMaximumMgDl is 400
+            ? 400
+            : 300;
+    }
+
+    /// <summary>
     /// Builds a display-friendly chart summary.
     /// </summary>
     /// <param name="chartPoints">The chart points.</param>
+    /// <param name="windowHours">The selected chart window in hours.</param>
     /// <returns>The chart summary.</returns>
-    private static string BuildChartSummary(IReadOnlyCollection<GlucoseChartPoint> chartPoints)
+    private static string BuildChartSummary(
+        IReadOnlyCollection<GlucoseChartPoint> chartPoints,
+        int windowHours)
     {
+        var normalizedWindowHours = NormalizeChartWindowHours(windowHours);
+
         if (chartPoints.Count == 0)
         {
-            return "No chart data";
+            return $"Last {normalizedWindowHours}H · no readings in this time window";
         }
 
         var minimumValue = chartPoints.Min(point => point.ValueMgDl);
         var maximumValue = chartPoints.Max(point => point.ValueMgDl);
 
-        return $"{chartPoints.Count} readings · {minimumValue:0}-{maximumValue:0} mg/dL";
+        return $"Last {normalizedWindowHours}H · {chartPoints.Count} readings · {minimumValue:0}-{maximumValue:0} mg/dL";
     }
 
     /// <summary>
