@@ -90,9 +90,6 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private decimal _targetHighMgDl = 180m;
 
     [ObservableProperty]
-    private int _chartMaximumMgDl = 300;
-
-    [ObservableProperty]
     private string _targetRangeText = "Target range: 70-180 mg/dL";
 
     [ObservableProperty]
@@ -354,7 +351,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         IsStatisticsEnabled = true;
 
-        var targetRange = CreateStatisticsTargetRange();
+        var targetRange = GlucoseStatisticsTargetRange.DefaultMgDl();
         var request = BuildStatisticsRequest(snapshot, targetRange);
 
         var result = await _glucoseStatisticsService
@@ -506,7 +503,6 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         TargetLowMgDl = settings.TargetLowMgDl;
         TargetHighMgDl = settings.TargetHighMgDl;
-        ChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
         TargetRangeText = $"Target range: {settings.TargetLowMgDl}-{settings.TargetHighMgDl} mg/dL";
 
         AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
@@ -524,7 +520,6 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         TargetLowMgDl = 70m;
         TargetHighMgDl = 180m;
-        ChartMaximumMgDl = 300;
         TargetRangeText = "Target range: 70-180 mg/dL";
 
         AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
@@ -763,7 +758,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    /// Filters chart points using the selected time window relative to the current time.
+    /// Filters chart points using the selected time window.
     /// </summary>
     /// <param name="chartPoints">The full chart point collection.</param>
     /// <param name="windowHours">The selected chart window in hours.</param>
@@ -778,17 +773,11 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         }
 
         var normalizedWindowHours = NormalizeChartWindowHours(windowHours);
-        var windowEndUtc = DateTimeOffset.UtcNow;
-        var windowStartUtc = windowEndUtc.AddHours(-normalizedWindowHours);
+        var latestTimestamp = chartPoints.Max(point => point.Timestamp);
+        var minimumTimestamp = latestTimestamp.AddHours(-normalizedWindowHours);
 
         return chartPoints
-            .Where(point =>
-            {
-                var timestampUtc = point.Timestamp.ToUniversalTime();
-
-                return timestampUtc >= windowStartUtc &&
-                    timestampUtc <= windowEndUtc;
-            })
+            .Where(point => point.Timestamp >= minimumTimestamp)
             .OrderBy(point => point.Timestamp)
             .ToArray();
     }
@@ -840,30 +829,6 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    /// Creates the active statistics target range from dashboard settings.
-    /// </summary>
-    /// <returns>The active statistics target range.</returns>
-    private GlucoseStatisticsTargetRange CreateStatisticsTargetRange()
-    {
-        return new GlucoseStatisticsTargetRange(
-            TargetLowMgDl,
-            TargetHighMgDl,
-            GlucoseUnit.MgDl);
-    }
-
-    /// <summary>
-    /// Normalizes chart maximum values to supported options.
-    /// </summary>
-    /// <param name="chartMaximumMgDl">The requested chart maximum value.</param>
-    /// <returns>The normalized chart maximum value.</returns>
-    private static int NormalizeChartMaximumMgDl(int chartMaximumMgDl)
-    {
-        return chartMaximumMgDl is 400
-            ? 400
-            : 300;
-    }
-
-    /// <summary>
     /// Builds a display-friendly chart summary.
     /// </summary>
     /// <param name="chartPoints">The chart points.</param>
@@ -877,7 +842,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         if (chartPoints.Count == 0)
         {
-            return $"Last {normalizedWindowHours}H · no readings in this time window";
+            return $"Last {normalizedWindowHours}H · no chart data";
         }
 
         var minimumValue = chartPoints.Min(point => point.ValueMgDl);

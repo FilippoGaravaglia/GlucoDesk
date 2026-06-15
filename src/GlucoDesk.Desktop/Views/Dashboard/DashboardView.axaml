@@ -39,64 +39,101 @@
                     Spacing="22">
 
           <Border Classes="hero-card">
-            <Grid ColumnDefinitions="1.1*,0.9*"
-                  ColumnSpacing="32">
+            <Grid ColumnDefinitions="1.16*,0.84*"
+                  ColumnSpacing="30">
 
-              <StackPanel Spacing="20">
-                <StackPanel Spacing="8">
+              <StackPanel Grid.Column="0"
+                          Spacing="22">
+                <StackPanel Spacing="10">
                   <TextBlock Text="CURRENT GLUCOSE"
                              Classes="eyebrow" />
 
-                  <TextBlock Text="{Binding LatestValueText}"
-                             Classes="hero-value" />
+                  <Grid ColumnDefinitions="Auto,*"
+                        ColumnSpacing="18"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding LatestValueText}"
+                               Classes="hero-value" />
+
+                    <StackPanel Grid.Column="1"
+                                Spacing="8"
+                                VerticalAlignment="Center">
+                      <Border Classes="status-pill-success"
+                              HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding StatusText}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource GlucoDesk.Brush.Success}" />
+                      </Border>
+
+                      <TextBlock Text="{Binding TargetRangeText}"
+                                 Classes="secondary"
+                                 FontSize="13" />
+                    </StackPanel>
+                  </Grid>
 
                   <TextBlock Text="{Binding DataSourceStatusText}"
                              Classes="secondary"
                              FontSize="14"
                              TextWrapping="Wrap"
-                             MaxWidth="760" />
+                             MaxWidth="780" />
                 </StackPanel>
 
                 <WrapPanel Orientation="Horizontal">
-                  <Border Classes="badge-success"
+                  <Border Classes="signal-chip"
                           Margin="0,0,10,10">
-                    <TextBlock Text="{Binding StatusText}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource GlucoDesk.Brush.Success}" />
+                    <StackPanel Spacing="3">
+                      <TextBlock Text="Trend"
+                                 Classes="metric-label" />
+
+                      <TextBlock Text="{Binding TrendText}"
+                                 FontSize="13"
+                                 FontWeight="SemiBold"
+                                 Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+                    </StackPanel>
                   </Border>
 
-                  <Border Classes="badge-accent"
+                  <Border Classes="signal-chip"
                           Margin="0,0,10,10">
-                    <TextBlock Text="{Binding TrendText}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+                    <StackPanel Spacing="3">
+                      <TextBlock Text="Freshness"
+                                 Classes="metric-label" />
+
+                      <TextBlock Text="{Binding FreshnessText}"
+                                 FontSize="13"
+                                 FontWeight="SemiBold"
+                                 Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+                    </StackPanel>
                   </Border>
 
-                  <Border Classes="badge"
+                  <Border Classes="signal-chip"
                           Margin="0,0,10,10">
-                    <TextBlock Text="{Binding FreshnessText}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+                    <StackPanel Spacing="3">
+                      <TextBlock Text="Updated"
+                                 Classes="metric-label" />
+
+                      <TextBlock Text="{Binding LastUpdatedText}"
+                                 FontSize="13"
+                                 FontWeight="SemiBold"
+                                 Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+                    </StackPanel>
                   </Border>
                 </WrapPanel>
               </StackPanel>
 
               <Border Grid.Column="1"
-                      Classes="surface-card"
-                      Background="{StaticResource GlucoDesk.Brush.Surface}"
+                      Classes="hero-side-card"
                       VerticalAlignment="Stretch">
-                <StackPanel Spacing="12"
+                <StackPanel Spacing="18"
                             HorizontalAlignment="Stretch">
-                  <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Spacing="4">
+
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="16">
+                    <StackPanel Spacing="5">
                       <TextBlock Text="Dashboard refresh"
                                  Classes="section-title" />
 
                       <TextBlock Text="{Binding AutoRefreshStatusText}"
-                                 Classes="muted"
+                                 Classes="secondary"
                                  TextWrapping="Wrap" />
                     </StackPanel>
 
@@ -109,13 +146,19 @@
                   <Border Height="1"
                           Background="{StaticResource GlucoDesk.Brush.Border}" />
 
-                  <TextBlock Text="{Binding SettingsStatusText}"
-                             Classes="secondary"
-                             TextWrapping="Wrap" />
+                  <StackPanel Spacing="10">
+                    <Border Classes="refresh-row">
+                      <TextBlock Text="{Binding SettingsStatusText}"
+                                 Classes="secondary"
+                                 TextWrapping="Wrap" />
+                    </Border>
 
-                  <TextBlock Text="{Binding HistoryStatusText}"
-                             Classes="secondary"
-                             TextWrapping="Wrap" />
+                    <Border Classes="refresh-row">
+                      <TextBlock Text="{Binding HistoryStatusText}"
+                                 Classes="secondary"
+                                 TextWrapping="Wrap" />
+                    </Border>
+                  </StackPanel>
                 </StackPanel>
               </Border>
             </Grid>
@@ -125,9 +168,10 @@
                 ColumnSpacing="20">
 
             <Border Grid.Column="0"
-                    Classes="surface-card">
-              <StackPanel Spacing="10">
-                <Grid ColumnDefinitions="*,Auto">
+                    Classes="signal-card">
+              <StackPanel Spacing="12">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="16">
                   <StackPanel Spacing="4">
                     <TextBlock Text="{Binding ProviderStatusTitle}"
                                Classes="section-title" />
@@ -155,9 +199,10 @@
             </Border>
 
             <Border Grid.Column="1"
-                    Classes="surface-card">
-              <StackPanel Spacing="10">
-                <Grid ColumnDefinitions="*,Auto">
+                    Classes="signal-card">
+              <StackPanel Spacing="12">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="16">
                   <StackPanel Spacing="4">
                     <TextBlock Text="{Binding DataHealthTitle}"
                                Classes="section-title" />
@@ -191,7 +236,8 @@
             <Border Grid.Column="0"
                     Classes="surface-card-strong">
               <StackPanel Spacing="18">
-                <Grid ColumnDefinitions="*,Auto">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="18">
                   <StackPanel Spacing="4">
                     <TextBlock Text="Glucose overview"
                                Classes="section-title" />
@@ -224,7 +270,7 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Classes="metric-card-large"
+                  <Border Classes="metric-card-success"
                           Margin="0,0,12,12">
                     <StackPanel Spacing="5">
                       <TextBlock Text="Time in range"
@@ -235,7 +281,7 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Classes="metric-card-large"
+                  <Border Classes="metric-card-danger"
                           Margin="0,0,12,12">
                     <StackPanel Spacing="5">
                       <TextBlock Text="Below range"
@@ -246,7 +292,7 @@
                     </StackPanel>
                   </Border>
 
-                  <Border Classes="metric-card-large"
+                  <Border Classes="metric-card-warning"
                           Margin="0,0,12,12">
                     <StackPanel Spacing="5">
                       <TextBlock Text="Above range"
@@ -318,11 +364,11 @@
             </Border>
           </Grid>
 
-          <Border Classes="surface-card-strong">
+          <Border Classes="chart-card">
             <StackPanel Spacing="18">
               <Grid ColumnDefinitions="*,Auto"
-                    ColumnSpacing="16">
-                <StackPanel Spacing="5">
+                    ColumnSpacing="18">
+                <StackPanel Spacing="6">
                   <TextBlock Text="Recent glucose trend"
                              Classes="section-title" />
 
@@ -331,50 +377,54 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1"
-                            Spacing="8"
+                            Spacing="10"
                             HorizontalAlignment="Right">
-                  <WrapPanel Orientation="Horizontal"
-                             HorizontalAlignment="Right">
-                    <Button Content="3H"
-                            Command="{Binding SelectThreeHourChartWindowCommand}"
-                            Classes="nav-button"
-                            Classes.accent="{Binding IsThreeHourChartWindowSelected}"
-                            MinWidth="48"
-                            Padding="12,8"
-                            Margin="0,0,8,0" />
 
-                    <Button Content="6H"
-                            Command="{Binding SelectSixHourChartWindowCommand}"
-                            Classes="nav-button"
-                            Classes.accent="{Binding IsSixHourChartWindowSelected}"
-                            MinWidth="48"
-                            Padding="12,8"
-                            Margin="0,0,8,0" />
+                  <Border Classes="segmented-control"
+                          HorizontalAlignment="Right">
+                    <WrapPanel Orientation="Horizontal"
+                               HorizontalAlignment="Right">
+                      <Button Content="3H"
+                              Command="{Binding SelectThreeHourChartWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsThreeHourChartWindowSelected}"
+                              MinWidth="48"
+                              Padding="12,8"
+                              Margin="0,0,6,0" />
 
-                    <Button Content="12H"
-                            Command="{Binding SelectTwelveHourChartWindowCommand}"
-                            Classes="nav-button"
-                            Classes.accent="{Binding IsTwelveHourChartWindowSelected}"
-                            MinWidth="54"
-                            Padding="12,8" />
-                  </WrapPanel>
+                      <Button Content="6H"
+                              Command="{Binding SelectSixHourChartWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsSixHourChartWindowSelected}"
+                              MinWidth="48"
+                              Padding="12,8"
+                              Margin="0,0,6,0" />
+
+                      <Button Content="12H"
+                              Command="{Binding SelectTwelveHourChartWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsTwelveHourChartWindowSelected}"
+                              MinWidth="54"
+                              Padding="12,8" />
+                    </WrapPanel>
+                  </Border>
 
                   <TextBlock Text="{Binding ChartSummaryText}"
                              Classes="secondary"
                              TextAlignment="Right" />
 
-                  <TextBlock Text="{Binding LatestValueText}"
-                             Classes="muted"
-                             FontSize="12"
-                             TextAlignment="Right" />
+                  <Border Classes="badge"
+                          HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding LatestValueText}"
+                               Classes="muted"
+                               FontSize="12"
+                               TextAlignment="Right" />
+                  </Border>
                 </StackPanel>
               </Grid>
 
-              <Border Height="340"
-                      CornerRadius="22"
-                      BorderThickness="1"
-                      BorderBrush="{StaticResource GlucoDesk.Brush.Border}"
-                      Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
+              <Border Classes="chart-shell"
+                      Height="340"
                       Padding="12">
                 <controls:GlucoseTrendChart
                     Points="{Binding ChartPoints}"
@@ -386,34 +436,50 @@
             </StackPanel>
           </Border>
 
-          <Border Classes="surface-card"
-                  IsVisible="{Binding HasError}"
-                  Background="{StaticResource GlucoDesk.Brush.DangerSoft}">
-            <TextBlock Text="{Binding ErrorMessage}"
-                       TextWrapping="Wrap"
-                       FontWeight="SemiBold"
-                       Foreground="{StaticResource GlucoDesk.Brush.Danger}" />
-          </Border>
-
-          <Border Classes="surface-card"
-                  IsVisible="{Binding IsMockProviderActive}"
-                  Background="{StaticResource GlucoDesk.Brush.WarningSoft}">
+          <Border Classes="notice-card-danger"
+                  IsVisible="{Binding HasError}">
             <StackPanel Spacing="6">
-              <TextBlock Text="Demo mode active"
+              <TextBlock Text="Dashboard error"
                          Classes="section-title"
-                         Foreground="{StaticResource GlucoDesk.Brush.Warning}" />
+                         Foreground="{StaticResource GlucoDesk.Brush.Danger}" />
 
-              <TextBlock Text="Demo data is currently provided by the Mock CGM provider. Configure and select Dexcom or Nightscout in Settings to use real provider data."
+              <TextBlock Text="{Binding ErrorMessage}"
                          TextWrapping="Wrap"
                          Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
             </StackPanel>
           </Border>
 
-          <Border Classes="surface-card"
-                  Background="{StaticResource GlucoDesk.Brush.IndigoSoft}">
-            <TextBlock Text="GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications."
-                       TextWrapping="Wrap"
-                       Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+          <Border Classes="notice-card-warning"
+                  IsVisible="{Binding IsMockProviderActive}">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="14">
+              <Border Classes="notice-dot-warning"
+                      VerticalAlignment="Top" />
+
+              <StackPanel Grid.Column="1"
+                          Spacing="5">
+                <TextBlock Text="Demo mode active"
+                           Classes="section-title"
+                           Foreground="{StaticResource GlucoDesk.Brush.Warning}" />
+
+                <TextBlock Text="Mock provider is currently powering the dashboard. Configure and select Dexcom or Nightscout in Settings to use real provider data."
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Border Classes="notice-card-info">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="14">
+              <Border Classes="notice-dot-info"
+                      VerticalAlignment="Top" />
+
+              <TextBlock Grid.Column="1"
+                         Text="GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications."
+                         TextWrapping="Wrap"
+                         Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+            </Grid>
           </Border>
 
         </StackPanel>
