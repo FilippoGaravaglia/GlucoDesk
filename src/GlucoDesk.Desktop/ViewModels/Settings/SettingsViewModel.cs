@@ -91,6 +91,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private bool _canUseNightscoutProvider;
 
     /// <summary>
+    /// Gets the supported chart maximum options expressed in mg/dL.
+    /// </summary>
+    public IReadOnlyList<int> ChartMaximumOptions { get; } = [300, 400];
+
+    [ObservableProperty]
+    private int _selectedChartMaximumMgDl = 300;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
     /// <param name="settingsService">The application settings service.</param>
@@ -337,15 +345,15 @@ public sealed partial class SettingsViewModel : ViewModelBase
             CgmProviderKind.Nightscout,
             "Nightscout.ProviderUnavailable",
             "Nightscout is not available in the current desktop runtime.");
-    
+
         if (nightscoutProviderResult.IsFailure)
         {
             return Result.Failure(nightscoutProviderResult.Error);
         }
-    
+
         SelectedLiveProvider = nightscoutProviderResult.Value;
         SelectedHistoricalProvider = nightscoutProviderResult.Value;
-    
+
         return Result.Success();
     }
 
@@ -600,8 +608,21 @@ public sealed partial class SettingsViewModel : ViewModelBase
         TargetHighMgDlText = settings.TargetHighMgDl.ToString(CultureInfo.InvariantCulture);
         DashboardRefreshIntervalSecondsText = ((int)settings.DashboardRefreshInterval.TotalSeconds)
             .ToString(CultureInfo.InvariantCulture);
+        SelectedChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
 
         return usedProviderFallback;
+    }
+
+    /// <summary>
+    /// Normalizes chart maximum values to supported options.
+    /// </summary>
+    /// <param name="chartMaximumMgDl">The requested chart maximum value.</param>
+    /// <returns>The normalized chart maximum value.</returns>
+    private static int NormalizeChartMaximumMgDl(int chartMaximumMgDl)
+    {
+        return chartMaximumMgDl is 400
+            ? 400
+            : 300;
     }
 
     /// <summary>

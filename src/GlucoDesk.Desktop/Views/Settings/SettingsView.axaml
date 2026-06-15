@@ -194,7 +194,7 @@
                   <TextBlock Text="Glucose preferences"
                              Classes="section-title" />
 
-                  <TextBlock Text="Set preferred glucose unit and the target range used by the dashboard and statistics."
+                  <TextBlock Text="Set preferred glucose unit and the target range used by the dashboard, statistics and chart rendering."
                              Classes="secondary"
                              FontSize="13"
                              TextWrapping="Wrap" />
@@ -223,8 +223,8 @@
                                  Classes="metric-label" />
 
                       <TextBox Text="{Binding TargetLowMgDlText}"
-                         PlaceholderText="70"
-                         HorizontalAlignment="Stretch" />
+                               PlaceholderText="70"
+                               HorizontalAlignment="Stretch" />
 
                       <TextBlock Text="mg/dL"
                                  Classes="muted"
@@ -240,8 +240,8 @@
                                  Classes="metric-label" />
 
                       <TextBox Text="{Binding TargetHighMgDlText}"
-                        PlaceholderText="180"
-                        HorizontalAlignment="Stretch" />
+                               PlaceholderText="180"
+                               HorizontalAlignment="Stretch" />
 
                       <TextBlock Text="mg/dL"
                                  Classes="muted"
@@ -261,7 +261,7 @@
                   <TextBlock Text="Dashboard behavior"
                              Classes="section-title" />
 
-                  <TextBlock Text="Configure how frequently the dashboard refreshes provider data."
+                  <TextBlock Text="Configure how frequently the dashboard refreshes and how the glucose chart is scaled."
                              Classes="secondary"
                              FontSize="13"
                              TextWrapping="Wrap" />
@@ -274,10 +274,26 @@
                                Classes="metric-label" />
 
                     <TextBox Text="{Binding DashboardRefreshIntervalSecondsText}"
-                      PlaceholderText="30"
-                      HorizontalAlignment="Stretch" />
+                             PlaceholderText="30"
+                             HorizontalAlignment="Stretch" />
 
                     <TextBlock Text="seconds"
+                               Classes="muted"
+                               FontSize="12" />
+                  </StackPanel>
+                </Border>
+
+                <Border Classes="metric-card"
+                        MinWidth="0">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="Chart maximum"
+                               Classes="metric-label" />
+
+                    <ComboBox ItemsSource="{Binding ChartMaximumOptions}"
+                              SelectedItem="{Binding SelectedChartMaximumMgDl}"
+                              HorizontalAlignment="Stretch" />
+
+                    <TextBlock Text="mg/dL"
                                Classes="muted"
                                FontSize="12" />
                   </StackPanel>

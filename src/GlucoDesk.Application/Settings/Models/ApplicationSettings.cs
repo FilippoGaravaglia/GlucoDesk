@@ -16,15 +16,17 @@ public sealed record ApplicationSettings
     /// <param name="targetLowMgDl">The lower glucose target expressed in mg/dL.</param>
     /// <param name="targetHighMgDl">The upper glucose target expressed in mg/dL.</param>
     /// <param name="dashboardRefreshInterval">The dashboard refresh interval.</param>
+    /// <param name="chartMaximumMgDl">The maximum chart value expressed in mg/dL.</param>
     /// <exception cref="ArgumentException">Thrown when provider or unit values are invalid.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when target range or refresh interval values are invalid.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when target range, refresh interval or chart maximum values are invalid.</exception>
     public ApplicationSettings(
         CgmProviderKind activeLiveProvider = CgmProviderKind.Mock,
         CgmProviderKind historicalProvider = CgmProviderKind.Mock,
         GlucoseUnit preferredUnit = GlucoseUnit.MgDl,
         int targetLowMgDl = 70,
         int targetHighMgDl = 180,
-        TimeSpan? dashboardRefreshInterval = null)
+        TimeSpan? dashboardRefreshInterval = null,
+        int chartMaximumMgDl = 300)
     {
         var effectiveDashboardRefreshInterval = dashboardRefreshInterval ?? TimeSpan.FromSeconds(30);
 
@@ -67,12 +69,21 @@ public sealed record ApplicationSettings
                 "Dashboard refresh interval must be greater than zero.");
         }
 
+        if (chartMaximumMgDl is not 300 and not 400)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(chartMaximumMgDl),
+                chartMaximumMgDl,
+                "Chart maximum value must be either 300 or 400 mg/dL.");
+        }
+
         ActiveLiveProvider = activeLiveProvider;
         HistoricalProvider = historicalProvider;
         PreferredUnit = preferredUnit;
         TargetLowMgDl = targetLowMgDl;
         TargetHighMgDl = targetHighMgDl;
         DashboardRefreshInterval = effectiveDashboardRefreshInterval;
+        ChartMaximumMgDl = chartMaximumMgDl;
     }
 
     /// <summary>
@@ -109,4 +120,9 @@ public sealed record ApplicationSettings
     /// Gets the dashboard refresh interval.
     /// </summary>
     public TimeSpan DashboardRefreshInterval { get; }
+
+    /// <summary>
+    /// Gets the maximum chart value expressed in mg/dL.
+    /// </summary>
+    public int ChartMaximumMgDl { get; }
 }
