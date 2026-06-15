@@ -9,14 +9,14 @@ using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 using GlucoDesk.Desktop.ViewModels.Common;
+using GlucoDesk.Desktop.ViewModels.Settings.Providers;
 using GlucoDesk.Desktop.ViewModels.Settings.Selections;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
-using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
-using GlucoDesk.Desktop.ViewModels.Settings.Providers;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -29,6 +29,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [
         CgmProviderKind.Mock,
         CgmProviderKind.Nightscout,
+        CgmProviderKind.DexcomShare,
         CgmProviderKind.DexcomSandbox,
         CgmProviderKind.DexcomOfficial
     ];
@@ -83,7 +84,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _nightscoutConnectionStatusText = "Nightscout: status not checked";
-    
+
     [ObservableProperty]
     private bool _canTestNightscoutConnection;
 
@@ -256,8 +257,6 @@ public sealed partial class SettingsViewModel : ViewModelBase
         }
     }
 
-    #region Helpers
-
     /// <summary>
     /// Selects Nightscout as both live and historical provider and saves the settings.
     /// </summary>
@@ -325,39 +324,6 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Updates the availability of the Nightscout activation action.
-    /// </summary>
-    private void UpdateNightscoutProviderActionAvailability()
-    {
-        CanUseNightscoutProvider = ProviderActivationSelector.CanActivate(
-            ProviderOptions,
-            CgmProviderKind.Nightscout);
-    }
-
-    /// <summary>
-    /// Selects the available Nightscout provider option for both live and historical readings.
-    /// </summary>
-    /// <returns>The operation result.</returns>
-    private Result SelectAvailableNightscoutProvider()
-    {
-        var nightscoutProviderResult = ProviderActivationSelector.SelectAvailableProvider(
-            ProviderOptions,
-            CgmProviderKind.Nightscout,
-            "Nightscout.ProviderUnavailable",
-            "Nightscout is not available in the current desktop runtime.");
-
-        if (nightscoutProviderResult.IsFailure)
-        {
-            return Result.Failure(nightscoutProviderResult.Error);
-        }
-
-        SelectedLiveProvider = nightscoutProviderResult.Value;
-        SelectedHistoricalProvider = nightscoutProviderResult.Value;
-
-        return Result.Success();
-    }
-
-    /// <summary>
     /// Tests the configured Nightscout desktop connection.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -408,32 +374,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Refreshes the Nightscout configuration status text.
-    /// </summary>
-    private void RefreshNightscoutConnectionStatus()
-    {
-        var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
-
-        NightscoutConnectionStatusText = connectionService is null
-            ? "Nightscout: not configured in this desktop runtime."
-            : connectionService.GetConfigurationStatus().Message;
-    }
-
-    /// <summary>
-    /// Builds the initial Nightscout connection status text.
-    /// </summary>
-    /// <returns>The initial Nightscout connection status text.</returns>
-    private string BuildInitialNightscoutConnectionStatusText()
-    {
-        var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
-
-        return connectionService is null
-            ? "Nightscout: not configured in this desktop runtime."
-            : connectionService.GetConfigurationStatus().Message;
-    }
-
-    /// <summary>
-    /// Starts the Dexcom desktop connection flow and selects Dexcom as the active provider when the connection succeeds.
+    /// Starts the Dexcom desktop connection flow and selects the official Dexcom provider when the connection succeeds.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     [RelayCommand]
@@ -515,6 +456,66 @@ public sealed partial class SettingsViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Updates the availability of the Nightscout activation action.
+    /// </summary>
+    private void UpdateNightscoutProviderActionAvailability()
+    {
+        CanUseNightscoutProvider = ProviderActivationSelector.CanActivate(
+            ProviderOptions,
+            CgmProviderKind.Nightscout);
+    }
+
+    /// <summary>
+    /// Selects the available Nightscout provider option for both live and historical readings.
+    /// </summary>
+    /// <returns>The operation result.</returns>
+    private Result SelectAvailableNightscoutProvider()
+    {
+        var nightscoutProviderResult = ProviderActivationSelector.SelectAvailableProvider(
+            ProviderOptions,
+            CgmProviderKind.Nightscout,
+            "Nightscout.ProviderUnavailable",
+            "Nightscout is not available in the current desktop runtime.");
+
+        if (nightscoutProviderResult.IsFailure)
+        {
+            return Result.Failure(nightscoutProviderResult.Error);
+        }
+
+        SelectedLiveProvider = nightscoutProviderResult.Value;
+        SelectedHistoricalProvider = nightscoutProviderResult.Value;
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Refreshes the Nightscout configuration status text.
+    /// </summary>
+    private void RefreshNightscoutConnectionStatus()
+    {
+        var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
+
+        NightscoutConnectionStatusText = connectionService is null
+            ? "Nightscout: not configured in this desktop runtime."
+            : connectionService.GetConfigurationStatus().Message;
+    }
+
+    /// <summary>
+    /// Builds the initial Nightscout connection status text.
+    /// </summary>
+    /// <returns>The initial Nightscout connection status text.</returns>
+    private string BuildInitialNightscoutConnectionStatusText()
+    {
+        var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
+
+        return connectionService is null
+            ? "Nightscout: not configured in this desktop runtime."
+            : connectionService.GetConfigurationStatus().Message;
     }
 
     /// <summary>
@@ -625,7 +626,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
             : 300;
     }
 
-   /// <summary>
+    /// <summary>
     /// Creates application settings from the editable form values.
     /// </summary>
     /// <param name="validationMessage">The validation error message when settings cannot be created.</param>
@@ -953,13 +954,13 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Selects the currently available Dexcom provider for both live and historical readings.
+    /// Selects the currently available official Dexcom provider for both live and historical readings.
     /// </summary>
     /// <returns>The operation result.</returns>
     private Result SelectAvailableDexcomProvider()
     {
         var dexcomProvider = FindAvailableDexcomProviderOption();
-
+    
         if (dexcomProvider is null)
         {
             return Result.Failure(
@@ -967,29 +968,29 @@ public sealed partial class SettingsViewModel : ViewModelBase
                     "Dexcom.ProviderUnavailable",
                     "Dexcom is connected but no Dexcom provider is available in the current desktop runtime."));
         }
-
+    
         SelectedLiveProvider = dexcomProvider;
         SelectedHistoricalProvider = dexcomProvider;
-
+    
         return Result.Success();
     }
 
     /// <summary>
-    /// Finds the available Dexcom provider option in the current provider options.
+    /// Finds the available official Dexcom provider option in the current provider options.
     /// </summary>
-    /// <returns>The available Dexcom provider option, or null when unavailable.</returns>
+    /// <returns>The available official Dexcom provider option, or null when unavailable.</returns>
     private ProviderSelectionItem? FindAvailableDexcomProviderOption()
     {
         return ProviderOptions.FirstOrDefault(provider =>
-            provider.IsAvailable && IsDexcomProviderKind(provider.Kind));
+            provider.IsAvailable && IsOfficialDexcomProviderKind(provider.Kind));
     }
 
     /// <summary>
-    /// Checks whether the provider kind represents a Dexcom provider.
+    /// Checks whether the provider kind represents an official Dexcom OAuth provider.
     /// </summary>
     /// <param name="kind">The provider kind.</param>
-    /// <returns>True when the provider kind is a Dexcom provider; otherwise false.</returns>
-    private static bool IsDexcomProviderKind(CgmProviderKind kind)
+    /// <returns>True when the provider kind is an official Dexcom OAuth provider; otherwise false.</returns>
+    private static bool IsOfficialDexcomProviderKind(CgmProviderKind kind)
     {
         return kind is CgmProviderKind.DexcomSandbox or CgmProviderKind.DexcomOfficial;
     }

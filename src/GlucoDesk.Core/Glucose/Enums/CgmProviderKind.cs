@@ -28,5 +28,6 @@ public enum CgmProviderKind
     /// <summary>
     /// Dexcom official API provider.
     /// </summary>
-    DexcomOfficial = 4
+    DexcomOfficial = 4,
+    DexcomShare = 5
 }

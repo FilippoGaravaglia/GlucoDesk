@@ -263,7 +263,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         try
         {
             var result = await _glucoseDataService
-                .GetDashboardSnapshotAsync(GlucoseDashboardRequest.Default, cancellationToken);
+                .GetDashboardSnapshotAsync(CreateDashboardRequest(), cancellationToken);
 
             if (result.IsFailure)
             {
@@ -332,6 +332,30 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Creates the dashboard request used to load enough readings for all supported chart windows.
+    /// </summary>
+    /// <returns>The dashboard request.</returns>
+    private static GlucoseDashboardRequest CreateDashboardRequest()
+    {
+        return new GlucoseDashboardRequest(
+            TimeSpan.FromHours(TwelveHourChartWindow),
+            TimeSpan.FromMinutes(15),
+            maxReadings: CalculateDashboardMaxReadings(TwelveHourChartWindow));
+    }
+    
+    /// <summary>
+    /// Calculates the expected number of CGM readings for a chart window.
+    /// </summary>
+    /// <param name="windowHours">The chart window expressed in hours.</param>
+    /// <returns>The expected number of readings.</returns>
+    private static int CalculateDashboardMaxReadings(int windowHours)
+    {
+        const int readingsPerHour = 12;
+    
+        return windowHours * readingsPerHour;
+    }
 
     /// <summary>
     /// Refreshes dashboard statistics from local glucose history.
