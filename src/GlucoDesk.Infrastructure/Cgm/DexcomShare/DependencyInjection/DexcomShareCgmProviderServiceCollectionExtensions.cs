@@ -1,5 +1,6 @@
 using GlucoDesk.Application.Cgm.Providers.Abstractions;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Endpoints;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Mapping;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
@@ -17,17 +18,17 @@ public static class DexcomShareCgmProviderServiceCollectionExtensions
     /// Registers the Dexcom Share CGM provider.
     /// </summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="options">The Dexcom Share options.</param>
     /// <returns>The updated service collection.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when services or options are null.</exception>
-    public static IServiceCollection AddDexcomShareCgmProvider(
-        this IServiceCollection services,
-        DexcomShareOptions options)
+    public static IServiceCollection AddDexcomShareCgmProvider(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(options);
 
-        services.AddSingleton(options);
+        services.AddSingleton<MacOsKeychainDexcomShareCredentialStore>();
+        services.AddSingleton<EnvironmentDexcomShareCredentialStore>();
+
+        services.AddSingleton<IDexcomShareCredentialStore, CompositeDexcomShareCredentialStore>();
+        services.AddSingleton<IDexcomShareOptionsProvider, StoredDexcomShareOptionsProvider>();
+
         services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddSingleton<DexcomShareEndpointProvider>();
         services.AddSingleton<DexcomShareGlucoseValueMapper>();

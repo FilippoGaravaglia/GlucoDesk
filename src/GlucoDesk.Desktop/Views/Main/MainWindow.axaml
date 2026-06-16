@@ -2,6 +2,8 @@
     x:Class="GlucoDesk.Desktop.Views.Main.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:accountViews="clr-namespace:GlucoDesk.Desktop.Views.Account"
+    xmlns:accountViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Account"
     xmlns:dashboardViews="clr-namespace:GlucoDesk.Desktop.Views.Dashboard"
     xmlns:dashboardViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Dashboard"
     xmlns:settingsViews="clr-namespace:GlucoDesk.Desktop.Views.Settings"
@@ -16,6 +18,10 @@
   <Window.DataTemplates>
     <DataTemplate DataType="{x:Type dashboardViewModels:DashboardViewModel}">
       <dashboardViews:DashboardView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type accountViewModels:AccountViewModel}">
+      <accountViews:AccountView />
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type settingsViewModels:SettingsViewModel}">
@@ -34,18 +40,18 @@
         <StackPanel Grid.Row="0"
                     Spacing="24">
 
-        <StackPanel Spacing="10">
-          <Image Source="avares://GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png"
-                Width="228"
-                Height="64"
-                Stretch="Uniform"
-                HorizontalAlignment="Left"
-                Margin="0,2,0,0" />
+          <StackPanel Spacing="10">
+            <Image Source="avares://GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png"
+                   Width="228"
+                   Height="64"
+                   Stretch="Uniform"
+                   HorizontalAlignment="Left"
+                   Margin="0,2,0,0" />
 
-          <TextBlock Text="Desktop companion"
-                    Classes="sidebar-subtitle"
-                    Margin="4,0,0,0" />
-        </StackPanel>
+            <TextBlock Text="Desktop companion"
+                       Classes="sidebar-subtitle"
+                       Margin="4,0,0,0" />
+          </StackPanel>
 
           <StackPanel Spacing="10">
             <Button Content="Dashboard"
@@ -54,6 +60,13 @@
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
                     Command="{Binding ShowDashboardCommand}" />
+
+            <Button Content="Account"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsAccountSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowAccountCommand}" />
 
             <Button Content="Settings"
                     Classes="nav-button"

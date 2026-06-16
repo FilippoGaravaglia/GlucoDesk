@@ -2,7 +2,6 @@ using GlucoDesk.Application.Cgm.Providers.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Metadata;
 using GlucoDesk.Application.Cgm.Readings.Requests;
 using GlucoDesk.Application.Cgm.Readings.Results;
-using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
@@ -17,7 +16,7 @@ namespace GlucoDesk.Infrastructure.Cgm.DexcomShare.Providers;
 /// </summary>
 public sealed class DexcomShareCgmProvider : ICgmLiveProvider, ICgmHistoricalProvider, ICgmMetadataProvider
 {
-    private readonly DexcomShareOptions _options;
+    private readonly IDexcomShareOptionsProvider _optionsProvider;
     private readonly IDexcomShareClient _client;
     private readonly DexcomShareGlucoseValueMapper _mapper;
     private readonly TimeProvider _timeProvider;
@@ -25,22 +24,22 @@ public sealed class DexcomShareCgmProvider : ICgmLiveProvider, ICgmHistoricalPro
     /// <summary>
     /// Initializes a new instance of the <see cref="DexcomShareCgmProvider"/> class.
     /// </summary>
-    /// <param name="options">The Dexcom Share options.</param>
+    /// <param name="optionsProvider">The Dexcom Share options provider.</param>
     /// <param name="client">The Dexcom Share client.</param>
     /// <param name="mapper">The Dexcom Share glucose value mapper.</param>
     /// <param name="timeProvider">The time provider.</param>
     public DexcomShareCgmProvider(
-        DexcomShareOptions options,
+        IDexcomShareOptionsProvider optionsProvider,
         IDexcomShareClient client,
         DexcomShareGlucoseValueMapper mapper,
         TimeProvider timeProvider)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(optionsProvider);
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(mapper);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
-        _options = options;
+        _optionsProvider = optionsProvider;
         _client = client;
         _mapper = mapper;
         _timeProvider = timeProvider;
@@ -49,10 +48,20 @@ public sealed class DexcomShareCgmProvider : ICgmLiveProvider, ICgmHistoricalPro
     /// <inheritdoc />
     public async Task<Result<LatestGlucoseReadingResult>> GetLatestReadingAsync(CancellationToken cancellationToken)
     {
+        var optionsResult = await GetOptionsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (optionsResult.IsFailure)
+        {
+            return Result<LatestGlucoseReadingResult>.Failure(optionsResult.Error);
+        }
+
+        var options = optionsResult.Value;
         var retrievedAt = _timeProvider.GetUtcNow();
 
         var readingsResult = await GetMappedReadingsAsync(
-                _options.LatestReadingLookback,
+                options,
+                options.LatestReadingLookback,
                 maxCount: 1,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -77,10 +86,20 @@ public sealed class DexcomShareCgmProvider : ICgmLiveProvider, ICgmHistoricalPro
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var lookback = CalculateLookback(request);
-        var maxCount = CalculateMaxCount(lookback, request.Limit);
+        var optionsResult = await GetOptionsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (optionsResult.IsFailure)
+        {
+            return Result<GlucoseReadingsResult>.Failure(optionsResult.Error);
+        }
+
+        var options = optionsResult.Value;
+        var lookback = CalculateLookback(options, request);
+        var maxCount = CalculateMaxCount(options, lookback, request.Limit);
 
         var readingsResult = await GetMappedReadingsAsync(
+                options,
                 lookback,
                 maxCount,
                 cancellationToken)
@@ -113,17 +132,9 @@ public sealed class DexcomShareCgmProvider : ICgmLiveProvider, ICgmHistoricalPro
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!_options.IsConfigured)
-        {
-            return Task.FromResult(Result<CgmProviderMetadata>.Failure(
-                new Error(
-                    "DexcomShare.NotConfigured",
-                    "Dexcom Share is not configured in the current desktop runtime.")));
-        }
-
         var metadata = new CgmProviderMetadata(
             CgmProviderKind.DexcomShare,
-            _options.DisplayName,
+            "Dexcom Share",
             GlucoseDataFreshness.NearRealTime,
             supportsLiveReadings: true,
             supportsHistoricalReadings: true);
@@ -134,41 +145,33 @@ public sealed class DexcomShareCgmProvider : ICgmLiveProvider, ICgmHistoricalPro
     #region Helpers
 
     /// <summary>
-    /// Calculates the number of readings to request from Dexcom Share for the selected lookback window.
+    /// Gets the current Dexcom Share options.
     /// </summary>
-    /// <param name="lookback">The requested lookback window.</param>
-    /// <param name="requestedLimit">The optional caller-provided limit.</param>
-    /// <returns>The calculated maximum reading count.</returns>
-    private int CalculateMaxCount(
-        TimeSpan lookback,
-        int? requestedLimit)
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The current Dexcom Share options.</returns>
+    private async Task<Result<DexcomShareOptions>> GetOptionsAsync(CancellationToken cancellationToken)
     {
-        const int readingsPerHour = 12;
-        const int bufferReadings = 12;
-    
-        var requestedHours = Math.Ceiling(lookback.TotalHours);
-        var requiredCount = ((int)requestedHours * readingsPerHour) + bufferReadings;
-    
-        var effectiveRequestedLimit = requestedLimit.GetValueOrDefault(0);
-    
-        return Math.Clamp(
-            Math.Max(requiredCount, effectiveRequestedLimit),
-            1,
-            _options.MaximumRecentReadings);
+        return await _optionsProvider
+            .GetOptionsAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
     /// Gets mapped Dexcom Share glucose readings.
     /// </summary>
+    /// <param name="options">The Dexcom Share options.</param>
     /// <param name="lookback">The requested lookback window.</param>
     /// <param name="maxCount">The maximum number of readings.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The mapped glucose readings.</returns>
     private async Task<Result<IReadOnlyCollection<GlucoseReading>>> GetMappedReadingsAsync(
+        DexcomShareOptions options,
         TimeSpan lookback,
         int maxCount,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         var sessionResult = await _client
             .AuthenticateAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -197,20 +200,53 @@ public sealed class DexcomShareCgmProvider : ICgmLiveProvider, ICgmHistoricalPro
     /// <summary>
     /// Calculates the Dexcom Share lookback window for a glucose readings request.
     /// </summary>
+    /// <param name="options">The Dexcom Share options.</param>
     /// <param name="request">The glucose readings request.</param>
     /// <returns>The calculated lookback window.</returns>
-    private TimeSpan CalculateLookback(GlucoseReadingsRequest request)
+    private static TimeSpan CalculateLookback(
+        DexcomShareOptions options,
+        GlucoseReadingsRequest request)
     {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(request);
+
         var requestLookback = request.To - request.From;
 
         if (requestLookback <= TimeSpan.Zero)
         {
-            return _options.RecentReadingsLookback;
+            return options.RecentReadingsLookback;
         }
 
-        return requestLookback > _options.RecentReadingsLookback
+        return requestLookback > options.RecentReadingsLookback
             ? requestLookback
-            : _options.RecentReadingsLookback;
+            : options.RecentReadingsLookback;
+    }
+
+    /// <summary>
+    /// Calculates the number of readings to request from Dexcom Share for the selected lookback window.
+    /// </summary>
+    /// <param name="options">The Dexcom Share options.</param>
+    /// <param name="lookback">The requested lookback window.</param>
+    /// <param name="requestedLimit">The optional caller-provided limit.</param>
+    /// <returns>The calculated maximum reading count.</returns>
+    private static int CalculateMaxCount(
+        DexcomShareOptions options,
+        TimeSpan lookback,
+        int? requestedLimit)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        const int readingsPerHour = 12;
+        const int bufferReadings = 12;
+
+        var requestedHours = Math.Ceiling(lookback.TotalHours);
+        var requiredCount = ((int)requestedHours * readingsPerHour) + bufferReadings;
+        var effectiveRequestedLimit = requestedLimit.GetValueOrDefault(0);
+
+        return Math.Clamp(
+            Math.Max(requiredCount, effectiveRequestedLimit),
+            1,
+            options.MaximumRecentReadings);
     }
 
     /// <summary>
