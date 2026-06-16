@@ -406,6 +406,13 @@
                               Classes.accent="{Binding IsTwelveHourChartWindowSelected}"
                               MinWidth="54"
                               Padding="12,8" />
+
+                      <Button Content="24H"
+                              Command="{Binding ShowTwentyFourHourChartWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsTwentyFourHourChartWindowSelected}"
+                              MinWidth="54"
+                              Padding="12,8" />
                     </WrapPanel>
                   </Border>
 

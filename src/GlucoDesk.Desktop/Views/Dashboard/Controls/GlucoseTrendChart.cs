@@ -348,6 +348,7 @@ public sealed class GlucoseTrendChart : Control
         {
             6 => 6,
             12 => 12,
+            24 => 24,
             _ => 3
         };
     }

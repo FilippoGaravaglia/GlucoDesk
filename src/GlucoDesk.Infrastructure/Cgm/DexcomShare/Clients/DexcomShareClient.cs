@@ -18,7 +18,7 @@ public sealed class DexcomShareClient : IDexcomShareClient
     private const int MinimumLookbackMinutes = 1;
     private const int MaximumLookbackMinutes = 1440;
     private const int MinimumReadingCount = 1;
-    private const int MaximumReadingCount = 144;
+    private const int MaximumReadingCount = 288;
     private const string UserAgent = "GlucoDesk/0.1";
 
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
