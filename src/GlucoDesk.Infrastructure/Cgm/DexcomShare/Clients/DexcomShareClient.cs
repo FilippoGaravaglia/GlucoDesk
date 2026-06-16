@@ -24,41 +24,61 @@ public sealed class DexcomShareClient : IDexcomShareClient
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _httpClient;
-    private readonly DexcomShareOptions _options;
+    private readonly IDexcomShareOptionsProvider _optionsProvider;
     private readonly DexcomShareEndpointProvider _endpointProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DexcomShareClient"/> class.
     /// </summary>
     /// <param name="httpClient">The HTTP client.</param>
-    /// <param name="options">The Dexcom Share options.</param>
+    /// <param name="optionsProvider">The Dexcom Share options provider.</param>
     /// <param name="endpointProvider">The endpoint provider.</param>
     public DexcomShareClient(
         HttpClient httpClient,
-        DexcomShareOptions options,
+        IDexcomShareOptionsProvider optionsProvider,
         DexcomShareEndpointProvider endpointProvider)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(optionsProvider);
         ArgumentNullException.ThrowIfNull(endpointProvider);
 
         _httpClient = httpClient;
-        _options = options;
+        _optionsProvider = optionsProvider;
         _endpointProvider = endpointProvider;
     }
 
     /// <inheritdoc />
     public async Task<Result<string>> AuthenticateAsync(CancellationToken cancellationToken)
     {
-        if (!_options.IsConfigured)
+        var optionsResult = await _optionsProvider
+            .GetOptionsAsync(cancellationToken)
+            .ConfigureAwait(false);
+    
+        if (optionsResult.IsFailure)
+        {
+            return Result<string>.Failure(optionsResult.Error);
+        }
+    
+        return await AuthenticateAsync(optionsResult.Value, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<string>> AuthenticateAsync(
+        DexcomShareOptions options,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (!options.IsConfigured)
         {
             return Result<string>.Failure(
                 new Error(
                     "DexcomShare.NotConfigured",
-                    "Dexcom Share is not configured. Set username, password and region through environment variables."));
+                    "Dexcom Share account is not configured. Open Account and enter your Dexcom Share credentials."));
         }
 
-        var accountIdResult = await AuthenticatePublisherAccountAsync(cancellationToken)
+        var accountIdResult = await AuthenticatePublisherAccountAsync(options, cancellationToken)
             .ConfigureAwait(false);
 
         if (accountIdResult.IsFailure)
@@ -66,7 +86,7 @@ public sealed class DexcomShareClient : IDexcomShareClient
             return Result<string>.Failure(accountIdResult.Error);
         }
 
-        return await LoginPublisherAccountByIdAsync(accountIdResult.Value, cancellationToken)
+        return await LoginPublisherAccountByIdAsync(options, accountIdResult.Value, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -85,6 +105,17 @@ public sealed class DexcomShareClient : IDexcomShareClient
                     "Dexcom Share session identifier is missing."));
         }
 
+        var optionsResult = await _optionsProvider
+            .GetOptionsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (optionsResult.IsFailure)
+        {
+            return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Failure(optionsResult.Error);
+        }
+
+        var options = optionsResult.Value;
+
         var normalizedMinutes = Math.Clamp(
             minutes,
             MinimumLookbackMinutes,
@@ -95,7 +126,7 @@ public sealed class DexcomShareClient : IDexcomShareClient
             MinimumReadingCount,
             MaximumReadingCount);
 
-        var baseUri = _endpointProvider.GetBaseUri(_options.Region);
+        var baseUri = _endpointProvider.GetBaseUri(options.Region);
         var requestUri = new Uri(
             baseUri,
             $"/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues?sessionID={Uri.EscapeDataString(sessionId)}&minutes={normalizedMinutes}&maxCount={normalizedMaxCount}");
@@ -127,7 +158,9 @@ public sealed class DexcomShareClient : IDexcomShareClient
             }
 
             var values = await response.Content
-                .ReadFromJsonAsync<IReadOnlyCollection<DexcomShareGlucoseValueDto>>(SerializerOptions, cancellationToken)
+                .ReadFromJsonAsync<IReadOnlyCollection<DexcomShareGlucoseValueDto>>(
+                    SerializerOptions,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Success(values ?? []);
@@ -148,13 +181,16 @@ public sealed class DexcomShareClient : IDexcomShareClient
     #region Helpers
 
     /// <summary>
-    /// Authenticates the configured Dexcom Share publisher account and returns its account identifier.
+    /// Authenticates the Dexcom Share publisher account and returns the account identifier.
     /// </summary>
+    /// <param name="options">The Dexcom Share options.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The Dexcom Share account identifier.</returns>
-    private async Task<Result<string>> AuthenticatePublisherAccountAsync(CancellationToken cancellationToken)
+    private async Task<Result<string>> AuthenticatePublisherAccountAsync(
+        DexcomShareOptions options,
+        CancellationToken cancellationToken)
     {
-        var baseUri = _endpointProvider.GetBaseUri(_options.Region);
+        var baseUri = _endpointProvider.GetBaseUri(options.Region);
         var requestUri = new Uri(
             baseUri,
             "/ShareWebServices/Services/General/AuthenticatePublisherAccount");
@@ -163,9 +199,9 @@ public sealed class DexcomShareClient : IDexcomShareClient
         {
             Content = JsonContent.Create(
                 new DexcomShareAuthenticationRequest(
-                    _options.Username,
-                    _options.Password,
-                    _options.ApplicationId))
+                    options.Username,
+                    options.Password,
+                    options.ApplicationId))
         };
 
         ApplyDefaultHeaders(request);
@@ -183,12 +219,14 @@ public sealed class DexcomShareClient : IDexcomShareClient
     }
 
     /// <summary>
-    /// Logs in the configured Dexcom Share publisher account and returns a session identifier.
+    /// Logs into Dexcom Share using a publisher account identifier and returns the session identifier.
     /// </summary>
+    /// <param name="options">The Dexcom Share options.</param>
     /// <param name="accountId">The Dexcom Share account identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The Dexcom Share session identifier.</returns>
     private async Task<Result<string>> LoginPublisherAccountByIdAsync(
+        DexcomShareOptions options,
         string accountId,
         CancellationToken cancellationToken)
     {
@@ -200,7 +238,7 @@ public sealed class DexcomShareClient : IDexcomShareClient
                     "Dexcom Share account identifier is missing."));
         }
 
-        var baseUri = _endpointProvider.GetBaseUri(_options.Region);
+        var baseUri = _endpointProvider.GetBaseUri(options.Region);
         var requestUri = new Uri(
             baseUri,
             "/ShareWebServices/Services/General/LoginPublisherAccountById");
@@ -210,8 +248,8 @@ public sealed class DexcomShareClient : IDexcomShareClient
             Content = JsonContent.Create(
                 new DexcomShareLoginByAccountIdRequest(
                     accountId,
-                    _options.Password,
-                    _options.ApplicationId))
+                    options.Password,
+                    options.ApplicationId))
         };
 
         ApplyDefaultHeaders(request);
@@ -229,13 +267,13 @@ public sealed class DexcomShareClient : IDexcomShareClient
     }
 
     /// <summary>
-    /// Sends a Dexcom Share request that returns a JSON string payload.
+    /// Sends an HTTP request expected to return a JSON string payload.
     /// </summary>
     /// <param name="request">The HTTP request.</param>
     /// <param name="authorizationErrorCode">The authorization error code.</param>
     /// <param name="authorizationErrorMessage">The authorization error message.</param>
     /// <param name="httpErrorCode">The HTTP error code.</param>
-    /// <param name="httpErrorMessage">The HTTP error message prefix.</param>
+    /// <param name="httpErrorMessage">The HTTP error message.</param>
     /// <param name="emptyPayloadErrorCode">The empty payload error code.</param>
     /// <param name="emptyPayloadErrorMessage">The empty payload error message.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -273,7 +311,9 @@ public sealed class DexcomShareClient : IDexcomShareClient
             }
 
             var value = await response.Content
-                .ReadFromJsonAsync<string>(SerializerOptions, cancellationToken)
+                .ReadFromJsonAsync<string>(
+                    SerializerOptions,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             if (string.IsNullOrWhiteSpace(value))
@@ -300,9 +340,9 @@ public sealed class DexcomShareClient : IDexcomShareClient
     }
 
     /// <summary>
-    /// Applies default headers required by Dexcom Share requests.
+    /// Applies default Dexcom Share request headers.
     /// </summary>
-    /// <param name="request">The HTTP request message.</param>
+    /// <param name="request">The HTTP request.</param>
     private static void ApplyDefaultHeaders(HttpRequestMessage request)
     {
         request.Headers.TryAddWithoutValidation("User-Agent", UserAgent);

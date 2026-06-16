@@ -1,0 +1,196 @@
+<UserControl
+    x:Class="GlucoDesk.Desktop.Views.Account.AccountView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Border Classes="page-shell">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+
+      <Grid RowDefinitions="Auto,*"
+            Margin="30"
+            RowSpacing="26"
+            MaxWidth="1240"
+            HorizontalAlignment="Stretch">
+
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,Auto"
+              ColumnSpacing="24">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Account"
+                       Classes="page-title" />
+
+            <TextBlock Text="Connect GlucoDesk to your Dexcom Share account using secure local storage."
+                       Classes="secondary"
+                       FontSize="16"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+
+          <Border Grid.Column="1"
+                  Classes="badge-accent"
+                  VerticalAlignment="Top">
+            <TextBlock Text="Secure storage"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+          </Border>
+        </Grid>
+
+        <Grid Grid.Row="1"
+              ColumnDefinitions="1.05*,0.95*"
+              ColumnSpacing="20">
+
+          <Border Grid.Column="0"
+                  Classes="surface-card-strong">
+            <StackPanel Spacing="18">
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Dexcom Share"
+                           Classes="section-title" />
+
+                <TextBlock Text="Save your Dexcom Share account locally so GlucoDesk can reconnect automatically when the app starts."
+                           Classes="secondary"
+                           FontSize="13"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+
+              <Border Classes="metric-card-accent"
+                      MinWidth="0">
+                <StackPanel Spacing="10">
+                  <TextBlock Text="Region"
+                             Classes="metric-label" />
+
+                  <ComboBox ItemsSource="{Binding RegionOptions}"
+                            SelectedItem="{Binding SelectedRegion}"
+                            HorizontalAlignment="Stretch" />
+                </StackPanel>
+              </Border>
+
+              <Border Classes="metric-card"
+                      MinWidth="0">
+                <StackPanel Spacing="10">
+                  <TextBlock Text="Dexcom email"
+                             Classes="metric-label" />
+
+                  <TextBox Text="{Binding EmailText}"
+                           PlaceholderText="name@example.com"
+                           HorizontalAlignment="Stretch" />
+                </StackPanel>
+              </Border>
+
+              <Border Classes="metric-card"
+                      MinWidth="0">
+                <StackPanel Spacing="10">
+                  <TextBlock Text="Dexcom password"
+                             Classes="metric-label" />
+
+                  <TextBox Text="{Binding PasswordText}"
+                           PasswordChar="•"
+                           PlaceholderText="Leave empty to keep the saved password"
+                           HorizontalAlignment="Stretch" />
+
+                  <TextBlock Text="The password is stored in the macOS Keychain, not in GlucoDesk settings files."
+                             Classes="muted"
+                             FontSize="12"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+              </Border>
+
+              <WrapPanel Orientation="Horizontal">
+                <Button Content="Load saved account"
+                        Command="{Binding LoadCommand}"
+                        Margin="0,0,10,10" />
+
+                <Button Content="Save account"
+                        Command="{Binding SaveCommand}"
+                        Margin="0,0,10,10" />
+
+                <Button Content="Test connection"
+                        Command="{Binding TestConnectionCommand}"
+                        Margin="0,0,10,10" />
+
+                <Button Content="Clear account"
+                        Command="{Binding ClearCredentialsCommand}"
+                        IsVisible="{Binding HasStoredCredentials}"
+                        Margin="0,0,10,10" />
+              </WrapPanel>
+
+              <TextBlock Text="{Binding StatusMessage}"
+                         Classes="secondary"
+                         TextWrapping="Wrap" />
+
+              <Border IsVisible="{Binding HasError}"
+                      Background="{StaticResource GlucoDesk.Brush.DangerSoft}"
+                      BorderBrush="{StaticResource GlucoDesk.Brush.Danger}"
+                      BorderThickness="1"
+                      CornerRadius="14"
+                      Padding="14">
+                <TextBlock Text="{Binding ErrorMessage}"
+                           TextWrapping="Wrap"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource GlucoDesk.Brush.Danger}" />
+              </Border>
+
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Column="1"
+                  Classes="surface-card">
+            <StackPanel Spacing="18">
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="How it works"
+                           Classes="section-title" />
+
+                <TextBlock Text="GlucoDesk uses Dexcom Share to read near real-time glucose data from your Dexcom account."
+                           Classes="secondary"
+                           FontSize="13"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+
+              <Border Classes="sidebar-note-card">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="Automatic reconnect"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+
+                  <TextBlock Text="After saving your account, GlucoDesk can reconnect after app restart without entering credentials from the terminal."
+                             TextWrapping="Wrap"
+                             Classes="sidebar-note" />
+                </StackPanel>
+              </Border>
+
+              <Border Classes="sidebar-note-card"
+                      Background="{StaticResource GlucoDesk.Brush.IndigoSoft}">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="Privacy"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
+
+                  <TextBlock Text="Credentials stay on your Mac. They are not committed to Git and are not stored in local JSON settings."
+                             TextWrapping="Wrap"
+                             Classes="sidebar-note" />
+                </StackPanel>
+              </Border>
+
+              <Border Classes="sidebar-note-card"
+                      Background="{StaticResource GlucoDesk.Brush.WarningSoft}">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="Safety notice"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.Warning}" />
+
+                  <TextBlock Text="GlucoDesk is not a medical device. Always use official Dexcom and Omnipod apps for treatment decisions."
+                             TextWrapping="Wrap"
+                             Classes="sidebar-note" />
+                </StackPanel>
+              </Border>
+
+            </StackPanel>
+          </Border>
+
+        </Grid>
+      </Grid>
+    </ScrollViewer>
+  </Border>
+</UserControl>

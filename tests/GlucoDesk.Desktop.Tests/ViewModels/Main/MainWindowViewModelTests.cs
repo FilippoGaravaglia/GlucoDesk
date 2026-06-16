@@ -10,10 +10,15 @@ using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
+using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Readings;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Main;
 
@@ -25,8 +30,22 @@ public sealed class MainWindowViewModelTests
         var viewModel = CreateViewModel();
 
         Assert.True(viewModel.IsDashboardSelected);
+        Assert.False(viewModel.IsAccountSelected);
         Assert.False(viewModel.IsSettingsSelected);
         Assert.Same(viewModel.Dashboard, viewModel.CurrentContent);
+    }
+
+    [Fact]
+    public async Task ShowAccountCommand_ShouldSelectAccount()
+    {
+        var viewModel = CreateViewModel();
+
+        await viewModel.ShowAccountCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsDashboardSelected);
+        Assert.True(viewModel.IsAccountSelected);
+        Assert.False(viewModel.IsSettingsSelected);
+        Assert.Same(viewModel.Account, viewModel.CurrentContent);
     }
 
     [Fact]
@@ -37,6 +56,7 @@ public sealed class MainWindowViewModelTests
         viewModel.ShowSettingsCommand.Execute(null);
 
         Assert.False(viewModel.IsDashboardSelected);
+        Assert.False(viewModel.IsAccountSelected);
         Assert.True(viewModel.IsSettingsSelected);
         Assert.Same(viewModel.Settings, viewModel.CurrentContent);
     }
@@ -50,6 +70,7 @@ public sealed class MainWindowViewModelTests
         viewModel.ShowDashboardCommand.Execute(null);
 
         Assert.True(viewModel.IsDashboardSelected);
+        Assert.False(viewModel.IsAccountSelected);
         Assert.False(viewModel.IsSettingsSelected);
         Assert.Same(viewModel.Dashboard, viewModel.CurrentContent);
     }
@@ -71,6 +92,9 @@ public sealed class MainWindowViewModelTests
                 new FakeGlucoseDataService(),
                 settingsService,
                 DashboardRefreshOptions.Default),
+            new AccountViewModel(
+                new FakeDexcomShareCredentialStore(),
+                new FakeDexcomShareClient()),
             new SettingsViewModel(settingsService));
     }
 
@@ -79,12 +103,16 @@ public sealed class MainWindowViewModelTests
         /// <inheritdoc />
         public Task<Result<CgmProviderMetadata>> GetProviderMetadataAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             return Task.FromResult(Result<CgmProviderMetadata>.Success(CreateMetadata()));
         }
 
         /// <inheritdoc />
         public Task<Result<LatestGlucoseReadingResult>> GetLatestReadingAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             return Task.FromResult(Result<LatestGlucoseReadingResult>.Success(
                 new LatestGlucoseReadingResult(CreateReading(FixedNow), FixedNow)));
         }
@@ -94,6 +122,8 @@ public sealed class MainWindowViewModelTests
             GlucoseReadingsRequest request,
             CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             return Task.FromResult(Result<GlucoseReadingsResult>.Success(
                 new GlucoseReadingsResult(
                     [
@@ -116,6 +146,8 @@ public sealed class MainWindowViewModelTests
             GlucoseDashboardRequest request,
             CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             return Task.FromResult(Result<GlucoseDashboardSnapshot>.Success(CreateSnapshot()));
         }
     }
@@ -125,6 +157,8 @@ public sealed class MainWindowViewModelTests
         /// <inheritdoc />
         public Task<Result<ApplicationSettings>> GetSettingsAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             return Task.FromResult(Result<ApplicationSettings>.Success(ApplicationSettings.Default));
         }
 
@@ -133,7 +167,72 @@ public sealed class MainWindowViewModelTests
             ApplicationSettings settings,
             CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             return Task.FromResult(Result.Success());
+        }
+    }
+
+    private sealed class FakeDexcomShareCredentialStore : IDexcomShareCredentialStore
+    {
+        /// <inheritdoc />
+        public Task<DexcomShareCredentials?> ReadAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult<DexcomShareCredentials?>(null);
+        }
+
+        /// <inheritdoc />
+        public Task SaveAsync(
+            DexcomShareCredentials credentials,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task ClearAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeDexcomShareClient : IDexcomShareClient
+    {
+        /// <inheritdoc />
+        public Task<Result<string>> AuthenticateAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(Result<string>.Success("test-session-id"));
+        }
+
+        /// <inheritdoc />
+        public Task<Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>> GetLatestGlucoseValuesAsync(
+            string sessionId,
+            int minutes,
+            int maxCount,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(
+                Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Success([]));
+        }
+
+        /// <inheritdoc />
+        public Task<Result<string>> AuthenticateAsync(
+            DexcomShareOptions options,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+        
+            return Task.FromResult(Result<string>.Success("test-session-id"));
         }
     }
 

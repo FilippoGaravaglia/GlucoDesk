@@ -1,0 +1,397 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Desktop.ViewModels.Common;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
+
+namespace GlucoDesk.Desktop.ViewModels.Account;
+
+/// <summary>
+/// Represents the account screen view model.
+/// </summary>
+public sealed partial class AccountViewModel : ViewModelBase
+{
+    private readonly IDexcomShareCredentialStore _credentialStore;
+    private readonly IDexcomShareClient _dexcomShareClient;
+
+    [ObservableProperty]
+    private string _emailText = string.Empty;
+
+    [ObservableProperty]
+    private string _passwordText = string.Empty;
+
+    [ObservableProperty]
+    private DexcomShareRegionSelectionItem? _selectedRegion;
+
+    [ObservableProperty]
+    private string _statusMessage = "Account not loaded";
+
+    [ObservableProperty]
+    private string? _errorMessage;
+
+    [ObservableProperty]
+    private bool _hasError;
+
+    [ObservableProperty]
+    private bool _isBusy;
+
+    [ObservableProperty]
+    private bool _hasStoredCredentials;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AccountViewModel"/> class.
+    /// </summary>
+    /// <param name="credentialStore">The Dexcom Share credential store.</param>
+    /// <param name="dexcomShareClient">The Dexcom Share client.</param>
+    public AccountViewModel(
+        IDexcomShareCredentialStore credentialStore,
+        IDexcomShareClient dexcomShareClient)
+    {
+        ArgumentNullException.ThrowIfNull(credentialStore);
+        ArgumentNullException.ThrowIfNull(dexcomShareClient);
+
+        _credentialStore = credentialStore;
+        _dexcomShareClient = dexcomShareClient;
+
+        RegionOptions =
+        [
+            new DexcomShareRegionSelectionItem(
+                DexcomShareRegion.OutsideUs,
+                "Outside US / Europe"),
+
+            new DexcomShareRegionSelectionItem(
+                DexcomShareRegion.Us,
+                "United States")
+        ];
+
+        SelectedRegion = RegionOptions[0];
+    }
+
+    /// <summary>
+    /// Gets the supported Dexcom Share region options.
+    /// </summary>
+    public IReadOnlyList<DexcomShareRegionSelectionItem> RegionOptions { get; }
+
+    /// <summary>
+    /// Loads persisted Dexcom Share account details.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    public async Task LoadAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        ClearError();
+        StatusMessage = "Loading account...";
+
+        try
+        {
+            var credentials = await _credentialStore
+                .ReadAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (credentials is null)
+            {
+                HasStoredCredentials = false;
+                EmailText = string.Empty;
+                PasswordText = string.Empty;
+                SelectedRegion = RegionOptions[0];
+                StatusMessage = "No Dexcom Share account saved yet.";
+                return;
+            }
+
+            HasStoredCredentials = true;
+            EmailText = credentials.Username;
+            PasswordText = string.Empty;
+            SelectedRegion = FindRegion(credentials.Region);
+            StatusMessage = "Dexcom Share account loaded. Password is stored securely; leave it empty to keep the existing one.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Account load cancelled";
+        }
+        catch (Exception exception)
+        {
+            ApplyUnexpectedFailure(exception, "Unexpected error while loading account");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Saves Dexcom Share account details.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task SaveAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        ClearError();
+        StatusMessage = "Saving account...";
+
+        try
+        {
+            var credentials = await BuildCredentialsFromCurrentFormAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (credentials is null)
+            {
+                return;
+            }
+
+            await _credentialStore
+                .SaveAsync(credentials, cancellationToken)
+                .ConfigureAwait(false);
+
+            HasStoredCredentials = true;
+            PasswordText = string.Empty;
+            StatusMessage = "Dexcom Share account saved securely. GlucoDesk can reconnect automatically using the saved account.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Account save cancelled";
+        }
+        catch (Exception exception)
+        {
+            ApplyUnexpectedFailure(exception, "Unexpected error while saving account");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Tests the current Dexcom Share account without saving it.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task TestConnectionAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        ClearError();
+        StatusMessage = "Testing Dexcom Share connection...";
+
+        try
+        {
+            var credentials = await BuildCredentialsFromCurrentFormAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (credentials is null)
+            {
+                return;
+            }
+
+            var options = CreateOptions(credentials);
+
+            var result = await _dexcomShareClient
+                .AuthenticateAsync(options, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (result.IsFailure)
+            {
+                ApplyFailure(result, "Dexcom Share connection failed");
+                return;
+            }
+
+            StatusMessage = HasStoredCredentials
+                ? "Dexcom Share connection successful. Save the account if you changed any field."
+                : "Dexcom Share connection successful. Save the account to persist these credentials.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Connection test cancelled";
+        }
+        catch (Exception exception)
+        {
+            ApplyUnexpectedFailure(exception, "Unexpected error while testing Dexcom Share connection");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Clears saved Dexcom Share account details.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task ClearCredentialsAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        ClearError();
+        StatusMessage = "Clearing account...";
+
+        try
+        {
+            await _credentialStore
+                .ClearAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            HasStoredCredentials = false;
+            EmailText = string.Empty;
+            PasswordText = string.Empty;
+            SelectedRegion = RegionOptions[0];
+
+            StatusMessage = "Dexcom Share account removed from secure storage.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Clear account cancelled";
+        }
+        catch (Exception exception)
+        {
+            ApplyUnexpectedFailure(exception, "Unexpected error while clearing account");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Builds Dexcom Share credentials from the current form values without saving them.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The credentials, or null when the form is invalid.</returns>
+    private async Task<DexcomShareCredentials?> BuildCredentialsFromCurrentFormAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedRegion is null)
+        {
+            ApplyValidationFailure("Select a Dexcom Share region.");
+            return null;
+        }
+    
+        if (string.IsNullOrWhiteSpace(EmailText))
+        {
+            ApplyValidationFailure("Enter your Dexcom account email.");
+            return null;
+        }
+    
+        var existingCredentials = await _credentialStore
+            .ReadAsync(cancellationToken)
+            .ConfigureAwait(false);
+    
+        var passwordToUse = string.IsNullOrWhiteSpace(PasswordText)
+            ? existingCredentials?.Password
+            : PasswordText;
+    
+        if (string.IsNullOrWhiteSpace(passwordToUse))
+        {
+            ApplyValidationFailure("Enter your Dexcom password.");
+            return null;
+        }
+    
+        return new DexcomShareCredentials(
+            EmailText,
+            passwordToUse,
+            SelectedRegion.Region);
+    }
+
+    /// <summary>
+    /// Creates Dexcom Share options from credentials.
+    /// </summary>
+    /// <param name="credentials">The Dexcom Share credentials.</param>
+    /// <returns>The Dexcom Share options.</returns>
+    private static DexcomShareOptions CreateOptions(DexcomShareCredentials credentials)
+    {
+        ArgumentNullException.ThrowIfNull(credentials);
+
+        return new DexcomShareOptions(
+            credentials.Username,
+            credentials.Password,
+            credentials.Region,
+            displayName: "Dexcom Share");
+    }
+
+    /// <summary>
+    /// Finds a region selection item by region.
+    /// </summary>
+    /// <param name="region">The Dexcom Share region.</param>
+    /// <returns>The matching region selection item.</returns>
+    private DexcomShareRegionSelectionItem FindRegion(DexcomShareRegion region)
+    {
+        return RegionOptions.FirstOrDefault(option => option.Region == region)
+            ?? RegionOptions[0];
+    }
+
+    /// <summary>
+    /// Clears the current error state.
+    /// </summary>
+    private void ClearError()
+    {
+        HasError = false;
+        ErrorMessage = null;
+    }
+
+    /// <summary>
+    /// Applies a validation failure.
+    /// </summary>
+    /// <param name="message">The validation message.</param>
+    private void ApplyValidationFailure(string message)
+    {
+        HasError = true;
+        ErrorMessage = message;
+        StatusMessage = message;
+    }
+
+    /// <summary>
+    /// Applies an operation failure.
+    /// </summary>
+    /// <typeparam name="TValue">The result value type.</typeparam>
+    /// <param name="result">The failed result.</param>
+    /// <param name="fallbackMessage">The fallback message.</param>
+    private void ApplyFailure<TValue>(
+        Result<TValue> result,
+        string fallbackMessage)
+        where TValue : notnull
+    {
+        HasError = true;
+        ErrorMessage = string.IsNullOrWhiteSpace(result.Error.Message)
+            ? fallbackMessage
+            : result.Error.Message;
+        StatusMessage = fallbackMessage;
+    }
+
+    /// <summary>
+    /// Applies an unexpected exception failure.
+    /// </summary>
+    /// <param name="exception">The exception.</param>
+    /// <param name="fallbackMessage">The fallback message.</param>
+    private void ApplyUnexpectedFailure(
+        Exception exception,
+        string fallbackMessage)
+    {
+        HasError = true;
+        ErrorMessage = exception.Message;
+        StatusMessage = fallbackMessage;
+    }
+
+    #endregion
+}

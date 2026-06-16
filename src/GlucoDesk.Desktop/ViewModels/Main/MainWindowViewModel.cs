@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Settings;
@@ -18,21 +19,28 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private bool _isDashboardSelected;
 
     [ObservableProperty]
+    private bool _isAccountSelected;
+
+    [ObservableProperty]
     private bool _isSettingsSelected;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
     /// </summary>
     /// <param name="dashboard">The dashboard view model.</param>
+    /// <param name="account">The account view model.</param>
     /// <param name="settings">The settings view model.</param>
     public MainWindowViewModel(
         DashboardViewModel dashboard,
+        AccountViewModel account,
         SettingsViewModel settings)
     {
         ArgumentNullException.ThrowIfNull(dashboard);
+        ArgumentNullException.ThrowIfNull(account);
         ArgumentNullException.ThrowIfNull(settings);
 
         Dashboard = dashboard;
+        Account = account;
         Settings = settings;
 
         SelectSection(Dashboard);
@@ -42,6 +50,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     /// Gets the dashboard view model.
     /// </summary>
     public DashboardViewModel Dashboard { get; }
+
+    /// <summary>
+    /// Gets the account view model.
+    /// </summary>
+    public AccountViewModel Account { get; }
 
     /// <summary>
     /// Gets the settings view model.
@@ -55,6 +68,18 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private void ShowDashboard()
     {
         SelectSection(Dashboard);
+    }
+
+    /// <summary>
+    /// Selects the account section.
+    /// </summary>
+    [RelayCommand]
+    private async Task ShowAccountAsync(CancellationToken cancellationToken)
+    {
+        await Account.LoadAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        SelectSection(Account);
     }
 
     /// <summary>
@@ -78,6 +103,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
         CurrentContent = selectedContent;
         IsDashboardSelected = ReferenceEquals(selectedContent, Dashboard);
+        IsAccountSelected = ReferenceEquals(selectedContent, Account);
         IsSettingsSelected = ReferenceEquals(selectedContent, Settings);
     }
 

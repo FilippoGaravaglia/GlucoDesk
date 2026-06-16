@@ -1,6 +1,6 @@
 using GlucoDesk.Application.Common.DependencyInjection;
 using GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
-using GlucoDesk.Desktop.Bootstrap.Providers.DexcomShare;
+using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Main;
@@ -28,7 +28,7 @@ internal static class DesktopServiceProviderBuilder
 
         services.AddGlucoDeskApplication();
         services.AddDesktopCgmProviders();
-        services.AddDesktopDexcomShareProviderIfConfigured();
+        services.AddDexcomShareCgmProvider();
         services.AddJsonApplicationSettingsStore();
         services.AddJsonGlucoseHistoryStore();
         services.AddDesktopShell();
@@ -44,22 +44,6 @@ internal static class DesktopServiceProviderBuilder
     #region Helpers
 
     /// <summary>
-    /// Registers Dexcom Share as a desktop CGM provider when environment configuration is available.
-    /// </summary>
-    /// <param name="services">The service collection.</param>
-    private static void AddDesktopDexcomShareProviderIfConfigured(this IServiceCollection services)
-    {
-        var dexcomShareOptions = DesktopDexcomShareProviderOptions.FromEnvironment();
-
-        if (!dexcomShareOptions.IsConfigured)
-        {
-            return;
-        }
-
-        services.AddDexcomShareCgmProvider(dexcomShareOptions);
-    }
-
-    /// <summary>
     /// Registers desktop windows, view models and desktop-specific options.
     /// </summary>
     /// <param name="services">The service collection.</param>
@@ -70,6 +54,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddTransient<MainWindow>();
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
+        services.AddTransient<AccountViewModel>();
         services.AddTransient<SettingsViewModel>();
     }
 
