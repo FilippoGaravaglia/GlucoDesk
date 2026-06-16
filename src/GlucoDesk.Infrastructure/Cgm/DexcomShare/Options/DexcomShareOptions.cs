@@ -5,6 +5,8 @@ namespace GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
 /// </summary>
 public sealed record DexcomShareOptions
 {
+    private const int MaximumDexcomShareReadingCount = 288;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="DexcomShareOptions"/> class.
     /// </summary>
@@ -24,7 +26,7 @@ public sealed record DexcomShareOptions
         string? displayName = null,
         TimeSpan? latestReadingLookback = null,
         TimeSpan? recentReadingsLookback = null,
-        int maximumRecentReadings = 144)
+        int maximumRecentReadings = MaximumDexcomShareReadingCount)
     {
         Username = username?.Trim() ?? string.Empty;
         Password = password ?? string.Empty;
@@ -36,10 +38,10 @@ public sealed record DexcomShareOptions
             ? "Dexcom Share"
             : displayName.Trim();
         LatestReadingLookback = latestReadingLookback ?? TimeSpan.FromMinutes(30);
-        RecentReadingsLookback = recentReadingsLookback ?? TimeSpan.FromHours(12);
+        RecentReadingsLookback = recentReadingsLookback ?? TimeSpan.FromHours(24);
         MaximumRecentReadings = maximumRecentReadings <= 0
-            ? 144
-            : Math.Min(maximumRecentReadings, 144);
+            ? MaximumDexcomShareReadingCount
+            : Math.Min(maximumRecentReadings, MaximumDexcomShareReadingCount);
     }
 
     /// <summary>
@@ -83,7 +85,7 @@ public sealed record DexcomShareOptions
     public int MaximumRecentReadings { get; }
 
     /// <summary>
-    /// Gets a value indicating whether the provider has enough configuration to run.
+    /// Gets a value indicating whether Dexcom Share is configured.
     /// </summary>
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(Username)

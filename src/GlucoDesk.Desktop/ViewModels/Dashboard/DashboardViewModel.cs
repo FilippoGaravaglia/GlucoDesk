@@ -32,7 +32,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private const int ThreeHourChartWindow = 3;
     private const int SixHourChartWindow = 6;
     private const int TwelveHourChartWindow = 12;
-
+    private const int TwentyFourHourChartWindow = 24;
     private readonly IGlucoseDataService _glucoseDataService;
     private readonly IApplicationSettingsService _settingsService;
     private readonly IApplicationSettingsChangeNotifier? _settingsChangeNotifier;
@@ -82,6 +82,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty]
     private bool _isTwelveHourChartWindowSelected;
+
+    [ObservableProperty]
+    private bool _isTwentyFourHourChartWindowSelected;
 
     [ObservableProperty]
     private decimal _targetLowMgDl = 70m;
@@ -321,6 +324,15 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
+    /// Selects the twenty-four-hour chart window.
+    /// </summary>
+    [RelayCommand]
+    private void ShowTwentyFourHourChartWindow()
+    {
+        SelectChartWindow(TwentyFourHourChartWindow);
+    }
+
+    /// <summary>
     /// Releases event subscriptions owned by the dashboard view model.
     /// </summary>
     public void Dispose()
@@ -340,9 +352,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private static GlucoseDashboardRequest CreateDashboardRequest()
     {
         return new GlucoseDashboardRequest(
-            TimeSpan.FromHours(TwelveHourChartWindow),
+            TimeSpan.FromHours(TwentyFourHourChartWindow),
             TimeSpan.FromMinutes(15),
-            maxReadings: CalculateDashboardMaxReadings(TwelveHourChartWindow));
+            maxReadings: CalculateDashboardMaxReadings(TwentyFourHourChartWindow));
     }
     
     /// <summary>
@@ -764,7 +776,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         var filteredChartPoints = FilterChartPointsByWindow(
             _allChartPoints,
-            SelectedChartWindowHours);
+            SelectedChartWindowHours);  
 
         ChartPoints = filteredChartPoints;
         ChartSummaryText = BuildChartSummary(filteredChartPoints, SelectedChartWindowHours);
@@ -779,6 +791,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         IsThreeHourChartWindowSelected = windowHours == ThreeHourChartWindow;
         IsSixHourChartWindowSelected = windowHours == SixHourChartWindow;
         IsTwelveHourChartWindowSelected = windowHours == TwelveHourChartWindow;
+        IsTwentyFourHourChartWindowSelected = windowHours == TwentyFourHourChartWindow;
     }
 
     /// <summary>
@@ -807,7 +820,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    /// Normalizes chart window values to supported options.
+    /// Normalizes the selected chart window to one of the supported values.
     /// </summary>
     /// <param name="windowHours">The requested chart window in hours.</param>
     /// <returns>The normalized chart window in hours.</returns>
@@ -815,8 +828,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         return windowHours switch
         {
+            ThreeHourChartWindow => ThreeHourChartWindow,
             SixHourChartWindow => SixHourChartWindow,
             TwelveHourChartWindow => TwelveHourChartWindow,
+            TwentyFourHourChartWindow => TwentyFourHourChartWindow,
             _ => ThreeHourChartWindow
         };
     }
