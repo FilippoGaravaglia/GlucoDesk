@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Application.Cgm.Dashboard.Requests;
@@ -6,6 +7,7 @@ using GlucoDesk.Application.Cgm.History.Results;
 using GlucoDesk.Application.Cgm.History.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Statistics.Requests;
+using GlucoDesk.Application.Cgm.Statistics.Results;
 using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
@@ -21,7 +23,6 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
-using System.Globalization;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -34,12 +35,46 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private const int SixHourChartWindow = 6;
     private const int TwelveHourChartWindow = 12;
     private const int TwentyFourHourChartWindow = 24;
+    private const double MinimumStatisticsCoverageRatio = 0.70d;
+
+    private static readonly StatisticsWindowSelectionItem TwentyFourHourStatisticsWindow = new(
+        "24H",
+        TimeSpan.FromHours(24),
+        "24 hours");
+
+    private static readonly StatisticsWindowSelectionItem ThreeDayStatisticsWindow = new(
+        "3D",
+        TimeSpan.FromDays(3),
+        "3 days");
+
+    private static readonly StatisticsWindowSelectionItem SevenDayStatisticsWindow = new(
+        "7D",
+        TimeSpan.FromDays(7),
+        "7 days");
+
+    private static readonly StatisticsWindowSelectionItem FourteenDayStatisticsWindow = new(
+        "14D",
+        TimeSpan.FromDays(14),
+        "14 days");
+
+    private static readonly StatisticsWindowSelectionItem ThirtyDayStatisticsWindow = new(
+        "30D",
+        TimeSpan.FromDays(30),
+        "30 days");
+
+    private static readonly StatisticsWindowSelectionItem NinetyDayStatisticsWindow = new(
+        "90D",
+        TimeSpan.FromDays(90),
+        "90 days");
+
     private readonly IGlucoseDataService _glucoseDataService;
     private readonly IApplicationSettingsService _settingsService;
     private readonly IApplicationSettingsChangeNotifier? _settingsChangeNotifier;
     private readonly IGlucoseHistoryService? _glucoseHistoryService;
     private readonly IGlucoseStatisticsService? _glucoseStatisticsService;
     private readonly DashboardRefreshOptions _refreshOptions;
+
+    private GlucoseDashboardSnapshot? _lastDashboardSnapshot;
 
     private bool _isInitialized;
     private TimeSpan _autoRefreshInterval;
@@ -201,6 +236,42 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private string _statisticsAboveRangeInsightText = "Waiting for enough readings.";
 
+    [ObservableProperty]
+    private string _statisticsWindowStatusText = "Local insights · 24H";
+
+    [ObservableProperty]
+    private string _statisticsHistoryAvailabilityText = "Calculated from available local GlucoDesk history.";
+
+    [ObservableProperty]
+    private string _statisticsInsufficientHistoryTitle = "Not enough local history yet";
+
+    [ObservableProperty]
+    private string _statisticsInsufficientHistoryMessage = "Keep GlucoDesk running to build reliable local insights for this time window.";
+
+    [ObservableProperty]
+    private bool _isStatisticsCardsVisible;
+
+    [ObservableProperty]
+    private bool _isStatisticsHistoryInsufficient;
+
+    [ObservableProperty]
+    private bool _isTwentyFourHourStatisticsWindowSelected = true;
+
+    [ObservableProperty]
+    private bool _isThreeDayStatisticsWindowSelected;
+
+    [ObservableProperty]
+    private bool _isSevenDayStatisticsWindowSelected;
+
+    [ObservableProperty]
+    private bool _isFourteenDayStatisticsWindowSelected;
+
+    [ObservableProperty]
+    private bool _isThirtyDayStatisticsWindowSelected;
+
+    [ObservableProperty]
+    private bool _isNinetyDayStatisticsWindowSelected;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
     /// </summary>
@@ -358,6 +429,66 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
+    /// Selects the twenty-four-hour statistics window.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task SelectTwentyFourHourStatisticsWindowAsync(CancellationToken cancellationToken)
+    {
+        return SelectStatisticsWindowAsync(TwentyFourHourStatisticsWindow, cancellationToken);
+    }
+
+    /// <summary>
+    /// Selects the three-day statistics window.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task SelectThreeDayStatisticsWindowAsync(CancellationToken cancellationToken)
+    {
+        return SelectStatisticsWindowAsync(ThreeDayStatisticsWindow, cancellationToken);
+    }
+
+    /// <summary>
+    /// Selects the seven-day statistics window.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task SelectSevenDayStatisticsWindowAsync(CancellationToken cancellationToken)
+    {
+        return SelectStatisticsWindowAsync(SevenDayStatisticsWindow, cancellationToken);
+    }
+
+    /// <summary>
+    /// Selects the fourteen-day statistics window.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task SelectFourteenDayStatisticsWindowAsync(CancellationToken cancellationToken)
+    {
+        return SelectStatisticsWindowAsync(FourteenDayStatisticsWindow, cancellationToken);
+    }
+
+    /// <summary>
+    /// Selects the thirty-day statistics window.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task SelectThirtyDayStatisticsWindowAsync(CancellationToken cancellationToken)
+    {
+        return SelectStatisticsWindowAsync(ThirtyDayStatisticsWindow, cancellationToken);
+    }
+
+    /// <summary>
+    /// Selects the ninety-day statistics window.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task SelectNinetyDayStatisticsWindowAsync(CancellationToken cancellationToken)
+    {
+        return SelectStatisticsWindowAsync(NinetyDayStatisticsWindow, cancellationToken);
+    }
+
+    /// <summary>
     /// Releases event subscriptions owned by the dashboard view model.
     /// </summary>
     public void Dispose()
@@ -432,7 +563,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private static string BuildAverageInsight(bool hasStatisticsData)
     {
         return hasStatisticsData
-            ? "Your 24-hour average based on the latest analyzed readings."
+            ? "Average glucose for the selected local history window."
             : "Average glucose will appear after enough readings are available.";
     }
 
@@ -453,7 +584,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         return percentage switch
         {
-            >= 90d => "Excellent stability across the selected day.",
+            >= 90d => "Excellent stability across the selected window.",
             >= 75d => "Good time in target range.",
             >= 60d => "Partially in range. Worth monitoring patterns.",
             _ => "Low time in range. Review the trend with your official diabetes tools."
@@ -542,14 +673,17 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         if (_glucoseStatisticsService is null)
         {
             IsStatisticsEnabled = false;
+            IsStatisticsCardsVisible = false;
+            IsStatisticsHistoryInsufficient = false;
             ApplyStatisticsPresentation(DashboardStatisticsPresenter.Disabled());
             return;
         }
 
         IsStatisticsEnabled = true;
 
+        var selectedWindow = GetSelectedStatisticsWindow();
         var targetRange = GlucoseStatisticsTargetRange.DefaultMgDl();
-        var request = BuildStatisticsRequest(snapshot, targetRange);
+        var request = BuildStatisticsRequest(snapshot, targetRange, selectedWindow);
 
         var result = await _glucoseStatisticsService
             .CalculateAsync(request, cancellationToken)
@@ -557,30 +691,41 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         if (result.IsFailure)
         {
+            IsStatisticsCardsVisible = false;
+            IsStatisticsHistoryInsufficient = false;
             ApplyStatisticsPresentation(DashboardStatisticsPresenter.Failed(result.Error.Code));
             return;
         }
 
         var presentation = DashboardStatisticsPresenter.Present(result.Value, targetRange);
 
-        ApplyStatisticsPresentation(presentation);
+        ApplyStatisticsPresentation(
+            presentation,
+            result.Value,
+            selectedWindow);
     }
 
     /// <summary>
-    /// Builds the statistics request for the current dashboard snapshot.
+    /// Builds the statistics request for the selected local history window.
     /// </summary>
     /// <param name="snapshot">The dashboard snapshot.</param>
     /// <param name="targetRange">The target range.</param>
+    /// <param name="selectedWindow">The selected statistics window.</param>
     /// <returns>The statistics request.</returns>
     private static GlucoseStatisticsRequest BuildStatisticsRequest(
         GlucoseDashboardSnapshot snapshot,
-        GlucoseStatisticsTargetRange targetRange)
+        GlucoseStatisticsTargetRange targetRange,
+        StatisticsWindowSelectionItem selectedWindow)
     {
-        var from = snapshot.RecentReadings.Count > 0
-            ? snapshot.RecentReadings.Min(reading => reading.Timestamp)
-            : snapshot.SnapshotCreatedAt.AddHours(-12);
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(targetRange);
+        ArgumentNullException.ThrowIfNull(selectedWindow);
 
-        var to = snapshot.SnapshotCreatedAt;
+        var to = snapshot.RecentReadings.Count > 0
+            ? snapshot.RecentReadings.Max(reading => reading.Timestamp)
+            : snapshot.SnapshotCreatedAt;
+
+        var from = to.Subtract(selectedWindow.Duration);
 
         if (to <= from)
         {
@@ -608,25 +753,282 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         StatisticsReadingsAnalyzedText = presentation.ReadingsAnalyzedText;
         StatisticsTargetRangeText = presentation.TargetRangeText;
         HasStatisticsData = presentation.HasStatisticsData;
-    
+
         StatisticsTimeInRangePercentValue = ParsePercentageValue(presentation.TimeInRangeText);
         StatisticsBelowRangePercentValue = ParsePercentageValue(presentation.BelowRangeText);
         StatisticsAboveRangePercentValue = ParsePercentageValue(presentation.AboveRangeText);
-    
+
         StatisticsAverageInsightText = BuildAverageInsight(presentation.HasStatisticsData);
-    
+
         StatisticsTimeInRangeInsightText = BuildTimeInRangeInsight(
             StatisticsTimeInRangePercentValue,
             presentation.HasStatisticsData);
-    
+
         StatisticsBelowRangeInsightText = BuildBelowRangeInsight(
             StatisticsBelowRangePercentValue,
             presentation.HasStatisticsData);
-    
+
         StatisticsAboveRangeInsightText = BuildAboveRangeInsight(
             StatisticsAboveRangePercentValue,
             presentation.HasStatisticsData);
+
+        IsStatisticsHistoryInsufficient = false;
+        IsStatisticsCardsVisible = presentation.HasStatisticsData;
     }
+
+    /// <summary>
+    /// Applies a statistics presentation with local history availability information.
+    /// </summary>
+    /// <param name="presentation">The statistics presentation.</param>
+    /// <param name="result">The statistics result.</param>
+    /// <param name="selectedWindow">The selected statistics window.</param>
+    private void ApplyStatisticsPresentation(
+        DashboardStatisticsPresentation presentation,
+        GlucoseStatisticsResult result,
+        StatisticsWindowSelectionItem selectedWindow)
+    {
+        ApplyStatisticsPresentation(presentation);
+
+        var availability = BuildStatisticsHistoryAvailability(result, selectedWindow);
+
+        StatisticsWindowStatusText = BuildStatisticsWindowStatusText(
+            selectedWindow,
+            result,
+            availability);
+
+        StatisticsHistoryAvailabilityText = availability.HasEnoughData
+            ? $"Calculated from local GlucoDesk history for the selected {selectedWindow.Label} window."
+            : "Local insights are calculated only from readings saved by GlucoDesk.";
+
+        IsStatisticsHistoryInsufficient = !availability.HasEnoughData;
+        IsStatisticsCardsVisible = presentation.HasStatisticsData && availability.HasEnoughData;
+
+        if (!availability.HasEnoughData)
+        {
+            StatisticsInsufficientHistoryTitle = $"Not enough history for {selectedWindow.Label}";
+            StatisticsInsufficientHistoryMessage = BuildInsufficientStatisticsHistoryMessage(
+                selectedWindow,
+                availability);
+        }
+    }
+
+    /// <summary>
+    /// Selects the active statistics time window and refreshes local insights.
+    /// </summary>
+    /// <param name="selectedWindow">The selected statistics window.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task SelectStatisticsWindowAsync(
+        StatisticsWindowSelectionItem selectedWindow,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(selectedWindow);
+
+        ApplyStatisticsWindowSelectionState(selectedWindow);
+
+        if (_lastDashboardSnapshot is null)
+        {
+            StatisticsWindowStatusText = $"Local insights · {selectedWindow.Label}";
+            StatisticsHistoryAvailabilityText = "Refresh the dashboard to calculate local insights for this window.";
+            return;
+        }
+
+        try
+        {
+            await RefreshStatisticsAsync(_lastDashboardSnapshot, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            StatisticsStatusText = "Statistics refresh cancelled";
+        }
+        catch (Exception exception)
+        {
+            HasError = true;
+            ErrorMessage = exception.Message;
+            StatisticsStatusText = "Unable to refresh local statistics";
+        }
+    }
+
+    /// <summary>
+    /// Applies the selected statistics window state.
+    /// </summary>
+    /// <param name="selectedWindow">The selected statistics window.</param>
+    private void ApplyStatisticsWindowSelectionState(StatisticsWindowSelectionItem selectedWindow)
+    {
+        IsTwentyFourHourStatisticsWindowSelected = ReferenceEquals(selectedWindow, TwentyFourHourStatisticsWindow);
+        IsThreeDayStatisticsWindowSelected = ReferenceEquals(selectedWindow, ThreeDayStatisticsWindow);
+        IsSevenDayStatisticsWindowSelected = ReferenceEquals(selectedWindow, SevenDayStatisticsWindow);
+        IsFourteenDayStatisticsWindowSelected = ReferenceEquals(selectedWindow, FourteenDayStatisticsWindow);
+        IsThirtyDayStatisticsWindowSelected = ReferenceEquals(selectedWindow, ThirtyDayStatisticsWindow);
+        IsNinetyDayStatisticsWindowSelected = ReferenceEquals(selectedWindow, NinetyDayStatisticsWindow);
+    }
+
+    /// <summary>
+    /// Gets the currently selected statistics window.
+    /// </summary>
+    /// <returns>The currently selected statistics window.</returns>
+    private StatisticsWindowSelectionItem GetSelectedStatisticsWindow()
+    {
+        if (IsThreeDayStatisticsWindowSelected)
+        {
+            return ThreeDayStatisticsWindow;
+        }
+
+        if (IsSevenDayStatisticsWindowSelected)
+        {
+            return SevenDayStatisticsWindow;
+        }
+
+        if (IsFourteenDayStatisticsWindowSelected)
+        {
+            return FourteenDayStatisticsWindow;
+        }
+
+        if (IsThirtyDayStatisticsWindowSelected)
+        {
+            return ThirtyDayStatisticsWindow;
+        }
+
+        if (IsNinetyDayStatisticsWindowSelected)
+        {
+            return NinetyDayStatisticsWindow;
+        }
+
+        return TwentyFourHourStatisticsWindow;
+    }
+
+    /// <summary>
+    /// Builds local history availability information for a statistics result.
+    /// </summary>
+    /// <param name="result">The statistics result.</param>
+    /// <param name="selectedWindow">The selected statistics window.</param>
+    /// <returns>The statistics history availability information.</returns>
+    private static StatisticsHistoryAvailability BuildStatisticsHistoryAvailability(
+        GlucoseStatisticsResult result,
+        StatisticsWindowSelectionItem selectedWindow)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(selectedWindow);
+
+        if (!result.HasData
+            || result.FirstReadingAt is null
+            || result.LastReadingAt is null
+            || result.AnalyzedReadingsCount == 0)
+        {
+            return new StatisticsHistoryAvailability(
+                false,
+                "no local history",
+                TimeSpan.Zero,
+                result.AnalyzedReadingsCount);
+        }
+
+        var availableDuration = result.LastReadingAt.Value - result.FirstReadingAt.Value;
+
+        if (availableDuration < TimeSpan.Zero)
+        {
+            availableDuration = TimeSpan.Zero;
+        }
+
+        var coverageRatio = selectedWindow.Duration.TotalMilliseconds <= 0
+            ? 0d
+            : availableDuration.TotalMilliseconds / selectedWindow.Duration.TotalMilliseconds;
+
+        var hasEnoughData = coverageRatio >= MinimumStatisticsCoverageRatio;
+
+        return new StatisticsHistoryAvailability(
+            hasEnoughData,
+            FormatAvailableHistoryDuration(availableDuration),
+            availableDuration,
+            result.AnalyzedReadingsCount);
+    }
+
+    /// <summary>
+    /// Builds the selected statistics window status text.
+    /// </summary>
+    /// <param name="selectedWindow">The selected statistics window.</param>
+    /// <param name="result">The statistics result.</param>
+    /// <param name="availability">The statistics history availability.</param>
+    /// <returns>The selected statistics window status text.</returns>
+    private static string BuildStatisticsWindowStatusText(
+        StatisticsWindowSelectionItem selectedWindow,
+        GlucoseStatisticsResult result,
+        StatisticsHistoryAvailability availability)
+    {
+        ArgumentNullException.ThrowIfNull(selectedWindow);
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(availability);
+
+        if (!result.HasData)
+        {
+            return $"{selectedWindow.Label} selected · no local readings yet";
+        }
+
+        return availability.HasEnoughData
+            ? $"{selectedWindow.Label} selected · {result.AnalyzedReadingsCount} readings analyzed"
+            : $"{selectedWindow.Label} selected · {availability.AvailablePeriodText} available locally";
+    }
+
+    /// <summary>
+    /// Builds the insufficient local statistics history message.
+    /// </summary>
+    /// <param name="selectedWindow">The selected statistics window.</param>
+    /// <param name="availability">The statistics history availability.</param>
+    /// <returns>The insufficient local statistics history message.</returns>
+    private static string BuildInsufficientStatisticsHistoryMessage(
+        StatisticsWindowSelectionItem selectedWindow,
+        StatisticsHistoryAvailability availability)
+    {
+        ArgumentNullException.ThrowIfNull(selectedWindow);
+        ArgumentNullException.ThrowIfNull(availability);
+
+        if (availability.AnalyzedReadingsCount == 0)
+        {
+            return $"GlucoDesk has not saved local readings for the selected {selectedWindow.Label} window yet. Keep the app running and refresh the dashboard to build local insights.";
+        }
+
+        return $"The selected {selectedWindow.Label} window needs about {selectedWindow.Description} of local history. GlucoDesk currently has {availability.AvailablePeriodText} saved locally. Keep the app running to unlock this insight automatically.";
+    }
+
+    /// <summary>
+    /// Formats the available local history duration.
+    /// </summary>
+    /// <param name="duration">The available duration.</param>
+    /// <returns>The formatted available duration.</returns>
+    private static string FormatAvailableHistoryDuration(TimeSpan duration)
+    {
+        if (duration.TotalDays >= 2d)
+        {
+            return $"{Math.Floor(duration.TotalDays):0} days";
+        }
+
+        if (duration.TotalDays >= 1d)
+        {
+            return "1 day";
+        }
+
+        if (duration.TotalHours >= 2d)
+        {
+            return $"{Math.Floor(duration.TotalHours):0} hours";
+        }
+
+        if (duration.TotalHours >= 1d)
+        {
+            return "1 hour";
+        }
+
+        if (duration.TotalMinutes >= 1d)
+        {
+            return $"{Math.Max(1d, Math.Floor(duration.TotalMinutes)):0} minutes";
+        }
+
+        return "less than 1 minute";
+    }
+
+    private sealed record StatisticsHistoryAvailability(
+        bool HasEnoughData,
+        string AvailablePeriodText,
+        TimeSpan AvailableDuration,
+        int AnalyzedReadingsCount);
 
     /// <summary>
     /// Builds the dashboard history status text from a detailed history save result.
@@ -747,6 +1149,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// <param name="snapshot">The dashboard snapshot.</param>
     private void ApplySnapshot(GlucoseDashboardSnapshot snapshot)
     {
+        _lastDashboardSnapshot = snapshot;
+
         var targetRange = CreateTargetRange();
 
         ProviderDisplayName = snapshot.Metadata.DisplayName;

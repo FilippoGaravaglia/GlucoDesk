@@ -627,4 +627,21 @@
     <Setter Property="Background" Value="#FEF3C7" />
     <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.Warning}" />
   </Style>
+
+  <Style Selector="Border.insight-empty-state">
+    ß<Setter Property="Padding" Value="24" />
+    ß<Setter Property="CornerRadius" Value="26" />
+    ß<Setter Property="BorderThickness" Value="1" />
+    ß<Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
+    ß<Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentPale}" />
+  </Style>
+
+  <Style Selector="Border.empty-state-icon">
+    <Setter Property="Width" Value="54" />
+    <Setter Property="Height" Value="54" />
+    <Setter Property="CornerRadius" Value="18" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentSoft}" />
+  </Style>
 </Styles>

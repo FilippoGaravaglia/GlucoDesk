@@ -95,7 +95,7 @@
                   <Border Classes="signal-chip"
                           Margin="0,0,10,10">
                     <StackPanel Spacing="3">
-                      <TextBlock Text="Freshness"
+                      <TextBlock Text="Data"
                                  Classes="metric-label" />
 
                       <TextBlock Text="{Binding FreshnessText}"
@@ -127,7 +127,7 @@
                   <Grid ColumnDefinitions="*,Auto"
                         ColumnSpacing="16">
                     <StackPanel Spacing="5">
-                      <TextBlock Text="Connected source"
+                      <TextBlock Text="Connected to Dexcom Share"
                                  Classes="section-title" />
 
                       <TextBlock Text="{Binding DashboardContextText}"
@@ -149,7 +149,7 @@
                     <Border Grid.Column="0"
                             Classes="compact-refresh-row">
                       <StackPanel Spacing="4">
-                        <TextBlock Text="Data"
+                        <TextBlock Text="Data quality"
                                    Classes="metric-label" />
 
                         <TextBlock Text="{Binding DataHealthBadgeText}"
@@ -265,30 +265,98 @@
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="18">
                 <StackPanel Spacing="4">
-                  <TextBlock Text="Daily glucose picture"
+                  <TextBlock Text="Glucose insights"
                              Classes="section-title" />
 
                   <TextBlock Text="{Binding StatisticsStatusText}"
                              TextWrapping="Wrap"
                              Classes="secondary"
                              FontSize="13" />
+
+                  <TextBlock Text="{Binding StatisticsHistoryAvailabilityText}"
+                             TextWrapping="Wrap"
+                             Classes="muted"
+                             FontSize="12" />
                 </StackPanel>
 
-                <Border Grid.Column="1"
-                        Classes="badge-accent"
-                        VerticalAlignment="Top">
-                  <TextBlock Text="{Binding StatisticsReadingsAnalyzedText}"
-                             FontSize="12"
-                             FontWeight="SemiBold"
-                             Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
-                </Border>
+                <StackPanel Grid.Column="1"
+                            Spacing="10"
+                            HorizontalAlignment="Right">
+
+                  <Border Classes="segmented-control"
+                          HorizontalAlignment="Right">
+                    <WrapPanel Orientation="Horizontal"
+                               HorizontalAlignment="Right">
+                      <Button Content="24H"
+                              Command="{Binding SelectTwentyFourHourStatisticsWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsTwentyFourHourStatisticsWindowSelected}"
+                              MinWidth="50"
+                              Padding="12,8"
+                              Margin="0,0,6,0" />
+
+                      <Button Content="3D"
+                              Command="{Binding SelectThreeDayStatisticsWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsThreeDayStatisticsWindowSelected}"
+                              MinWidth="48"
+                              Padding="12,8"
+                              Margin="0,0,6,0" />
+
+                      <Button Content="7D"
+                              Command="{Binding SelectSevenDayStatisticsWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsSevenDayStatisticsWindowSelected}"
+                              MinWidth="48"
+                              Padding="12,8"
+                              Margin="0,0,6,0" />
+
+                      <Button Content="14D"
+                              Command="{Binding SelectFourteenDayStatisticsWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsFourteenDayStatisticsWindowSelected}"
+                              MinWidth="54"
+                              Padding="12,8"
+                              Margin="0,0,6,0" />
+
+                      <Button Content="30D"
+                              Command="{Binding SelectThirtyDayStatisticsWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsThirtyDayStatisticsWindowSelected}"
+                              MinWidth="54"
+                              Padding="12,8"
+                              Margin="0,0,6,0" />
+
+                      <Button Content="90D"
+                              Command="{Binding SelectNinetyDayStatisticsWindowCommand}"
+                              Classes="segment-button"
+                              Classes.accent="{Binding IsNinetyDayStatisticsWindowSelected}"
+                              MinWidth="54"
+                              Padding="12,8" />
+                    </WrapPanel>
+                  </Border>
+
+                  <Border Classes="badge-accent"
+                          HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding StatisticsWindowStatusText}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+                  </Border>
+                </StackPanel>
               </Grid>
 
-              <Grid ColumnDefinitions="1.05*,0.95*"
-                    ColumnSpacing="18">
+              <Grid ColumnDefinitions="*,*"
+                    RowDefinitions="Auto,Auto"
+                    ColumnSpacing="18"
+                    RowSpacing="18"
+                    IsVisible="{Binding IsStatisticsCardsVisible}">
 
-                <Border Grid.Column="0"
-                        Classes="insight-card-primary">
+                <Border Grid.Row="0"
+                        Grid.Column="0"
+                        Classes="insight-card-primary"
+                        MinHeight="156"
+                        HorizontalAlignment="Stretch">
                   <StackPanel Spacing="14">
                     <Grid ColumnDefinitions="*,Auto">
                       <StackPanel Spacing="4">
@@ -320,8 +388,11 @@
                   </StackPanel>
                 </Border>
 
-                <Border Grid.Column="1"
-                        Classes="insight-card">
+                <Border Grid.Row="0"
+                        Grid.Column="1"
+                        Classes="insight-card"
+                        MinHeight="156"
+                        HorizontalAlignment="Stretch">
                   <StackPanel Spacing="12">
                     <TextBlock Text="Average glucose"
                                Classes="metric-label" />
@@ -334,13 +405,12 @@
                                TextWrapping="Wrap" />
                   </StackPanel>
                 </Border>
-              </Grid>
 
-              <Grid ColumnDefinitions="*,*"
-                    ColumnSpacing="18">
-
-                <Border Grid.Column="0"
-                        Classes="insight-card-danger">
+                <Border Grid.Row="1"
+                        Grid.Column="0"
+                        Classes="insight-card-danger"
+                        MinHeight="156"
+                        HorizontalAlignment="Stretch">
                   <StackPanel Spacing="14">
                     <TextBlock Text="Below range"
                                Classes="metric-label" />
@@ -359,8 +429,11 @@
                   </StackPanel>
                 </Border>
 
-                <Border Grid.Column="1"
-                        Classes="insight-card-warning">
+                <Border Grid.Row="1"
+                        Grid.Column="1"
+                        Classes="insight-card-warning"
+                        MinHeight="156"
+                        HorizontalAlignment="Stretch">
                   <StackPanel Spacing="14">
                     <TextBlock Text="Above range"
                                Classes="metric-label" />
@@ -379,6 +452,40 @@
                   </StackPanel>
                 </Border>
               </Grid>
+
+              <Border Classes="insight-empty-state"
+                      IsVisible="{Binding IsStatisticsHistoryInsufficient}">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="18">
+                  <Border Classes="empty-state-icon"
+                          VerticalAlignment="Top">
+                    <TextBlock Text="↗"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+                  </Border>
+
+                  <StackPanel Grid.Column="1"
+                              Spacing="8">
+                    <TextBlock Text="{Binding StatisticsInsufficientHistoryTitle}"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+                    <TextBlock Text="{Binding StatisticsInsufficientHistoryMessage}"
+                               TextWrapping="Wrap"
+                               Classes="secondary"
+                               FontSize="14" />
+
+                    <TextBlock Text="This is expected after a fresh setup. GlucoDesk will unlock longer insight windows as local history grows."
+                               TextWrapping="Wrap"
+                               Classes="muted"
+                               FontSize="12" />
+                  </StackPanel>
+                </Grid>
+              </Border>
 
               <Border Classes="source-strip">
                 <Grid ColumnDefinitions="*,Auto"
