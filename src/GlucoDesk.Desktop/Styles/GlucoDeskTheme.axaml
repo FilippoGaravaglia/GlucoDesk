@@ -540,4 +540,91 @@
     <Setter Property="Foreground" Value="#FFFFFF" />
   </Style>
 
+  <Style Selector="Border.insight-section-card">
+    <Setter Property="Padding" Value="22" />
+    <Setter Property="CornerRadius" Value="28" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderStrong}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.Surface}" />
+  </Style>
+
+  <Style Selector="Border.insight-card">
+    <Setter Property="Padding" Value="22" />
+    <Setter Property="CornerRadius" Value="24" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.Border}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceSoft}" />
+  </Style>
+
+  <Style Selector="Border.insight-card-primary">
+    <Setter Property="Padding" Value="22" />
+    <Setter Property="CornerRadius" Value="24" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="#86EFAC" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SuccessPale}" />
+  </Style>
+
+  <Style Selector="Border.insight-card-danger">
+    <Setter Property="Padding" Value="22" />
+    <Setter Property="CornerRadius" Value="24" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="#FCA5A5" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.DangerPale}" />
+  </Style>
+
+  <Style Selector="Border.insight-card-warning">
+    <Setter Property="Padding" Value="22" />
+    <Setter Property="CornerRadius" Value="24" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="#FCD34D" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.WarningPale}" />
+  </Style>
+
+  <Style Selector="TextBlock.insight-value">
+    <Setter Property="FontSize" Value="30" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+  </Style>
+
+  <Style Selector="TextBlock.insight-copy">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+  </Style>
+
+  <Style Selector="Border.compact-refresh-row">
+    <Setter Property="Padding" Value="14" />
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceSoft}" />
+  </Style>
+
+  <Style Selector="Border.source-strip">
+    <Setter Property="Padding" Value="16" />
+    <Setter Property="CornerRadius" Value="20" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.SurfaceGlass}" />
+  </Style>
+
+  <Style Selector="ProgressBar.insight-progress-success">
+    <Setter Property="Height" Value="10" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Background" Value="#DCFCE7" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.Success}" />
+  </Style>
+
+  <Style Selector="ProgressBar.insight-progress-danger">
+    <Setter Property="Height" Value="10" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Background" Value="#FEE2E2" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.Danger}" />
+  </Style>
+
+  <Style Selector="ProgressBar.insight-progress-warning">
+    <Setter Property="Height" Value="10" />
+    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="Background" Value="#FEF3C7" />
+    <Setter Property="Foreground" Value="{StaticResource GlucoDesk.Brush.Warning}" />
+  </Style>
 </Styles>
