@@ -21,6 +21,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
+using System.Globalization;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -175,6 +176,30 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty]
     private bool _isShowingRealProviderData;
+
+    [ObservableProperty]
+    private string _dashboardContextText = "Waiting for dashboard data";
+
+    [ObservableProperty]
+    private double _statisticsTimeInRangePercentValue;
+
+    [ObservableProperty]
+    private double _statisticsBelowRangePercentValue;
+
+    [ObservableProperty]
+    private double _statisticsAboveRangePercentValue;
+
+    [ObservableProperty]
+    private string _statisticsAverageInsightText = "Waiting for enough readings.";
+
+    [ObservableProperty]
+    private string _statisticsTimeInRangeInsightText = "Waiting for enough readings.";
+
+    [ObservableProperty]
+    private string _statisticsBelowRangeInsightText = "Waiting for enough readings.";
+
+    [ObservableProperty]
+    private string _statisticsAboveRangeInsightText = "Waiting for enough readings.";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
@@ -346,6 +371,142 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     #region Helpers
 
     /// <summary>
+    /// Builds a compact dashboard context message for the consumer dashboard.
+    /// </summary>
+    /// <param name="providerDisplayName">The active provider display name.</param>
+    /// <param name="freshnessText">The data freshness text.</param>
+    /// <param name="readingsCountText">The readings count text.</param>
+    /// <param name="lastUpdatedText">The last update text.</param>
+    /// <returns>The dashboard context text.</returns>
+    private static string BuildDashboardContextText(
+        string providerDisplayName,
+        string freshnessText,
+        string readingsCountText,
+        string lastUpdatedText)
+    {
+        return $"{providerDisplayName} · {freshnessText} · {readingsCountText} · Updated {lastUpdatedText}";
+    }
+
+    /// <summary>
+    /// Parses a percentage text into a numeric percentage value.
+    /// </summary>
+    /// <param name="percentageText">The percentage text.</param>
+    /// <returns>The parsed percentage value.</returns>
+    private static double ParsePercentageValue(string percentageText)
+    {
+        if (string.IsNullOrWhiteSpace(percentageText))
+        {
+            return 0d;
+        }
+
+        var normalizedText = percentageText
+            .Replace("%", string.Empty, StringComparison.Ordinal)
+            .Trim();
+
+        if (double.TryParse(
+                normalizedText,
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out var invariantValue))
+        {
+            return Math.Clamp(invariantValue, 0d, 100d);
+        }
+
+        if (double.TryParse(
+                normalizedText,
+                NumberStyles.Number,
+                CultureInfo.CurrentCulture,
+                out var currentCultureValue))
+        {
+            return Math.Clamp(currentCultureValue, 0d, 100d);
+        }
+
+        return 0d;
+    }
+
+    /// <summary>
+    /// Builds the average glucose insight text.
+    /// </summary>
+    /// <param name="hasStatisticsData">A value indicating whether statistics data is available.</param>
+    /// <returns>The average glucose insight text.</returns>
+    private static string BuildAverageInsight(bool hasStatisticsData)
+    {
+        return hasStatisticsData
+            ? "Your 24-hour average based on the latest analyzed readings."
+            : "Average glucose will appear after enough readings are available.";
+    }
+
+    /// <summary>
+    /// Builds the time in range insight text.
+    /// </summary>
+    /// <param name="percentage">The time in range percentage.</param>
+    /// <param name="hasStatisticsData">A value indicating whether statistics data is available.</param>
+    /// <returns>The time in range insight text.</returns>
+    private static string BuildTimeInRangeInsight(
+        double percentage,
+        bool hasStatisticsData)
+    {
+        if (!hasStatisticsData)
+        {
+            return "Time in range will appear after enough readings are available.";
+        }
+
+        return percentage switch
+        {
+            >= 90d => "Excellent stability across the selected day.",
+            >= 75d => "Good time in target range.",
+            >= 60d => "Partially in range. Worth monitoring patterns.",
+            _ => "Low time in range. Review the trend with your official diabetes tools."
+        };
+    }
+
+    /// <summary>
+    /// Builds the below range insight text.
+    /// </summary>
+    /// <param name="percentage">The below range percentage.</param>
+    /// <param name="hasStatisticsData">A value indicating whether statistics data is available.</param>
+    /// <returns>The below range insight text.</returns>
+    private static string BuildBelowRangeInsight(
+        double percentage,
+        bool hasStatisticsData)
+    {
+        if (!hasStatisticsData)
+        {
+            return "Low exposure will appear after enough readings are available.";
+        }
+
+        return percentage switch
+        {
+            <= 1d => "Minimal low exposure.",
+            <= 4d => "Some low exposure detected.",
+            _ => "Frequent low exposure. Check official diabetes apps and alerts."
+        };
+    }
+
+    /// <summary>
+    /// Builds the above range insight text.
+    /// </summary>
+    /// <param name="percentage">The above range percentage.</param>
+    /// <param name="hasStatisticsData">A value indicating whether statistics data is available.</param>
+    /// <returns>The above range insight text.</returns>
+    private static string BuildAboveRangeInsight(
+        double percentage,
+        bool hasStatisticsData)
+    {
+        if (!hasStatisticsData)
+        {
+            return "High exposure will appear after enough readings are available.";
+        }
+
+        return percentage switch
+        {
+            <= 5d => "Mostly controlled above-range exposure.",
+            <= 20d => "Some above-range time detected.",
+            _ => "High exposure is elevated. Review the day pattern carefully."
+        };
+    }
+
+    /// <summary>
     /// Creates the dashboard request used to load enough readings for all supported chart windows.
     /// </summary>
     /// <returns>The dashboard request.</returns>
@@ -447,6 +608,24 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         StatisticsReadingsAnalyzedText = presentation.ReadingsAnalyzedText;
         StatisticsTargetRangeText = presentation.TargetRangeText;
         HasStatisticsData = presentation.HasStatisticsData;
+    
+        StatisticsTimeInRangePercentValue = ParsePercentageValue(presentation.TimeInRangeText);
+        StatisticsBelowRangePercentValue = ParsePercentageValue(presentation.BelowRangeText);
+        StatisticsAboveRangePercentValue = ParsePercentageValue(presentation.AboveRangeText);
+    
+        StatisticsAverageInsightText = BuildAverageInsight(presentation.HasStatisticsData);
+    
+        StatisticsTimeInRangeInsightText = BuildTimeInRangeInsight(
+            StatisticsTimeInRangePercentValue,
+            presentation.HasStatisticsData);
+    
+        StatisticsBelowRangeInsightText = BuildBelowRangeInsight(
+            StatisticsBelowRangePercentValue,
+            presentation.HasStatisticsData);
+    
+        StatisticsAboveRangeInsightText = BuildAboveRangeInsight(
+            StatisticsAboveRangePercentValue,
+            presentation.HasStatisticsData);
     }
 
     /// <summary>
@@ -600,6 +779,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             : FormatStatus(snapshot.LatestReading.GetStatus(targetRange), snapshot.IsLatestReadingStale);
 
         RecentReadingsCountText = $"{snapshot.RecentReadings.Count} readings";
+
+        DashboardContextText = BuildDashboardContextText(
+            snapshot.Metadata.DisplayName,
+            FreshnessText,
+            RecentReadingsCountText,
+            LastUpdatedText);
 
         UpdateChart(snapshot.RecentReadings, targetRange);
     }
