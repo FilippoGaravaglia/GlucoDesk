@@ -4,6 +4,7 @@ using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 
 namespace GlucoDesk.Desktop.ViewModels.Main;
 
@@ -25,23 +26,32 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private bool _isSettingsSelected;
 
     /// <summary>
+    /// Gets the background sync status view model.
+    /// </summary>
+    public BackgroundSyncStatusViewModel BackgroundSyncStatus { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
     /// </summary>
     /// <param name="dashboard">The dashboard view model.</param>
     /// <param name="account">The account view model.</param>
     /// <param name="settings">The settings view model.</param>
+    /// <param name="backgroundSyncStatus">The background sync status view model.</param>
     public MainWindowViewModel(
         DashboardViewModel dashboard,
         AccountViewModel account,
-        SettingsViewModel settings)
+        SettingsViewModel settings,
+        BackgroundSyncStatusViewModel backgroundSyncStatus)
     {
         ArgumentNullException.ThrowIfNull(dashboard);
         ArgumentNullException.ThrowIfNull(account);
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(backgroundSyncStatus);
 
         Dashboard = dashboard;
         Account = account;
         Settings = settings;
+        BackgroundSyncStatus = backgroundSyncStatus;
 
         SelectSection(Dashboard);
     }

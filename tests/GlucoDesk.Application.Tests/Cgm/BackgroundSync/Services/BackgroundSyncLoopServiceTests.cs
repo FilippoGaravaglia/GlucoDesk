@@ -1,11 +1,12 @@
+using GlucoDesk.Application.Cgm.BackgroundSync.Enums;
 using GlucoDesk.Application.Cgm.BackgroundSync.Options;
 using GlucoDesk.Application.Cgm.BackgroundSync.Results;
 using GlucoDesk.Application.Cgm.BackgroundSync.Services;
 using GlucoDesk.Application.Cgm.BackgroundSync.Services.Abstractions;
+using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Core.Glucose.Enums;
-using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
-using GlucoDesk.Application.Cgm.BackgroundSync.Enums;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GlucoDesk.Application.Tests.Cgm.BackgroundSync.Services;
 
@@ -15,8 +16,12 @@ public sealed class BackgroundSyncLoopServiceTests
     public async Task StartAsync_ShouldStartLoop()
     {
         // Arrange
+        var syncService = new FakeCgmBackgroundSyncService();
+
+        await using var serviceProvider = CreateServiceProvider(syncService);
+
         await using var loopService = new BackgroundSyncLoopService(
-            new FakeCgmBackgroundSyncService(),
+            serviceProvider.GetRequiredService<IServiceScopeFactory>(),
             new BackgroundSyncOptions(
                 TimeSpan.FromMilliseconds(50),
                 true,
@@ -34,8 +39,12 @@ public sealed class BackgroundSyncLoopServiceTests
     public async Task StopAsync_ShouldStopLoop()
     {
         // Arrange
+        var syncService = new FakeCgmBackgroundSyncService();
+
+        await using var serviceProvider = CreateServiceProvider(syncService);
+
         await using var loopService = new BackgroundSyncLoopService(
-            new FakeCgmBackgroundSyncService(),
+            serviceProvider.GetRequiredService<IServiceScopeFactory>(),
             new BackgroundSyncOptions(
                 TimeSpan.FromMilliseconds(50),
                 true,
@@ -57,8 +66,10 @@ public sealed class BackgroundSyncLoopServiceTests
         // Arrange
         var syncService = new FakeCgmBackgroundSyncService();
 
+        await using var serviceProvider = CreateServiceProvider(syncService);
+
         await using var loopService = new BackgroundSyncLoopService(
-            syncService,
+            serviceProvider.GetRequiredService<IServiceScopeFactory>(),
             new BackgroundSyncOptions(
                 TimeSpan.FromMilliseconds(50),
                 true,
@@ -83,8 +94,10 @@ public sealed class BackgroundSyncLoopServiceTests
         // Arrange
         var syncService = new FailingOnceCgmBackgroundSyncService();
 
+        await using var serviceProvider = CreateServiceProvider(syncService);
+
         await using var loopService = new BackgroundSyncLoopService(
-            syncService,
+            serviceProvider.GetRequiredService<IServiceScopeFactory>(),
             new BackgroundSyncOptions(
                 TimeSpan.FromMilliseconds(30),
                 true,
@@ -103,8 +116,12 @@ public sealed class BackgroundSyncLoopServiceTests
     public async Task DisposeAsync_ShouldStopRunningLoop()
     {
         // Arrange
+        var syncService = new FakeCgmBackgroundSyncService();
+
+        await using var serviceProvider = CreateServiceProvider(syncService);
+
         var loopService = new BackgroundSyncLoopService(
-            new FakeCgmBackgroundSyncService(),
+            serviceProvider.GetRequiredService<IServiceScopeFactory>(),
             new BackgroundSyncOptions(
                 TimeSpan.FromMilliseconds(50),
                 true,
@@ -123,21 +140,24 @@ public sealed class BackgroundSyncLoopServiceTests
     public async Task Loop_ShouldUpdateState_WhenIterationCompletes()
     {
         // Arrange
+        var syncService = new FakeCgmBackgroundSyncService();
         var stateService = new BackgroundSyncStateService();
-    
+
+        await using var serviceProvider = CreateServiceProvider(syncService);
+
         await using var loopService = new BackgroundSyncLoopService(
-            new FakeCgmBackgroundSyncService(),
+            serviceProvider.GetRequiredService<IServiceScopeFactory>(),
             new BackgroundSyncOptions(
                 TimeSpan.FromMilliseconds(30),
                 true,
                 true),
             stateService);
-    
+
         // Act
         await loopService.StartAsync(CancellationToken.None);
         await Task.Delay(90);
         await loopService.StopAsync(CancellationToken.None);
-    
+
         // Assert
         Assert.False(stateService.CurrentSnapshot.IsRunning);
         Assert.Equal(BackgroundSyncStatus.Succeeded, stateService.CurrentSnapshot.LastStatus);
@@ -149,10 +169,30 @@ public sealed class BackgroundSyncLoopServiceTests
 
     #region Helpers
 
+    /// <summary>
+    /// Creates a service provider for background sync loop tests.
+    /// </summary>
+    /// <param name="backgroundSyncService">The background sync service.</param>
+    /// <returns>The service provider.</returns>
+    private static ServiceProvider CreateServiceProvider(ICgmBackgroundSyncService backgroundSyncService)
+    {
+        var services = new ServiceCollection();
+
+        services.AddScoped(_ => backgroundSyncService);
+
+        return services.BuildServiceProvider(
+            new ServiceProviderOptions
+            {
+                ValidateOnBuild = true,
+                ValidateScopes = true
+            });
+    }
+
     private sealed class FakeCgmBackgroundSyncService : ICgmBackgroundSyncService
     {
         public int RunCount { get; private set; }
 
+        /// <inheritdoc />
         public Task<Result<BackgroundSyncIterationResult>> RunOnceAsync(
             CancellationToken cancellationToken)
         {
@@ -172,6 +212,7 @@ public sealed class BackgroundSyncLoopServiceTests
     {
         public int RunCount { get; private set; }
 
+        /// <inheritdoc />
         public Task<Result<BackgroundSyncIterationResult>> RunOnceAsync(
             CancellationToken cancellationToken)
         {

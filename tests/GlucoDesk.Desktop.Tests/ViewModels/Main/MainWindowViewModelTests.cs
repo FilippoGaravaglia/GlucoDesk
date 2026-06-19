@@ -19,6 +19,9 @@ using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Readings;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
+using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
+using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
+using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Main;
 
@@ -77,6 +80,28 @@ public sealed class MainWindowViewModelTests
 
     #region Helpers
 
+    /// <summary>
+    /// Creates a background sync status view model for navigation tests.
+    /// </summary>
+    /// <returns>The background sync status view model.</returns>
+    private static BackgroundSyncStatusViewModel CreateBackgroundSyncStatusViewModel()
+    {
+        return new BackgroundSyncStatusViewModel(
+            new BackgroundSyncStateService(),
+            new ImmediateBackgroundSyncUiDispatcher());
+    }
+    
+    private sealed class ImmediateBackgroundSyncUiDispatcher : IBackgroundSyncUiDispatcher
+    {
+        /// <inheritdoc />
+        public void Post(Action action)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+    
+            action();
+        }
+    }
+
     private static readonly DateTimeOffset FixedNow = new(2026, 6, 7, 10, 0, 0, TimeSpan.Zero);
 
     /// <summary>
@@ -95,7 +120,8 @@ public sealed class MainWindowViewModelTests
             new AccountViewModel(
                 new FakeDexcomShareCredentialStore(),
                 new FakeDexcomShareClient()),
-            new SettingsViewModel(settingsService));
+            new SettingsViewModel(settingsService),
+            CreateBackgroundSyncStatusViewModel());
     }
 
     private sealed class FakeGlucoseDataService : IGlucoseDataService
