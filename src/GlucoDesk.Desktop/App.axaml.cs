@@ -1,5 +1,6 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap;
 using GlucoDesk.Desktop.Views.Main;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,13 +30,77 @@ public partial class App : Avalonia.Application
                 .ServiceProvider
                 .GetRequiredService<MainWindow>();
 
-            desktop.Exit += (_, _) => DisposeServices();
+            desktop.MainWindow.Opened += async (_, _) =>
+            {
+                await StartBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider)
+                    .ConfigureAwait(false);
+            };
+
+            desktop.Exit += async (_, _) =>
+            {
+                await StopBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider)
+                    .ConfigureAwait(false);
+
+                DisposeServices();
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Starts the desktop background sync lifecycle without breaking application startup.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    private static async Task StartBackgroundSyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopBackgroundSyncLifecycleService>();
+
+            if (lifecycleService is null)
+            {
+                return;
+            }
+
+            _ = await lifecycleService
+                .StartAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            // Background sync startup must never break the desktop app startup.
+        }
+    }
+
+    /// <summary>
+    /// Stops the desktop background sync lifecycle without breaking application shutdown.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    private static async Task StopBackgroundSyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopBackgroundSyncLifecycleService>();
+
+            if (lifecycleService is null)
+            {
+                return;
+            }
+
+            _ = await lifecycleService
+                .StopAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            // Background sync shutdown must never block or break the desktop app shutdown.
+        }
+    }
 
     /// <summary>
     /// Disposes application-level dependency injection services.
