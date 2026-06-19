@@ -4,6 +4,8 @@ using GlucoDesk.Application.Cgm.BackgroundSync.Services;
 using GlucoDesk.Application.Cgm.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
+using GlucoDesk.Application.Cgm.BackgroundSync.Enums;
 
 namespace GlucoDesk.Application.Tests.Cgm.BackgroundSync.Services;
 
@@ -117,6 +119,36 @@ public sealed class BackgroundSyncLoopServiceTests
         Assert.False(loopService.IsRunning);
     }
 
+    [Fact]
+    public async Task Loop_ShouldUpdateState_WhenIterationCompletes()
+    {
+        // Arrange
+        var stateService = new BackgroundSyncStateService();
+    
+        await using var loopService = new BackgroundSyncLoopService(
+            new FakeCgmBackgroundSyncService(),
+            new BackgroundSyncOptions(
+                TimeSpan.FromMilliseconds(30),
+                true,
+                true),
+            stateService);
+    
+        // Act
+        await loopService.StartAsync(CancellationToken.None);
+        await Task.Delay(90);
+        await loopService.StopAsync(CancellationToken.None);
+    
+        // Assert
+        Assert.False(stateService.CurrentSnapshot.IsRunning);
+        Assert.Equal(BackgroundSyncStatus.Succeeded, stateService.CurrentSnapshot.LastStatus);
+        Assert.Equal(CgmProviderKind.Mock, stateService.CurrentSnapshot.LastProviderKind);
+        Assert.True(stateService.CurrentSnapshot.LastReadingsCount > 0);
+        Assert.NotNull(stateService.CurrentSnapshot.LastAttemptedAt);
+        Assert.NotNull(stateService.CurrentSnapshot.LastSucceededAt);
+    }
+
+    #region Helpers
+
     private sealed class FakeCgmBackgroundSyncService : ICgmBackgroundSyncService
     {
         public int RunCount { get; private set; }
@@ -159,4 +191,6 @@ public sealed class BackgroundSyncLoopServiceTests
                     DateTimeOffset.UtcNow)));
         }
     }
+
+    #endregion
 }

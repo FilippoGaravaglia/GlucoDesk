@@ -1,5 +1,6 @@
 using GlucoDesk.Application.Cgm.BackgroundSync.Options;
 using GlucoDesk.Application.Cgm.BackgroundSync.Services.Abstractions;
+using GlucoDesk.Application.Cgm.BackgroundSync.State.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 
 namespace GlucoDesk.Application.Cgm.BackgroundSync.Services;
@@ -11,6 +12,8 @@ public sealed class BackgroundSyncLoopService : IBackgroundSyncLoopService, IAsy
 {
     private readonly ICgmBackgroundSyncService _backgroundSyncService;
     private readonly BackgroundSyncOptions _options;
+    private readonly IBackgroundSyncStateService? _stateService;
+    private readonly TimeProvider _timeProvider;
     private readonly SemaphoreSlim _lifecycleLock = new(1, 1);
 
     private CancellationTokenSource? _loopCancellationTokenSource;
@@ -21,15 +24,21 @@ public sealed class BackgroundSyncLoopService : IBackgroundSyncLoopService, IAsy
     /// </summary>
     /// <param name="backgroundSyncService">The background sync service.</param>
     /// <param name="options">The background sync options.</param>
+    /// <param name="stateService">The optional background sync state service.</param>
+    /// <param name="timeProvider">The optional time provider.</param>
     public BackgroundSyncLoopService(
         ICgmBackgroundSyncService backgroundSyncService,
-        BackgroundSyncOptions options)
+        BackgroundSyncOptions options,
+        IBackgroundSyncStateService? stateService = null,
+        TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(backgroundSyncService);
         ArgumentNullException.ThrowIfNull(options);
 
         _backgroundSyncService = backgroundSyncService;
         _options = options;
+        _stateService = stateService;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <inheritdoc />
@@ -55,6 +64,8 @@ public sealed class BackgroundSyncLoopService : IBackgroundSyncLoopService, IAsy
 
             _loopTask = RunLoopAsync(_loopCancellationTokenSource.Token);
 
+            _stateService?.MarkStarted(_timeProvider.GetUtcNow());
+
             return Result.Success();
         }
         finally
@@ -76,6 +87,7 @@ public sealed class BackgroundSyncLoopService : IBackgroundSyncLoopService, IAsy
         {
             if (_loopTask is null)
             {
+                _stateService?.MarkStopped(_timeProvider.GetUtcNow());
                 return Result.Success();
             }
 
@@ -110,6 +122,7 @@ public sealed class BackgroundSyncLoopService : IBackgroundSyncLoopService, IAsy
                 _loopTask = null;
                 _loopCancellationTokenSource?.Dispose();
                 _loopCancellationTokenSource = null;
+                _stateService?.MarkStopped(_timeProvider.GetUtcNow());
             }
             finally
             {
@@ -161,9 +174,19 @@ public sealed class BackgroundSyncLoopService : IBackgroundSyncLoopService, IAsy
     {
         try
         {
-            _ = await _backgroundSyncService
+            var result = await _backgroundSyncService
                 .RunOnceAsync(cancellationToken)
                 .ConfigureAwait(false);
+
+            if (result.IsSuccess)
+            {
+                _stateService?.RecordIteration(result.Value);
+                return;
+            }
+
+            _stateService?.RecordFailure(
+                _timeProvider.GetUtcNow(),
+                result.Error.Message);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -171,6 +194,10 @@ public sealed class BackgroundSyncLoopService : IBackgroundSyncLoopService, IAsy
         }
         catch
         {
+            _stateService?.RecordFailure(
+                _timeProvider.GetUtcNow(),
+                "Background sync loop iteration failed unexpectedly.");
+
             // The background sync loop must remain alive even when one iteration fails.
         }
     }
