@@ -33,7 +33,10 @@ public static class DexcomShareCgmProviderServiceCollectionExtensions
         services.AddSingleton<DexcomShareEndpointProvider>();
         services.AddSingleton<DexcomShareGlucoseValueMapper>();
 
-        services.AddHttpClient<IDexcomShareClient, DexcomShareClient>();
+        services.AddHttpClient<IDexcomShareClient, DexcomShareClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
 
         services.AddSingleton<DexcomShareCgmProvider>();
 

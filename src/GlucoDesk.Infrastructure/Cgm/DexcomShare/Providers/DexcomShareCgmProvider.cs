@@ -171,29 +171,20 @@ public sealed class DexcomShareCgmProvider : ICgmLiveProvider, ICgmHistoricalPro
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
-
-        var sessionResult = await _client
-            .AuthenticateAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (sessionResult.IsFailure)
-        {
-            return Result<IReadOnlyCollection<GlucoseReading>>.Failure(sessionResult.Error);
-        }
-
+    
         var valuesResult = await _client
             .GetLatestGlucoseValuesAsync(
-                sessionResult.Value,
+                options,
                 CalculateMinutes(lookback),
                 maxCount,
                 cancellationToken)
             .ConfigureAwait(false);
-
+    
         if (valuesResult.IsFailure)
         {
             return Result<IReadOnlyCollection<GlucoseReading>>.Failure(valuesResult.Error);
         }
-
+    
         return _mapper.MapValues(valuesResult.Value);
     }
 

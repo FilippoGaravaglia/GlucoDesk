@@ -204,6 +204,25 @@ public sealed class MainWindowViewModelTests
 
     private sealed class FakeDexcomShareClient : IDexcomShareClient
     {
+        public Task<Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>> GetLatestGlucoseValuesAsync(
+            DexcomShareOptions options,
+            int minutes,
+            int maxCount,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(options);
+
+            return GetLatestGlucoseValuesAsync(
+                "fake-session",
+                minutes,
+                maxCount,
+                cancellationToken);
+        }
+
+        public void InvalidateSession()
+        {
+        }
+        
         /// <inheritdoc />
         public Task<Result<string>> AuthenticateAsync(CancellationToken cancellationToken)
         {
