@@ -22,11 +22,12 @@ public static class BackgroundSyncServiceCollectionExtensions
         BackgroundSyncOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(services);
-
+    
         services.TryAddSingleton(options ?? BackgroundSyncOptions.Default);
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<ICgmBackgroundSyncService, CgmBackgroundSyncService>();
-
+        services.TryAddSingleton<IBackgroundSyncLoopService, BackgroundSyncLoopService>();
+    
         return services;
     }
 }
