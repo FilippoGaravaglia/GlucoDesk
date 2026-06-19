@@ -25,6 +25,7 @@ public static class HistoryContinuityServiceCollectionExtensions
 
         services.TryAddSingleton(options ?? HistoryContinuityOptions.Default);
         services.TryAddSingleton<IGlucoseHistoryContinuityService, GlucoseHistoryContinuityService>();
+        services.TryAddScoped<IGlucoseHistoryContinuityQueryService, GlucoseHistoryContinuityQueryService>();
 
         return services;
     }
