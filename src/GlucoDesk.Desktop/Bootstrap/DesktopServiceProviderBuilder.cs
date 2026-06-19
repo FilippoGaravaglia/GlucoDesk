@@ -11,6 +11,7 @@ using GlucoDesk.Infrastructure.Cgm.History.DependencyInjection;
 using GlucoDesk.Infrastructure.Settings.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.WidgetState.DependencyInjection;
+using GlucoDesk.Application.Cgm.BackgroundSync.DependencyInjection;
 
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -34,6 +35,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddJsonGlucoseHistoryStore();
         services.AddJsonWidgetStateStore();
         services.AddDesktopShell();
+        services.AddCgmBackgroundSync();
 
         return services.BuildServiceProvider(
             new ServiceProviderOptions
