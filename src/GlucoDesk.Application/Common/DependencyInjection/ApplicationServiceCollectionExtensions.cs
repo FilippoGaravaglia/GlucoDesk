@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using GlucoDesk.Application.Cgm.Statistics.Services;
 using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
+using GlucoDesk.Application.Cgm.History.Continuity.DependencyInjection;
 
 namespace GlucoDesk.Application.Common.DependencyInjection;
 
@@ -42,6 +43,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IGlucoseHistoryAnalyticsService, GlucoseHistoryAnalyticsService>();
         services.AddScoped<ICgmProviderResolver, CgmProviderResolver>();
         services.TryAddScoped<IGlucoseStatisticsService, GlucoseStatisticsService>();
+        services.AddGlucoseHistoryContinuity();
 
         return services;
     }
