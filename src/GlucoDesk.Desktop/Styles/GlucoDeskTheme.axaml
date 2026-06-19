@@ -629,11 +629,11 @@
   </Style>
 
   <Style Selector="Border.insight-empty-state">
-    ß<Setter Property="Padding" Value="24" />
-    ß<Setter Property="CornerRadius" Value="26" />
-    ß<Setter Property="BorderThickness" Value="1" />
-    ß<Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
-    ß<Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentPale}" />
+    <Setter Property="Padding" Value="24" />
+    <Setter Property="CornerRadius" Value="26" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{StaticResource GlucoDesk.Brush.BorderAccent}" />
+    <Setter Property="Background" Value="{StaticResource GlucoDesk.Brush.AccentPale}" />
   </Style>
 
   <Style Selector="Border.empty-state-icon">

@@ -18,6 +18,7 @@ public sealed record DexcomShareOptions
     /// <param name="latestReadingLookback">The latest reading lookback window.</param>
     /// <param name="recentReadingsLookback">The recent readings lookback window.</param>
     /// <param name="maximumRecentReadings">The maximum number of recent readings requested from Dexcom Share.</param>
+    /// <param name="sessionCacheDuration">The in-memory Dexcom Share session cache duration.</param>
     public DexcomShareOptions(
         string? username,
         string? password,
@@ -26,7 +27,8 @@ public sealed record DexcomShareOptions
         string? displayName = null,
         TimeSpan? latestReadingLookback = null,
         TimeSpan? recentReadingsLookback = null,
-        int maximumRecentReadings = MaximumDexcomShareReadingCount)
+        int maximumRecentReadings = MaximumDexcomShareReadingCount,
+        TimeSpan? sessionCacheDuration = null)
     {
         Username = username?.Trim() ?? string.Empty;
         Password = password ?? string.Empty;
@@ -42,6 +44,9 @@ public sealed record DexcomShareOptions
         MaximumRecentReadings = maximumRecentReadings <= 0
             ? MaximumDexcomShareReadingCount
             : Math.Min(maximumRecentReadings, MaximumDexcomShareReadingCount);
+        SessionCacheDuration = sessionCacheDuration is null || sessionCacheDuration <= TimeSpan.Zero
+            ? TimeSpan.FromMinutes(25)
+            : sessionCacheDuration.Value;
     }
 
     /// <summary>
@@ -83,6 +88,11 @@ public sealed record DexcomShareOptions
     /// Gets the maximum number of recent readings requested from Dexcom Share.
     /// </summary>
     public int MaximumRecentReadings { get; }
+
+    /// <summary>
+    /// Gets the in-memory Dexcom Share session cache duration.
+    /// </summary>
+    public TimeSpan SessionCacheDuration { get; }
 
     /// <summary>
     /// Gets a value indicating whether Dexcom Share is configured.

@@ -11,7 +11,7 @@ using GlucoDesk.Infrastructure.Cgm.DexcomShare.Readings;
 namespace GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 
 /// <summary>
-/// Provides Dexcom Share HTTP operations.
+/// Provides Dexcom Share HTTP operations with managed in-memory session reuse.
 /// </summary>
 public sealed class DexcomShareClient : IDexcomShareClient
 {
@@ -26,6 +26,10 @@ public sealed class DexcomShareClient : IDexcomShareClient
     private readonly HttpClient _httpClient;
     private readonly IDexcomShareOptionsProvider _optionsProvider;
     private readonly DexcomShareEndpointProvider _endpointProvider;
+    private readonly TimeProvider _timeProvider;
+    private readonly SemaphoreSlim _authenticationLock = new(1, 1);
+
+    private DexcomShareSession? _cachedSession;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DexcomShareClient"/> class.
@@ -33,18 +37,22 @@ public sealed class DexcomShareClient : IDexcomShareClient
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="optionsProvider">The Dexcom Share options provider.</param>
     /// <param name="endpointProvider">The endpoint provider.</param>
+    /// <param name="timeProvider">The time provider.</param>
     public DexcomShareClient(
         HttpClient httpClient,
         IDexcomShareOptionsProvider optionsProvider,
-        DexcomShareEndpointProvider endpointProvider)
+        DexcomShareEndpointProvider endpointProvider,
+        TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         ArgumentNullException.ThrowIfNull(optionsProvider);
         ArgumentNullException.ThrowIfNull(endpointProvider);
+        ArgumentNullException.ThrowIfNull(timeProvider);
 
         _httpClient = httpClient;
         _optionsProvider = optionsProvider;
         _endpointProvider = endpointProvider;
+        _timeProvider = timeProvider;
     }
 
     /// <inheritdoc />
@@ -53,14 +61,20 @@ public sealed class DexcomShareClient : IDexcomShareClient
         var optionsResult = await _optionsProvider
             .GetOptionsAsync(cancellationToken)
             .ConfigureAwait(false);
-    
+
         if (optionsResult.IsFailure)
         {
             return Result<string>.Failure(optionsResult.Error);
         }
-    
-        return await AuthenticateAsync(optionsResult.Value, cancellationToken)
+
+        var sessionResult = await GetOrAuthenticateSessionAsync(
+                optionsResult.Value,
+                cancellationToken)
             .ConfigureAwait(false);
+
+        return sessionResult.IsFailure
+            ? Result<string>.Failure(sessionResult.Error)
+            : Result<string>.Success(sessionResult.Value.SessionId);
     }
 
     /// <inheritdoc />
@@ -72,22 +86,88 @@ public sealed class DexcomShareClient : IDexcomShareClient
 
         if (!options.IsConfigured)
         {
-            return Result<string>.Failure(
-                new Error(
-                    "DexcomShare.NotConfigured",
-                    "Dexcom Share account is not configured. Open Account and enter your Dexcom Share credentials."));
+            return Result<string>.Failure(CreateNotConfiguredError());
         }
 
-        var accountIdResult = await AuthenticatePublisherAccountAsync(options, cancellationToken)
+        var sessionResult = await AuthenticateFreshSessionAsync(
+                options,
+                cacheSession: false,
+                cancellationToken)
             .ConfigureAwait(false);
 
-        if (accountIdResult.IsFailure)
+        return sessionResult.IsFailure
+            ? Result<string>.Failure(sessionResult.Error)
+            : Result<string>.Success(sessionResult.Value.SessionId);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>> GetLatestGlucoseValuesAsync(
+        DexcomShareOptions options,
+        int minutes,
+        int maxCount,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (!options.IsConfigured)
         {
-            return Result<string>.Failure(accountIdResult.Error);
+            return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Failure(CreateNotConfiguredError());
         }
 
-        return await LoginPublisherAccountByIdAsync(options, accountIdResult.Value, cancellationToken)
+        var sessionResult = await GetOrAuthenticateSessionAsync(
+                options,
+                cancellationToken)
             .ConfigureAwait(false);
+
+        if (sessionResult.IsFailure)
+        {
+            return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Failure(sessionResult.Error);
+        }
+
+        var firstAttemptResult = await GetLatestGlucoseValuesAsync(
+                sessionResult.Value.SessionId,
+                minutes,
+                maxCount,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (firstAttemptResult.IsSuccess)
+        {
+            TouchCachedSession(sessionResult.Value);
+            return firstAttemptResult;
+        }
+
+        if (!IsSessionExpiredError(firstAttemptResult.Error))
+        {
+            return firstAttemptResult;
+        }
+
+        InvalidateSession();
+
+        var freshSessionResult = await AuthenticateFreshSessionAsync(
+                options,
+                cacheSession: true,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (freshSessionResult.IsFailure)
+        {
+            return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Failure(freshSessionResult.Error);
+        }
+
+        var retryResult = await GetLatestGlucoseValuesAsync(
+                freshSessionResult.Value.SessionId,
+                minutes,
+                maxCount,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (retryResult.IsSuccess)
+        {
+            TouchCachedSession(freshSessionResult.Value);
+        }
+
+        return retryResult;
     }
 
     /// <inheritdoc />
@@ -115,70 +195,136 @@ public sealed class DexcomShareClient : IDexcomShareClient
         }
 
         var options = optionsResult.Value;
-
-        var normalizedMinutes = Math.Clamp(
-            minutes,
-            MinimumLookbackMinutes,
-            MaximumLookbackMinutes);
-
-        var normalizedMaxCount = Math.Clamp(
-            maxCount,
-            MinimumReadingCount,
-            MaximumReadingCount);
-
+        var normalizedMinutes = Math.Clamp(minutes, MinimumLookbackMinutes, MaximumLookbackMinutes);
+        var normalizedMaxCount = Math.Clamp(maxCount, MinimumReadingCount, MaximumReadingCount);
         var baseUri = _endpointProvider.GetBaseUri(options.Region);
+
         var requestUri = new Uri(
             baseUri,
             $"/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues?sessionID={Uri.EscapeDataString(sessionId)}&minutes={normalizedMinutes}&maxCount={normalizedMaxCount}");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+        var result = await SendDexcomPostAsync<IReadOnlyCollection<DexcomShareGlucoseValueDto>>(
+                requestUri,
+                payload: null,
+                DexcomShareHttpOperation.GlucoseReadings,
+                cancellationToken)
+            .ConfigureAwait(false);
 
-        ApplyDefaultHeaders(request);
+        return result;
+    }
 
-        try
-        {
-            using var response = await _httpClient
-                .SendAsync(request, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            {
-                return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Failure(
-                    new Error(
-                        "DexcomShare.SessionRejected",
-                        "Dexcom Share rejected the current session. Authentication may have expired."));
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Failure(
-                    new Error(
-                        "DexcomShare.ReadingsHttpFailed",
-                        $"Dexcom Share readings request failed with HTTP {(int)response.StatusCode}."));
-            }
-
-            var values = await response.Content
-                .ReadFromJsonAsync<IReadOnlyCollection<DexcomShareGlucoseValueDto>>(
-                    SerializerOptions,
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Success(values ?? []);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            return Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Failure(
-                new Error(
-                    "DexcomShare.ReadingsNetworkError",
-                    exception.Message));
-        }
+    /// <inheritdoc />
+    public void InvalidateSession()
+    {
+        _cachedSession = null;
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Gets a valid cached session or authenticates a new one.
+    /// </summary>
+    /// <param name="options">The Dexcom Share options.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The Dexcom Share session.</returns>
+    private async Task<Result<DexcomShareSession>> GetOrAuthenticateSessionAsync(
+        DexcomShareOptions options,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+    
+        if (!options.IsConfigured)
+        {
+            return Result<DexcomShareSession>.Failure(CreateNotConfiguredError());
+        }
+    
+        var accountKey = BuildAccountKey(options);
+        var cachedSession = _cachedSession;
+    
+        if (cachedSession is not null && IsCachedSessionUsable(cachedSession, accountKey, options))
+        {
+            TouchCachedSession(cachedSession);
+            return Result<DexcomShareSession>.Success(cachedSession);
+        }
+    
+        await _authenticationLock
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
+    
+        try
+        {
+            cachedSession = _cachedSession;
+    
+            if (cachedSession is not null && IsCachedSessionUsable(cachedSession, accountKey, options))
+            {
+                TouchCachedSession(cachedSession);
+                return Result<DexcomShareSession>.Success(cachedSession);
+            }
+    
+            return await AuthenticateFreshSessionAsync(
+                    options,
+                    cacheSession: true,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _authenticationLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Authenticates a new Dexcom Share session.
+    /// </summary>
+    /// <param name="options">The Dexcom Share options.</param>
+    /// <param name="cacheSession">A value indicating whether the session should be cached.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The authenticated Dexcom Share session.</returns>
+    private async Task<Result<DexcomShareSession>> AuthenticateFreshSessionAsync(
+        DexcomShareOptions options,
+        bool cacheSession,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (!options.IsConfigured)
+        {
+            return Result<DexcomShareSession>.Failure(CreateNotConfiguredError());
+        }
+
+        var accountIdResult = await AuthenticatePublisherAccountAsync(options, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (accountIdResult.IsFailure)
+        {
+            return Result<DexcomShareSession>.Failure(accountIdResult.Error);
+        }
+
+        var sessionIdResult = await LoginPublisherAccountByIdAsync(
+                options,
+                accountIdResult.Value,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (sessionIdResult.IsFailure)
+        {
+            return Result<DexcomShareSession>.Failure(sessionIdResult.Error);
+        }
+
+        var now = _timeProvider.GetUtcNow();
+        var session = new DexcomShareSession(
+            sessionIdResult.Value,
+            BuildAccountKey(options),
+            now,
+            now);
+
+        if (cacheSession)
+        {
+            _cachedSession = session;
+        }
+
+        return Result<DexcomShareSession>.Success(session);
+    }
 
     /// <summary>
     /// Authenticates the Dexcom Share publisher account and returns the account identifier.
@@ -195,31 +341,31 @@ public sealed class DexcomShareClient : IDexcomShareClient
             baseUri,
             "/ShareWebServices/Services/General/AuthenticatePublisherAccount");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-        {
-            Content = JsonContent.Create(
-                new DexcomShareAuthenticationRequest(
-                    options.Username,
-                    options.Password,
-                    options.ApplicationId))
-        };
+        var payload = new DexcomShareAuthenticationRequest(
+            options.Username,
+            options.Password,
+            options.ApplicationId);
 
-        ApplyDefaultHeaders(request);
-
-        return await SendStringRequestAsync(
-                request,
-                "DexcomShare.AuthenticationFailed",
-                "Dexcom Share authentication failed. Check username, password, region and Share status.",
-                "DexcomShare.AuthenticationHttpFailed",
-                "Dexcom Share authentication failed",
-                "DexcomShare.EmptyAccountId",
-                "Dexcom Share returned an empty account identifier.",
+        var result = await SendDexcomPostAsync<string>(
+                requestUri,
+                payload,
+                DexcomShareHttpOperation.Authentication,
                 cancellationToken)
             .ConfigureAwait(false);
+
+        if (result.IsFailure)
+        {
+            return result;
+        }
+
+        return ValidateDexcomIdentifier(
+            result.Value,
+            "DexcomShare.AuthenticationRejected",
+            "Dexcom Share rejected the configured account credentials.");
     }
 
     /// <summary>
-    /// Logs into Dexcom Share using a publisher account identifier and returns the session identifier.
+    /// Logs into Dexcom Share using an authenticated account identifier.
     /// </summary>
     /// <param name="options">The Dexcom Share options.</param>
     /// <param name="accountId">The Dexcom Share account identifier.</param>
@@ -230,123 +376,318 @@ public sealed class DexcomShareClient : IDexcomShareClient
         string accountId,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(accountId))
-        {
-            return Result<string>.Failure(
-                new Error(
-                    "DexcomShare.EmptyAccountId",
-                    "Dexcom Share account identifier is missing."));
-        }
-
         var baseUri = _endpointProvider.GetBaseUri(options.Region);
         var requestUri = new Uri(
             baseUri,
             "/ShareWebServices/Services/General/LoginPublisherAccountById");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
-        {
-            Content = JsonContent.Create(
-                new DexcomShareLoginByAccountIdRequest(
-                    accountId,
-                    options.Password,
-                    options.ApplicationId))
-        };
+        var payload = new DexcomShareLoginByAccountIdRequest(
+            accountId,
+            options.Password,
+            options.ApplicationId);
 
-        ApplyDefaultHeaders(request);
-
-        return await SendStringRequestAsync(
-                request,
-                "DexcomShare.LoginFailed",
-                "Dexcom Share login failed after account authentication.",
-                "DexcomShare.LoginHttpFailed",
-                "Dexcom Share login failed",
-                "DexcomShare.EmptySession",
-                "Dexcom Share returned an empty session identifier.",
+        var result = await SendDexcomPostAsync<string>(
+                requestUri,
+                payload,
+                DexcomShareHttpOperation.Authentication,
                 cancellationToken)
             .ConfigureAwait(false);
+
+        if (result.IsFailure)
+        {
+            return result;
+        }
+
+        return ValidateDexcomIdentifier(
+            result.Value,
+            "DexcomShare.AuthenticationRejected",
+            "Dexcom Share did not return a valid session identifier.");
     }
 
     /// <summary>
-    /// Sends an HTTP request expected to return a JSON string payload.
+    /// Sends a Dexcom Share POST request and deserializes the response.
     /// </summary>
-    /// <param name="request">The HTTP request.</param>
-    /// <param name="authorizationErrorCode">The authorization error code.</param>
-    /// <param name="authorizationErrorMessage">The authorization error message.</param>
-    /// <param name="httpErrorCode">The HTTP error code.</param>
-    /// <param name="httpErrorMessage">The HTTP error message.</param>
-    /// <param name="emptyPayloadErrorCode">The empty payload error code.</param>
-    /// <param name="emptyPayloadErrorMessage">The empty payload error message.</param>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="requestUri">The request URI.</param>
+    /// <param name="payload">The optional JSON payload.</param>
+    /// <param name="operation">The Dexcom Share operation.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The JSON string payload.</returns>
-    private async Task<Result<string>> SendStringRequestAsync(
-        HttpRequestMessage request,
-        string authorizationErrorCode,
-        string authorizationErrorMessage,
-        string httpErrorCode,
-        string httpErrorMessage,
-        string emptyPayloadErrorCode,
-        string emptyPayloadErrorMessage,
+    /// <returns>The deserialized response.</returns>
+    private async Task<Result<TResponse>> SendDexcomPostAsync<TResponse>(
+        Uri requestUri,
+        object? payload,
+        DexcomShareHttpOperation operation,
         CancellationToken cancellationToken)
+        where TResponse : notnull
     {
+        using var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+
+        ApplyDefaultHeaders(request);
+
+        if (payload is not null)
+        {
+            request.Content = JsonContent.Create(payload, options: SerializerOptions);
+        }
+
         try
         {
             using var response = await _httpClient
                 .SendAsync(request, cancellationToken)
                 .ConfigureAwait(false);
 
-            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            {
-                return Result<string>.Failure(
-                    new Error(
-                        authorizationErrorCode,
-                        authorizationErrorMessage));
-            }
+            var responseContent = await response.Content
+                .ReadAsStringAsync(cancellationToken)
+                .ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                return Result<string>.Failure(
-                    new Error(
-                        httpErrorCode,
-                        $"{httpErrorMessage} with HTTP {(int)response.StatusCode}."));
+                return Result<TResponse>.Failure(
+                    BuildHttpError(response.StatusCode, responseContent, operation));
             }
 
-            var value = await response.Content
-                .ReadFromJsonAsync<string>(
-                    SerializerOptions,
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            if (string.IsNullOrWhiteSpace(value))
+            if (string.IsNullOrWhiteSpace(responseContent))
             {
-                return Result<string>.Failure(
+                return Result<TResponse>.Failure(
                     new Error(
-                        emptyPayloadErrorCode,
-                        emptyPayloadErrorMessage));
+                        "DexcomShare.EmptyResponse",
+                        "Dexcom Share returned an empty response."));
             }
 
-            return Result<string>.Success(value);
+            var value = JsonSerializer.Deserialize<TResponse>(
+                responseContent,
+                SerializerOptions);
+
+            if (value is null)
+            {
+                return Result<TResponse>.Failure(
+                    new Error(
+                        "DexcomShare.InvalidResponse",
+                        "Dexcom Share returned a response that could not be parsed."));
+            }
+
+            return Result<TResponse>.Success(value);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
         }
-        catch (Exception exception)
+        catch (TaskCanceledException)
         {
-            return Result<string>.Failure(
+            return Result<TResponse>.Failure(
+                new Error(
+                    "DexcomShare.Timeout",
+                    "Dexcom Share did not respond before the request timeout."));
+        }
+        catch (HttpRequestException)
+        {
+            return Result<TResponse>.Failure(
                 new Error(
                     "DexcomShare.NetworkError",
-                    exception.Message));
+                    "Unable to reach Dexcom Share. Check your network connection and try again."));
+        }
+        catch (JsonException)
+        {
+            return Result<TResponse>.Failure(
+                new Error(
+                    "DexcomShare.InvalidResponse",
+                    "Dexcom Share returned a response that could not be parsed."));
         }
     }
 
     /// <summary>
-    /// Applies default Dexcom Share request headers.
+    /// Applies default Dexcom Share HTTP headers.
     /// </summary>
-    /// <param name="request">The HTTP request.</param>
+    /// <param name="request">The HTTP request message.</param>
     private static void ApplyDefaultHeaders(HttpRequestMessage request)
     {
-        request.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
+        request.Headers.UserAgent.ParseAdd(UserAgent);
+        request.Headers.Accept.ParseAdd("application/json");
     }
+
+    /// <summary>
+    /// Validates a Dexcom Share identifier returned by the API.
+    /// </summary>
+    /// <param name="identifier">The identifier.</param>
+    /// <param name="errorCode">The error code used when validation fails.</param>
+    /// <param name="errorMessage">The error message used when validation fails.</param>
+    /// <returns>The validated identifier.</returns>
+    private static Result<string> ValidateDexcomIdentifier(
+        string? identifier,
+        string errorCode,
+        string errorMessage)
+    {
+        if (string.IsNullOrWhiteSpace(identifier))
+        {
+            return Result<string>.Failure(new Error(errorCode, errorMessage));
+        }
+
+        var normalizedIdentifier = identifier.Trim();
+
+        if (Guid.TryParse(normalizedIdentifier, out var guid) && guid == Guid.Empty)
+        {
+            return Result<string>.Failure(new Error(errorCode, errorMessage));
+        }
+
+        return Result<string>.Success(normalizedIdentifier);
+    }
+
+    /// <summary>
+    /// Builds a Dexcom Share HTTP error.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code.</param>
+    /// <param name="responseContent">The response content.</param>
+    /// <param name="operation">The Dexcom Share operation.</param>
+    /// <returns>The mapped error.</returns>
+    private static Error BuildHttpError(
+        HttpStatusCode statusCode,
+        string responseContent,
+        DexcomShareHttpOperation operation)
+    {
+        if (operation is DexcomShareHttpOperation.GlucoseReadings
+            && IsSessionInvalidResponse(statusCode, responseContent))
+        {
+            return new Error(
+                "DexcomShare.SessionExpired",
+                "Dexcom Share session expired. GlucoDesk will try to reconnect.");
+        }
+
+        if (operation is DexcomShareHttpOperation.Authentication)
+        {
+            return new Error(
+                "DexcomShare.AuthenticationRejected",
+                "Dexcom Share rejected the configured account credentials or is temporarily unavailable.");
+        }
+
+        return new Error(
+            "DexcomShare.RequestFailed",
+            $"Dexcom Share request failed with HTTP {(int)statusCode}.");
+    }
+
+    /// <summary>
+    /// Determines whether an HTTP response indicates an invalid Dexcom Share session.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code.</param>
+    /// <param name="responseContent">The response content.</param>
+    /// <returns><see langword="true"/> when the response indicates an invalid session; otherwise, <see langword="false"/>.</returns>
+    private static bool IsSessionInvalidResponse(
+        HttpStatusCode statusCode,
+        string responseContent)
+    {
+        if (statusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(responseContent))
+        {
+            return false;
+        }
+
+        return responseContent.Contains("session", StringComparison.OrdinalIgnoreCase)
+            && (responseContent.Contains("invalid", StringComparison.OrdinalIgnoreCase)
+                || responseContent.Contains("expired", StringComparison.OrdinalIgnoreCase)
+                || responseContent.Contains("not found", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Determines whether an error represents an expired Dexcom Share session.
+    /// </summary>
+    /// <param name="error">The error.</param>
+    /// <returns><see langword="true"/> when the error represents an expired session; otherwise, <see langword="false"/>.</returns>
+    private static bool IsSessionExpiredError(Error error)
+    {
+        return string.Equals(
+            error.Code,
+            "DexcomShare.SessionExpired",
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Determines whether a cached session can be reused.
+    /// </summary>
+    /// <param name="session">The cached session.</param>
+    /// <param name="accountKey">The current account key.</param>
+    /// <param name="options">The Dexcom Share options.</param>
+    /// <returns><see langword="true"/> when the cached session can be reused; otherwise, <see langword="false"/>.</returns>
+    private bool IsCachedSessionUsable(
+        DexcomShareSession? session,
+        string accountKey,
+        DexcomShareOptions options)
+    {
+        if (session is null)
+        {
+            return false;
+        }
+
+        if (!string.Equals(session.AccountKey, accountKey, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var now = _timeProvider.GetUtcNow();
+        var age = now - session.AuthenticatedAt;
+
+        return age >= TimeSpan.Zero && age <= options.SessionCacheDuration;
+    }
+
+    /// <summary>
+    /// Updates the last-used timestamp for the cached session.
+    /// </summary>
+    /// <param name="session">The Dexcom Share session.</param>
+    private void TouchCachedSession(DexcomShareSession session)
+    {
+        if (_cachedSession is null)
+        {
+            return;
+        }
+
+        if (!string.Equals(_cachedSession.SessionId, session.SessionId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _cachedSession = _cachedSession with
+        {
+            LastUsedAt = _timeProvider.GetUtcNow()
+        };
+    }
+
+    /// <summary>
+    /// Builds the in-memory session account key without exposing the password.
+    /// </summary>
+    /// <param name="options">The Dexcom Share options.</param>
+    /// <returns>The session account key.</returns>
+    private static string BuildAccountKey(DexcomShareOptions options)
+    {
+        return string.Join(
+            "|",
+            options.Username.Trim().ToUpperInvariant(),
+            options.Region.ToString(),
+            options.ApplicationId.Trim());
+    }
+
+    /// <summary>
+    /// Creates the not-configured Dexcom Share error.
+    /// </summary>
+    /// <returns>The not-configured error.</returns>
+    private static Error CreateNotConfiguredError()
+    {
+        return new Error(
+            "DexcomShare.NotConfigured",
+            "Dexcom Share account is not configured. Open Account and enter your Dexcom Share credentials.");
+    }
+
+    private enum DexcomShareHttpOperation
+    {
+        Authentication,
+        GlucoseReadings
+    }
+
+    private sealed record DexcomShareSession(
+        string SessionId,
+        string AccountKey,
+        DateTimeOffset AuthenticatedAt,
+        DateTimeOffset LastUsedAt);
 
     #endregion
 }
