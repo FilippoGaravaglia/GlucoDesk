@@ -23,6 +23,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
+using GlucoDesk.Application.Cgm.WidgetState.Services.Abstractions;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -72,6 +73,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IApplicationSettingsChangeNotifier? _settingsChangeNotifier;
     private readonly IGlucoseHistoryService? _glucoseHistoryService;
     private readonly IGlucoseStatisticsService? _glucoseStatisticsService;
+    private readonly IWidgetStatePublisher? _widgetStatePublisher;
     private readonly DashboardRefreshOptions _refreshOptions;
 
     private GlucoseDashboardSnapshot? _lastDashboardSnapshot;
@@ -281,13 +283,15 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// <param name="settingsChangeNotifier">The optional application settings change notifier.</param>
     /// <param name="glucoseHistoryService">The optional glucose history service.</param>
     /// <param name="glucoseStatisticsService">The glucose statistics service.</param>
+    /// <param name="widgetStatePublisher">The optional widget state publisher.</param>
     public DashboardViewModel(
         IGlucoseDataService glucoseDataService,
         IApplicationSettingsService settingsService,
         DashboardRefreshOptions? refreshOptions = null,
         IApplicationSettingsChangeNotifier? settingsChangeNotifier = null,
         IGlucoseHistoryService? glucoseHistoryService = null,
-        IGlucoseStatisticsService? glucoseStatisticsService = null)
+        IGlucoseStatisticsService? glucoseStatisticsService = null,
+        IWidgetStatePublisher? widgetStatePublisher = null)
     {
         ArgumentNullException.ThrowIfNull(glucoseDataService);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -298,8 +302,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         _settingsChangeNotifier = settingsChangeNotifier;
         _glucoseHistoryService = glucoseHistoryService;
         _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
-
         _glucoseStatisticsService = glucoseStatisticsService;
+        _widgetStatePublisher = widgetStatePublisher;
         IsStatisticsEnabled = _glucoseStatisticsService is not null;
         ApplyStatisticsPresentation(DashboardStatisticsPresenter.Disabled());
 
@@ -362,16 +366,29 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         try
         {
             var result = await _glucoseDataService
-                .GetDashboardSnapshotAsync(CreateDashboardRequest(), cancellationToken);
+                .GetDashboardSnapshotAsync(CreateDashboardRequest(), cancellationToken)
+                .ConfigureAwait(false);
 
             if (result.IsFailure)
             {
                 ApplyFailure(result);
+
+                await PublishUnavailableWidgetStateAsync(
+                        CgmProviderKind.Unknown,
+                        StatusText,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
                 return;
             }
 
             ApplySnapshot(result.Value);
-            await PersistSnapshotToHistoryAsync(result.Value, cancellationToken);
+
+            await PublishSnapshotToWidgetStateAsync(result.Value, cancellationToken)
+                .ConfigureAwait(false);
+
+            await PersistSnapshotToHistoryAsync(result.Value, cancellationToken)
+                .ConfigureAwait(false);
 
             await RefreshStatisticsAsync(result.Value, cancellationToken)
                 .ConfigureAwait(false);
@@ -385,6 +402,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         catch (Exception exception)
         {
             ApplyUnexpectedFailure(exception);
+
+            await PublishUnavailableWidgetStateAsync(
+                    CgmProviderKind.Unknown,
+                    "Unexpected dashboard error",
+                    cancellationToken)
+                .ConfigureAwait(false);
         }
         finally
         {
@@ -500,6 +523,95 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Publishes the current dashboard snapshot to the local widget state store.
+    /// </summary>
+    /// <param name="snapshot">The dashboard snapshot.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task PublishSnapshotToWidgetStateAsync(
+        GlucoseDashboardSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        if (_widgetStatePublisher is null)
+        {
+            return;
+        }
+
+        if (snapshot.LatestReading is not null)
+        {
+            await PublishWidgetStateSafelyAsync(
+                    () => _widgetStatePublisher.PublishReadingAsync(
+                        snapshot.LatestReading,
+                        cancellationToken),
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            return;
+        }
+
+        await PublishUnavailableWidgetStateAsync(
+                snapshot.Metadata.ProviderKind,
+                "No current glucose reading available",
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Publishes an unavailable widget state without affecting the dashboard refresh flow.
+    /// </summary>
+    /// <param name="providerKind">The provider kind.</param>
+    /// <param name="statusMessage">The status message.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task PublishUnavailableWidgetStateAsync(
+        CgmProviderKind providerKind,
+        string statusMessage,
+        CancellationToken cancellationToken)
+    {
+        if (_widgetStatePublisher is null)
+        {
+            return;
+        }
+
+        await PublishWidgetStateSafelyAsync(
+                () => _widgetStatePublisher.PublishUnavailableAsync(
+                    providerKind,
+                    statusMessage,
+                    cancellationToken),
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Publishes widget state as a best-effort side effect.
+    /// </summary>
+    /// <param name="publishOperation">The publish operation.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private static async Task PublishWidgetStateSafelyAsync(
+        Func<Task<Result>> publishOperation,
+        CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await publishOperation()
+                .ConfigureAwait(false);
+
+            _ = result;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Widget state publishing is best-effort during cancellation.
+        }
+        catch
+        {
+            // Widget state publishing must never break the dashboard refresh flow.
+        }
+    }
 
     /// <summary>
     /// Builds a compact dashboard context message for the consumer dashboard.

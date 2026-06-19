@@ -10,6 +10,7 @@ using GlucoDesk.Infrastructure.Cgm.DexcomShare.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.History.DependencyInjection;
 using GlucoDesk.Infrastructure.Settings.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.WidgetState.DependencyInjection;
 
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -31,6 +32,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddDexcomShareCgmProvider();
         services.AddJsonApplicationSettingsStore();
         services.AddJsonGlucoseHistoryStore();
+        services.AddJsonWidgetStateStore();
         services.AddDesktopShell();
 
         return services.BuildServiceProvider(

@@ -6,6 +6,15 @@ namespace GlucoDesk.Infrastructure.Cgm.WidgetState.Options;
 public sealed record LocalWidgetStateStorageOptions
 {
     /// <summary>
+    /// Gets the default widget state storage options.
+    /// </summary>
+    public static LocalWidgetStateStorageOptions Default => new(
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "GlucoDesk",
+            "glucodesk-widget-state.json"));
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="LocalWidgetStateStorageOptions"/> class.
     /// </summary>
     /// <param name="stateFilePath">The widget state file path.</param>
