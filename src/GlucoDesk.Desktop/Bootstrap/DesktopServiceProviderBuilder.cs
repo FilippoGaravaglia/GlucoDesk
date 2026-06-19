@@ -1,4 +1,8 @@
+using GlucoDesk.Application.Cgm.BackgroundSync.DependencyInjection;
 using GlucoDesk.Application.Common.DependencyInjection;
+using GlucoDesk.Desktop.BackgroundSync.Options;
+using GlucoDesk.Desktop.BackgroundSync.Services;
+using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
 using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
@@ -8,10 +12,9 @@ using GlucoDesk.Desktop.ViewModels.Settings;
 using GlucoDesk.Desktop.Views.Main;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.History.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.WidgetState.DependencyInjection;
 using GlucoDesk.Infrastructure.Settings.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using GlucoDesk.Infrastructure.Cgm.WidgetState.DependencyInjection;
-using GlucoDesk.Application.Cgm.BackgroundSync.DependencyInjection;
 
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -34,8 +37,9 @@ internal static class DesktopServiceProviderBuilder
         services.AddJsonApplicationSettingsStore();
         services.AddJsonGlucoseHistoryStore();
         services.AddJsonWidgetStateStore();
-        services.AddDesktopShell();
         services.AddCgmBackgroundSync();
+        services.AddDesktopBackgroundSyncLifecycle();
+        services.AddDesktopShell();
 
         return services.BuildServiceProvider(
             new ServiceProviderOptions
@@ -46,6 +50,16 @@ internal static class DesktopServiceProviderBuilder
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Registers desktop background sync lifecycle services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddDesktopBackgroundSyncLifecycle(this IServiceCollection services)
+    {
+        services.AddSingleton(DesktopBackgroundSyncLifecycleOptions.Default);
+        services.AddSingleton<IDesktopBackgroundSyncLifecycleService, DesktopBackgroundSyncLifecycleService>();
+    }
 
     /// <summary>
     /// Registers desktop windows, view models and desktop-specific options.
