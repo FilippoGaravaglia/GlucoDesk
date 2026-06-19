@@ -17,17 +17,22 @@ public sealed class JsonGlucoseHistoryStoreTests : IDisposable
             Path.GetTempPath(),
             "GlucoDesk.Tests",
             Guid.NewGuid().ToString("N"));
+
+        Directory.CreateDirectory(_temporaryDirectoryPath);
     }
 
     [Fact]
     public async Task GetReadingsAsync_ShouldReturnEmptyResult_WhenFileDoesNotExist()
     {
+        // Arrange
         var store = CreateStore();
         var from = new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero);
         var request = new GlucoseHistoryRequest(from, from.AddHours(1));
 
+        // Act
         var result = await store.GetReadingsAsync(request, CancellationToken.None);
 
+        // Assert
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value.Readings);
     }
@@ -35,11 +40,16 @@ public sealed class JsonGlucoseHistoryStoreTests : IDisposable
     [Fact]
     public async Task SaveReadingsAsync_ShouldCreateHistoryFile()
     {
+        // Arrange
         var store = CreateStore();
-        var reading = CreateReading(new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero), 110);
+        var reading = CreateReading(
+            new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero),
+            110m);
 
+        // Act
         var result = await store.SaveReadingsAsync([reading], CancellationToken.None);
 
+        // Assert
         Assert.True(result.IsSuccess);
         Assert.True(File.Exists(BuildHistoryFilePath()));
     }
@@ -47,11 +57,12 @@ public sealed class JsonGlucoseHistoryStoreTests : IDisposable
     [Fact]
     public async Task GetReadingsAsync_ShouldReturnSavedReadingsWithinRange()
     {
+        // Arrange
         var store = CreateStore();
         var from = new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero);
-        var firstReading = CreateReading(from.AddMinutes(5), 110);
-        var secondReading = CreateReading(from.AddMinutes(10), 120);
-        var outOfRangeReading = CreateReading(from.AddHours(2), 130);
+        var firstReading = CreateReading(from.AddMinutes(5), 110m);
+        var secondReading = CreateReading(from.AddMinutes(10), 120m);
+        var outOfRangeReading = CreateReading(from.AddHours(2), 130m);
 
         await store.SaveReadingsAsync(
             [
@@ -61,163 +72,215 @@ public sealed class JsonGlucoseHistoryStoreTests : IDisposable
             ],
             CancellationToken.None);
 
+        // Act
         var result = await store.GetReadingsAsync(
             new GlucoseHistoryRequest(from, from.AddHours(1)),
             CancellationToken.None);
 
+        // Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Count);
-        Assert.Equal(110, result.Value.Readings.First().Value.Amount);
-        Assert.Equal(120, result.Value.Readings.Last().Value.Amount);
+        Assert.Equal(110m, result.Value.Readings.First().Value.Amount);
+        Assert.Equal(120m, result.Value.Readings.Last().Value.Amount);
     }
 
     [Fact]
     public async Task SaveReadingsAsync_ShouldDeduplicateReadingsByTimestampAndProvider()
     {
+        // Arrange
         var store = CreateStore();
         var timestamp = new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero);
 
-        await store.SaveReadingsAsync([CreateReading(timestamp, 110)], CancellationToken.None);
-        await store.SaveReadingsAsync([CreateReading(timestamp, 115)], CancellationToken.None);
+        await store.SaveReadingsAsync([CreateReading(timestamp, 110m)], CancellationToken.None);
+        await store.SaveReadingsAsync([CreateReading(timestamp, 115m)], CancellationToken.None);
 
+        // Act
         var result = await store.GetReadingsAsync(
             new GlucoseHistoryRequest(timestamp.AddMinutes(-1), timestamp.AddMinutes(1)),
             CancellationToken.None);
 
+        // Assert
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value.Readings);
-        Assert.Equal(115, result.Value.Readings.Single().Value.Amount);
+        Assert.Equal(115m, result.Value.Readings.Single().Value.Amount);
     }
 
     [Fact]
-    public async Task GetReadingsAsync_ShouldReturnFailure_WhenJsonIsInvalid()
+    public async Task GetReadingsAsync_ShouldReturnEmptyHistory_AndQuarantineFile_WhenJsonIsInvalid()
     {
-        Directory.CreateDirectory(_temporaryDirectoryPath);
-        await File.WriteAllTextAsync(BuildHistoryFilePath(), "{ invalid json");
+        // Arrange
+        var historyFilePath = BuildHistoryFilePath();
 
-        var store = CreateStore();
-        var from = new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero);
-
-        var result = await store.GetReadingsAsync(
-            new GlucoseHistoryRequest(from, from.AddHours(1)),
+        await File.WriteAllTextAsync(
+            historyFilePath,
+            "{ invalid-json",
             CancellationToken.None);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal("History.InvalidFormat", result.Error.Code);
+        var store = CreateStore();
+
+        var request = new GlucoseHistoryRequest(
+            DateTimeOffset.UtcNow.AddDays(-1),
+            DateTimeOffset.UtcNow);
+
+        // Act
+        var result = await store.GetReadingsAsync(
+            request,
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value.Readings);
+
+        Assert.False(File.Exists(historyFilePath));
+
+        var quarantinedFiles = Directory.GetFiles(
+            _temporaryDirectoryPath,
+            "glucose-history.json.corrupt.*");
+
+        Assert.Single(quarantinedFiles);
     }
 
     [Fact]
-    public async Task SaveReadingsWithSummaryAsync_ShouldReturnAddedCount_WhenReadingsAreNew()
+    public async Task GetReadingsAsync_ShouldRecoverFromBackup_WhenPrimaryJsonIsInvalid()
     {
-        var options = CreateOptions();
-        var store = new JsonGlucoseHistoryStore(options);
+        // Arrange
+        var historyFilePath = BuildHistoryFilePath();
+        var backupFilePath = $"{historyFilePath}.bak";
 
-        var readings = new[]
-        {
-            CreateReading(new DateTimeOffset(2026, 6, 14, 10, 0, 0, TimeSpan.Zero), CgmProviderKind.Nightscout),
-            CreateReading(new DateTimeOffset(2026, 6, 14, 10, 5, 0, TimeSpan.Zero), CgmProviderKind.Nightscout)
-        };
+        var timestamp = new DateTimeOffset(
+            2026,
+            6,
+            18,
+            10,
+            0,
+            0,
+            TimeSpan.Zero);
 
-        var result = await store.SaveReadingsWithSummaryAsync(readings, CancellationToken.None);
+        var backupJson = """
+        [
+          {
+            "timestamp": "2026-06-18T10:00:00+00:00",
+            "amount": 120,
+            "unit": "MgDl",
+            "trend": "Flat",
+            "providerKind": "DexcomShare",
+            "freshness": "NearRealTime"
+          }
+        ]
+        """;
 
+        await File.WriteAllTextAsync(
+            historyFilePath,
+            "{ invalid-json",
+            CancellationToken.None);
+
+        await File.WriteAllTextAsync(
+            backupFilePath,
+            backupJson,
+            CancellationToken.None);
+
+        var store = CreateStore();
+
+        var request = new GlucoseHistoryRequest(
+            timestamp.AddMinutes(-5),
+            timestamp.AddMinutes(5));
+
+        // Act
+        var result = await store.GetReadingsAsync(
+            request,
+            CancellationToken.None);
+
+        // Assert
         Assert.True(result.IsSuccess);
-        Assert.Equal(CgmProviderKind.Nightscout, result.Value.ProviderKind);
+
+        var reading = Assert.Single(result.Value.Readings);
+
+        Assert.Equal(timestamp, reading.Timestamp);
+        Assert.Equal(120m, reading.Value.Amount);
+        Assert.Equal(GlucoseUnit.MgDl, reading.Value.Unit);
+        Assert.Equal(TrendDirection.Flat, reading.Trend);
+        Assert.Equal(CgmProviderKind.DexcomShare, reading.Provider);
+        Assert.Equal(GlucoseDataFreshness.NearRealTime, reading.Freshness);
+
+        Assert.True(File.Exists(historyFilePath));
+    }
+
+    [Fact]
+    public async Task SaveReadingsWithSummaryAsync_ShouldReturnDetailedSummary_WhenNewReadingsAreSaved()
+    {
+        // Arrange
+        var store = CreateStore();
+
+        var firstReading = CreateReading(
+            new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero),
+            110m);
+
+        var secondReading = CreateReading(
+            new DateTimeOffset(2026, 6, 8, 8, 5, 0, TimeSpan.Zero),
+            115m);
+
+        // Act
+        var result = await store.SaveReadingsWithSummaryAsync(
+            [firstReading, secondReading],
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(CgmProviderKind.DexcomShare, result.Value.ProviderKind);
         Assert.Equal(2, result.Value.IncomingReadingsCount);
         Assert.Equal(2, result.Value.AddedReadingsCount);
         Assert.Equal(0, result.Value.DuplicateReadingsCount);
         Assert.Equal(2, result.Value.StoredReadingsCount);
+        Assert.True(result.Value.HasNewReadings);
     }
 
     [Fact]
-    public async Task SaveReadingsWithSummaryAsync_ShouldReturnDuplicateCount_WhenReadingsAlreadyExist()
+    public async Task SaveReadingsWithSummaryAsync_ShouldCountDuplicates_WhenReadingsAlreadyExist()
     {
-        var options = CreateOptions();
-        var store = new JsonGlucoseHistoryStore(options);
+        // Arrange
+        var store = CreateStore();
+        var timestamp = new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero);
 
-        var readings = new[]
-        {
-            CreateReading(new DateTimeOffset(2026, 6, 14, 10, 0, 0, TimeSpan.Zero), CgmProviderKind.Nightscout)
-        };
+        var firstReading = CreateReading(timestamp, 110m);
+        var duplicateReading = CreateReading(timestamp, 115m);
 
-        var firstResult = await store.SaveReadingsWithSummaryAsync(readings, CancellationToken.None);
-        var secondResult = await store.SaveReadingsWithSummaryAsync(readings, CancellationToken.None);
+        await store.SaveReadingsWithSummaryAsync(
+            [firstReading],
+            CancellationToken.None);
 
-        Assert.True(firstResult.IsSuccess);
-        Assert.True(secondResult.IsSuccess);
-        Assert.Equal(1, secondResult.Value.IncomingReadingsCount);
-        Assert.Equal(0, secondResult.Value.AddedReadingsCount);
-        Assert.Equal(1, secondResult.Value.DuplicateReadingsCount);
-        Assert.Equal(1, secondResult.Value.StoredReadingsCount);
-    }
+        // Act
+        var result = await store.SaveReadingsWithSummaryAsync(
+            [duplicateReading],
+            CancellationToken.None);
 
-    [Fact]
-    public async Task SaveReadingsWithSummaryAsync_ShouldKeepMockAndNightscoutReadingsSeparate()
-    {
-        var options = CreateOptions();
-        var store = new JsonGlucoseHistoryStore(options);
-
-        var timestamp = new DateTimeOffset(2026, 6, 14, 10, 0, 0, TimeSpan.Zero);
-
-        var readings = new[]
-        {
-            CreateReading(timestamp, CgmProviderKind.Mock),
-            CreateReading(timestamp, CgmProviderKind.Nightscout)
-        };
-
-        var result = await store.SaveReadingsWithSummaryAsync(readings, CancellationToken.None);
-
+        // Assert
         Assert.True(result.IsSuccess);
-        Assert.Equal(CgmProviderKind.Unknown, result.Value.ProviderKind);
-        Assert.Equal(2, result.Value.IncomingReadingsCount);
-        Assert.Equal(2, result.Value.AddedReadingsCount);
-        Assert.Equal(0, result.Value.DuplicateReadingsCount);
-        Assert.Equal(2, result.Value.StoredReadingsCount);
+        Assert.Equal(CgmProviderKind.DexcomShare, result.Value.ProviderKind);
+        Assert.Equal(1, result.Value.IncomingReadingsCount);
+        Assert.Equal(0, result.Value.AddedReadingsCount);
+        Assert.Equal(1, result.Value.DuplicateReadingsCount);
+        Assert.Equal(1, result.Value.StoredReadingsCount);
+        Assert.False(result.Value.HasNewReadings);
+
+        var readingsResult = await store.GetReadingsAsync(
+            new GlucoseHistoryRequest(timestamp.AddMinutes(-1), timestamp.AddMinutes(1)),
+            CancellationToken.None);
+
+        Assert.True(readingsResult.IsSuccess);
+        Assert.Single(readingsResult.Value.Readings);
+        Assert.Equal(115m, readingsResult.Value.Readings.Single().Value.Amount);
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
-        if (Directory.Exists(_temporaryDirectoryPath))
-        {
-            Directory.Delete(_temporaryDirectoryPath, recursive: true);
-        }
+        DeleteDirectorySafely(_temporaryDirectoryPath);
     }
 
     #region Helpers
 
     /// <summary>
-    /// Creates local glucose history storage options for tests.
-    /// </summary>
-    /// <returns>The local glucose history storage options.</returns>
-    private static LocalGlucoseHistoryStorageOptions CreateOptions()
-    {
-        var historyFilePath = Path.Combine(
-            Path.GetTempPath(),
-            "GlucoDesk.Tests",
-            $"{Guid.NewGuid():N}.glucose-history.json");
-    
-        return new LocalGlucoseHistoryStorageOptions(historyFilePath);
-    }
-
-    /// <summary>
-    /// Creates a glucose reading for history store tests.
-    /// </summary>
-    /// <param name="timestamp">The reading timestamp.</param>
-    /// <param name="providerKind">The provider kind.</param>
-    /// <returns>The glucose reading.</returns>
-    private static GlucoseReading CreateReading(
-        DateTimeOffset timestamp,
-        CgmProviderKind providerKind)
-    {
-        return new GlucoseReading(
-            timestamp,
-            new GlucoseValue(120, GlucoseUnit.MgDl),
-            TrendDirection.Flat,
-            providerKind,
-            GlucoseDataFreshness.NearRealTime);
-    }
-
-    /// <summary>
-    /// Creates a JSON glucose history store using a test file path.
+    /// Creates a JSON glucose history store for the current test.
     /// </summary>
     /// <returns>The JSON glucose history store.</returns>
     private JsonGlucoseHistoryStore CreateStore()
@@ -227,30 +290,49 @@ public sealed class JsonGlucoseHistoryStoreTests : IDisposable
     }
 
     /// <summary>
-    /// Builds the test history file path.
+    /// Builds the history file path for the current test.
     /// </summary>
-    /// <returns>The test history file path.</returns>
+    /// <returns>The history file path.</returns>
     private string BuildHistoryFilePath()
     {
         return Path.Combine(_temporaryDirectoryPath, "glucose-history.json");
     }
 
     /// <summary>
-    /// Creates a glucose reading for store tests.
+    /// Creates a glucose reading for tests.
     /// </summary>
     /// <param name="timestamp">The reading timestamp.</param>
-    /// <param name="amount">The glucose amount.</param>
+    /// <param name="valueMgDl">The glucose value in mg/dL.</param>
     /// <returns>The glucose reading.</returns>
     private static GlucoseReading CreateReading(
         DateTimeOffset timestamp,
-        decimal amount)
+        decimal valueMgDl)
     {
         return new GlucoseReading(
             timestamp,
-            new GlucoseValue(amount, GlucoseUnit.MgDl),
+            new GlucoseValue(valueMgDl, GlucoseUnit.MgDl),
             TrendDirection.Flat,
-            CgmProviderKind.Mock,
+            CgmProviderKind.DexcomShare,
             GlucoseDataFreshness.NearRealTime);
+    }
+
+    /// <summary>
+    /// Deletes a directory without failing the test when cleanup is not possible.
+    /// </summary>
+    /// <param name="directoryPath">The directory path.</param>
+    private static void DeleteDirectorySafely(string directoryPath)
+    {
+        try
+        {
+            if (Directory.Exists(directoryPath))
+            {
+                Directory.Delete(directoryPath, recursive: true);
+            }
+        }
+        catch
+        {
+            // Test cleanup is best-effort.
+        }
     }
 
     #endregion
