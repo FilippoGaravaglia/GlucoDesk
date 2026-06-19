@@ -1,10 +1,10 @@
 using GlucoDesk.Application.Cgm.BackgroundSync.Options;
 using GlucoDesk.Application.Cgm.BackgroundSync.Services;
 using GlucoDesk.Application.Cgm.BackgroundSync.Services.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
 using GlucoDesk.Application.Cgm.BackgroundSync.State.Services.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace GlucoDesk.Application.Cgm.BackgroundSync.DependencyInjection;
 
@@ -24,13 +24,15 @@ public static class BackgroundSyncServiceCollectionExtensions
         BackgroundSyncOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(services);
-    
+
         services.TryAddSingleton(options ?? BackgroundSyncOptions.Default);
         services.TryAddSingleton(TimeProvider.System);
-        services.TryAddSingleton<ICgmBackgroundSyncService, CgmBackgroundSyncService>();
-        services.TryAddSingleton<IBackgroundSyncLoopService, BackgroundSyncLoopService>();
         services.TryAddSingleton<IBackgroundSyncStateService, BackgroundSyncStateService>();
-    
+
+        services.TryAddScoped<ICgmBackgroundSyncService, CgmBackgroundSyncService>();
+
+        services.TryAddSingleton<IBackgroundSyncLoopService, BackgroundSyncLoopService>();
+
         return services;
     }
 }

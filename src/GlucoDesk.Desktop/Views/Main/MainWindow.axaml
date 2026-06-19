@@ -80,6 +80,28 @@
         <StackPanel Grid.Row="2"
                     Spacing="12">
 
+          <Border Classes="sync-status-card">
+            <StackPanel Spacing="6">
+              <TextBlock Text="{Binding BackgroundSyncStatus.Title}"
+                         Classes="sync-status-label" />
+
+              <TextBlock Text="{Binding BackgroundSyncStatus.StatusText}"
+                         Classes="sync-status-title" />
+
+              <TextBlock Text="{Binding BackgroundSyncStatus.SummaryText}"
+                         Classes="sync-status-summary"
+                         TextWrapping="Wrap" />
+
+              <TextBlock Text="{Binding BackgroundSyncStatus.SupportingText}"
+                         Classes="sync-status-supporting"
+                         TextWrapping="Wrap" />
+
+              <TextBlock Text="{Binding BackgroundSyncStatus.LastUpdateText}"
+                         Classes="sync-status-meta"
+                         IsVisible="{Binding BackgroundSyncStatus.HasSuccessfulSync}" />
+            </StackPanel>
+          </Border>
+
           <Border Classes="sidebar-note-card">
             <StackPanel Spacing="8">
               <TextBlock Text="Companion mode"

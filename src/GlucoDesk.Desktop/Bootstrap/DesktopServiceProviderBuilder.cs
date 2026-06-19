@@ -15,6 +15,9 @@ using GlucoDesk.Infrastructure.Cgm.History.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.WidgetState.DependencyInjection;
 using GlucoDesk.Infrastructure.Settings.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using GlucoDesk.Desktop.BackgroundSync.Dispatching;
+using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
+using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -58,7 +61,9 @@ internal static class DesktopServiceProviderBuilder
     private static void AddDesktopBackgroundSyncLifecycle(this IServiceCollection services)
     {
         services.AddSingleton(DesktopBackgroundSyncLifecycleOptions.Default);
+        services.AddSingleton<IBackgroundSyncUiDispatcher, AvaloniaBackgroundSyncUiDispatcher>();
         services.AddSingleton<IDesktopBackgroundSyncLifecycleService, DesktopBackgroundSyncLifecycleService>();
+        services.AddSingleton<BackgroundSyncStatusViewModel>();
     }
 
     /// <summary>
