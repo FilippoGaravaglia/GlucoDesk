@@ -19,6 +19,7 @@ using GlucoDesk.Desktop.BackgroundSync.Dispatching;
 using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 using GlucoDesk.Infrastructure.Cgm.Diary.Excel.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.DependencyInjection;
 
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -41,6 +42,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddJsonApplicationSettingsStore();
         services.AddJsonGlucoseHistoryStore();
         services.AddGlycemicDiaryExcelExport();
+        services.AddGlycemicDiaryPdfExport();
         services.AddJsonWidgetStateStore();
         services.AddCgmBackgroundSync();
         services.AddDesktopBackgroundSyncLifecycle();
