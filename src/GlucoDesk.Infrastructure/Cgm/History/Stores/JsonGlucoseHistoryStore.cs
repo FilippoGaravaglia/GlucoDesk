@@ -21,6 +21,7 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
     private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
 
     private readonly LocalGlucoseHistoryStorageOptions _options;
+    private readonly SemaphoreSlim _storageLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonGlucoseHistoryStore"/> class.
@@ -53,19 +54,26 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
     {
         ArgumentNullException.ThrowIfNull(readings);
 
-        if (readings.Count == 0)
-        {
-            return Result<GlucoseHistorySaveResult>.Success(
-                new GlucoseHistorySaveResult(
-                    CgmProviderKind.Unknown,
-                    0,
-                    0,
-                    0,
-                    GetStoredReadingsCountSafely()));
-        }
+        await _storageLock
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
 
         try
         {
+            if (readings.Count == 0)
+            {
+                var storedReadingsCount = await GetStoredReadingsCountSafelyAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                return Result<GlucoseHistorySaveResult>.Success(
+                    new GlucoseHistorySaveResult(
+                        CgmProviderKind.Unknown,
+                        0,
+                        0,
+                        0,
+                        storedReadingsCount));
+            }
+
             var existingDocuments = await LoadDocumentsAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -108,10 +116,7 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
                 existingDocumentsByKey[incomingDocument.Key] = incomingDocument.Value;
             }
 
-            var mergedDocuments = existingDocumentsByKey.Values
-                .OrderBy(document => document.Timestamp)
-                .ThenBy(document => document.ProviderKind.ToString(), StringComparer.Ordinal)
-                .ToArray();
+            var mergedDocuments = NormalizeDocuments(existingDocumentsByKey.Values);
 
             await SaveDocumentsAsync(mergedDocuments, cancellationToken)
                 .ConfigureAwait(false);
@@ -121,7 +126,7 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
                 incomingDocuments.Length,
                 addedReadingsCount,
                 incomingDuplicateCount + existingDuplicateCount,
-                mergedDocuments.Length);
+                mergedDocuments.Count);
 
             return Result<GlucoseHistorySaveResult>.Success(saveResult);
         }
@@ -140,6 +145,10 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
             return Result<GlucoseHistorySaveResult>.Failure(
                 new Error("History.SaveFailed", "Unable to save glucose history."));
         }
+        finally
+        {
+            _storageLock.Release();
+        }
     }
 
     /// <inheritdoc />
@@ -149,13 +158,12 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        await _storageLock
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
+
         try
         {
-            if (!File.Exists(_options.HistoryFilePath))
-            {
-                return Result<GlucoseHistoryResult>.Success(new GlucoseHistoryResult([]));
-            }
-
             var documents = await LoadDocumentsAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -183,37 +191,104 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
             return Result<GlucoseHistoryResult>.Failure(
                 new Error("History.LoadFailed", "Unable to load glucose history."));
         }
+        finally
+        {
+            _storageLock.Release();
+        }
     }
 
     #region Helpers
 
     /// <summary>
-    /// Loads all glucose history documents from local storage.
+    /// Loads all glucose history documents from local storage, recovering from backup when possible.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The stored glucose history documents.</returns>
     private async Task<IReadOnlyCollection<GlucoseHistoryDocument>> LoadDocumentsAsync(
         CancellationToken cancellationToken)
     {
-        if (!File.Exists(_options.HistoryFilePath))
+        var historyFilePath = _options.HistoryFilePath;
+        var backupFilePath = BuildBackupFilePath(historyFilePath);
+
+        if (File.Exists(historyFilePath))
         {
-            return [];
+            var primaryDocuments = await TryLoadDocumentsFromPathAsync(
+                    historyFilePath,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (primaryDocuments is not null)
+            {
+                return primaryDocuments;
+            }
+
+            QuarantineFileSafely(historyFilePath);
         }
 
-        await using var stream = File.OpenRead(_options.HistoryFilePath);
+        if (File.Exists(backupFilePath))
+        {
+            var backupDocuments = await TryLoadDocumentsFromPathAsync(
+                    backupFilePath,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
-        var documents = await JsonSerializer
-            .DeserializeAsync<IReadOnlyCollection<GlucoseHistoryDocument>>(
-                stream,
-                SerializerOptions,
-                cancellationToken)
-            .ConfigureAwait(false);
+            if (backupDocuments is not null)
+            {
+                RestoreBackupSafely(backupFilePath, historyFilePath);
+                return backupDocuments;
+            }
 
-        return documents ?? [];
+            QuarantineFileSafely(backupFilePath);
+        }
+
+        return [];
     }
 
     /// <summary>
-    /// Saves glucose history documents to local storage using an atomic replacement.
+    /// Attempts to load glucose history documents from a file path.
+    /// </summary>
+    /// <param name="filePath">The history file path.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The loaded documents, or null when the file is invalid.</returns>
+    private static async Task<IReadOnlyCollection<GlucoseHistoryDocument>?> TryLoadDocumentsFromPathAsync(
+        string filePath,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var stream = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 4096,
+                useAsync: true);
+
+            var documents = await JsonSerializer
+                .DeserializeAsync<IReadOnlyCollection<GlucoseHistoryDocument>>(
+                    stream,
+                    SerializerOptions,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            var normalizedDocuments = NormalizeDocuments(documents ?? []);
+
+            ValidateDocuments(normalizedDocuments);
+
+            return normalizedDocuments;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Saves glucose history documents to local storage using a temporary file and a backup of the previous file.
     /// </summary>
     /// <param name="documents">The documents to save.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -223,41 +298,164 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
     {
         EnsureHistoryDirectoryExists(_options.HistoryFilePath);
 
+        var normalizedDocuments = NormalizeDocuments(documents);
         var temporaryFilePath = BuildTemporaryFilePath(_options.HistoryFilePath);
+        var backupFilePath = BuildBackupFilePath(_options.HistoryFilePath);
 
-        await using (var stream = File.Create(temporaryFilePath))
+        try
         {
-            await JsonSerializer
-                .SerializeAsync(stream, documents, SerializerOptions, cancellationToken)
-                .ConfigureAwait(false);
-        }
+            await using (var stream = new FileStream(
+                             temporaryFilePath,
+                             FileMode.CreateNew,
+                             FileAccess.Write,
+                             FileShare.None,
+                             bufferSize: 4096,
+                             useAsync: true))
+            {
+                await JsonSerializer
+                    .SerializeAsync(stream, normalizedDocuments, SerializerOptions, cancellationToken)
+                    .ConfigureAwait(false);
 
-        File.Move(temporaryFilePath, _options.HistoryFilePath, overwrite: true);
+                await stream
+                    .FlushAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            CreateBackupSafely(_options.HistoryFilePath, backupFilePath);
+
+            File.Move(temporaryFilePath, _options.HistoryFilePath, overwrite: true);
+        }
+        finally
+        {
+            DeleteFileSafely(temporaryFilePath);
+        }
     }
 
     /// <summary>
     /// Gets the current stored readings count without failing the empty-readings save path.
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The stored readings count.</returns>
-    private int GetStoredReadingsCountSafely()
+    private async Task<int> GetStoredReadingsCountSafelyAsync(CancellationToken cancellationToken)
     {
         try
         {
-            if (!File.Exists(_options.HistoryFilePath))
-            {
-                return 0;
-            }
+            var documents = await LoadDocumentsAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-            var json = File.ReadAllText(_options.HistoryFilePath);
-            var documents = JsonSerializer.Deserialize<IReadOnlyCollection<GlucoseHistoryDocument>>(
-                json,
-                SerializerOptions);
-
-            return documents?.Count ?? 0;
+            return documents.Count;
         }
         catch
         {
             return 0;
+        }
+    }
+
+    /// <summary>
+    /// Creates a backup of the current history file when it exists.
+    /// </summary>
+    /// <param name="historyFilePath">The current history file path.</param>
+    /// <param name="backupFilePath">The backup file path.</param>
+    private static void CreateBackupSafely(
+        string historyFilePath,
+        string backupFilePath)
+    {
+        if (!File.Exists(historyFilePath))
+        {
+            return;
+        }
+
+        File.Copy(historyFilePath, backupFilePath, overwrite: true);
+    }
+
+    /// <summary>
+    /// Restores a backup file into the primary history file path.
+    /// </summary>
+    /// <param name="backupFilePath">The backup file path.</param>
+    /// <param name="historyFilePath">The primary history file path.</param>
+    private static void RestoreBackupSafely(
+        string backupFilePath,
+        string historyFilePath)
+    {
+        try
+        {
+            EnsureHistoryDirectoryExists(historyFilePath);
+            File.Copy(backupFilePath, historyFilePath, overwrite: true);
+        }
+        catch
+        {
+            // Recovery is best-effort. The caller can still use the in-memory backup data.
+        }
+    }
+
+    /// <summary>
+    /// Moves an invalid history file to a timestamped quarantine file.
+    /// </summary>
+    /// <param name="filePath">The invalid file path.</param>
+    private static void QuarantineFileSafely(string filePath)
+    {
+        try
+        {
+            if (!File.Exists(filePath))
+            {
+                return;
+            }
+
+            var quarantinedFilePath = BuildCorruptFilePath(filePath);
+            File.Move(filePath, quarantinedFilePath, overwrite: true);
+        }
+        catch
+        {
+            // Quarantine is best-effort and must never prevent the app from starting.
+        }
+    }
+
+    /// <summary>
+    /// Deletes a file without throwing when cleanup fails.
+    /// </summary>
+    /// <param name="filePath">The file path.</param>
+    private static void DeleteFileSafely(string filePath)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+        catch
+        {
+            // Temporary file cleanup is best-effort.
+        }
+    }
+
+    /// <summary>
+    /// Normalizes glucose history documents by de-duplicating and ordering them.
+    /// </summary>
+    /// <param name="documents">The documents to normalize.</param>
+    /// <returns>The normalized documents.</returns>
+    private static IReadOnlyCollection<GlucoseHistoryDocument> NormalizeDocuments(
+        IEnumerable<GlucoseHistoryDocument> documents)
+    {
+        ArgumentNullException.ThrowIfNull(documents);
+
+        return documents
+            .GroupBy(document => document.BuildIdentityKey(), StringComparer.Ordinal)
+            .Select(group => group.Last())
+            .OrderBy(document => document.Timestamp)
+            .ThenBy(document => document.ProviderKind.ToString(), StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Validates glucose history documents by converting them to domain readings.
+    /// </summary>
+    /// <param name="documents">The documents to validate.</param>
+    private static void ValidateDocuments(IReadOnlyCollection<GlucoseHistoryDocument> documents)
+    {
+        foreach (var document in documents)
+        {
+            _ = document.ToReading();
         }
     }
 
@@ -320,13 +518,37 @@ public sealed class JsonGlucoseHistoryStore : IGlucoseHistoryStore
     }
 
     /// <summary>
-    /// Builds a temporary file path used for atomic history writes.
+    /// Builds a temporary file path used for safer history writes.
     /// </summary>
     /// <param name="historyFilePath">The final history file path.</param>
     /// <returns>The temporary history file path.</returns>
     private static string BuildTemporaryFilePath(string historyFilePath)
     {
         return $"{historyFilePath}.{Guid.NewGuid():N}.tmp";
+    }
+
+    /// <summary>
+    /// Builds the backup history file path.
+    /// </summary>
+    /// <param name="historyFilePath">The primary history file path.</param>
+    /// <returns>The backup history file path.</returns>
+    private static string BuildBackupFilePath(string historyFilePath)
+    {
+        return $"{historyFilePath}.bak";
+    }
+
+    /// <summary>
+    /// Builds a timestamped corrupt file path.
+    /// </summary>
+    /// <param name="filePath">The invalid file path.</param>
+    /// <returns>The corrupt file path.</returns>
+    private static string BuildCorruptFilePath(string filePath)
+    {
+        var timestamp = DateTimeOffset.UtcNow.ToString(
+            "yyyyMMddHHmmssfff",
+            CultureInfo.InvariantCulture);
+
+        return $"{filePath}.corrupt.{timestamp}";
     }
 
     /// <summary>
