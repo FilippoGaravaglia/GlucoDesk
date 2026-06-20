@@ -14,6 +14,7 @@ using GlucoDesk.Desktop.Cgm.History.Continuity.Services;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Enums;
 
 namespace GlucoDesk.Desktop.Tests.Cgm.History.Continuity.Services;
 
@@ -151,6 +152,78 @@ public sealed class DesktopHistoryContinuitySyncCoordinatorTests
         Assert.Equal(1, continuitySyncService.SyncCallCount);
     }
 
+    [Fact]
+    public async Task RunStartupSyncAsync_ShouldUpdateStatus_WhenSyncSucceeds()
+    {
+        // Arrange
+        var continuitySyncService = new FakeHistoryContinuitySyncService();
+        var statusStore = new DesktopHistoryContinuitySyncStatusStore(TimeProvider.System);
+
+        var coordinator = CreateCoordinator(
+            continuitySyncService,
+            statusStore);
+
+        // Act
+        var result = await coordinator.RunStartupSyncAsync(CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+
+        var status = statusStore.Current;
+
+        Assert.Equal(DesktopHistoryContinuitySyncRunState.Succeeded, status.State);
+        Assert.Equal(CgmHistoryContinuitySyncTrigger.Startup, status.Trigger);
+        Assert.NotNull(status.StartedAtUtc);
+        Assert.NotNull(status.CompletedAtUtc);
+        Assert.NotNull(status.LastSuccessfulSyncAtUtc);
+        Assert.True(status.HasNewReadings);
+        Assert.Equal(1, status.TotalFetchedReadings);
+        Assert.Equal(1, status.AddedReadingsCount);
+        Assert.Equal(0, status.DuplicateReadingsCount);
+        Assert.Equal(1, status.StoredReadingsCount);
+        Assert.Null(status.ErrorCode);
+        Assert.Null(status.ErrorDescription);
+    }
+
+    [Fact]
+    public async Task RunStartupSyncAsync_ShouldUpdateStatus_WhenSyncFails()
+    {
+        // Arrange
+        var expectedError = new Error(
+            "HistoryContinuity.SyncFailed",
+            "History continuity synchronization failed.");
+
+        var continuitySyncService = new FakeHistoryContinuitySyncService
+        {
+            Result = Result<CgmHistoryContinuitySyncResult>.Failure(expectedError)
+        };
+
+        var statusStore = new DesktopHistoryContinuitySyncStatusStore(TimeProvider.System);
+
+        var coordinator = CreateCoordinator(
+            continuitySyncService,
+            statusStore);
+
+        // Act
+        var result = await coordinator.RunStartupSyncAsync(CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.Equal(expectedError.Code, result.Error.Code);
+
+        var status = statusStore.Current;
+
+        Assert.Equal(DesktopHistoryContinuitySyncRunState.Failed, status.State);
+        Assert.Equal(CgmHistoryContinuitySyncTrigger.Startup, status.Trigger);
+        Assert.NotNull(status.StartedAtUtc);
+        Assert.NotNull(status.CompletedAtUtc);
+        Assert.Null(status.LastSuccessfulSyncAtUtc);
+        Assert.False(status.HasNewReadings);
+        Assert.Equal(0, status.TotalFetchedReadings);
+        Assert.Equal(expectedError.Code, status.ErrorCode);
+        Assert.Equal(expectedError.Message, status.ErrorDescription);
+    }
+
     #region Helpers
 
     /// <summary>
@@ -160,6 +233,23 @@ public sealed class DesktopHistoryContinuitySyncCoordinatorTests
     /// <returns>The coordinator under test.</returns>
     private static IDesktopHistoryContinuitySyncCoordinator CreateCoordinator(
         ICgmHistoryContinuitySyncService continuitySyncService)
+    {
+        var statusStore = new DesktopHistoryContinuitySyncStatusStore(TimeProvider.System);
+
+        return CreateCoordinator(
+            continuitySyncService,
+            statusStore);
+    }
+
+    /// <summary>
+    /// Creates a desktop history continuity synchronization coordinator for tests.
+    /// </summary>
+    /// <param name="continuitySyncService">The fake continuity synchronization service.</param>
+    /// <param name="statusStore">The status store used by the coordinator.</param>
+    /// <returns>The coordinator under test.</returns>
+    private static IDesktopHistoryContinuitySyncCoordinator CreateCoordinator(
+        ICgmHistoryContinuitySyncService continuitySyncService,
+        IDesktopHistoryContinuitySyncStatusStore statusStore)
     {
         var services = new ServiceCollection();
 
@@ -174,7 +264,8 @@ public sealed class DesktopHistoryContinuitySyncCoordinatorTests
 
         return new DesktopHistoryContinuitySyncCoordinator(
             serviceProvider.GetRequiredService<IServiceScopeFactory>(),
-            NullLogger<DesktopHistoryContinuitySyncCoordinator>.Instance);
+            NullLogger<DesktopHistoryContinuitySyncCoordinator>.Instance,
+            statusStore);
     }
 
     /// <summary>

@@ -54,6 +54,9 @@ public sealed class DesktopServiceProviderBuilderTests
 
         var backgroundSyncStatusViewModel = serviceProvider
             .GetRequiredService<BackgroundSyncStatusViewModel>();
+        
+        var historyContinuityStatusStore = serviceProvider
+            .GetRequiredService<IDesktopHistoryContinuitySyncStatusStore>();
 
         // Assert
         Assert.NotNull(backgroundSyncLifecycleService);
@@ -61,6 +64,7 @@ public sealed class DesktopServiceProviderBuilderTests
         Assert.NotNull(historyContinuityCoordinator);
         Assert.NotNull(diaryExportFileSaveService);
         Assert.NotNull(backgroundSyncStatusViewModel);
+        Assert.NotNull(historyContinuityStatusStore);
     }
 
     [Fact]
