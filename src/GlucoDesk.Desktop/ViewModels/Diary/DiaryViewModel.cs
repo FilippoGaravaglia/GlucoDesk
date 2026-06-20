@@ -5,9 +5,9 @@ using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Requests;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
+using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Diary.Enums;
 using GlucoDesk.Desktop.ViewModels.Diary.Options;
-using GlucoDesk.Desktop.ViewModels.Common;
 
 namespace GlucoDesk.Desktop.ViewModels.Diary;
 
@@ -26,6 +26,8 @@ public sealed class DiaryViewModel : ViewModelBase
     private bool _isExporting;
     private bool _hasError;
     private bool _hasSuccess;
+    private bool _hasWarning;
+    private string _statusTitle;
     private string _statusText;
 
     /// <summary>
@@ -85,6 +87,7 @@ public sealed class DiaryViewModel : ViewModelBase
 
         _selectedPeriodPreset = PeriodPresets[1];
         _selectedFormat = Formats[0];
+        _statusTitle = "Ready to export";
         _statusText = "Choose a period and format, then export your diary.";
 
         ExportCommand = new AsyncRelayCommand(
@@ -115,8 +118,11 @@ public sealed class DiaryViewModel : ViewModelBase
         get => _selectedPeriodPreset;
         set
         {
+            ArgumentNullException.ThrowIfNull(value);
+
             if (SetProperty(ref _selectedPeriodPreset, value))
             {
+                ResetReadyStatus();
                 ExportCommand.NotifyCanExecuteChanged();
             }
         }
@@ -130,8 +136,11 @@ public sealed class DiaryViewModel : ViewModelBase
         get => _selectedFormat;
         set
         {
+            ArgumentNullException.ThrowIfNull(value);
+
             if (SetProperty(ref _selectedFormat, value))
             {
+                ResetReadyStatus();
                 ExportCommand.NotifyCanExecuteChanged();
             }
         }
@@ -147,10 +156,22 @@ public sealed class DiaryViewModel : ViewModelBase
         {
             if (SetProperty(ref _isExporting, value))
             {
+                OnPropertyChanged(nameof(CanEditSelection));
+                OnPropertyChanged(nameof(ExportButtonText));
                 ExportCommand.NotifyCanExecuteChanged();
             }
         }
     }
+
+    /// <summary>
+    /// Gets a value indicating whether the export controls can be edited.
+    /// </summary>
+    public bool CanEditSelection => !IsExporting;
+
+    /// <summary>
+    /// Gets the export button text.
+    /// </summary>
+    public string ExportButtonText => IsExporting ? "Exporting..." : "Export diary";
 
     /// <summary>
     /// Gets a value indicating whether the last export failed.
@@ -168,6 +189,24 @@ public sealed class DiaryViewModel : ViewModelBase
     {
         get => _hasSuccess;
         private set => SetProperty(ref _hasSuccess, value);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the last export completed with a user-facing warning.
+    /// </summary>
+    public bool HasWarning
+    {
+        get => _hasWarning;
+        private set => SetProperty(ref _hasWarning, value);
+    }
+
+    /// <summary>
+    /// Gets the export status title.
+    /// </summary>
+    public string StatusTitle
+    {
+        get => _statusTitle;
+        private set => SetProperty(ref _statusTitle, value);
     }
 
     /// <summary>
@@ -193,14 +232,17 @@ public sealed class DiaryViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Exports the glycemicsummary>
+    /// Exports the glycemic diary using the selected format and period.
     /// </summary>
     private async Task ExportAsync()
     {
+        if (IsExporting)
+        {
+            return;
+        }
+
         IsExporting = true;
-        HasError = false;
-        HasSuccess = false;
-        StatusText = "Generating diary export...";
+        SetBusyStatus();
 
         try
         {
@@ -208,31 +250,42 @@ public sealed class DiaryViewModel : ViewModelBase
 
             if (exportResult.IsFailure)
             {
-                HasError = true;
-                StatusText = exportResult.Error.Message;
+                SetErrorStatus(exportResult.Error.Message);
                 return;
             }
 
-            StatusText = "Choose where to save your diary...";
+            StatusTitle = "Choose save location";
+            StatusText = "Select where to save the generated diary file.";
 
-            var saveResult = await _fileSaveService
-                .SaveAsync(exportResult.Value, CancellationToken.None);
+            var saveResult = await _fileSaveService.SaveAsync(
+                exportResult.Value,
+                CancellationToken.None);
 
             if (saveResult.IsFailure)
             {
-                HasError = true;
-                StatusText = saveResult.Error.Message;
+                SetErrorStatus(saveResult.Error.Message);
                 return;
             }
 
             if (saveResult.Value.WasCanceled)
             {
-                StatusText = "Export cancelled.";
+                SetWarningStatus(
+                    "Export cancelled",
+                    "No file was saved.");
                 return;
             }
 
-            HasSuccess = true;
-            StatusText = $"Diary saved as {saveResult.Value.SavedFileName}.";
+            SetSuccessStatus(saveResult.Value.SavedFileName);
+        }
+        catch (OperationCanceledException)
+        {
+            SetWarningStatus(
+                "Export cancelled",
+                "The export operation was cancelled.");
+        }
+        catch (Exception exception)
+        {
+            SetErrorStatus($"Unexpected export error: {exception.Message}");
         }
         finally
         {
@@ -322,6 +375,81 @@ public sealed class DiaryViewModel : ViewModelBase
         var previousMonthEnd = currentMonthStart.AddTicks(-1);
 
         return (previousMonthStart, previousMonthEnd);
+    }
+
+    /// <summary>
+    /// Resets the diary export status to its ready state.
+    /// </summary>
+    private void ResetReadyStatus()
+    {
+        if (IsExporting)
+        {
+            return;
+        }
+
+        HasError = false;
+        HasSuccess = false;
+        HasWarning = false;
+        StatusTitle = "Ready to export";
+        StatusText = "Choose a period and format, then export your diary.";
+    }
+
+    /// <summary>
+    /// Sets the diary export status to busy.
+    /// </summary>
+    private void SetBusyStatus()
+    {
+        HasError = false;
+        HasSuccess = false;
+        HasWarning = false;
+        StatusTitle = "Generating diary";
+        StatusText = "GlucoDesk is preparing your export file.";
+    }
+
+    /// <summary>
+    /// Sets the diary export status to success.
+    /// </summary>
+    /// <param name="savedFileName">The saved file name.</param>
+    private void SetSuccessStatus(string? savedFileName)
+    {
+        HasError = false;
+        HasWarning = false;
+        HasSuccess = true;
+        StatusTitle = "Diary exported";
+        StatusText = string.IsNullOrWhiteSpace(savedFileName)
+            ? "The diary file was saved successfully."
+            : $"The diary was saved as {savedFileName}.";
+    }
+
+    /// <summary>
+    /// Sets the diary export status to warning.
+    /// </summary>
+    /// <param name="title">The status title.</param>
+    /// <param name="message">The status message.</param>
+    private void SetWarningStatus(
+        string title,
+        string message)
+    {
+        HasError = false;
+        HasSuccess = false;
+        HasWarning = true;
+        StatusTitle = title;
+        StatusText = message;
+    }
+
+    /// <summary>
+    /// Sets the diary export status to error.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    private void SetErrorStatus(string message)
+    {
+        HasSuccess = false;
+        HasWarning = false;
+        HasError = true;
+        StatusTitle = "Export failed";
+        StatusText = string.IsNullOrWhiteSpace(message)
+            ? "Unable to export the diary."
+            : message;
     }
 
     #endregion
