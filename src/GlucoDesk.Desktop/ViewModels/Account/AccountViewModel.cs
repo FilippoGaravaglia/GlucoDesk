@@ -26,7 +26,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     private DexcomShareRegionSelectionItem? _selectedRegion;
 
     [ObservableProperty]
-    private string _statusMessage = "Account not loaded";
+    private string _statusMessage = "Account not loaded.";
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -75,10 +75,31 @@ public sealed partial class AccountViewModel : ViewModelBase
     public IReadOnlyList<DexcomShareRegionSelectionItem> RegionOptions { get; }
 
     /// <summary>
+    /// Gets the user-facing secure credential storage state.
+    /// </summary>
+    public string CredentialStorageStatusText => HasStoredCredentials
+        ? "Saved account available"
+        : "No saved account";
+
+    /// <summary>
+    /// Gets the user-facing secure credential storage description.
+    /// </summary>
+    public string CredentialStorageDescriptionText => HasStoredCredentials
+        ? "Dexcom Share credentials are available from secure local storage. The password is not shown in the form."
+        : "Save your Dexcom Share account to enable automatic reconnect when GlucoDesk starts.";
+
+    /// <summary>
+    /// Gets the user-facing password help text.
+    /// </summary>
+    public string PasswordHelpText => HasStoredCredentials
+        ? "Leave empty to keep the saved password. Enter a new password only if you want to replace it."
+        : "Required to connect to Dexcom Share. It will be saved using the configured secure credential store.";
+
+    /// <summary>
     /// Loads persisted Dexcom Share account details.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRunAccountOperation))]
     public async Task LoadAsync(CancellationToken cancellationToken)
     {
         if (IsBusy)
@@ -110,15 +131,15 @@ public sealed partial class AccountViewModel : ViewModelBase
             EmailText = credentials.Username;
             PasswordText = string.Empty;
             SelectedRegion = FindRegion(credentials.Region);
-            StatusMessage = "Dexcom Share account loaded. Password is stored securely; leave it empty to keep the existing one.";
+            StatusMessage = "Dexcom Share account loaded. Password is kept hidden and remains in secure storage.";
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Account load cancelled";
+            StatusMessage = "Account load cancelled.";
         }
         catch (Exception exception)
         {
-            ApplyUnexpectedFailure(exception, "Unexpected error while loading account");
+            ApplyUnexpectedFailure(exception, "Unexpected error while loading account.");
         }
         finally
         {
@@ -130,7 +151,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// Saves Dexcom Share account details.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRunAccountOperation))]
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
         if (IsBusy)
@@ -162,11 +183,11 @@ public sealed partial class AccountViewModel : ViewModelBase
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Account save cancelled";
+            StatusMessage = "Account save cancelled.";
         }
         catch (Exception exception)
         {
-            ApplyUnexpectedFailure(exception, "Unexpected error while saving account");
+            ApplyUnexpectedFailure(exception, "Unexpected error while saving account.");
         }
         finally
         {
@@ -178,7 +199,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// Tests the current Dexcom Share account without saving it.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRunAccountOperation))]
     private async Task TestConnectionAsync(CancellationToken cancellationToken)
     {
         if (IsBusy)
@@ -208,7 +229,7 @@ public sealed partial class AccountViewModel : ViewModelBase
 
             if (result.IsFailure)
             {
-                ApplyFailure(result, "Dexcom Share connection failed");
+                ApplyFailure(result, "Dexcom Share connection failed.");
                 return;
             }
 
@@ -218,11 +239,11 @@ public sealed partial class AccountViewModel : ViewModelBase
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Connection test cancelled";
+            StatusMessage = "Connection test cancelled.";
         }
         catch (Exception exception)
         {
-            ApplyUnexpectedFailure(exception, "Unexpected error while testing Dexcom Share connection");
+            ApplyUnexpectedFailure(exception, "Unexpected error while testing Dexcom Share connection.");
         }
         finally
         {
@@ -234,7 +255,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// Clears saved Dexcom Share account details.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanClearStoredCredentials))]
     private async Task ClearCredentialsAsync(CancellationToken cancellationToken)
     {
         if (IsBusy)
@@ -261,11 +282,11 @@ public sealed partial class AccountViewModel : ViewModelBase
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Clear account cancelled";
+            StatusMessage = "Clear account cancelled.";
         }
         catch (Exception exception)
         {
-            ApplyUnexpectedFailure(exception, "Unexpected error while clearing account");
+            ApplyUnexpectedFailure(exception, "Unexpected error while clearing account.");
         }
         finally
         {
@@ -274,6 +295,49 @@ public sealed partial class AccountViewModel : ViewModelBase
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Determines whether an account operation can run.
+    /// </summary>
+    /// <returns>True when no account operation is already running; otherwise false.</returns>
+    private bool CanRunAccountOperation()
+    {
+        return !IsBusy;
+    }
+
+    /// <summary>
+    /// Determines whether stored credentials can be cleared.
+    /// </summary>
+    /// <returns>True when stored credentials exist and no operation is running; otherwise false.</returns>
+    private bool CanClearStoredCredentials()
+    {
+        return HasStoredCredentials && !IsBusy;
+    }
+
+    /// <summary>
+    /// Handles busy state changes and refreshes command availability.
+    /// </summary>
+    /// <param name="value">The new busy state.</param>
+    partial void OnIsBusyChanged(bool value)
+    {
+        LoadCommand.NotifyCanExecuteChanged();
+        SaveCommand.NotifyCanExecuteChanged();
+        TestConnectionCommand.NotifyCanExecuteChanged();
+        ClearCredentialsCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Handles stored credential state changes and refreshes dependent UI state.
+    /// </summary>
+    /// <param name="value">The new stored credential state.</param>
+    partial void OnHasStoredCredentialsChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CredentialStorageStatusText));
+        OnPropertyChanged(nameof(CredentialStorageDescriptionText));
+        OnPropertyChanged(nameof(PasswordHelpText));
+
+        ClearCredentialsCommand.NotifyCanExecuteChanged();
+    }
 
     /// <summary>
     /// Builds Dexcom Share credentials from the current form values without saving them.
@@ -287,27 +351,27 @@ public sealed partial class AccountViewModel : ViewModelBase
             ApplyValidationFailure("Select a Dexcom Share region.");
             return null;
         }
-    
+
         if (string.IsNullOrWhiteSpace(EmailText))
         {
             ApplyValidationFailure("Enter your Dexcom account email.");
             return null;
         }
-    
+
         var existingCredentials = await _credentialStore
             .ReadAsync(cancellationToken)
             .ConfigureAwait(false);
-    
+
         var passwordToUse = string.IsNullOrWhiteSpace(PasswordText)
             ? existingCredentials?.Password
             : PasswordText;
-    
+
         if (string.IsNullOrWhiteSpace(passwordToUse))
         {
             ApplyValidationFailure("Enter your Dexcom password.");
             return null;
         }
-    
+
         return new DexcomShareCredentials(
             EmailText,
             passwordToUse,
@@ -394,4 +458,5 @@ public sealed partial class AccountViewModel : ViewModelBase
     }
 
     #endregion
+
 }
