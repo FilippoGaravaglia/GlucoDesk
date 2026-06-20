@@ -1,6 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Application.Settings.Abstractions;
+using GlucoDesk.Application.Settings.Models;
+using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
@@ -15,6 +18,7 @@ public sealed partial class AccountViewModel : ViewModelBase
 {
     private readonly IDexcomShareCredentialStore _credentialStore;
     private readonly IDexcomShareClient _dexcomShareClient;
+    private readonly IApplicationSettingsService _settingsService;
 
     [ObservableProperty]
     private string _emailText = string.Empty;
@@ -45,15 +49,19 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// </summary>
     /// <param name="credentialStore">The Dexcom Share credential store.</param>
     /// <param name="dexcomShareClient">The Dexcom Share client.</param>
+    /// <param name="settingsService">The application settings service.</param>
     public AccountViewModel(
         IDexcomShareCredentialStore credentialStore,
-        IDexcomShareClient dexcomShareClient)
+        IDexcomShareClient dexcomShareClient,
+        IApplicationSettingsService settingsService)
     {
         ArgumentNullException.ThrowIfNull(credentialStore);
         ArgumentNullException.ThrowIfNull(dexcomShareClient);
+        ArgumentNullException.ThrowIfNull(settingsService);
 
         _credentialStore = credentialStore;
         _dexcomShareClient = dexcomShareClient;
+        _settingsService = settingsService;
 
         RegionOptions =
         [
@@ -179,7 +187,16 @@ public sealed partial class AccountViewModel : ViewModelBase
 
             HasStoredCredentials = true;
             PasswordText = string.Empty;
-            StatusMessage = "Dexcom Share account saved securely. GlucoDesk can reconnect automatically using the saved account.";
+
+            var providersConfigured = await EnsureDexcomShareProvidersConfiguredAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!providersConfigured)
+            {
+                return;
+            }
+
+            StatusMessage = "Dexcom Share account saved securely. Dexcom Share is now selected as the live and historical provider, so GlucoDesk can reconnect after restart.";
         }
         catch (OperationCanceledException)
         {
@@ -379,6 +396,70 @@ public sealed partial class AccountViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Ensures Dexcom Share is selected as the active live and historical provider.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True when provider settings are configured successfully; otherwise false.</returns>
+    private async Task<bool> EnsureDexcomShareProvidersConfiguredAsync(CancellationToken cancellationToken)
+    {
+        var settingsResult = await _settingsService
+            .GetSettingsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (settingsResult.IsFailure)
+        {
+            ApplyFailure(
+                settingsResult,
+                "Dexcom Share account was saved, but GlucoDesk could not read application settings.");
+
+            return false;
+        }
+
+        var currentSettings = settingsResult.Value;
+
+        if (currentSettings.ActiveLiveProvider == CgmProviderKind.DexcomShare &&
+            currentSettings.HistoricalProvider == CgmProviderKind.DexcomShare)
+        {
+            return true;
+        }
+
+        var updatedSettings = CreateDexcomShareProviderSettings(currentSettings);
+
+        var saveSettingsResult = await _settingsService
+            .SaveSettingsAsync(updatedSettings, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (saveSettingsResult.IsFailure)
+        {
+            ApplyFailure(
+                saveSettingsResult,
+                "Dexcom Share account was saved, but GlucoDesk could not update provider settings.");
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Creates application settings with Dexcom Share selected as live and historical provider.
+    /// </summary>
+    /// <param name="currentSettings">The current application settings.</param>
+    /// <returns>The updated application settings.</returns>
+    private static ApplicationSettings CreateDexcomShareProviderSettings(ApplicationSettings currentSettings)
+    {
+        ArgumentNullException.ThrowIfNull(currentSettings);
+
+        return new ApplicationSettings(
+            CgmProviderKind.DexcomShare,
+            CgmProviderKind.DexcomShare,
+            currentSettings.PreferredUnit,
+            currentSettings.TargetLowMgDl,
+            currentSettings.TargetHighMgDl,
+            currentSettings.DashboardRefreshInterval);
+    }
+
+    /// <summary>
     /// Creates Dexcom Share options from credentials.
     /// </summary>
     /// <param name="credentials">The Dexcom Share credentials.</param>
@@ -428,6 +509,22 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// <summary>
     /// Applies an operation failure.
     /// </summary>
+    /// <param name="result">The failed result.</param>
+    /// <param name="fallbackMessage">The fallback message.</param>
+    private void ApplyFailure(
+        Result result,
+        string fallbackMessage)
+    {
+        HasError = true;
+        ErrorMessage = string.IsNullOrWhiteSpace(result.Error.Message)
+            ? fallbackMessage
+            : result.Error.Message;
+        StatusMessage = fallbackMessage;
+    }
+
+    /// <summary>
+    /// Applies an operation failure.
+    /// </summary>
     /// <typeparam name="TValue">The result value type.</typeparam>
     /// <param name="result">The failed result.</param>
     /// <param name="fallbackMessage">The fallback message.</param>
@@ -458,5 +555,4 @@ public sealed partial class AccountViewModel : ViewModelBase
     }
 
     #endregion
-
 }
