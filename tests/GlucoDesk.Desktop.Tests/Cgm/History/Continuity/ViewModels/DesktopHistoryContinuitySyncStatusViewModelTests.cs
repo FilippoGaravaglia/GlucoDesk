@@ -1,5 +1,6 @@
 using GlucoDesk.Application.Cgm.History.Continuity.Enums;
 using GlucoDesk.Application.Common.Errors;
+using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Enums;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Results;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
@@ -13,8 +14,8 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModelTests
     [Fact]
     public void Constructor_ShouldExposeInitialIdleStatus()
     {
-        // Arrange
-        var statusStore = new FakeStatusStore();
+    // Arrange
+    var statusStore = new FakeStatusStore();
 
         // Act
         using var viewModel = CreateViewModel(statusStore);
@@ -27,6 +28,8 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModelTests
         Assert.False(viewModel.HasError);
         Assert.False(viewModel.HasLastSuccessfulSync);
         Assert.False(viewModel.HasNewReadings);
+        Assert.True(viewModel.CanRunManualSync);
+        Assert.True(viewModel.RunManualSyncCommand.CanExecute(null));
     }
 
     [Fact]
@@ -64,6 +67,8 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModelTests
         Assert.False(viewModel.HasError);
         Assert.Equal(snapshot.Message, viewModel.Message);
         Assert.NotEqual("Not available", viewModel.StartedAtText);
+        Assert.False(viewModel.CanRunManualSync);
+        Assert.False(viewModel.RunManualSyncCommand.CanExecute(null));
     }
 
     [Fact]
@@ -102,6 +107,8 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModelTests
         Assert.True(viewModel.HasReadingSummary);
         Assert.True(viewModel.HasLastSuccessfulSync);
         Assert.True(viewModel.HasNewReadings);
+        Assert.True(viewModel.CanRunManualSync);
+        Assert.True(viewModel.RunManualSyncCommand.CanExecute(null));
         Assert.Equal("Fetched: 5, added: 3, duplicates: 2, stored: 50", viewModel.ReadingSummaryText);
         Assert.NotEqual("Not available", viewModel.CompletedAtText);
         Assert.NotEqual("Not available", viewModel.LastSuccessfulSyncAtText);
@@ -139,6 +146,8 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModelTests
         Assert.False(viewModel.IsRunning);
         Assert.True(viewModel.HasError);
         Assert.False(viewModel.HasNewReadings);
+        Assert.True(viewModel.CanRunManualSync);
+        Assert.True(viewModel.RunManualSyncCommand.CanExecute(null));
         Assert.Equal(
             "HistoryContinuity.SyncFailed: History continuity synchronization failed.",
             viewModel.ErrorText);
@@ -176,19 +185,73 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModelTests
         Assert.Equal("Idle", viewModel.StateText);
     }
 
+    [Fact]
+    public async Task RunManualSyncCommand_ShouldRunManualSync_WhenNotRunning()
+    {
+        // Arrange
+        var statusStore = new FakeStatusStore();
+        var syncCoordinator = new FakeDesktopHistoryContinuitySyncCoordinator();
+
+        using var viewModel = CreateViewModel(statusStore, syncCoordinator);
+
+        // Act
+        await viewModel.RunManualSyncCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.Equal(1, syncCoordinator.ManualSyncCalls);
+        Assert.Equal(TimeSpan.FromHours(24), syncCoordinator.LastManualLookback);
+        Assert.True(viewModel.CanRunManualSync);
+    }
+
+    [Fact]
+    public void RunManualSyncCommand_ShouldBeDisabled_WhenSyncIsRunning()
+    {
+        // Arrange
+        var statusStore = new FakeStatusStore();
+        var syncCoordinator = new FakeDesktopHistoryContinuitySyncCoordinator();
+
+        using var viewModel = CreateViewModel(statusStore, syncCoordinator);
+
+        var snapshot = new DesktopHistoryContinuitySyncStatusSnapshot(
+            DesktopHistoryContinuitySyncRunState.Running,
+            CgmHistoryContinuitySyncTrigger.Manual,
+            StartedAtUtc: new DateTimeOffset(2026, 6, 20, 10, 0, 0, TimeSpan.Zero),
+            CompletedAtUtc: null,
+            LastSuccessfulSyncAtUtc: null,
+            Message: "History continuity synchronization started by Manual.",
+            ErrorCode: null,
+            ErrorDescription: null,
+            TotalFetchedReadings: 0,
+            AddedReadingsCount: 0,
+            DuplicateReadingsCount: 0,
+            StoredReadingsCount: 0,
+            HasNewReadings: false);
+
+        // Act
+        statusStore.Publish(snapshot);
+
+        // Assert
+        Assert.False(viewModel.CanRunManualSync);
+        Assert.False(viewModel.RunManualSyncCommand.CanExecute(null));
+        Assert.Equal(0, syncCoordinator.ManualSyncCalls);
+    }
+
     #region Helpers
 
     /// <summary>
     /// Creates the status ViewModel under test.
     /// </summary>
     /// <param name="statusStore">The fake status store.</param>
+    /// <param name="syncCoordinator">The fake synchronization coordinator.</param>
     /// <returns>The status ViewModel.</returns>
     private static DesktopHistoryContinuitySyncStatusViewModel CreateViewModel(
-        IDesktopHistoryContinuitySyncStatusStore statusStore)
+        IDesktopHistoryContinuitySyncStatusStore statusStore,
+        IDesktopHistoryContinuitySyncCoordinator? syncCoordinator = null)
     {
         return new DesktopHistoryContinuitySyncStatusViewModel(
             statusStore,
-            new ImmediateDesktopUiDispatcher());
+            new ImmediateDesktopUiDispatcher(),
+            syncCoordinator ?? new FakeDesktopHistoryContinuitySyncCoordinator());
     }
 
     #endregion
@@ -211,6 +274,10 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModelTests
         public DesktopHistoryContinuitySyncStatusSnapshot Current { get; private set; } =
             DesktopHistoryContinuitySyncStatusSnapshot.Idle;
 
+        /// <summary>
+        /// Publishes a status snapshot to subscribers.
+        /// </summary>
+        /// <param name="snapshot">The status snapshot.</param>
         public void Publish(DesktopHistoryContinuitySyncStatusSnapshot snapshot)
         {
             Current = snapshot;
@@ -251,6 +318,55 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModelTests
         public void MarkCanceled(CgmHistoryContinuitySyncTrigger trigger)
         {
             throw new NotSupportedException();
+        }
+    }
+
+    private sealed class FakeDesktopHistoryContinuitySyncCoordinator : IDesktopHistoryContinuitySyncCoordinator
+    {
+        public int StartupSyncCalls { get; private set; }
+
+        public int ResumeSyncCalls { get; private set; }
+
+        public int ManualSyncCalls { get; private set; }
+
+        public TimeSpan? LastManualLookback { get; private set; }
+
+        /// <inheritdoc />
+        public Task<Result<DesktopHistoryContinuitySyncRunResult>> RunStartupSyncAsync(
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            StartupSyncCalls++;
+
+            return Task.FromResult(Result<DesktopHistoryContinuitySyncRunResult>.Success(
+                DesktopHistoryContinuitySyncRunResult.Skipped(CgmHistoryContinuitySyncTrigger.Startup)));
+        }
+
+        /// <inheritdoc />
+        public Task<Result<DesktopHistoryContinuitySyncRunResult>> RunResumeSyncAsync(
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            ResumeSyncCalls++;
+
+            return Task.FromResult(Result<DesktopHistoryContinuitySyncRunResult>.Success(
+                DesktopHistoryContinuitySyncRunResult.Skipped(CgmHistoryContinuitySyncTrigger.Resume)));
+        }
+
+        /// <inheritdoc />
+        public Task<Result<DesktopHistoryContinuitySyncRunResult>> RunManualSyncAsync(
+            TimeSpan lookback,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            ManualSyncCalls++;
+            LastManualLookback = lookback;
+
+            return Task.FromResult(Result<DesktopHistoryContinuitySyncRunResult>.Success(
+                DesktopHistoryContinuitySyncRunResult.Skipped(CgmHistoryContinuitySyncTrigger.Manual)));
         }
     }
 }
