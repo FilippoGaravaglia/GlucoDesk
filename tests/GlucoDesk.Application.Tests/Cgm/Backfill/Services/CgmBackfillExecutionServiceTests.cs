@@ -5,6 +5,9 @@ using GlucoDesk.Application.Cgm.Backfill.Services;
 using GlucoDesk.Application.Cgm.Backfill.Services.Abstractions;
 using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Core.Glucose.Readings;
+using GlucoDesk.Core.Glucose.ValueObjects;
 
 namespace GlucoDesk.Application.Tests.Cgm.Backfill.Services;
 
@@ -180,6 +183,58 @@ public sealed class CgmBackfillExecutionServiceTests
         Assert.Equal("Backfill.InvalidExecutionWindow", result.Error.Code);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_ShouldExposeFetchedReadingsAcrossFetchedGaps()
+    {
+        // Arrange
+        var startsAt = new DateTimeOffset(2026, 6, 20, 8, 0, 0, TimeSpan.Zero);
+        var endsAt = new DateTimeOffset(2026, 6, 20, 12, 0, 0, TimeSpan.Zero);
+
+        var firstGap = CreatePlanGap(
+            startsAt.AddHours(1),
+            startsAt.AddHours(2));
+
+        var secondGap = CreatePlanGap(
+            startsAt.AddHours(3),
+            startsAt.AddHours(4));
+
+        var firstReading = CreateReading(firstGap.StartsAt.AddMinutes(5));
+        var secondReading = CreateReading(secondGap.StartsAt.AddMinutes(5));
+
+        var fetcher = new FakeHistoricalReadingsFetcher
+        {
+            ReadingsByGapStart =
+            {
+                [firstGap.StartsAt] = [firstReading],
+                [secondGap.StartsAt] = [secondReading]
+            }
+        };
+
+        var service = new CgmBackfillExecutionService(
+            new FakeBackfillRunService
+            {
+                Run = CreateRun(
+                    startsAt,
+                    endsAt,
+                    [firstGap, secondGap])
+            },
+            fetcher);
+
+        // Act
+        var result = await service.ExecuteAsync(
+            new CgmBackfillRunRequest(
+                startsAt,
+                endsAt),
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.TotalFetchedReadings);
+        Assert.Equal(2, result.Value.FetchedReadings.Count);
+        Assert.Contains(firstReading, result.Value.FetchedReadings);
+        Assert.Contains(secondReading, result.Value.FetchedReadings);
+    }
+
     #region Helpers
 
     /// <summary>
@@ -273,6 +328,8 @@ public sealed class CgmBackfillExecutionServiceTests
 
         public Dictionary<DateTimeOffset, int> ReadingsCountByGapStart { get; } = [];
 
+        public Dictionary<DateTimeOffset, IReadOnlyCollection<GlucoseReading>> ReadingsByGapStart { get; } = [];
+
         /// <inheritdoc />
         public Task<Result<CgmBackfillFetchedGapResult>> FetchAsync(
             CgmBackfillPlanGap gap,
@@ -291,13 +348,36 @@ public sealed class CgmBackfillExecutionServiceTests
                         "Unable to fetch historical readings.")));
             }
 
+            if (ReadingsByGapStart.TryGetValue(gap.StartsAt, out var readings))
+            {
+                return Task.FromResult(Result<CgmBackfillFetchedGapResult>.Success(
+                    new CgmBackfillFetchedGapResult(
+                        gap,
+                        readings)));
+            }
+            
             var readingsCount = ReadingsCountByGapStart.GetValueOrDefault(gap.StartsAt);
-
+            
             return Task.FromResult(Result<CgmBackfillFetchedGapResult>.Success(
                 new CgmBackfillFetchedGapResult(
                     gap,
                     readingsCount)));
         }
+    }
+
+    /// <summary>
+    /// Creates a glucose reading used by the tests.
+    /// </summary>
+    /// <param name="timestamp">The reading timestamp.</param>
+    /// <returns>The glucose reading.</returns>
+    private static GlucoseReading CreateReading(DateTimeOffset timestamp)
+    {
+        return new GlucoseReading(
+            timestamp,
+            new GlucoseValue(120, GlucoseUnit.MgDl),
+            TrendDirection.Flat,
+            CgmProviderKind.Mock,
+            GlucoseDataFreshness.Historical);
     }
 
     #endregion

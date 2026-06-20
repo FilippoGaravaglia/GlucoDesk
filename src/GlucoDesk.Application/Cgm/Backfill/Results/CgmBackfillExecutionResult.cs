@@ -1,4 +1,5 @@
 using GlucoDesk.Application.Cgm.Backfill.Enums;
+using GlucoDesk.Core.Glucose.Readings;
 
 namespace GlucoDesk.Application.Cgm.Backfill.Results;
 
@@ -49,6 +50,14 @@ public sealed record CgmBackfillExecutionResult
     /// Gets a user-facing or diagnostic message describing the execution.
     /// </summary>
     public string Message { get; }
+
+    /// <summary>
+    /// Gets all readings fetched across all recoverable gaps.
+    /// </summary>
+    public IReadOnlyCollection<GlucoseReading> FetchedReadings =>
+        FetchedGaps
+            .SelectMany(gap => gap.Readings)
+            .ToArray();
 
     /// <summary>
     /// Gets the total number of fetched readings.

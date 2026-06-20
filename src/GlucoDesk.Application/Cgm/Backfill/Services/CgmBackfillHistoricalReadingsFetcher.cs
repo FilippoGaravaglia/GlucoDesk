@@ -53,7 +53,7 @@ public sealed class CgmBackfillHistoricalReadingsFetcher : ICgmBackfillHistorica
         return Result<CgmBackfillFetchedGapResult>.Success(
             new CgmBackfillFetchedGapResult(
                 gap,
-                readingsResult.Value.Readings.Count));
+                readingsResult.Value.Readings));
     }
 
     #region Helpers

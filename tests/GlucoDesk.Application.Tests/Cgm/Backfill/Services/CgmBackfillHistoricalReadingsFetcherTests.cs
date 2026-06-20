@@ -45,6 +45,9 @@ public sealed class CgmBackfillHistoricalReadingsFetcherTests
         Assert.Equal(1, glucoseDataService.HistoricalReadingsRequestCount);
         Assert.Equal(3, result.Value.ReadingsCount);
         Assert.True(result.Value.HasReadings);
+        Assert.Equal(3, result.Value.Readings.Count);
+        Assert.All(result.Value.Readings, reading =>
+        Assert.Equal(GlucoseDataFreshness.Historical, reading.Freshness));
     }
 
     [Fact]
@@ -69,6 +72,7 @@ public sealed class CgmBackfillHistoricalReadingsFetcherTests
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.Value.ReadingsCount);
         Assert.False(result.Value.HasReadings);
+        Assert.Empty(result.Value.Readings);
     }
 
     [Fact]
