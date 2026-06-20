@@ -1,3 +1,4 @@
+using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
@@ -41,6 +42,7 @@ public sealed class AccountViewModelTests
         Assert.Equal(string.Empty, viewModel.PasswordText);
         Assert.Equal(DexcomShareRegion.Us, viewModel.SelectedRegion?.Region);
         Assert.Equal("Saved account available", viewModel.CredentialStorageStatusText);
+        Assert.Equal("Connection not verified", viewModel.ConnectionDiagnosticStatusText);
         Assert.Contains(
             "Password is kept hidden",
             viewModel.StatusMessage,
@@ -70,6 +72,7 @@ public sealed class AccountViewModelTests
         Assert.Equal(SecretPassword, store.StoredCredentials.Password);
         Assert.Equal(DexcomShareRegion.OutsideUs, store.StoredCredentials.Region);
         Assert.Equal(1, store.SaveCallCount);
+        Assert.Equal("Connection not verified", viewModel.ConnectionDiagnosticStatusText);
     }
 
     [Fact]
@@ -146,9 +149,70 @@ public sealed class AccountViewModelTests
         Assert.Equal(1, client.AuthenticateWithOptionsCallCount);
         Assert.Equal(0, store.SaveCallCount);
         Assert.Null(store.StoredCredentials);
+        Assert.Equal("Connection verified", viewModel.ConnectionDiagnosticStatusText);
+        Assert.True(viewModel.HasSuccessfulConnectionTest);
+        Assert.False(viewModel.HasFailedConnectionTest);
         Assert.Contains(
             "connection successful",
             viewModel.StatusMessage,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task TestConnectionCommand_ShouldShowConnectionDiagnostics_WhenAuthenticationFails()
+    {
+        // Arrange
+        var store = new FakeDexcomShareCredentialStore();
+        var client = new FakeDexcomShareClient
+        {
+            AuthenticationResult = Result<string>.Failure(
+                new Error(
+                    "DexcomShare.AuthenticationFailed",
+                    "Invalid Dexcom Share credentials."))
+        };
+
+        var viewModel = CreateViewModel(store, client);
+
+        viewModel.EmailText = PersonEmail;
+        viewModel.PasswordText = SecretPassword;
+        viewModel.SelectedRegion = viewModel.RegionOptions
+            .Single(option => option.Region == DexcomShareRegion.OutsideUs);
+
+        // Act
+        await viewModel.TestConnectionCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.Equal(1, client.AuthenticateWithOptionsCallCount);
+        Assert.Equal("Connection failed", viewModel.ConnectionDiagnosticStatusText);
+        Assert.False(viewModel.HasSuccessfulConnectionTest);
+        Assert.True(viewModel.HasFailedConnectionTest);
+        Assert.True(viewModel.HasError);
+        Assert.Equal("Invalid Dexcom Share credentials.", viewModel.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task EditingFormAfterSuccessfulConnectionTest_ShouldMarkDiagnosticsAsNotVerified()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+
+        viewModel.EmailText = PersonEmail;
+        viewModel.PasswordText = SecretPassword;
+        viewModel.SelectedRegion = viewModel.RegionOptions
+            .Single(option => option.Region == DexcomShareRegion.OutsideUs);
+
+        await viewModel.TestConnectionCommand.ExecuteAsync(null);
+
+        // Act
+        viewModel.EmailText = NewEmail;
+
+        // Assert
+        Assert.Equal("Connection not verified", viewModel.ConnectionDiagnosticStatusText);
+        Assert.False(viewModel.HasSuccessfulConnectionTest);
+        Assert.False(viewModel.HasFailedConnectionTest);
+        Assert.Contains(
+            "form has changed",
+            viewModel.ConnectionDiagnosticDescriptionText,
             StringComparison.OrdinalIgnoreCase);
     }
 
@@ -178,6 +242,7 @@ public sealed class AccountViewModelTests
         Assert.Equal(DexcomShareRegion.OutsideUs, viewModel.SelectedRegion?.Region);
         Assert.Null(store.StoredCredentials);
         Assert.Equal(1, store.ClearCallCount);
+        Assert.Equal("Connection not tested", viewModel.ConnectionDiagnosticStatusText);
     }
 
     [Fact]

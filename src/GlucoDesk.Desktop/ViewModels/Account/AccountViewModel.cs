@@ -20,6 +20,8 @@ public sealed partial class AccountViewModel : ViewModelBase
     private readonly IDexcomShareClient _dexcomShareClient;
     private readonly IApplicationSettingsService _settingsService;
 
+    private bool _suppressFormChangeDiagnostics;
+
     [ObservableProperty]
     private string _emailText = string.Empty;
 
@@ -43,6 +45,18 @@ public sealed partial class AccountViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasStoredCredentials;
+
+    [ObservableProperty]
+    private string _connectionDiagnosticStatusText = "Connection not tested";
+
+    [ObservableProperty]
+    private string _connectionDiagnosticDescriptionText = "Use Test connection to verify the current Dexcom Share credentials before relying on automatic reconnect.";
+
+    [ObservableProperty]
+    private bool _hasSuccessfulConnectionTest;
+
+    [ObservableProperty]
+    private bool _hasFailedConnectionTest;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AccountViewModel"/> class.
@@ -74,7 +88,9 @@ public sealed partial class AccountViewModel : ViewModelBase
                 "United States")
         ];
 
+        _suppressFormChangeDiagnostics = true;
         SelectedRegion = RegionOptions[0];
+        _suppressFormChangeDiagnostics = false;
     }
 
     /// <summary>
@@ -128,17 +144,27 @@ public sealed partial class AccountViewModel : ViewModelBase
             if (credentials is null)
             {
                 HasStoredCredentials = false;
-                EmailText = string.Empty;
-                PasswordText = string.Empty;
-                SelectedRegion = RegionOptions[0];
+                ApplyAccountFormState(
+                    email: string.Empty,
+                    password: string.Empty,
+                    region: RegionOptions[0]);
+
+                ResetConnectionDiagnostics(
+                    "No saved Dexcom Share account is available. Enter credentials and run Test connection before saving.");
+
                 StatusMessage = "No Dexcom Share account saved yet.";
                 return;
             }
 
             HasStoredCredentials = true;
-            EmailText = credentials.Username;
-            PasswordText = string.Empty;
-            SelectedRegion = FindRegion(credentials.Region);
+            ApplyAccountFormState(
+                credentials.Username,
+                password: string.Empty,
+                FindRegion(credentials.Region));
+
+            SetConnectionDiagnosticsPending(
+                "Saved credentials were loaded from secure storage. Run Test connection to verify they are still valid.");
+
             StatusMessage = "Dexcom Share account loaded. Password is kept hidden and remains in secure storage.";
         }
         catch (OperationCanceledException)
@@ -186,15 +212,24 @@ public sealed partial class AccountViewModel : ViewModelBase
                 .ConfigureAwait(false);
 
             HasStoredCredentials = true;
-            PasswordText = string.Empty;
+
+            ApplyAccountFormState(
+                credentials.Username,
+                password: string.Empty,
+                FindRegion(credentials.Region));
 
             var providersConfigured = await EnsureDexcomShareProvidersConfiguredAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (!providersConfigured)
             {
+                SetConnectionDiagnosticsPending(
+                    "Credentials were saved, but provider settings could not be updated. Check the error message before restarting.");
                 return;
             }
+
+            SetConnectionDiagnosticsPending(
+                "Account saved and Dexcom Share selected as provider. Run Test connection to verify credentials before relying on reconnect.");
 
             StatusMessage = "Dexcom Share account saved securely. Dexcom Share is now selected as the live and historical provider, so GlucoDesk can reconnect after restart.";
         }
@@ -227,6 +262,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         IsBusy = true;
         ClearError();
         StatusMessage = "Testing Dexcom Share connection...";
+        SetConnectionDiagnosticsPending("Testing the current Dexcom Share credentials...");
 
         try
         {
@@ -235,6 +271,7 @@ public sealed partial class AccountViewModel : ViewModelBase
 
             if (credentials is null)
             {
+                SetConnectionDiagnosticsFailed("The current form is incomplete. Fix the validation error and try again.");
                 return;
             }
 
@@ -246,9 +283,17 @@ public sealed partial class AccountViewModel : ViewModelBase
 
             if (result.IsFailure)
             {
+                var message = string.IsNullOrWhiteSpace(result.Error.Message)
+                    ? "Dexcom Share rejected the current credentials."
+                    : result.Error.Message;
+
+                SetConnectionDiagnosticsFailed(message);
                 ApplyFailure(result, "Dexcom Share connection failed.");
                 return;
             }
+
+            SetConnectionDiagnosticsSucceeded(
+                "Dexcom Share accepted the current credentials. The account can be used for automatic reconnect.");
 
             StatusMessage = HasStoredCredentials
                 ? "Dexcom Share connection successful. Save the account if you changed any field."
@@ -257,9 +302,11 @@ public sealed partial class AccountViewModel : ViewModelBase
         catch (OperationCanceledException)
         {
             StatusMessage = "Connection test cancelled.";
+            SetConnectionDiagnosticsPending("Connection test was cancelled. Run Test connection again when ready.");
         }
         catch (Exception exception)
         {
+            SetConnectionDiagnosticsFailed(exception.Message);
             ApplyUnexpectedFailure(exception, "Unexpected error while testing Dexcom Share connection.");
         }
         finally
@@ -291,9 +338,14 @@ public sealed partial class AccountViewModel : ViewModelBase
                 .ConfigureAwait(false);
 
             HasStoredCredentials = false;
-            EmailText = string.Empty;
-            PasswordText = string.Empty;
-            SelectedRegion = RegionOptions[0];
+
+            ApplyAccountFormState(
+                email: string.Empty,
+                password: string.Empty,
+                region: RegionOptions[0]);
+
+            ResetConnectionDiagnostics(
+                "Saved credentials were removed. Enter credentials and run Test connection before saving a new account.");
 
             StatusMessage = "Dexcom Share account removed from secure storage.";
         }
@@ -332,6 +384,33 @@ public sealed partial class AccountViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Handles email changes and marks diagnostics as stale when the user edits the form.
+    /// </summary>
+    /// <param name="value">The new email value.</param>
+    partial void OnEmailTextChanged(string value)
+    {
+        MarkDiagnosticsStaleAfterUserChange();
+    }
+
+    /// <summary>
+    /// Handles password changes and marks diagnostics as stale when the user edits the form.
+    /// </summary>
+    /// <param name="value">The new password value.</param>
+    partial void OnPasswordTextChanged(string value)
+    {
+        MarkDiagnosticsStaleAfterUserChange();
+    }
+
+    /// <summary>
+    /// Handles region changes and marks diagnostics as stale when the user edits the form.
+    /// </summary>
+    /// <param name="value">The new selected region.</param>
+    partial void OnSelectedRegionChanged(DexcomShareRegionSelectionItem? value)
+    {
+        MarkDiagnosticsStaleAfterUserChange();
+    }
+
+    /// <summary>
     /// Handles busy state changes and refreshes command availability.
     /// </summary>
     /// <param name="value">The new busy state.</param>
@@ -354,6 +433,95 @@ public sealed partial class AccountViewModel : ViewModelBase
         OnPropertyChanged(nameof(PasswordHelpText));
 
         ClearCredentialsCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Applies account form state while suppressing stale diagnostics generated by programmatic changes.
+    /// </summary>
+    /// <param name="email">The account email.</param>
+    /// <param name="password">The account password field value.</param>
+    /// <param name="region">The selected Dexcom Share region.</param>
+    private void ApplyAccountFormState(
+        string email,
+        string password,
+        DexcomShareRegionSelectionItem region)
+    {
+        ArgumentNullException.ThrowIfNull(region);
+
+        _suppressFormChangeDiagnostics = true;
+
+        try
+        {
+            EmailText = email;
+            PasswordText = password;
+            SelectedRegion = region;
+        }
+        finally
+        {
+            _suppressFormChangeDiagnostics = false;
+        }
+    }
+
+    /// <summary>
+    /// Marks connection diagnostics as stale after a user-driven form change.
+    /// </summary>
+    private void MarkDiagnosticsStaleAfterUserChange()
+    {
+        if (_suppressFormChangeDiagnostics || IsBusy)
+        {
+            return;
+        }
+
+        SetConnectionDiagnosticsPending(
+            "The account form has changed. Run Test connection again to verify the current values.");
+    }
+
+    /// <summary>
+    /// Resets connection diagnostics to the not-tested state.
+    /// </summary>
+    /// <param name="description">The diagnostic description.</param>
+    private void ResetConnectionDiagnostics(string description)
+    {
+        HasSuccessfulConnectionTest = false;
+        HasFailedConnectionTest = false;
+        ConnectionDiagnosticStatusText = "Connection not tested";
+        ConnectionDiagnosticDescriptionText = description;
+    }
+
+    /// <summary>
+    /// Sets connection diagnostics to a pending or stale state.
+    /// </summary>
+    /// <param name="description">The diagnostic description.</param>
+    private void SetConnectionDiagnosticsPending(string description)
+    {
+        HasSuccessfulConnectionTest = false;
+        HasFailedConnectionTest = false;
+        ConnectionDiagnosticStatusText = "Connection not verified";
+        ConnectionDiagnosticDescriptionText = description;
+    }
+
+    /// <summary>
+    /// Sets connection diagnostics to a successful state.
+    /// </summary>
+    /// <param name="description">The diagnostic description.</param>
+    private void SetConnectionDiagnosticsSucceeded(string description)
+    {
+        HasSuccessfulConnectionTest = true;
+        HasFailedConnectionTest = false;
+        ConnectionDiagnosticStatusText = "Connection verified";
+        ConnectionDiagnosticDescriptionText = description;
+    }
+
+    /// <summary>
+    /// Sets connection diagnostics to a failed state.
+    /// </summary>
+    /// <param name="description">The diagnostic description.</param>
+    private void SetConnectionDiagnosticsFailed(string description)
+    {
+        HasSuccessfulConnectionTest = false;
+        HasFailedConnectionTest = true;
+        ConnectionDiagnosticStatusText = "Connection failed";
+        ConnectionDiagnosticDescriptionText = description;
     }
 
     /// <summary>
