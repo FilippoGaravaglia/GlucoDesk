@@ -85,6 +85,7 @@ internal static class DesktopServiceProviderBuilder
     /// <param name="services">The service collection.</param>
     private static void AddDesktopHistoryContinuitySync(this IServiceCollection services)
     {
+        services.TryAddSingleton<IDesktopHistoryContinuitySyncStatusStore, DesktopHistoryContinuitySyncStatusStore>();
         services.TryAddSingleton<IDesktopHistoryContinuitySyncCoordinator, DesktopHistoryContinuitySyncCoordinator>();
     }
 
