@@ -6,6 +6,7 @@ using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
 
 namespace GlucoDesk.Desktop.ViewModels.Main;
 
@@ -30,6 +31,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private bool _isSettingsSelected;
 
     /// <summary>
+    /// Gets the history continuity synchronization status ViewModel.
+    /// </summary>
+    public DesktopHistoryContinuitySyncStatusViewModel HistoryContinuitySyncStatus { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
     /// </summary>
     /// <param name="dashboard">The dashboard view model.</param>
@@ -37,24 +43,28 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     /// <param name="settings">The settings view model.</param>
     /// <param name="backgroundSyncStatus">The background sync status view model.</param>
     /// <param name="diary">The diary view model.</param>
+    /// <param name="historyContinuitySyncStatus">The history continuity synchronization status ViewModel.</param>
     public MainWindowViewModel(
         DashboardViewModel dashboard,
         AccountViewModel account,
         SettingsViewModel settings,
         BackgroundSyncStatusViewModel backgroundSyncStatus,
-        DiaryViewModel diary)
+        DiaryViewModel diary,
+        DesktopHistoryContinuitySyncStatusViewModel historyContinuitySyncStatus)
     {
         ArgumentNullException.ThrowIfNull(dashboard);
         ArgumentNullException.ThrowIfNull(account);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(backgroundSyncStatus);
         ArgumentNullException.ThrowIfNull(diary);
+        ArgumentNullException.ThrowIfNull(historyContinuitySyncStatus);
 
         Dashboard = dashboard;
         Account = account;
         Settings = settings;
         BackgroundSyncStatus = backgroundSyncStatus;
         Diary = diary;
+        HistoryContinuitySyncStatus = historyContinuitySyncStatus;
 
         SelectSection(Dashboard);
     }

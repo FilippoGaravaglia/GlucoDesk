@@ -1,36 +1,42 @@
+using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
 using GlucoDesk.Application.Cgm.Dashboard.Requests;
 using GlucoDesk.Application.Cgm.Dashboard.Results;
+using GlucoDesk.Application.Cgm.Diary.Exports.Requests;
+using GlucoDesk.Application.Cgm.Diary.Exports.Results;
+using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.Requests;
+using GlucoDesk.Application.Cgm.Diary.Results;
+using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
+using GlucoDesk.Application.Cgm.History.Continuity.Enums;
 using GlucoDesk.Application.Cgm.Providers.Metadata;
 using GlucoDesk.Application.Cgm.Readings.Requests;
 using GlucoDesk.Application.Cgm.Readings.Results;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
+using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
+using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Results;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
+using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
+using GlucoDesk.Desktop.Common.Dispatching.Abstractions;
+using GlucoDesk.Desktop.Diary.Results;
+using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Account;
+using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
+using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.ViewModels.Settings;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
-using GlucoDesk.Infrastructure.Cgm.DexcomShare.Readings;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
-using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
-using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
-using GlucoDesk.Desktop.ViewModels.BackgroundSync;
-using GlucoDesk.Application.Cgm.Diary.Exports.Requests;
-using GlucoDesk.Application.Cgm.Diary.Exports.Results;
-using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
-using GlucoDesk.Desktop.Diary.Results;
-using GlucoDesk.Desktop.Diary.Services.Abstractions;
-using GlucoDesk.Desktop.ViewModels.Diary;
-using GlucoDesk.Application.Cgm.Diary.Requests;
-using GlucoDesk.Application.Cgm.Diary.Results;
-using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.Readings;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Main;
 
@@ -39,7 +45,7 @@ public sealed class MainWindowViewModelTests
     [Fact]
     public void Constructor_ShouldSelectDashboardByDefault()
     {
-        var viewModel = CreateViewModel();
+    var viewModel = CreateViewModel();
 
         Assert.True(viewModel.IsDashboardSelected);
         Assert.False(viewModel.IsAccountSelected);
@@ -89,28 +95,6 @@ public sealed class MainWindowViewModelTests
 
     #region Helpers
 
-    /// <summary>
-    /// Creates a background sync status view model for navigation tests.
-    /// </summary>
-    /// <returns>The background sync status view model.</returns>
-    private static BackgroundSyncStatusViewModel CreateBackgroundSyncStatusViewModel()
-    {
-        return new BackgroundSyncStatusViewModel(
-            new BackgroundSyncStateService(),
-            new ImmediateBackgroundSyncUiDispatcher());
-    }
-    
-    private sealed class ImmediateBackgroundSyncUiDispatcher : IBackgroundSyncUiDispatcher
-    {
-        /// <inheritdoc />
-        public void Post(Action action)
-        {
-            ArgumentNullException.ThrowIfNull(action);
-    
-            action();
-        }
-    }
-
     private static readonly DateTimeOffset FixedNow = new(2026, 6, 7, 10, 0, 0, TimeSpan.Zero);
 
     /// <summary>
@@ -131,8 +115,95 @@ public sealed class MainWindowViewModelTests
                 new FakeDexcomShareClient()),
             new SettingsViewModel(settingsService),
             CreateBackgroundSyncStatusViewModel(),
-            CreateDiaryViewModel());
+            CreateDiaryViewModel(),
+            CreateHistoryContinuitySyncStatusViewModel());
     }
+
+    /// <summary>
+    /// Creates a background sync status view model for navigation tests.
+    /// </summary>
+    /// <returns>The background sync status view model.</returns>
+    private static BackgroundSyncStatusViewModel CreateBackgroundSyncStatusViewModel()
+    {
+        return new BackgroundSyncStatusViewModel(
+            new BackgroundSyncStateService(),
+            new ImmediateBackgroundSyncUiDispatcher());
+    }
+
+    /// <summary>
+    /// Creates a diary view model for navigation tests.
+    /// </summary>
+    /// <returns>The diary view model.</returns>
+    private static DiaryViewModel CreateDiaryViewModel()
+    {
+        return new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
+            new FakeGlycemicDiaryExcelExportService(),
+            new FakeGlycemicDiaryPdfExportService(),
+            new FakeDiaryExportFileSaveService(),
+            TimeProvider.System);
+    }
+
+    /// <summary>
+    /// Creates a history continuity synchronization status ViewModel for navigation tests.
+    /// </summary>
+    /// <returns>The history continuity synchronization status ViewModel.</returns>
+    private static DesktopHistoryContinuitySyncStatusViewModel CreateHistoryContinuitySyncStatusViewModel()
+    {
+        return new DesktopHistoryContinuitySyncStatusViewModel(
+            new FakeDesktopHistoryContinuitySyncStatusStore(),
+            new ImmediateDesktopUiDispatcher());
+    }
+
+    /// <summary>
+    /// Creates a dashboard snapshot used by navigation tests.
+    /// </summary>
+    /// <returns>The dashboard snapshot.</returns>
+    private static GlucoseDashboardSnapshot CreateSnapshot()
+    {
+        return new GlucoseDashboardSnapshot(
+            CreateMetadata(),
+            CreateReading(FixedNow),
+            [
+                CreateReading(FixedNow.AddMinutes(-10)),
+                CreateReading(FixedNow.AddMinutes(-5))
+            ],
+            FixedNow,
+            FixedNow,
+            FixedNow,
+            TimeSpan.FromMinutes(15));
+    }
+
+    /// <summary>
+    /// Creates provider metadata used by navigation tests.
+    /// </summary>
+    /// <returns>The provider metadata.</returns>
+    private static CgmProviderMetadata CreateMetadata()
+    {
+        return new CgmProviderMetadata(
+            CgmProviderKind.Mock,
+            "Mock CGM Provider",
+            GlucoseDataFreshness.NearRealTime,
+            supportsLiveReadings: true,
+            supportsHistoricalReadings: true);
+    }
+
+    /// <summary>
+    /// Creates a glucose reading for the supplied timestamp.
+    /// </summary>
+    /// <param name="timestamp">The reading timestamp.</param>
+    /// <returns>The glucose reading.</returns>
+    private static GlucoseReading CreateReading(DateTimeOffset timestamp)
+    {
+        return new GlucoseReading(
+            timestamp,
+            new GlucoseValue(123, GlucoseUnit.MgDl),
+            TrendDirection.Flat,
+            CgmProviderKind.Mock,
+            GlucoseDataFreshness.NearRealTime);
+    }
+
+    #endregion
 
     private sealed class FakeGlucoseDataService : IGlucoseDataService
     {
@@ -240,28 +311,20 @@ public sealed class MainWindowViewModelTests
 
     private sealed class FakeDexcomShareClient : IDexcomShareClient
     {
-        public Task<Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>> GetLatestGlucoseValuesAsync(
-            DexcomShareOptions options,
-            int minutes,
-            int maxCount,
-            CancellationToken cancellationToken)
-        {
-            ArgumentNullException.ThrowIfNull(options);
-
-            return GetLatestGlucoseValuesAsync(
-                "fake-session",
-                minutes,
-                maxCount,
-                cancellationToken);
-        }
-
-        public void InvalidateSession()
-        {
-        }
-        
         /// <inheritdoc />
         public Task<Result<string>> AuthenticateAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(Result<string>.Success("test-session-id"));
+        }
+
+        /// <inheritdoc />
+        public Task<Result<string>> AuthenticateAsync(
+            DexcomShareOptions options,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(options);
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult(Result<string>.Success("test-session-id"));
@@ -281,127 +344,25 @@ public sealed class MainWindowViewModelTests
         }
 
         /// <inheritdoc />
-        public Task<Result<string>> AuthenticateAsync(
+        public Task<Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>> GetLatestGlucoseValuesAsync(
             DexcomShareOptions options,
+            int minutes,
+            int maxCount,
             CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-        
-            return Task.FromResult(Result<string>.Success("test-session-id"));
+            ArgumentNullException.ThrowIfNull(options);
+
+            return GetLatestGlucoseValuesAsync(
+                "fake-session",
+                minutes,
+                maxCount,
+                cancellationToken);
         }
-    }
 
-    /// <summary>
-    /// Creates a dashboard snapshot used by navigation tests.
-    /// </summary>
-    /// <returns>The dashboard snapshot.</returns>
-    private static GlucoseDashboardSnapshot CreateSnapshot()
-    {
-        return new GlucoseDashboardSnapshot(
-            CreateMetadata(),
-            CreateReading(FixedNow),
-            [
-                CreateReading(FixedNow.AddMinutes(-10)),
-                CreateReading(FixedNow.AddMinutes(-5))
-            ],
-            FixedNow,
-            FixedNow,
-            FixedNow,
-            TimeSpan.FromMinutes(15));
-    }
-
-    /// <summary>
-    /// Creates provider metadata used by navigation tests.
-    /// </summary>
-    /// <returns>The provider metadata.</returns>
-    private static CgmProviderMetadata CreateMetadata()
-    {
-        return new CgmProviderMetadata(
-            CgmProviderKind.Mock,
-            "Mock CGM Provider",
-            GlucoseDataFreshness.NearRealTime,
-            supportsLiveReadings: true,
-            supportsHistoricalReadings: true);
-    }
-
-    /// <summary>
-    /// Creates a glucose reading for the supplied timestamp.
-    /// </summary>
-    /// <param name="timestamp">The reading timestamp.</param>
-    /// <returns>The glucose reading.</returns>
-    private static GlucoseReading CreateReading(DateTimeOffset timestamp)
-    {
-        return new GlucoseReading(
-            timestamp,
-            new GlucoseValue(123, GlucoseUnit.MgDl),
-            TrendDirection.Flat,
-            CgmProviderKind.Mock,
-            GlucoseDataFreshness.NearRealTime);
-    }
-
-    private sealed class FakeGlycemicDiaryExcelExportService : IGlycemicDiaryExcelExportService
-    {
         /// <inheritdoc />
-        public Task<Result<GlycemicDiaryExportFile>> ExportAsync(
-            GlycemicDiaryExcelExportRequest request,
-            CancellationToken cancellationToken)
+        public void InvalidateSession()
         {
-            ArgumentNullException.ThrowIfNull(request);
-            cancellationToken.ThrowIfCancellationRequested();
-    
-            return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
-                new GlycemicDiaryExportFile(
-                    "diary.xlsx",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    [1, 2, 3])));
         }
-    }
-    
-    private sealed class FakeGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExportService
-    {
-        /// <inheritdoc />
-        public Task<Result<GlycemicDiaryExportFile>> ExportAsync(
-            GlycemicDiaryPdfExportRequest request,
-            CancellationToken cancellationToken)
-        {
-            ArgumentNullException.ThrowIfNull(request);
-            cancellationToken.ThrowIfCancellationRequested();
-    
-            return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
-                new GlycemicDiaryExportFile(
-                    "diary.pdf",
-                    "application/pdf",
-                    [1, 2, 3])));
-        }
-    }
-    
-    private sealed class FakeDiaryExportFileSaveService : IDiaryExportFileSaveService
-    {
-        /// <inheritdoc />
-        public Task<Result<DiaryExportSaveResult>> SaveAsync(
-            GlycemicDiaryExportFile file,
-            CancellationToken cancellationToken)
-        {
-            ArgumentNullException.ThrowIfNull(file);
-            cancellationToken.ThrowIfCancellationRequested();
-    
-            return Task.FromResult(Result<DiaryExportSaveResult>.Success(
-                DiaryExportSaveResult.Saved(file.FileName)));
-        }
-    }
-
-    /// <summary>
-    /// Creates a diary view model for navigation tests.
-    /// </summary>
-    /// <returns>The diary view model.</returns>
-    private static DiaryViewModel CreateDiaryViewModel()
-    {
-        return new DiaryViewModel(
-            new FakeGlycemicDiaryService(),
-            new FakeGlycemicDiaryExcelExportService(),
-            new FakeGlycemicDiaryPdfExportService(),
-            new FakeDiaryExportFileSaveService(),
-            TimeProvider.System);
     }
 
     private sealed class FakeGlycemicDiaryService : IGlycemicDiaryService
@@ -418,5 +379,129 @@ public sealed class MainWindowViewModelTests
         }
     }
 
-    #endregion
+    private sealed class FakeGlycemicDiaryExcelExportService : IGlycemicDiaryExcelExportService
+    {
+        /// <inheritdoc />
+        public Task<Result<GlycemicDiaryExportFile>> ExportAsync(
+            GlycemicDiaryExcelExportRequest request,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
+                new GlycemicDiaryExportFile(
+                    "diary.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    [1, 2, 3])));
+        }
+    }
+
+    private sealed class FakeGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExportService
+    {
+        /// <inheritdoc />
+        public Task<Result<GlycemicDiaryExportFile>> ExportAsync(
+            GlycemicDiaryPdfExportRequest request,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
+                new GlycemicDiaryExportFile(
+                    "diary.pdf",
+                    "application/pdf",
+                    [1, 2, 3])));
+        }
+    }
+
+    private sealed class FakeDiaryExportFileSaveService : IDiaryExportFileSaveService
+    {
+        /// <inheritdoc />
+        public Task<Result<DiaryExportSaveResult>> SaveAsync(
+            GlycemicDiaryExportFile file,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(file);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(Result<DiaryExportSaveResult>.Success(
+                DiaryExportSaveResult.Saved(file.FileName)));
+        }
+    }
+
+    private sealed class ImmediateBackgroundSyncUiDispatcher : IBackgroundSyncUiDispatcher
+    {
+        /// <inheritdoc />
+        public void Post(Action action)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+
+            action();
+        }
+    }
+
+    private sealed class ImmediateDesktopUiDispatcher : IDesktopUiDispatcher
+    {
+        /// <inheritdoc />
+        public void Post(Action action)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+
+            action();
+        }
+    }
+
+    private sealed class FakeDesktopHistoryContinuitySyncStatusStore : IDesktopHistoryContinuitySyncStatusStore
+    {
+        public event EventHandler<DesktopHistoryContinuitySyncStatusSnapshot>? StatusChanged
+        {
+            add
+            {
+            }
+    
+            remove
+            {
+            }
+        }
+    
+        public DesktopHistoryContinuitySyncStatusSnapshot Current { get; private set; } =
+            DesktopHistoryContinuitySyncStatusSnapshot.Idle;
+    
+        /// <inheritdoc />
+        public void MarkRunning(CgmHistoryContinuitySyncTrigger trigger)
+        {
+            throw new NotSupportedException();
+        }
+    
+        /// <inheritdoc />
+        public void MarkSucceeded(
+            CgmHistoryContinuitySyncTrigger trigger,
+            DesktopHistoryContinuitySyncRunResult runResult)
+        {
+            throw new NotSupportedException();
+        }
+    
+        /// <inheritdoc />
+        public void MarkSkipped(
+            CgmHistoryContinuitySyncTrigger trigger,
+            string message)
+        {
+            throw new NotSupportedException();
+        }
+    
+        /// <inheritdoc />
+        public void MarkFailed(
+            CgmHistoryContinuitySyncTrigger trigger,
+            Error error)
+        {
+            throw new NotSupportedException();
+        }
+    
+        /// <inheritdoc />
+        public void MarkCanceled(CgmHistoryContinuitySyncTrigger trigger)
+        {
+            throw new NotSupportedException();
+        }
+    }
 }

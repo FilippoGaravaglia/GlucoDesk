@@ -1,0 +1,105 @@
+<UserControl
+    x:Class="GlucoDesk.Desktop.Views.Cgm.History.Continuity.HistoryContinuitySyncStatusCard"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Border
+        Padding="12"
+        CornerRadius="14"
+        Background="#0F172A"
+        BorderBrush="#1E293B"
+        BorderThickness="1">
+
+        <StackPanel Spacing="8">
+
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="2">
+                    <TextBlock
+                        Text="History continuity"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Foreground="#E5E7EB" />
+
+                    <TextBlock
+                        Text="{Binding StateText}"
+                        FontSize="12"
+                        Foreground="#94A3B8" />
+                </StackPanel>
+
+                <Border
+                    Grid.Column="1"
+                    MinHeight="26"
+                    Padding="10,0"
+                    CornerRadius="999"
+                    Background="#111827"
+                    BorderBrush="#334155"
+                    BorderThickness="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center">
+
+                    <TextBlock
+                        Text="{Binding TriggerText}"
+                        FontSize="11"
+                        LineHeight="14"
+                        Foreground="#CBD5E1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        TextAlignment="Center" />
+                </Border>
+            </Grid>
+
+            <TextBlock
+                Text="{Binding Message}"
+                FontSize="12"
+                Foreground="#CBD5E1"
+                TextWrapping="Wrap" />
+
+            <StackPanel
+                Spacing="4"
+                IsVisible="{Binding HasLastSuccessfulSync}">
+
+                <TextBlock
+                    Text="Last successful sync"
+                    FontSize="11"
+                    Foreground="#64748B" />
+
+                <TextBlock
+                    Text="{Binding LastSuccessfulSyncAtText}"
+                    FontSize="12"
+                    Foreground="#E5E7EB" />
+            </StackPanel>
+
+            <StackPanel
+                Spacing="4"
+                IsVisible="{Binding HasReadingSummary}">
+
+                <TextBlock
+                    Text="Readings"
+                    FontSize="11"
+                    Foreground="#64748B" />
+
+                <TextBlock
+                    Text="{Binding ReadingSummaryText}"
+                    FontSize="12"
+                    Foreground="#CBD5E1"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Border
+                Padding="8"
+                CornerRadius="10"
+                Background="#450A0A"
+                BorderBrush="#7F1D1D"
+                BorderThickness="1"
+                IsVisible="{Binding HasError}">
+
+                <TextBlock
+                    Text="{Binding ErrorText}"
+                    FontSize="12"
+                    Foreground="#FCA5A5"
+                    TextWrapping="Wrap" />
+            </Border>
+
+        </StackPanel>
+    </Border>
+</UserControl>
