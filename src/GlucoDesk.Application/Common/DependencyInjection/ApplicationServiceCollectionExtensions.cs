@@ -1,23 +1,24 @@
+using GlucoDesk.Application.Cgm.Backfill.Options;
+using GlucoDesk.Application.Cgm.Backfill.Services;
+using GlucoDesk.Application.Cgm.Backfill.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.DependencyInjection;
 using GlucoDesk.Application.Cgm.History.Analytics.Services;
 using GlucoDesk.Application.Cgm.History.Analytics.Services.Abstractions;
+using GlucoDesk.Application.Cgm.History.Continuity.DependencyInjection;
+using GlucoDesk.Application.Cgm.History.Continuity.Services;
+using GlucoDesk.Application.Cgm.History.Continuity.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Services;
 using GlucoDesk.Application.Cgm.History.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Resolution.Abstractions;
 using GlucoDesk.Application.Cgm.Providers.Resolution.Services;
 using GlucoDesk.Application.Cgm.Services;
 using GlucoDesk.Application.Cgm.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Statistics.Services;
+using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using GlucoDesk.Application.Cgm.Statistics.Services;
-using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
-using GlucoDesk.Application.Cgm.History.Continuity.DependencyInjection;
-using GlucoDesk.Application.Cgm.Diary.DependencyInjection;
-using GlucoDesk.Application.Cgm.Backfill.Services.Abstractions;
-using GlucoDesk.Application.Cgm.Backfill.Services;
-using GlucoDesk.Application.Cgm.History.Continuity.Services;
-using GlucoDesk.Application.Cgm.History.Continuity.Services.Abstractions;
 
 namespace GlucoDesk.Application.Common.DependencyInjection;
 
@@ -36,24 +37,66 @@ public static class ApplicationServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton<TimeProvider>(TimeProvider.System);
-        services.TryAddSingleton<IApplicationSettingsChangeNotifier, ApplicationSettingsChangeNotifier>();
+        services.AddApplicationCoreServices();
+        services.AddCgmApplicationServices();
+        services.AddCgmBackfillAndContinuityServices();
 
-        services.AddScoped<IGlucoseDataService>(serviceProvider =>
-        new GlucoseDataService(
-            serviceProvider.GetRequiredService<ICgmProviderResolver>(),
-        serviceProvider.GetRequiredService<TimeProvider>()));
-        services.AddScoped<IApplicationSettingsService, ApplicationSettingsService>();
-        services.AddScoped<IGlucoseHistoryService, GlucoseHistoryService>();
-        services.AddScoped<IGlucoseHistoryAnalyticsService, GlucoseHistoryAnalyticsService>();
-        services.AddScoped<ICgmProviderResolver, CgmProviderResolver>();
-        services.TryAddScoped<IGlucoseStatisticsService, GlucoseStatisticsService>();
         services.AddGlucoseHistoryContinuity();
         services.AddGlycemicDiary();
-        services.AddScoped<ICgmBackfillHistorySyncService, CgmBackfillHistorySyncService>();
-        services.TryAddSingleton(TimeProvider.System);
-        services.AddScoped<ICgmHistoryContinuitySyncService, CgmHistoryContinuitySyncService>();
 
         return services;
     }
+
+    #region Helpers
+
+    /// <summary>
+    /// Registers shared application services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddApplicationCoreServices(this IServiceCollection services)
+    {
+        services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+        services.TryAddSingleton<IApplicationSettingsChangeNotifier, ApplicationSettingsChangeNotifier>();
+
+        services.TryAddScoped<IApplicationSettingsService, ApplicationSettingsService>();
+    }
+
+    /// <summary>
+    /// Registers CGM application services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddCgmApplicationServices(this IServiceCollection services)
+    {
+        services.TryAddScoped<ICgmProviderResolver, CgmProviderResolver>();
+
+        services.TryAddScoped<IGlucoseDataService>(serviceProvider =>
+            new GlucoseDataService(
+                serviceProvider.GetRequiredService<ICgmProviderResolver>(),
+                serviceProvider.GetRequiredService<TimeProvider>()));
+
+        services.TryAddScoped<IGlucoseHistoryService, GlucoseHistoryService>();
+        services.TryAddScoped<IGlucoseHistoryAnalyticsService, GlucoseHistoryAnalyticsService>();
+        services.TryAddScoped<IGlucoseStatisticsService, GlucoseStatisticsService>();
+    }
+
+    /// <summary>
+    /// Registers CGM backfill and history continuity application services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddCgmBackfillAndContinuityServices(this IServiceCollection services)
+    {
+        services.TryAddSingleton(CgmBackfillCapabilityOptions.Default);
+
+        services.TryAddScoped<ICgmBackfillCapabilityService, CgmBackfillCapabilityService>();
+        services.TryAddScoped<ICgmBackfillPlanService, CgmBackfillPlanService>();
+        services.TryAddScoped<ICgmBackfillPlanQueryService, CgmBackfillPlanQueryService>();
+        services.TryAddScoped<ICgmBackfillRunService, CgmBackfillRunService>();
+        services.TryAddScoped<ICgmBackfillHistoricalReadingsFetcher, CgmBackfillHistoricalReadingsFetcher>();
+        services.TryAddScoped<ICgmBackfillExecutionService, CgmBackfillExecutionService>();
+        services.TryAddScoped<ICgmBackfillHistorySyncService, CgmBackfillHistorySyncService>();
+
+        services.TryAddScoped<ICgmHistoryContinuitySyncService, CgmHistoryContinuitySyncService>();
+    }
+
+    #endregion
 }
