@@ -10,6 +10,8 @@ using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
 using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
+using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
+using GlucoDesk.Desktop.Common.Dispatching.Abstractions;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
@@ -18,8 +20,6 @@ using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.ViewModels.Settings;
 using Microsoft.Extensions.DependencyInjection;
-using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
-using GlucoDesk.Desktop.Common.Dispatching.Abstractions;
 
 namespace GlucoDesk.Desktop.Tests.Bootstrap;
 
@@ -28,83 +28,84 @@ public sealed class DesktopServiceProviderBuilderTests
     [Fact]
     public async Task BuildServiceProvider_ShouldBuildProvider_WithValidationEnabled()
     {
-        // Act
-        await using var serviceProvider = BuildProvider();
-
+    // Act
+    await using var serviceProvider = BuildProvider();
+    
+    
         // Assert
         Assert.NotNull(serviceProvider);
     }
-
+    
     [Fact]
     public async Task BuildServiceProvider_ShouldResolveDesktopSingletonServices()
     {
         // Arrange
         await using var serviceProvider = BuildProvider();
-
+    
         // Act
         var backgroundSyncLifecycleService = serviceProvider
             .GetRequiredService<IDesktopBackgroundSyncLifecycleService>();
-
+    
         var backgroundSyncUiDispatcher = serviceProvider
             .GetRequiredService<IBackgroundSyncUiDispatcher>();
-
+    
         var historyContinuityCoordinator = serviceProvider
             .GetRequiredService<IDesktopHistoryContinuitySyncCoordinator>();
-
-        var diaryExportFileSaveService = serviceProvider
-            .GetRequiredService<IDiaryExportFileSaveService>();
-
-        var backgroundSyncStatusViewModel = serviceProvider
-            .GetRequiredService<BackgroundSyncStatusViewModel>();
-        
+    
         var historyContinuityStatusStore = serviceProvider
             .GetRequiredService<IDesktopHistoryContinuitySyncStatusStore>();
-
-        var desktopUiDispatcher = serviceProvider
-            .GetRequiredService<IDesktopUiDispatcher>();
-
+    
         var historyContinuityStatusViewModel = serviceProvider
             .GetRequiredService<DesktopHistoryContinuitySyncStatusViewModel>();
-
+    
+        var desktopUiDispatcher = serviceProvider
+            .GetRequiredService<IDesktopUiDispatcher>();
+    
+        var diaryExportFileSaveService = serviceProvider
+            .GetRequiredService<IDiaryExportFileSaveService>();
+    
+        var backgroundSyncStatusViewModel = serviceProvider
+            .GetRequiredService<BackgroundSyncStatusViewModel>();
+    
         // Assert
         Assert.NotNull(backgroundSyncLifecycleService);
         Assert.NotNull(backgroundSyncUiDispatcher);
         Assert.NotNull(historyContinuityCoordinator);
+        Assert.NotNull(historyContinuityStatusStore);
+        Assert.NotNull(historyContinuityStatusViewModel);
+        Assert.NotNull(desktopUiDispatcher);
         Assert.NotNull(diaryExportFileSaveService);
         Assert.NotNull(backgroundSyncStatusViewModel);
-        Assert.NotNull(historyContinuityStatusStore);
-        Assert.NotNull(desktopUiDispatcher);
-        Assert.NotNull(historyContinuityStatusViewModel);
     }
-
+    
     [Fact]
     public async Task BuildServiceProvider_ShouldResolveApplicationScopedServices_FromScope()
     {
         // Arrange
         await using var serviceProvider = BuildProvider();
         await using var scope = serviceProvider.CreateAsyncScope();
-
+    
         var scopedProvider = scope.ServiceProvider;
-
+    
         // Act
         var applicationSettingsService = scopedProvider
             .GetRequiredService<IApplicationSettingsService>();
-
+    
         var glucoseDataService = scopedProvider
             .GetRequiredService<IGlucoseDataService>();
-
+    
         var glucoseHistoryService = scopedProvider
             .GetRequiredService<IGlucoseHistoryService>();
-
+    
         var glucoseStatisticsService = scopedProvider
             .GetRequiredService<IGlucoseStatisticsService>();
-
+    
         var cgmProviderResolver = scopedProvider
             .GetRequiredService<ICgmProviderResolver>();
-
+    
         var historyContinuitySyncService = scopedProvider
             .GetRequiredService<ICgmHistoryContinuitySyncService>();
-
+    
         // Assert
         Assert.NotNull(applicationSettingsService);
         Assert.NotNull(glucoseDataService);
@@ -113,41 +114,41 @@ public sealed class DesktopServiceProviderBuilderTests
         Assert.NotNull(cgmProviderResolver);
         Assert.NotNull(historyContinuitySyncService);
     }
-
+    
     [Fact]
     public async Task BuildServiceProvider_ShouldResolveBackfillServiceGraph_FromScope()
     {
         // Arrange
         await using var serviceProvider = BuildProvider();
         await using var scope = serviceProvider.CreateAsyncScope();
-
+    
         var scopedProvider = scope.ServiceProvider;
-
+    
         // Act
         var capabilityOptions = scopedProvider
             .GetRequiredService<CgmBackfillCapabilityOptions>();
-
+    
         var capabilityService = scopedProvider
             .GetRequiredService<ICgmBackfillCapabilityService>();
-
+    
         var planService = scopedProvider
             .GetRequiredService<ICgmBackfillPlanService>();
-
+    
         var planQueryService = scopedProvider
             .GetRequiredService<ICgmBackfillPlanQueryService>();
-
+    
         var runService = scopedProvider
             .GetRequiredService<ICgmBackfillRunService>();
-
+    
         var historicalReadingsFetcher = scopedProvider
             .GetRequiredService<ICgmBackfillHistoricalReadingsFetcher>();
-
+    
         var executionService = scopedProvider
             .GetRequiredService<ICgmBackfillExecutionService>();
-
+    
         var historySyncService = scopedProvider
             .GetRequiredService<ICgmBackfillHistorySyncService>();
-
+    
         // Assert
         Assert.NotNull(capabilityOptions);
         Assert.NotNull(capabilityService);
@@ -158,42 +159,43 @@ public sealed class DesktopServiceProviderBuilderTests
         Assert.NotNull(executionService);
         Assert.NotNull(historySyncService);
     }
-
+    
     [Fact]
     public async Task BuildServiceProvider_ShouldResolveDesktopViewModels()
     {
         // Arrange
         await using var serviceProvider = BuildProvider();
         await using var scope = serviceProvider.CreateAsyncScope();
-
+    
         var scopedProvider = scope.ServiceProvider;
-
+    
         // Act
         var mainWindowViewModel = scopedProvider
             .GetRequiredService<MainWindowViewModel>();
-
+    
         var dashboardViewModel = scopedProvider
             .GetRequiredService<DashboardViewModel>();
-
+    
         var diaryViewModel = scopedProvider
             .GetRequiredService<DiaryViewModel>();
-
+    
         var accountViewModel = scopedProvider
             .GetRequiredService<AccountViewModel>();
-
+    
         var settingsViewModel = scopedProvider
             .GetRequiredService<SettingsViewModel>();
-
+    
         // Assert
         Assert.NotNull(mainWindowViewModel);
+        Assert.NotNull(mainWindowViewModel.HistoryContinuitySyncStatus);
         Assert.NotNull(dashboardViewModel);
         Assert.NotNull(diaryViewModel);
         Assert.NotNull(accountViewModel);
         Assert.NotNull(settingsViewModel);
     }
-
+    
     #region Helpers
-
+    
     /// <summary>
     /// Builds the desktop service provider using the real production composition root.
     /// </summary>
@@ -202,6 +204,7 @@ public sealed class DesktopServiceProviderBuilderTests
     {
         return DesktopServiceProviderBuilder.BuildServiceProvider();
     }
-
+    
     #endregion
+
 }
