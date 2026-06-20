@@ -1,28 +1,31 @@
 using GlucoDesk.Application.Cgm.BackgroundSync.DependencyInjection;
 using GlucoDesk.Application.Common.DependencyInjection;
+using GlucoDesk.Desktop.BackgroundSync.Dispatching;
+using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
 using GlucoDesk.Desktop.BackgroundSync.Options;
 using GlucoDesk.Desktop.BackgroundSync.Services;
 using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Services;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
+using GlucoDesk.Desktop.Diary.Services;
+using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Account;
+using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
+using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.ViewModels.Settings;
 using GlucoDesk.Desktop.Views.Main;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.Diary.Excel.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.History.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.WidgetState.DependencyInjection;
 using GlucoDesk.Infrastructure.Settings.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using GlucoDesk.Desktop.BackgroundSync.Dispatching;
-using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
-using GlucoDesk.Desktop.ViewModels.BackgroundSync;
-using GlucoDesk.Infrastructure.Cgm.Diary.Excel.DependencyInjection;
-using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.DependencyInjection;
-using GlucoDesk.Desktop.Diary.Services;
-using GlucoDesk.Desktop.Diary.Services.Abstractions;
-using GlucoDesk.Desktop.ViewModels.Diary;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -39,6 +42,8 @@ internal static class DesktopServiceProviderBuilder
     {
         var services = new ServiceCollection();
 
+        services.AddLogging();
+
         services.AddGlucoDeskApplication();
         services.AddDesktopCgmProviders();
         services.AddDexcomShareCgmProvider();
@@ -49,6 +54,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddJsonWidgetStateStore();
         services.AddCgmBackgroundSync();
         services.AddDesktopBackgroundSyncLifecycle();
+        services.AddDesktopHistoryContinuitySync();
         services.AddDesktopShell();
 
         return services.BuildServiceProvider(
@@ -71,6 +77,15 @@ internal static class DesktopServiceProviderBuilder
         services.AddSingleton<IBackgroundSyncUiDispatcher, AvaloniaBackgroundSyncUiDispatcher>();
         services.AddSingleton<IDesktopBackgroundSyncLifecycleService, DesktopBackgroundSyncLifecycleService>();
         services.AddSingleton<BackgroundSyncStatusViewModel>();
+    }
+
+    /// <summary>
+    /// Registers desktop history continuity synchronization services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddDesktopHistoryContinuitySync(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IDesktopHistoryContinuitySyncCoordinator, DesktopHistoryContinuitySyncCoordinator>();
     }
 
     /// <summary>

@@ -2,8 +2,10 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
 using GlucoDesk.Desktop.Views.Main;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace GlucoDesk.Desktop;
 
@@ -30,10 +32,10 @@ public partial class App : Avalonia.Application
                 .ServiceProvider
                 .GetRequiredService<MainWindow>();
 
-            desktop.MainWindow.Opened += async (_, _) =>
+            desktop.MainWindow.Opened += (_, _) =>
             {
-                await StartBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider)
-                    .ConfigureAwait(false);
+                _ = StartBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider);
+                _ = RunStartupHistoryContinuitySyncSafelyAsync(_applicationScope.ServiceProvider);
             };
 
             desktop.Exit += async (_, _) =>
@@ -54,8 +56,11 @@ public partial class App : Avalonia.Application
     /// Starts the desktop background sync lifecycle without breaking application startup.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private static async Task StartBackgroundSyncSafelyAsync(IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
         try
         {
             var lifecycleService = serviceProvider
@@ -70,9 +75,44 @@ public partial class App : Avalonia.Application
                 .StartAsync(CancellationToken.None)
                 .ConfigureAwait(false);
         }
-        catch
+        catch (Exception exception)
         {
-            // Background sync startup must never break the desktop app startup.
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while starting the desktop background sync lifecycle.");
+        }
+    }
+
+    /// <summary>
+    /// Runs startup history continuity synchronization without blocking the Avalonia UI startup flow.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task RunStartupHistoryContinuitySyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var coordinator = serviceProvider
+                .GetService<IDesktopHistoryContinuitySyncCoordinator>();
+
+            if (coordinator is null)
+            {
+                return;
+            }
+
+            _ = await coordinator
+                .RunStartupSyncAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while running startup history continuity synchronization.");
         }
     }
 
@@ -80,8 +120,11 @@ public partial class App : Avalonia.Application
     /// Stops the desktop background sync lifecycle without breaking application shutdown.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private static async Task StopBackgroundSyncSafelyAsync(IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
         try
         {
             var lifecycleService = serviceProvider
@@ -96,9 +139,38 @@ public partial class App : Avalonia.Application
                 .StopAsync(CancellationToken.None)
                 .ConfigureAwait(false);
         }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while stopping the desktop background sync lifecycle.");
+        }
+    }
+
+    /// <summary>
+    /// Logs an application startup or shutdown error when logging services are available.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <param name="exception">The exception to log.</param>
+    /// <param name="message">The log message.</param>
+    private static void LogSafely(
+        IServiceProvider serviceProvider,
+        Exception exception,
+        string message)
+    {
+        try
+        {
+            var logger = serviceProvider.GetService<ILogger<App>>();
+
+            logger?.LogError(
+                exception,
+                "{Message}",
+                message);
+        }
         catch
         {
-            // Background sync shutdown must never block or break the desktop app shutdown.
+            // Logging must never break application startup or shutdown.
         }
     }
 
