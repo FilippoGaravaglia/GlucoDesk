@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-SOURCE_ICON="${1:-$PROJECT_ROOT/src/GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png}"
+SOURCE_ICON="${1:-$PROJECT_ROOT/src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png}"
 OUTPUT_ICNS="${2:-$PROJECT_ROOT/artifacts/branding/GlucoDesk.icns}"
 
 ICONSET_DIR="$PROJECT_ROOT/artifacts/branding/GlucoDesk.iconset"
@@ -11,7 +11,11 @@ NORMALIZED_ICON="$PROJECT_ROOT/artifacts/branding/GlucoDesk-source-1024.png"
 
 if [[ ! -f "$SOURCE_ICON" ]]; then
   echo "Source icon not found: $SOURCE_ICON"
-  echo "Provide a PNG source icon, preferably 1024x1024."
+  echo
+  echo "Expected source icon:"
+  echo "src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png"
+  echo
+  echo "The source icon should be a square PNG, preferably 1024x1024."
   exit 1
 fi
 
@@ -19,12 +23,12 @@ mkdir -p "$(dirname "$OUTPUT_ICNS")"
 rm -rf "$ICONSET_DIR"
 mkdir -p "$ICONSET_DIR"
 
-sips \
-  --resampleHeightWidthMax 900 \
-  --padToHeightWidth 1024 1024 \
-  --padColor FFFFFF \
+python3 "$PROJECT_ROOT/scripts/prepare-app-icon-source.py" \
   "$SOURCE_ICON" \
-  --out "$NORMALIZED_ICON" >/dev/null
+  "$NORMALIZED_ICON" \
+  --canvas-size 1024 \
+  --icon-size 860 \
+  --background-threshold 225
 
 sips -z 16 16 "$NORMALIZED_ICON" --out "$ICONSET_DIR/icon_16x16.png" >/dev/null
 sips -z 32 32 "$NORMALIZED_ICON" --out "$ICONSET_DIR/icon_16x16@2x.png" >/dev/null

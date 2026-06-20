@@ -46,7 +46,7 @@ mkdir -p "$APP_RESOURCES_DIR"
 mkdir -p "$RELEASES_DIR"
 
 "$PROJECT_ROOT/scripts/generate-macos-icon.sh" \
-  "$PROJECT_ROOT/src/GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png" \
+  "$PROJECT_ROOT/src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png" \
   "$ICON_PATH"
 
 dotnet clean "$SOLUTION_FILE"
