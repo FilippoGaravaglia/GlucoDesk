@@ -1,3 +1,5 @@
+using GlucoDesk.Core.Glucose.Readings;
+
 namespace GlucoDesk.Application.Cgm.Backfill.Results;
 
 /// <summary>
@@ -5,6 +7,23 @@ namespace GlucoDesk.Application.Cgm.Backfill.Results;
 /// </summary>
 public sealed record CgmBackfillFetchedGapResult
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CgmBackfillFetchedGapResult"/> class.
+    /// </summary>
+    /// <param name="gap">The planned backfill gap.</param>
+    /// <param name="readings">The readings fetched for the gap.</param>
+    public CgmBackfillFetchedGapResult(
+        CgmBackfillPlanGap gap,
+        IReadOnlyCollection<GlucoseReading> readings)
+    {
+        ArgumentNullException.ThrowIfNull(gap);
+        ArgumentNullException.ThrowIfNull(readings);
+
+        Gap = gap;
+        Readings = readings;
+        ReadingsCount = readings.Count;
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CgmBackfillFetchedGapResult"/> class.
     /// </summary>
@@ -25,6 +44,7 @@ public sealed record CgmBackfillFetchedGapResult
         }
 
         Gap = gap;
+        Readings = [];
         ReadingsCount = readingsCount;
     }
 
@@ -32,6 +52,11 @@ public sealed record CgmBackfillFetchedGapResult
     /// Gets the planned backfill gap.
     /// </summary>
     public CgmBackfillPlanGap Gap { get; }
+
+    /// <summary>
+    /// Gets the readings fetched for the gap.
+    /// </summary>
+    public IReadOnlyCollection<GlucoseReading> Readings { get; }
 
     /// <summary>
     /// Gets the number of readings fetched for the gap.
