@@ -14,6 +14,8 @@ using GlucoDesk.Application.Cgm.Statistics.Services;
 using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Continuity.DependencyInjection;
 using GlucoDesk.Application.Cgm.Diary.DependencyInjection;
+using GlucoDesk.Application.Cgm.Backfill.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Backfill.Services;
 
 namespace GlucoDesk.Application.Common.DependencyInjection;
 
@@ -46,6 +48,7 @@ public static class ApplicationServiceCollectionExtensions
         services.TryAddScoped<IGlucoseStatisticsService, GlucoseStatisticsService>();
         services.AddGlucoseHistoryContinuity();
         services.AddGlycemicDiary();
+        services.AddScoped<ICgmBackfillHistorySyncService, CgmBackfillHistorySyncService>();
 
         return services;
     }
