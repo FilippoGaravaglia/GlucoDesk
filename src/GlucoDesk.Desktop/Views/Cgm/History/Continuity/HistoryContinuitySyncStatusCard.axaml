@@ -1,7 +1,7 @@
 <UserControl
-    x:Class="GlucoDesk.Desktop.Views.Cgm.History.Continuity.HistoryContinuitySyncStatusCard"
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ x:Class="GlucoDesk.Desktop.Views.Cgm.History.Continuity.HistoryContinuitySyncStatusCard"
+ xmlns="https://github.com/avaloniaui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Border
         Padding="12"
@@ -54,6 +54,20 @@
                 Foreground="#CBD5E1"
                 TextWrapping="Wrap" />
 
+            <Button
+                Content="Sync history now"
+                Command="{Binding RunManualSyncCommand}"
+                IsEnabled="{Binding CanRunManualSync}"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                Padding="10,6"
+                FontSize="12"
+                FontWeight="SemiBold"
+                Background="#0284C7"
+                Foreground="White"
+                BorderBrush="#0284C7"
+                BorderThickness="1" />
+
             <StackPanel
                 Spacing="4"
                 IsVisible="{Binding HasLastSuccessfulSync}">
@@ -102,4 +116,5 @@
 
         </StackPanel>
     </Border>
+
 </UserControl>

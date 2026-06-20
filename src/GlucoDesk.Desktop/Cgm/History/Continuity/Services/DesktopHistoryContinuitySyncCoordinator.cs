@@ -90,6 +90,10 @@ public sealed class DesktopHistoryContinuitySyncCoordinator : IDesktopHistoryCon
         {
             var skippedResult = DesktopHistoryContinuitySyncRunResult.Skipped(request.Trigger);
 
+            _statusStore.MarkSkipped(
+                request.Trigger,
+                "History continuity synchronization skipped because another run is already in progress.");
+
             _logger.LogInformation(
                 "History continuity synchronization skipped because another run is already in progress. Trigger: {Trigger}",
                 request.Trigger);

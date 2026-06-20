@@ -1,5 +1,6 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Application.Cgm.History.Continuity.Enums;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Enums;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Results;
@@ -13,8 +14,10 @@ namespace GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
 /// </summary>
 public sealed class DesktopHistoryContinuitySyncStatusViewModel : ObservableObject, IDisposable
 {
+    private static readonly TimeSpan DefaultManualSyncLookback = TimeSpan.FromHours(24);
     private readonly IDesktopHistoryContinuitySyncStatusStore _statusStore;
     private readonly IDesktopUiDispatcher _uiDispatcher;
+    private readonly IDesktopHistoryContinuitySyncCoordinator _syncCoordinator;
 
     private bool _isDisposed;
     private DesktopHistoryContinuitySyncRunState _state;
@@ -37,21 +40,39 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModel : ObservableObje
     /// </summary>
     /// <param name="statusStore">The history continuity synchronization status store.</param>
     /// <param name="uiDispatcher">The desktop UI dispatcher.</param>
+    /// <param name="syncCoordinator">The desktop history continuity synchronization coordinator.</param>
     /// <exception cref="ArgumentNullException">Thrown when a dependency is null.</exception>
     public DesktopHistoryContinuitySyncStatusViewModel(
         IDesktopHistoryContinuitySyncStatusStore statusStore,
-        IDesktopUiDispatcher uiDispatcher)
+        IDesktopUiDispatcher uiDispatcher,
+        IDesktopHistoryContinuitySyncCoordinator syncCoordinator)
     {
         ArgumentNullException.ThrowIfNull(statusStore);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(syncCoordinator);
 
         _statusStore = statusStore;
         _uiDispatcher = uiDispatcher;
+        _syncCoordinator = syncCoordinator;
+
+        RunManualSyncCommand = new AsyncRelayCommand(
+            RunManualSyncAsync,
+            () => CanRunManualSync);
 
         ApplySnapshot(_statusStore.Current);
 
         _statusStore.StatusChanged += OnStatusChanged;
     }
+
+    /// <summary>
+    /// Gets the command used to run a manual history continuity synchronization.
+    /// </summary>
+    public IAsyncRelayCommand RunManualSyncCommand { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether a manual history continuity synchronization can be started.
+    /// </summary>
+    public bool CanRunManualSync => !IsRunning;
 
     /// <summary>
     /// Gets the current synchronization state.
@@ -228,6 +249,20 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModel : ObservableObje
                             snapshot.StoredReadingsCount > 0;
         HasLastSuccessfulSync = snapshot.LastSuccessfulSyncAtUtc is not null;
         HasNewReadings = snapshot.HasNewReadings;
+
+        OnPropertyChanged(nameof(CanRunManualSync));
+        RunManualSyncCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Runs a manual history continuity synchronization.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private async Task RunManualSyncAsync()
+    {
+        await _syncCoordinator
+            .RunManualSyncAsync(DefaultManualSyncLookback, CancellationToken.None)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -326,4 +361,5 @@ public sealed class DesktopHistoryContinuitySyncStatusViewModel : ObservableObje
     }
 
     #endregion
+
 }
