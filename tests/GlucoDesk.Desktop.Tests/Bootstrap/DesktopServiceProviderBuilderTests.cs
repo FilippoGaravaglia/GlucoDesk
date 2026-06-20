@@ -18,6 +18,8 @@ using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.ViewModels.Settings;
 using Microsoft.Extensions.DependencyInjection;
+using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
+using GlucoDesk.Desktop.Common.Dispatching.Abstractions;
 
 namespace GlucoDesk.Desktop.Tests.Bootstrap;
 
@@ -58,6 +60,12 @@ public sealed class DesktopServiceProviderBuilderTests
         var historyContinuityStatusStore = serviceProvider
             .GetRequiredService<IDesktopHistoryContinuitySyncStatusStore>();
 
+        var desktopUiDispatcher = serviceProvider
+            .GetRequiredService<IDesktopUiDispatcher>();
+
+        var historyContinuityStatusViewModel = serviceProvider
+            .GetRequiredService<DesktopHistoryContinuitySyncStatusViewModel>();
+
         // Assert
         Assert.NotNull(backgroundSyncLifecycleService);
         Assert.NotNull(backgroundSyncUiDispatcher);
@@ -65,6 +73,8 @@ public sealed class DesktopServiceProviderBuilderTests
         Assert.NotNull(diaryExportFileSaveService);
         Assert.NotNull(backgroundSyncStatusViewModel);
         Assert.NotNull(historyContinuityStatusStore);
+        Assert.NotNull(desktopUiDispatcher);
+        Assert.NotNull(historyContinuityStatusViewModel);
     }
 
     [Fact]
