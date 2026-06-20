@@ -20,6 +20,9 @@ using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 using GlucoDesk.Infrastructure.Cgm.Diary.Excel.DependencyInjection;
 using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.DependencyInjection;
+using GlucoDesk.Desktop.Diary.Services;
+using GlucoDesk.Desktop.Diary.Services.Abstractions;
+using GlucoDesk.Desktop.ViewModels.Diary;
 
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -81,8 +84,10 @@ internal static class DesktopServiceProviderBuilder
         services.AddTransient<MainWindow>();
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
+        services.AddTransient<DiaryViewModel>();
         services.AddTransient<AccountViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddSingleton<IDiaryExportFileSaveService, AvaloniaDiaryExportFileSaveService>();
     }
 
     #endregion

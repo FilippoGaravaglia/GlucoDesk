@@ -6,6 +6,8 @@
     xmlns:accountViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Account"
     xmlns:dashboardViews="clr-namespace:GlucoDesk.Desktop.Views.Dashboard"
     xmlns:dashboardViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Dashboard"
+    xmlns:diaryViews="clr-namespace:GlucoDesk.Desktop.Views.Diary"
+    xmlns:diaryViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Diary"
     xmlns:settingsViews="clr-namespace:GlucoDesk.Desktop.Views.Settings"
     xmlns:settingsViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Settings"
     Title="GlucoDesk"
@@ -18,6 +20,10 @@
   <Window.DataTemplates>
     <DataTemplate DataType="{x:Type dashboardViewModels:DashboardViewModel}">
       <dashboardViews:DashboardView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type diaryViewModels:DiaryViewModel}">
+      <diaryViews:DiaryView />
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type accountViewModels:AccountViewModel}">
@@ -60,6 +66,13 @@
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
                     Command="{Binding ShowDashboardCommand}" />
+
+            <Button Content="Diary"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsDiarySelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowDiaryCommand}" />
 
             <Button Content="Account"
                     Classes="nav-button"

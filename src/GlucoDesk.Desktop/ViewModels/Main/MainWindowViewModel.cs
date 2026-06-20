@@ -1,10 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Desktop.ViewModels.Account;
+using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
+using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Settings;
-using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 
 namespace GlucoDesk.Desktop.ViewModels.Main;
 
@@ -20,15 +21,13 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private bool _isDashboardSelected;
 
     [ObservableProperty]
+    private bool _isDiarySelected;
+
+    [ObservableProperty]
     private bool _isAccountSelected;
 
     [ObservableProperty]
     private bool _isSettingsSelected;
-
-    /// <summary>
-    /// Gets the background sync status view model.
-    /// </summary>
-    public BackgroundSyncStatusViewModel BackgroundSyncStatus { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
@@ -37,21 +36,25 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     /// <param name="account">The account view model.</param>
     /// <param name="settings">The settings view model.</param>
     /// <param name="backgroundSyncStatus">The background sync status view model.</param>
+    /// <param name="diary">The diary view model.</param>
     public MainWindowViewModel(
         DashboardViewModel dashboard,
         AccountViewModel account,
         SettingsViewModel settings,
-        BackgroundSyncStatusViewModel backgroundSyncStatus)
+        BackgroundSyncStatusViewModel backgroundSyncStatus,
+        DiaryViewModel diary)
     {
         ArgumentNullException.ThrowIfNull(dashboard);
         ArgumentNullException.ThrowIfNull(account);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(backgroundSyncStatus);
+        ArgumentNullException.ThrowIfNull(diary);
 
         Dashboard = dashboard;
         Account = account;
         Settings = settings;
         BackgroundSyncStatus = backgroundSyncStatus;
+        Diary = diary;
 
         SelectSection(Dashboard);
     }
@@ -72,6 +75,16 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public SettingsViewModel Settings { get; }
 
     /// <summary>
+    /// Gets the background sync status view model.
+    /// </summary>
+    public BackgroundSyncStatusViewModel BackgroundSyncStatus { get; }
+
+    /// <summary>
+    /// Gets the diary view model.
+    /// </summary>
+    public DiaryViewModel Diary { get; }
+
+    /// <summary>
     /// Selects the dashboard section.
     /// </summary>
     [RelayCommand]
@@ -81,8 +94,18 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Selects the diary section.
+    /// </summary>
+    [RelayCommand]
+    private void ShowDiary()
+    {
+        SelectSection(Diary);
+    }
+
+    /// <summary>
     /// Selects the account section.
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
     [RelayCommand]
     private async Task ShowAccountAsync(CancellationToken cancellationToken)
     {
@@ -113,6 +136,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
         CurrentContent = selectedContent;
         IsDashboardSelected = ReferenceEquals(selectedContent, Dashboard);
+        IsDiarySelected = ReferenceEquals(selectedContent, Diary);
         IsAccountSelected = ReferenceEquals(selectedContent, Account);
         IsSettingsSelected = ReferenceEquals(selectedContent, Settings);
     }
