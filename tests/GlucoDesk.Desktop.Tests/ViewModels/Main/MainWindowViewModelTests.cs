@@ -22,6 +22,12 @@ using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
 using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
 using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
+using GlucoDesk.Application.Cgm.Diary.Exports.Requests;
+using GlucoDesk.Application.Cgm.Diary.Exports.Results;
+using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
+using GlucoDesk.Desktop.Diary.Results;
+using GlucoDesk.Desktop.Diary.Services.Abstractions;
+using GlucoDesk.Desktop.ViewModels.Diary;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Main;
 
@@ -121,7 +127,8 @@ public sealed class MainWindowViewModelTests
                 new FakeDexcomShareCredentialStore(),
                 new FakeDexcomShareClient()),
             new SettingsViewModel(settingsService),
-            CreateBackgroundSyncStatusViewModel());
+            CreateBackgroundSyncStatusViewModel(),
+            CreateDiaryViewModel());
     }
 
     private sealed class FakeGlucoseDataService : IGlucoseDataService
@@ -327,6 +334,70 @@ public sealed class MainWindowViewModelTests
             TrendDirection.Flat,
             CgmProviderKind.Mock,
             GlucoseDataFreshness.NearRealTime);
+    }
+
+    private sealed class FakeGlycemicDiaryExcelExportService : IGlycemicDiaryExcelExportService
+    {
+        /// <inheritdoc />
+        public Task<Result<GlycemicDiaryExportFile>> ExportAsync(
+            GlycemicDiaryExcelExportRequest request,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
+    
+            return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
+                new GlycemicDiaryExportFile(
+                    "diary.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    [1, 2, 3])));
+        }
+    }
+    
+    private sealed class FakeGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExportService
+    {
+        /// <inheritdoc />
+        public Task<Result<GlycemicDiaryExportFile>> ExportAsync(
+            GlycemicDiaryPdfExportRequest request,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
+    
+            return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
+                new GlycemicDiaryExportFile(
+                    "diary.pdf",
+                    "application/pdf",
+                    [1, 2, 3])));
+        }
+    }
+    
+    private sealed class FakeDiaryExportFileSaveService : IDiaryExportFileSaveService
+    {
+        /// <inheritdoc />
+        public Task<Result<DiaryExportSaveResult>> SaveAsync(
+            GlycemicDiaryExportFile file,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(file);
+            cancellationToken.ThrowIfCancellationRequested();
+    
+            return Task.FromResult(Result<DiaryExportSaveResult>.Success(
+                DiaryExportSaveResult.Saved(file.FileName)));
+        }
+    }
+
+    /// <summary>
+    /// Creates a diary view model for navigation tests.
+    /// </summary>
+    /// <returns>The diary view model.</returns>
+    private static DiaryViewModel CreateDiaryViewModel()
+    {
+        return new DiaryViewModel(
+            new FakeGlycemicDiaryExcelExportService(),
+            new FakeGlycemicDiaryPdfExportService(),
+            new FakeDiaryExportFileSaveService(),
+            TimeProvider.System);
     }
 
     #endregion

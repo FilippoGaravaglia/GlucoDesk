@@ -8,6 +8,7 @@ using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.Options;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Reflection;
 
 namespace GlucoDesk.Infrastructure.Cgm.Diary.Pdf.Services;
 
@@ -18,6 +19,22 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 {
     private readonly IGlycemicDiaryService _diaryService;
     private readonly GlycemicDiaryPdfExportOptions _options;
+    private const string BrandBlue = "#0F7BFF";
+    private const string BrandBlueDark = "#0A4FA3";
+    private const string BrandBlueSoft = "#EAF4FF";
+    private const string BrandBorder = "#B9DAFF";
+    private const string SuccessSoft = "#EAFBF1";
+    private const string WarningSoft = "#FFF6E5";
+    private const string NeutralSoft = "#F7F9FC";
+    private const string TextPrimary = "#14213D";
+    private const string TextSecondary = "#5C6B82";
+    private const string TextMuted = "#8A96A8";
+    private const string White = "#FFFFFF";
+    private const string SuccessBorder = "#B8E6C9";
+    private const string SuccessText = "#137333";
+    private const string WarningText = "#B26A00";
+    private const string WarningBorder = "#F1D18A";
+    private static readonly byte[]? BrandLogoBytes = LoadBrandLogoBytes();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QuestPdfGlycemicDiaryPdfExportService"/> class.
@@ -97,24 +114,87 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         IContainer container,
         GlycemicDiaryReport report)
     {
-        container.Column(column =>
+        container
+            .Background(BrandBlueSoft)
+            .Border(1)
+            .BorderColor(BrandBorder)
+            .CornerRadius(12)
+            .Padding(16)
+            .Row(row =>
+            {
+                row.ConstantItem(150)
+                    .Height(42)
+                    .Element(ComposeLogo);
+
+                row.RelativeItem()
+                    .PaddingLeft(16)
+                    .Column(column =>
+                    {
+                        column.Spacing(3);
+
+                        column.Item().Text("Glycemic diary")
+                            .FontSize(22)
+                            .SemiBold()
+                            .FontColor(BrandBlueDark);
+
+                        column.Item().Text($"{FormatDate(report.PeriodStartsAt)} - {FormatDate(report.PeriodEndsAt)}")
+                            .FontSize(10)
+                            .FontColor(TextSecondary);
+
+                        column.Item().Text("Local-first glucose summary")
+                            .FontSize(9)
+                            .FontColor(TextMuted);
+                    });
+            });
+    }
+
+    /// <summary>
+    /// Composes the GlucoDesk logo area.
+    /// </summary>
+    /// <param name="container">The target container.</param>
+    private static void ComposeLogo(IContainer container)
+    {
+        if (BrandLogoBytes is null)
         {
-            column.Spacing(4);
-
-            column.Item().Text(_options.ApplicationName)
+            container.Text("GlucoDesk")
                 .FontSize(20)
-                .SemiBold();
+                .SemiBold()
+                .FontColor(BrandBlueDark);
 
-            column.Item().Text("Glycemic diary")
-                .FontSize(14)
-                .FontColor(Colors.Grey.Darken2);
+            return;
+        }
 
-            column.Item().Text($"{FormatDate(report.PeriodStartsAt)} - {FormatDate(report.PeriodEndsAt)}")
-                .FontSize(10)
-                .FontColor(Colors.Grey.Darken1);
+        container.Image(BrandLogoBytes).FitArea();
+    }
 
-            column.Item().PaddingTop(8).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
-        });
+    /// <summary>
+    /// Applies the standard PDF card style.
+    /// </summary>
+    /// <param name="container">The target container.</param>
+    /// <returns>The styled container.</returns>
+    private static IContainer Card(IContainer container)
+    {
+        return container
+            .Background(White)
+            .Border(1)
+            .BorderColor(BrandBorder)
+            .CornerRadius(12)
+            .Padding(14);
+    }
+
+    /// <summary>
+    /// Applies the standard PDF metric box style.
+    /// </summary>
+    /// <param name="container">The target container.</param>
+    /// <returns>The styled container.</returns>
+    private static IContainer MetricBox(IContainer container)
+    {
+        return container
+            .Background(NeutralSoft)
+            .Border(1)
+            .BorderColor(BrandBorder)
+            .CornerRadius(8)
+            .Padding(10);
     }
 
     /// <summary>
@@ -128,12 +208,20 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     {
         container.Column(column =>
         {
-            column.Spacing(16);
-
-            column.Item().Element(content => ComposeOverview(content, report));
-            column.Item().Element(content => ComposeDailyDiaryTable(content, report));
-            column.Item().Element(content => ComposeDataCompleteness(content, report));
-            column.Item().Element(ComposeSafetyNotice);
+            column.Spacing(14);
+    
+            column.Item()
+                .PaddingTop(8)
+                .Element(content => ComposeOverview(content, report));
+    
+            column.Item()
+                .Element(content => ComposeDailyDiaryTable(content, report));
+    
+            column.Item()
+                .Element(content => ComposeDataCompleteness(content, report));
+    
+            column.Item()
+                .Element(ComposeSafetyNotice);
         });
     }
 
@@ -146,13 +234,32 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         IContainer container,
         GlycemicDiaryReport report)
     {
-        container.Column(column =>
+        container.Element(Card).Column(column =>
         {
-            column.Spacing(8);
+            column.Spacing(10);
 
-            column.Item().Text("Overview")
-                .FontSize(13)
-                .SemiBold();
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Column(title =>
+                {
+                    title.Item().Text("Overview")
+                        .FontSize(15)
+                        .SemiBold()
+                        .FontColor(BrandBlueDark);
+
+                    title.Item().Text("Summary of the selected glucose history period.")
+                        .FontSize(8)
+                        .FontColor(TextMuted);
+                });
+
+                row.ConstantItem(110)
+                    .AlignRight()
+                    .AlignMiddle()
+                    .Text($"Coverage {FormatPercentage(report.OverallContinuity.DataCoveragePercentage)}")
+                    .FontSize(9)
+                    .SemiBold()
+                    .FontColor(BrandBlueDark);
+            });
 
             column.Item().Table(table =>
             {
@@ -185,23 +292,33 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         IContainer container,
         GlycemicDiaryReport report)
     {
-        container.Column(column =>
+        container.Element(Card).Column(column =>
         {
-            column.Spacing(8);
+            column.Spacing(10);
 
-            column.Item().Text("Daily diary")
-                .FontSize(13)
-                .SemiBold();
+            column.Item().Column(title =>
+            {
+                title.Spacing(2);
+
+                title.Item().Text("Daily diary")
+                    .FontSize(15)
+                    .SemiBold()
+                    .FontColor(BrandBlueDark);
+
+                title.Item().Text("Daily glucose summaries and key time-block values.")
+                    .FontSize(8)
+                    .FontColor(TextMuted);
+            });
 
             column.Item().Table(table =>
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.RelativeColumn(1.1f);
-                    columns.RelativeColumn();
-                    columns.RelativeColumn();
-                    columns.RelativeColumn();
-                    columns.RelativeColumn();
+                    columns.RelativeColumn(1.15f);
+                    columns.RelativeColumn(0.75f);
+                    columns.RelativeColumn(0.75f);
+                    columns.RelativeColumn(0.75f);
+                    columns.RelativeColumn(0.9f);
                     columns.RelativeColumn();
                     columns.RelativeColumn();
                     columns.RelativeColumn();
@@ -210,34 +327,66 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
                 table.Header(header =>
                 {
-                    HeaderCell(header.Cell()).Text("Date");
-                    HeaderCell(header.Cell()).Text("Avg");
-                    HeaderCell(header.Cell()).Text("Min");
-                    HeaderCell(header.Cell()).Text("Max");
-                    HeaderCell(header.Cell()).Text("TIR");
-                    HeaderCell(header.Cell()).Text("Breakfast");
-                    HeaderCell(header.Cell()).Text("Lunch");
-                    HeaderCell(header.Cell()).Text("Dinner");
-                    HeaderCell(header.Cell()).Text("Pre-night");
+                    DailyHeaderCell(header.Cell()).Text("Date")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
+
+                    DailyHeaderCell(header.Cell()).Text("Avg")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
+
+                    DailyHeaderCell(header.Cell()).Text("Min")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
+
+                    DailyHeaderCell(header.Cell()).Text("Max")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
+
+                    DailyHeaderCell(header.Cell()).Text("TIR")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
+
+                    DailyHeaderCell(header.Cell()).Text("Breakfast")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
+
+                    DailyHeaderCell(header.Cell()).Text("Lunch")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
+
+                    DailyHeaderCell(header.Cell()).Text("Dinner")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
+
+                    DailyHeaderCell(header.Cell()).Text("Pre-night")
+                        .FontColor(BrandBlueDark)
+                        .SemiBold();
                 });
+
+                var rowIndex = 0;
 
                 foreach (var day in report.DailyEntries.OrderBy(day => day.Date))
                 {
-                    BodyCell(table.Cell()).Text(day.Date.ToString("yyyy-MM-dd"));
-                    BodyCell(table.Cell()).Text(FormatPlain(day.AverageMgDl));
-                    BodyCell(table.Cell()).Text(FormatPlain(day.MinimumMgDl));
-                    BodyCell(table.Cell()).Text(FormatPlain(day.MaximumMgDl));
-                    BodyCell(table.Cell()).Text(FormatPercentage(day.TimeInRangePercentage));
-                    BodyCell(table.Cell()).Text(FormatPlain(GetBlockValue(day, "Breakfast")));
-                    BodyCell(table.Cell()).Text(FormatPlain(GetBlockValue(day, "Lunch")));
-                    BodyCell(table.Cell()).Text(FormatPlain(GetBlockValue(day, "Dinner")));
-                    BodyCell(table.Cell()).Text(FormatPlain(GetBlockValue(day, "Pre-night")));
+                    var isAlternate = rowIndex % 2 != 0;
+
+                    DailyBodyCell(table.Cell(), isAlternate).Text(day.Date.ToString("yyyy-MM-dd"));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(day.AverageMgDl));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(day.MinimumMgDl));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(day.MaximumMgDl));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPercentage(day.TimeInRangePercentage));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(GetBlockValue(day, "Breakfast")));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(GetBlockValue(day, "Lunch")));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(GetBlockValue(day, "Dinner")));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(GetBlockValue(day, "Pre-night")));
+
+                    rowIndex++;
                 }
             });
         });
     }
 
-    /// <summary>
+   /// <summary>
     /// Composes the data completeness section.
     /// </summary>
     /// <param name="container">The container.</param>
@@ -246,45 +395,97 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         IContainer container,
         GlycemicDiaryReport report)
     {
-        container.Column(column =>
-        {
-            column.Spacing(8);
+        var hasGoodCoverage = report.OverallContinuity.DataCoveragePercentage >= 90;
+        var backgroundColor = hasGoodCoverage ? SuccessSoft : WarningSoft;
+        var borderColor = hasGoodCoverage ? SuccessBorder : WarningBorder;
+        var statusColor = hasGoodCoverage ? SuccessText : WarningText;
+        var statusText = hasGoodCoverage ? "Good coverage" : "Partial coverage";
 
-            column.Item().Text("Data completeness")
-                .FontSize(13)
-                .SemiBold();
-
-            column.Item().Text("Days marked as partial may contain missing CGM history and should be interpreted carefully.")
-                .FontSize(9)
-                .FontColor(Colors.Grey.Darken2);
-
-            column.Item().Table(table =>
+        container
+            .Background(backgroundColor)
+            .Border(1)
+            .BorderColor(borderColor)
+            .CornerRadius(12)
+            .Padding(14)
+            .Column(column =>
             {
-                table.ColumnsDefinition(columns =>
+                column.Spacing(10);
+
+                column.Item().Row(row =>
                 {
-                    columns.RelativeColumn(1.4f);
-                    columns.RelativeColumn();
-                    columns.RelativeColumn();
-                    columns.RelativeColumn();
+                    row.RelativeItem().Column(title =>
+                    {
+                        title.Spacing(2);
+
+                        title.Item().Text("Data completeness")
+                            .FontSize(15)
+                            .SemiBold()
+                            .FontColor(BrandBlueDark);
+
+                        title.Item().Text("Days marked as partial may contain missing CGM history and should be interpreted carefully.")
+                            .FontSize(8)
+                            .FontColor(TextSecondary);
+                    });
+
+                    row.ConstantItem(120)
+                        .AlignRight()
+                        .AlignMiddle()
+                        .Text(statusText)
+                        .FontSize(9)
+                        .SemiBold()
+                        .FontColor(statusColor);
                 });
 
-                table.Header(header =>
+                column.Item().Table(table =>
                 {
-                    HeaderCell(header.Cell()).Text("Date");
-                    HeaderCell(header.Cell()).Text("Coverage");
-                    HeaderCell(header.Cell()).Text("Status");
-                    HeaderCell(header.Cell()).Text("Gaps");
-                });
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(1.4f);
+                        columns.RelativeColumn();
+                        columns.RelativeColumn();
+                        columns.RelativeColumn(0.7f);
+                    });
 
-                foreach (var day in report.DailyEntries.OrderBy(day => day.Date))
-                {
-                    BodyCell(table.Cell()).Text(day.Date.ToString("yyyy-MM-dd"));
-                    BodyCell(table.Cell()).Text(FormatPercentage(day.DataCoveragePercentage));
-                    BodyCell(table.Cell()).Text(day.IsDataComplete ? "Complete" : "Partial");
-                    BodyCell(table.Cell()).Text(day.GapCount.ToString());
-                }
+                    table.Header(header =>
+                    {
+                        CompletenessHeaderCell(header.Cell()).Text("Date")
+                            .FontColor(BrandBlueDark)
+                            .SemiBold();
+
+                        CompletenessHeaderCell(header.Cell()).Text("Coverage")
+                            .FontColor(BrandBlueDark)
+                            .SemiBold();
+
+                        CompletenessHeaderCell(header.Cell()).Text("Status")
+                            .FontColor(BrandBlueDark)
+                            .SemiBold();
+
+                        CompletenessHeaderCell(header.Cell()).Text("Gaps")
+                            .FontColor(BrandBlueDark)
+                            .SemiBold();
+                    });
+
+                    var rowIndex = 0;
+
+                    foreach (var day in report.DailyEntries.OrderBy(day => day.Date))
+                    {
+                        var isAlternate = rowIndex % 2 != 0;
+                        var dayStatusColor = day.IsDataComplete ? SuccessText : WarningText;
+                        var dayStatusText = day.IsDataComplete ? "Complete" : "Partial";
+
+                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.Date.ToString("yyyy-MM-dd"));
+                        CompletenessBodyCell(table.Cell(), isAlternate).Text(FormatPercentage(day.DataCoveragePercentage));
+
+                        CompletenessBodyCell(table.Cell(), isAlternate).Text(dayStatusText)
+                            .SemiBold()
+                            .FontColor(dayStatusColor);
+
+                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.GapCount.ToString());
+
+                        rowIndex++;
+                    }
+                });
             });
-        });
     }
 
     /// <summary>
@@ -294,16 +495,32 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private void ComposeSafetyNotice(IContainer container)
     {
         container
+            .Background(NeutralSoft)
             .Border(1)
-            .BorderColor(Colors.Grey.Lighten2)
-            .Padding(10)
+            .BorderColor("#DDE6F2")
+            .CornerRadius(10)
+            .Padding(12)
             .Column(column =>
             {
-                column.Spacing(4);
-                column.Item().Text("Safety notice").SemiBold();
+                column.Spacing(5);
+
+                column.Item().Row(row =>
+                {
+                    row.ConstantItem(4)
+                        .Height(16)
+                        .Background(BrandBlueDark);
+
+                    row.RelativeItem()
+                        .PaddingLeft(8)
+                        .Text("Safety notice")
+                        .FontSize(11)
+                        .SemiBold()
+                        .FontColor(BrandBlueDark);
+                });
+
                 column.Item().Text(_options.SafetyDisclaimer)
                     .FontSize(8)
-                    .FontColor(Colors.Grey.Darken2);
+                    .FontColor(TextSecondary);
             });
     }
 
@@ -314,13 +531,36 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private static void ComposeFooter(IContainer container)
     {
         container
-            .AlignCenter()
-            .Text(text =>
+            .BorderTop(1)
+            .BorderColor("#DDE6F2")
+            .PaddingTop(8)
+            .Row(row =>
             {
-                text.Span("Page ");
-                text.CurrentPageNumber();
-                text.Span(" of ");
-                text.TotalPages();
+                row.RelativeItem()
+                    .Text("Generated by GlucoDesk")
+                    .FontSize(8)
+                    .FontColor(TextMuted);
+
+                row.ConstantItem(90)
+                    .AlignRight()
+                    .Text(text =>
+                    {
+                        text.Span("Page ")
+                            .FontSize(8)
+                            .FontColor(TextMuted);
+
+                        text.CurrentPageNumber()
+                            .FontSize(8)
+                            .FontColor(TextMuted);
+
+                        text.Span(" of ")
+                            .FontSize(8)
+                            .FontColor(TextMuted);
+
+                        text.TotalPages()
+                            .FontSize(8)
+                            .FontColor(TextMuted);
+                    });
             });
     }
 
@@ -464,6 +704,95 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         }
 
         return $"glucodesk-diary-{report.PeriodStartsAt:yyyyMMdd}-{report.PeriodEndsAt:yyyyMMdd}.pdf";
+    }
+
+    /// <summary>
+    /// Loads the embedded GlucoDesk brand logo.
+    /// </summary>
+    /// <returns>The logo bytes, if available.</returns>
+    private static byte[]? LoadBrandLogoBytes()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+
+        const string resourceName = "GlucoDesk.Infrastructure.Assets.Brand.glucodesk-wordmark-removebg-preview.png";
+
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+
+        if (stream is null)
+        {
+            return null;
+        }
+
+        using var memoryStream = new MemoryStream();
+        stream.CopyTo(memoryStream);
+
+        return memoryStream.ToArray();
+    }
+
+    /// <summary>
+    /// Applies the daily diary table header cell style.
+    /// </summary>
+    /// <param name="container">The target container.</param>
+    /// <returns>The styled container.</returns>
+    private static IContainer DailyHeaderCell(IContainer container)
+    {
+        return container
+            .Background(BrandBlueSoft)
+            .Border(0.5f)
+            .BorderColor(BrandBorder)
+            .PaddingVertical(5)
+            .PaddingHorizontal(4);
+    }   
+
+    /// <summary>
+    /// Applies the daily diary table body cell style.
+    /// </summary>
+    /// <param name="container">The target container.</param>
+    /// <param name="isAlternate">A value indicating whether the row is alternate.</param>
+    /// <returns>The styled container.</returns>
+    private static IContainer DailyBodyCell(
+        IContainer container,
+        bool isAlternate)
+    {
+        return container
+            .Background(isAlternate ? NeutralSoft : White)
+            .Border(0.5f)
+            .BorderColor("#E3EAF3")
+            .PaddingVertical(4)
+            .PaddingHorizontal(4);
+    }
+
+    /// <summary>
+    /// Applies the data completeness table header cell style.
+    /// </summary>
+    /// <param name="container">The target container.</param>
+    /// <returns>The styled container.</returns>
+    private static IContainer CompletenessHeaderCell(IContainer container)
+    {
+        return container
+            .Background(White)
+            .Border(0.5f)
+            .BorderColor(BrandBorder)
+            .PaddingVertical(5)
+            .PaddingHorizontal(4);
+    }
+
+    /// <summary>
+    /// Applies the data completeness table body cell style.
+    /// </summary>
+    /// <param name="container">The target container.</param>
+    /// <param name="isAlternate">A value indicating whether the row is alternate.</param>
+    /// <returns>The styled container.</returns>
+    private static IContainer CompletenessBodyCell(
+        IContainer container,
+        bool isAlternate)
+    {
+        return container
+            .Background(isAlternate ? "#FFFDF8" : White)
+            .Border(0.5f)
+            .BorderColor("#E8DDBF")
+            .PaddingVertical(4)
+            .PaddingHorizontal(4);
     }
 
     #endregion
