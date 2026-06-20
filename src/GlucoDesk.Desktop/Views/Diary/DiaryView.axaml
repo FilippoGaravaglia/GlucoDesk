@@ -28,45 +28,64 @@
               Margin="0,0,0,18">
         <StackPanel Spacing="20">
 
-          <StackPanel Spacing="6">
-            <TextBlock Text="Period"
-                       FontWeight="SemiBold"
-                       Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+          <Grid ColumnDefinitions="*,*"
+                ColumnSpacing="20">
 
-            <ComboBox ItemsSource="{Binding PeriodPresets}"
-                      SelectedItem="{Binding SelectedPeriodPreset}"
-                      MinWidth="280" />
+            <StackPanel Grid.Column="0"
+                        Spacing="6">
+              <TextBlock Text="Period"
+                         FontWeight="SemiBold"
+                         Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
 
-            <TextBlock Text="{Binding SelectedPeriodPreset.Description}"
-                       FontSize="12"
-                       Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                       TextWrapping="Wrap" />
-          </StackPanel>
+              <ComboBox ItemsSource="{Binding PeriodPresets}"
+                        SelectedItem="{Binding SelectedPeriodPreset}"
+                        IsEnabled="{Binding CanEditSelection}"
+                        MinWidth="280" />
 
-          <StackPanel Spacing="6">
-            <TextBlock Text="Format"
-                       FontWeight="SemiBold"
-                       Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+              <TextBlock Text="{Binding SelectedPeriodPreset.Description}"
+                         FontSize="12"
+                         Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
 
-            <ComboBox ItemsSource="{Binding Formats}"
-                      SelectedItem="{Binding SelectedFormat}"
-                      MinWidth="280" />
+            <StackPanel Grid.Column="1"
+                        Spacing="6">
+              <TextBlock Text="Format"
+                         FontWeight="SemiBold"
+                         Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
 
-            <TextBlock Text="{Binding SelectedFormat.Description}"
-                       FontSize="12"
-                       Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                       TextWrapping="Wrap" />
-          </StackPanel>
+              <ComboBox ItemsSource="{Binding Formats}"
+                        SelectedItem="{Binding SelectedFormat}"
+                        IsEnabled="{Binding CanEditSelection}"
+                        MinWidth="280" />
 
-          <Button Content="Export diary"
+              <TextBlock Text="{Binding SelectedFormat.Description}"
+                         FontSize="12"
+                         Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
+
+          <Border Padding="14"
+                  CornerRadius="14"
+                  Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="{Binding StatusTitle}"
+                         FontWeight="SemiBold"
+                         Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+              <TextBlock Text="{Binding StatusText}"
+                         FontSize="13"
+                         Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+
+          <Button Content="{Binding ExportButtonText}"
                   Classes="primary-button"
                   Command="{Binding ExportCommand}"
-                  HorizontalAlignment="Left" />
-
-          <TextBlock Text="{Binding StatusText}"
-                     FontSize="13"
-                     Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                     TextWrapping="Wrap" />
+                  HorizontalAlignment="Left"
+                  IsEnabled="{Binding ExportCommand.CanExecute, RelativeSource={RelativeSource Self}}" />
 
         </StackPanel>
       </Border>

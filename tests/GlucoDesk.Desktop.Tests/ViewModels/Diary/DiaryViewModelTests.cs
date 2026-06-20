@@ -100,6 +100,52 @@ public sealed class DiaryViewModelTests
         {
             ShouldCancel = true
         };
+    
+        var viewModel = new DiaryViewModel(
+            new FakeExcelExportService(),
+            new FakePdfExportService(),
+            saveService,
+            TimeProvider.System);
+    
+        // Act
+        await viewModel.ExportCommand.ExecuteAsync(null);
+    
+        // Assert
+        Assert.False(viewModel.HasError);
+        Assert.False(viewModel.HasSuccess);
+        Assert.True(viewModel.HasWarning);
+        Assert.Equal("Export cancelled", viewModel.StatusTitle);
+        Assert.Equal("No file was saved.", viewModel.StatusText);
+    }
+
+    [Fact]
+    public void Constructor_ShouldExposeReadyStatus()
+    {
+        // Arrange & Act
+        var viewModel = new DiaryViewModel(
+            new FakeExcelExportService(),
+            new FakePdfExportService(),
+            new FakeFileSaveService(),
+            TimeProvider.System);
+
+        // Assert
+        Assert.False(viewModel.IsExporting);
+        Assert.True(viewModel.CanEditSelection);
+        Assert.False(viewModel.HasError);
+        Assert.False(viewModel.HasSuccess);
+        Assert.False(viewModel.HasWarning);
+        Assert.Equal("Ready to export", viewModel.StatusTitle);
+        Assert.Equal("Export diary", viewModel.ExportButtonText);
+    }
+
+    [Fact]
+    public async Task ExportCommand_ShouldShowError_WhenSaveFails()
+    {
+        // Arrange
+        var saveService = new FakeFileSaveService
+        {
+            ShouldFail = true
+        };
 
         var viewModel = new DiaryViewModel(
             new FakeExcelExportService(),
@@ -111,9 +157,34 @@ public sealed class DiaryViewModelTests
         await viewModel.ExportCommand.ExecuteAsync(null);
 
         // Assert
-        Assert.False(viewModel.HasError);
+        Assert.True(viewModel.HasError);
         Assert.False(viewModel.HasSuccess);
-        Assert.Equal("Export cancelled.", viewModel.StatusText);
+        Assert.False(viewModel.HasWarning);
+        Assert.Equal("Export failed", viewModel.StatusTitle);
+    }
+
+    [Fact]
+    public async Task ExportCommand_ShouldHandleUnexpectedExportException()
+    {
+        // Arrange
+        var excelService = new FakeExcelExportService
+        {
+            ShouldThrow = true
+        };
+
+        var viewModel = new DiaryViewModel(
+            excelService,
+            new FakePdfExportService(),
+            new FakeFileSaveService(),
+            TimeProvider.System);
+
+        // Act
+        await viewModel.ExportCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.True(viewModel.HasError);
+        Assert.False(viewModel.HasSuccess);
+        Assert.Contains("Unexpected export error", viewModel.StatusText, StringComparison.OrdinalIgnoreCase);
     }
 
     #region Helpers
@@ -124,12 +195,19 @@ public sealed class DiaryViewModelTests
 
         public bool ShouldFail { get; init; }
 
+        public bool ShouldThrow { get; init; }
+
         /// <inheritdoc />
         public Task<Result<GlycemicDiaryExportFile>> ExportAsync(
             GlycemicDiaryExcelExportRequest request,
             CancellationToken cancellationToken)
         {
             ExportCount++;
+
+            if (ShouldThrow)
+            {
+                throw new InvalidOperationException("Simulated export exception.");
+            }
 
             if (ShouldFail)
             {
@@ -172,12 +250,22 @@ public sealed class DiaryViewModelTests
 
         public bool ShouldCancel { get; init; }
 
+        public bool ShouldFail { get; init; }
+
         /// <inheritdoc />
         public Task<Result<DiaryExportSaveResult>> SaveAsync(
             GlycemicDiaryExportFile file,
             CancellationToken cancellationToken)
         {
             SaveCount++;
+
+            if (ShouldFail)
+            {
+                return Task.FromResult(Result<DiaryExportSaveResult>.Failure(
+                    new Error(
+                        "Diary.SaveFailed",
+                        "Unable to save diary file.")));
+            }
 
             return Task.FromResult(Result<DiaryExportSaveResult>.Success(
                 ShouldCancel
