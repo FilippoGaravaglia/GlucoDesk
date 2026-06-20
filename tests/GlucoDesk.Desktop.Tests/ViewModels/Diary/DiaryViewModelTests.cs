@@ -1,6 +1,9 @@
 using GlucoDesk.Application.Cgm.Diary.Exports.Requests;
 using GlucoDesk.Application.Cgm.Diary.Exports.Results;
 using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.Requests;
+using GlucoDesk.Application.Cgm.Diary.Results;
+using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Desktop.Diary.Results;
@@ -21,6 +24,7 @@ public sealed class DiaryViewModelTests
         var saveService = new FakeFileSaveService();
 
         var viewModel = new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
             excelService,
             pdfService,
             saveService,
@@ -49,6 +53,7 @@ public sealed class DiaryViewModelTests
         var saveService = new FakeFileSaveService();
 
         var viewModel = new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
             excelService,
             pdfService,
             saveService,
@@ -78,6 +83,7 @@ public sealed class DiaryViewModelTests
         };
 
         var viewModel = new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
             excelService,
             new FakePdfExportService(),
             new FakeFileSaveService(),
@@ -100,16 +106,17 @@ public sealed class DiaryViewModelTests
         {
             ShouldCancel = true
         };
-    
+
         var viewModel = new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
             new FakeExcelExportService(),
             new FakePdfExportService(),
             saveService,
             TimeProvider.System);
-    
+
         // Act
         await viewModel.ExportCommand.ExecuteAsync(null);
-    
+
         // Assert
         Assert.False(viewModel.HasError);
         Assert.False(viewModel.HasSuccess);
@@ -123,6 +130,7 @@ public sealed class DiaryViewModelTests
     {
         // Arrange & Act
         var viewModel = new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
             new FakeExcelExportService(),
             new FakePdfExportService(),
             new FakeFileSaveService(),
@@ -130,12 +138,23 @@ public sealed class DiaryViewModelTests
 
         // Assert
         Assert.False(viewModel.IsExporting);
+        Assert.False(viewModel.IsPreviewLoading);
         Assert.True(viewModel.CanEditSelection);
+
         Assert.False(viewModel.HasError);
         Assert.False(viewModel.HasSuccess);
         Assert.False(viewModel.HasWarning);
+
+        Assert.False(viewModel.HasPreview);
+        Assert.False(viewModel.HasPreviewWarning);
+        Assert.False(viewModel.HasPreviewError);
+
         Assert.Equal("Ready to export", viewModel.StatusTitle);
         Assert.Equal("Export diary", viewModel.ExportButtonText);
+
+        Assert.Equal("Data preview", viewModel.PreviewStatusTitle);
+        Assert.Equal("Coverage not checked yet", viewModel.PreviewCoverageText);
+        Assert.Equal("Refresh preview", viewModel.RefreshPreviewButtonText);
     }
 
     [Fact]
@@ -148,6 +167,7 @@ public sealed class DiaryViewModelTests
         };
 
         var viewModel = new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
             new FakeExcelExportService(),
             new FakePdfExportService(),
             saveService,
@@ -173,6 +193,7 @@ public sealed class DiaryViewModelTests
         };
 
         var viewModel = new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
             excelService,
             new FakePdfExportService(),
             new FakeFileSaveService(),
@@ -187,7 +208,58 @@ public sealed class DiaryViewModelTests
         Assert.Contains("Unexpected export error", viewModel.StatusText, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task RefreshPreviewCommand_ShouldShowError_WhenPreviewFails()
+    {
+        // Arrange
+        var diaryService = new FakeGlycemicDiaryService
+        {
+            ShouldFail = true
+        };
+
+        var viewModel = new DiaryViewModel(
+            diaryService,
+            new FakeExcelExportService(),
+            new FakePdfExportService(),
+            new FakeFileSaveService(),
+            TimeProvider.System);
+
+        // Act
+        await viewModel.RefreshPreviewCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.True(viewModel.HasPreviewError);
+        Assert.False(viewModel.HasPreview);
+        Assert.False(viewModel.HasPreviewWarning);
+        Assert.Equal("Preview failed", viewModel.PreviewStatusTitle);
+        Assert.Equal("Coverage unavailable", viewModel.PreviewCoverageText);
+    }
+
     #region Helpers
+
+    private sealed class FakeGlycemicDiaryService : IGlycemicDiaryService
+    {
+        public bool ShouldFail { get; init; }
+
+        /// <inheritdoc />
+        public Task<Result<GlycemicDiaryReport>> CreateDiaryAsync(
+            GlycemicDiaryRequest request,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (ShouldFail)
+            {
+                return Task.FromResult(Result<GlycemicDiaryReport>.Failure(
+                    new Error(
+                        "Diary.PreviewFailed",
+                        "Unable to preview diary completeness.")));
+            }
+
+            throw new NotSupportedException("Preview generation is not used by this test.");
+        }
+    }
 
     private sealed class FakeExcelExportService : IGlycemicDiaryExcelExportService
     {
@@ -202,6 +274,9 @@ public sealed class DiaryViewModelTests
             GlycemicDiaryExcelExportRequest request,
             CancellationToken cancellationToken)
         {
+            ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
+
             ExportCount++;
 
             if (ShouldThrow)
@@ -234,6 +309,9 @@ public sealed class DiaryViewModelTests
             GlycemicDiaryPdfExportRequest request,
             CancellationToken cancellationToken)
         {
+            ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
+
             ExportCount++;
 
             return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
@@ -257,6 +335,9 @@ public sealed class DiaryViewModelTests
             GlycemicDiaryExportFile file,
             CancellationToken cancellationToken)
         {
+            ArgumentNullException.ThrowIfNull(file);
+            cancellationToken.ThrowIfCancellationRequested();
+
             SaveCount++;
 
             if (ShouldFail)

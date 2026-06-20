@@ -69,6 +69,42 @@
           <Border Padding="14"
                   CornerRadius="14"
                   Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="16">
+              <StackPanel Grid.Column="0"
+                          Spacing="6">
+                <TextBlock Text="{Binding PreviewStatusTitle}"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+                <TextBlock Text="{Binding PreviewStatusText}"
+                           FontSize="13"
+                           Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
+                           TextWrapping="Wrap" />
+
+                <TextBlock Text="{Binding PreviewCoverageText}"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}"
+                           TextWrapping="Wrap" />
+
+                <TextBlock Text="{Binding PreviewDetailsText}"
+                           FontSize="12"
+                           Foreground="{StaticResource GlucoDesk.Brush.TextMuted}"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+
+              <Button Grid.Column="1"
+                      Content="{Binding RefreshPreviewButtonText}"
+                      Command="{Binding RefreshPreviewCommand}"
+                      IsEnabled="{Binding CanEditSelection}"
+                      VerticalAlignment="Center" />
+            </Grid>
+          </Border>
+
+          <Border Padding="14"
+                  CornerRadius="14"
+                  Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
             <StackPanel Spacing="6">
               <TextBlock Text="{Binding StatusTitle}"
                          FontWeight="SemiBold"
@@ -85,7 +121,7 @@
                   Classes="primary-button"
                   Command="{Binding ExportCommand}"
                   HorizontalAlignment="Left"
-                  IsEnabled="{Binding ExportCommand.CanExecute, RelativeSource={RelativeSource Self}}" />
+                  IsEnabled="{Binding CanEditSelection}" />
 
         </StackPanel>
       </Border>

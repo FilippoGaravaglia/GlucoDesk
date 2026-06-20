@@ -28,6 +28,9 @@ using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
 using GlucoDesk.Desktop.Diary.Results;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Diary;
+using GlucoDesk.Application.Cgm.Diary.Requests;
+using GlucoDesk.Application.Cgm.Diary.Results;
+using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Main;
 
@@ -394,10 +397,25 @@ public sealed class MainWindowViewModelTests
     private static DiaryViewModel CreateDiaryViewModel()
     {
         return new DiaryViewModel(
+            new FakeGlycemicDiaryService(),
             new FakeGlycemicDiaryExcelExportService(),
             new FakeGlycemicDiaryPdfExportService(),
             new FakeDiaryExportFileSaveService(),
             TimeProvider.System);
+    }
+
+    private sealed class FakeGlycemicDiaryService : IGlycemicDiaryService
+    {
+        /// <inheritdoc />
+        public Task<Result<GlycemicDiaryReport>> CreateDiaryAsync(
+            GlycemicDiaryRequest request,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            throw new NotSupportedException("Preview generation is not used by navigation tests.");
+        }
     }
 
     #endregion
