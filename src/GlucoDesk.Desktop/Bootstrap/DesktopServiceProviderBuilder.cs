@@ -26,6 +26,9 @@ using GlucoDesk.Infrastructure.Cgm.WidgetState.DependencyInjection;
 using GlucoDesk.Infrastructure.Settings.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
+using GlucoDesk.Desktop.Common.Dispatching;
+using GlucoDesk.Desktop.Common.Dispatching.Abstractions;
 
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -56,6 +59,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddDesktopBackgroundSyncLifecycle();
         services.AddDesktopHistoryContinuitySync();
         services.AddDesktopShell();
+        services.AddDesktopCommonServices();
 
         return services.BuildServiceProvider(
             new ServiceProviderOptions
@@ -66,6 +70,15 @@ internal static class DesktopServiceProviderBuilder
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Registers common desktop services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddDesktopCommonServices(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IDesktopUiDispatcher, AvaloniaDesktopUiDispatcher>();
+    }
 
     /// <summary>
     /// Registers desktop background sync lifecycle services.
@@ -87,6 +100,7 @@ internal static class DesktopServiceProviderBuilder
     {
         services.TryAddSingleton<IDesktopHistoryContinuitySyncStatusStore, DesktopHistoryContinuitySyncStatusStore>();
         services.TryAddSingleton<IDesktopHistoryContinuitySyncCoordinator, DesktopHistoryContinuitySyncCoordinator>();
+        services.TryAddSingleton<DesktopHistoryContinuitySyncStatusViewModel>();
     }
 
     /// <summary>
