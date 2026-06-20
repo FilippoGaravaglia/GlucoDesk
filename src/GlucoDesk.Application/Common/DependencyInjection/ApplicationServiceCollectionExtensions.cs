@@ -16,6 +16,8 @@ using GlucoDesk.Application.Cgm.History.Continuity.DependencyInjection;
 using GlucoDesk.Application.Cgm.Diary.DependencyInjection;
 using GlucoDesk.Application.Cgm.Backfill.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Backfill.Services;
+using GlucoDesk.Application.Cgm.History.Continuity.Services;
+using GlucoDesk.Application.Cgm.History.Continuity.Services.Abstractions;
 
 namespace GlucoDesk.Application.Common.DependencyInjection;
 
@@ -49,6 +51,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddGlucoseHistoryContinuity();
         services.AddGlycemicDiary();
         services.AddScoped<ICgmBackfillHistorySyncService, CgmBackfillHistorySyncService>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<ICgmHistoryContinuitySyncService, CgmHistoryContinuitySyncService>();
 
         return services;
     }
