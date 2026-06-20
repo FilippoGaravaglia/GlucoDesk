@@ -111,7 +111,8 @@ public sealed class MainWindowViewModelTests
                 DashboardRefreshOptions.Default),
             new AccountViewModel(
                 new FakeDexcomShareCredentialStore(),
-                new FakeDexcomShareClient()),
+                new FakeDexcomShareClient(),
+                settingsService),
             new SettingsViewModel(settingsService),
             CreateBackgroundSyncStatusViewModel(),
             CreateDiaryViewModel(),
