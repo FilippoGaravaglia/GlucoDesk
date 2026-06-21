@@ -61,6 +61,28 @@ public sealed class DashboardViewModelTests
     }
 
     [Fact]
+    public async Task InitializeCommand_ShouldApplyPreferredUnitAndChartMaximumFromSettings()
+    {
+        var settings = new ApplicationSettings(
+            preferredUnit: GlucoseUnit.MmolL,
+            targetLowMgDl: 70,
+            targetHighMgDl: 180,
+            dashboardRefreshInterval: TimeSpan.FromSeconds(15),
+            chartMaximumMgDl: 400);
+
+        var viewModel = new DashboardViewModel(
+            new FakeGlucoseDataService(),
+            new FakeApplicationSettingsService(Result<ApplicationSettings>.Success(settings)),
+            DashboardRefreshOptions.Default);
+
+        await viewModel.InitializeCommand.ExecuteAsync(null);
+
+        Assert.Equal(GlucoseUnit.MmolL, viewModel.PreferredUnit);
+        Assert.Equal(400, viewModel.ChartMaximumMgDl);
+        Assert.Equal("Target range: 3.9-10.0 mmol/L", viewModel.TargetRangeText);
+    }
+
+    [Fact]
     public async Task InitializeCommand_ShouldUseFallbackDashboardConfiguration_WhenSettingsFail()
     {
         var expectedError = new Error("Settings.Failed", "Unable to load settings.");
@@ -101,6 +123,29 @@ public sealed class DashboardViewModelTests
         Assert.Equal(2, viewModel.ChartPoints.Count);
         Assert.Equal("Last 3H · 2 readings · 123-123 mg/dL", viewModel.ChartSummaryText);
         Assert.StartsWith("Last refresh:", viewModel.AutoRefreshStatusText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RefreshCommand_ShouldFormatDashboardValuesUsingPreferredUnit()
+    {
+        var settings = new ApplicationSettings(
+            preferredUnit: GlucoseUnit.MmolL,
+            targetLowMgDl: 70,
+            targetHighMgDl: 180,
+            chartMaximumMgDl: 400);
+    
+        var viewModel = new DashboardViewModel(
+            new FakeGlucoseDataService(),
+            new FakeApplicationSettingsService(Result<ApplicationSettings>.Success(settings)),
+            DashboardRefreshOptions.Default);
+    
+        await viewModel.InitializeCommand.ExecuteAsync(null);
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+    
+        Assert.Equal("6.8 mmol/L", viewModel.LatestValueText);
+        Assert.Equal("Target range: 3.9-10.0 mmol/L", viewModel.TargetRangeText);
+        Assert.Equal("Last 3H · 2 readings · 6.8-6.8 mmol/L", viewModel.ChartSummaryText);
+        Assert.Equal(400, viewModel.ChartMaximumMgDl);
     }
 
     [Fact]

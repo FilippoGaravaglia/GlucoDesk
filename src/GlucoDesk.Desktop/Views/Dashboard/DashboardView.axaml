@@ -255,7 +255,8 @@
                     TargetLowMgDl="{Binding TargetLowMgDl}"
                     TargetHighMgDl="{Binding TargetHighMgDl}"
                     WindowHours="{Binding SelectedChartWindowHours}"
-                    MaxVisibleMgDl="{Binding ChartMaximumMgDl}" />
+                    MaxVisibleMgDl="{Binding ChartMaximumMgDl}"
+                    DisplayUnit="{Binding PreferredUnit}" />
               </Border>
             </StackPanel>
           </Border>

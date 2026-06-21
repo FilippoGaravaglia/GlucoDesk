@@ -274,6 +274,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private bool _isNinetyDayStatisticsWindowSelected;
 
+    [ObservableProperty]
+    private GlucoseUnit _preferredUnit = GlucoseUnit.MgDl;
+
+    [ObservableProperty]
+    private int _chartMaximumMgDl = 300;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
     /// </summary>
@@ -1218,6 +1224,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         ApplicationSettingsChangedEventArgs eventArgs)
     {
         ApplySettings(eventArgs.Settings);
+
+        if (_lastDashboardSnapshot is not null)
+        {
+            ApplySnapshot(_lastDashboardSnapshot);
+        }
+
         SettingsStatusText = "Settings updated";
     }
 
@@ -1229,11 +1241,16 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         _autoRefreshInterval = settings.DashboardRefreshInterval;
         OnPropertyChanged(nameof(AutoRefreshInterval));
-
+    
+        PreferredUnit = NormalizeDisplayUnit(settings.PreferredUnit);
         TargetLowMgDl = settings.TargetLowMgDl;
         TargetHighMgDl = settings.TargetHighMgDl;
-        TargetRangeText = $"Target range: {settings.TargetLowMgDl}-{settings.TargetHighMgDl} mg/dL";
-
+        ChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
+        TargetRangeText = FormatTargetRangeText(
+            TargetLowMgDl,
+            TargetHighMgDl,
+            PreferredUnit);
+    
         AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
         SettingsStatusText = "Settings loaded";
     }
@@ -1247,9 +1264,14 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
         OnPropertyChanged(nameof(AutoRefreshInterval));
 
+        PreferredUnit = GlucoseUnit.MgDl;
         TargetLowMgDl = 70m;
         TargetHighMgDl = 180m;
-        TargetRangeText = "Target range: 70-180 mg/dL";
+        ChartMaximumMgDl = 300;
+        TargetRangeText = FormatTargetRangeText(
+            TargetLowMgDl,
+            TargetHighMgDl,
+            PreferredUnit);
 
         AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
         SettingsStatusText = $"Using default settings · {result.Error.Code}";
@@ -1267,7 +1289,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         ProviderDisplayName = snapshot.Metadata.DisplayName;
         DataSourceStatusText = BuildDataSourceStatusText(snapshot);
-        LatestValueText = snapshot.LatestReading?.Value.ToString() ?? "—";
+        LatestValueText = snapshot.LatestReading is null
+            ? "—"
+            : FormatGlucoseValueText(snapshot.LatestReading.Value, PreferredUnit);
 
         ApplyProviderStatus(
             snapshot.Metadata.ProviderKind,
@@ -1480,7 +1504,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             SelectedChartWindowHours);  
 
         ChartPoints = filteredChartPoints;
-        ChartSummaryText = BuildChartSummary(filteredChartPoints, SelectedChartWindowHours);
+        ChartSummaryText = BuildChartSummary(
+            filteredChartPoints,
+            SelectedChartWindowHours,
+            PreferredUnit);
     }
 
     /// <summary>
@@ -1573,12 +1600,15 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// </summary>
     /// <param name="chartPoints">The chart points.</param>
     /// <param name="windowHours">The selected chart window in hours.</param>
+    /// <param name="displayUnit">The glucose display unit.</param>
     /// <returns>The chart summary.</returns>
     private static string BuildChartSummary(
         IReadOnlyCollection<GlucoseChartPoint> chartPoints,
-        int windowHours)
+        int windowHours,
+        GlucoseUnit displayUnit)
     {
         var normalizedWindowHours = NormalizeChartWindowHours(windowHours);
+        var normalizedDisplayUnit = NormalizeDisplayUnit(displayUnit);
 
         if (chartPoints.Count == 0)
         {
@@ -1588,7 +1618,116 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         var minimumValue = chartPoints.Min(point => point.ValueMgDl);
         var maximumValue = chartPoints.Max(point => point.ValueMgDl);
 
-        return $"Last {normalizedWindowHours}H · {chartPoints.Count} readings · {minimumValue:0}-{maximumValue:0} mg/dL";
+        return $"Last {normalizedWindowHours}H · {chartPoints.Count} readings · {FormatGlucoseValueLabel(minimumValue, normalizedDisplayUnit)}-{FormatGlucoseValueLabel(maximumValue, normalizedDisplayUnit)} {FormatGlucoseUnitLabel(normalizedDisplayUnit)}";
+    }
+
+    /// <summary>
+    /// Normalizes unsupported glucose display units to the default display unit.
+    /// </summary>
+    /// <param name="displayUnit">The requested display unit.</param>
+    /// <returns>The normalized display unit.</returns>
+    private static GlucoseUnit NormalizeDisplayUnit(GlucoseUnit displayUnit)
+    {
+        return Enum.IsDefined(displayUnit)
+            ? displayUnit
+            : GlucoseUnit.MgDl;
+    }
+
+    /// <summary>
+    /// Normalizes supported chart maximum values.
+    /// </summary>
+    /// <param name="chartMaximumMgDl">The requested chart maximum value.</param>
+    /// <returns>The normalized chart maximum value.</returns>
+    private static int NormalizeChartMaximumMgDl(int chartMaximumMgDl)
+    {
+        return chartMaximumMgDl is 400
+            ? 400
+            : 300;
+    }
+
+    /// <summary>
+    /// Formats the configured target range using the selected display unit.
+    /// </summary>
+    /// <param name="targetLowMgDl">The lower target value expressed in mg/dL.</param>
+    /// <param name="targetHighMgDl">The upper target value expressed in mg/dL.</param>
+    /// <param name="displayUnit">The glucose display unit.</param>
+    /// <returns>The formatted target range text.</returns>
+    private static string FormatTargetRangeText(
+        decimal targetLowMgDl,
+        decimal targetHighMgDl,
+        GlucoseUnit displayUnit)
+    {
+        var normalizedDisplayUnit = NormalizeDisplayUnit(displayUnit);
+
+        return $"Target range: {FormatGlucoseValueLabel(targetLowMgDl, normalizedDisplayUnit)}-{FormatGlucoseValueLabel(targetHighMgDl, normalizedDisplayUnit)} {FormatGlucoseUnitLabel(normalizedDisplayUnit)}";
+    }
+
+    /// <summary>
+    /// Formats a glucose value using the selected display unit.
+    /// </summary>
+    /// <param name="value">The glucose value.</param>
+    /// <param name="displayUnit">The glucose display unit.</param>
+    /// <returns>The formatted glucose value text.</returns>
+    private static string FormatGlucoseValueText(
+        GlucoseValue value,
+        GlucoseUnit displayUnit)
+    {
+        var normalizedDisplayUnit = NormalizeDisplayUnit(displayUnit);
+        var convertedValue = value.Unit == normalizedDisplayUnit
+            ? value
+            : value.ConvertTo(normalizedDisplayUnit);
+
+        return $"{FormatGlucoseAmount(convertedValue.Amount, normalizedDisplayUnit)} {FormatGlucoseUnitLabel(normalizedDisplayUnit)}";
+    }
+
+    /// <summary>
+    /// Formats a glucose value stored in mg/dL using the selected display unit.
+    /// </summary>
+    /// <param name="valueMgDl">The glucose value expressed in mg/dL.</param>
+    /// <param name="displayUnit">The glucose display unit.</param>
+    /// <returns>The formatted glucose value without unit suffix.</returns>
+    private static string FormatGlucoseValueLabel(
+        decimal valueMgDl,
+        GlucoseUnit displayUnit)
+    {
+        var normalizedDisplayUnit = NormalizeDisplayUnit(displayUnit);
+        var convertedValue = new GlucoseValue(valueMgDl, GlucoseUnit.MgDl)
+            .ConvertTo(normalizedDisplayUnit);
+
+        return FormatGlucoseAmount(convertedValue.Amount, normalizedDisplayUnit);
+    }
+
+    /// <summary>
+    /// Formats a glucose amount using the selected display unit.
+    /// </summary>
+    /// <param name="amount">The glucose amount.</param>
+    /// <param name="displayUnit">The glucose display unit.</param>
+    /// <returns>The formatted glucose amount.</returns>
+    private static string FormatGlucoseAmount(
+        decimal amount,
+        GlucoseUnit displayUnit)
+    {
+        return displayUnit switch
+        {
+            GlucoseUnit.MgDl => amount.ToString("0", CultureInfo.InvariantCulture),
+            GlucoseUnit.MmolL => amount.ToString("0.0", CultureInfo.InvariantCulture),
+            _ => amount.ToString("0", CultureInfo.InvariantCulture)
+        };
+    }
+
+    /// <summary>
+    /// Formats glucose unit labels for dashboard text.
+    /// </summary>
+    /// <param name="displayUnit">The glucose display unit.</param>
+    /// <returns>The formatted unit label.</returns>
+    private static string FormatGlucoseUnitLabel(GlucoseUnit displayUnit)
+    {
+        return displayUnit switch
+        {
+            GlucoseUnit.MgDl => "mg/dL",
+            GlucoseUnit.MmolL => "mmol/L",
+            _ => "mg/dL"
+        };
     }
 
     /// <summary>
