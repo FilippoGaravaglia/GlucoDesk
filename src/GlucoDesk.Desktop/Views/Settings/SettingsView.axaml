@@ -222,13 +222,14 @@
                       <TextBlock Text="Target low"
                                  Classes="metric-label" />
 
-                      <TextBox Text="{Binding TargetLowMgDlText}"
-                               PlaceholderText="70"
+                      <TextBox Text="{Binding TargetLowMgDlText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               PlaceholderText="{Binding TargetLowPlaceholderText}"
+                               TextChanged="OnTargetValueTextChanged"
                                HorizontalAlignment="Stretch" />
 
-                      <TextBlock Text="mg/dL"
-                                 Classes="muted"
-                                 FontSize="12" />
+                      <TextBlock Text="{Binding TargetRangeUnitLabel}"
+                                Classes="muted"
+                                FontSize="12" />
                     </StackPanel>
                   </Border>
 
@@ -239,11 +240,12 @@
                       <TextBlock Text="Target high"
                                  Classes="metric-label" />
 
-                      <TextBox Text="{Binding TargetHighMgDlText}"
-                               PlaceholderText="180"
+                      <TextBox Text="{Binding TargetHighMgDlText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               PlaceholderText="{Binding TargetHighPlaceholderText}"
+                               TextChanged="OnTargetValueTextChanged"
                                HorizontalAlignment="Stretch" />
 
-                      <TextBlock Text="mg/dL"
+                      <TextBlock Text="{Binding TargetRangeUnitLabel}"
                                  Classes="muted"
                                  FontSize="12" />
                     </StackPanel>

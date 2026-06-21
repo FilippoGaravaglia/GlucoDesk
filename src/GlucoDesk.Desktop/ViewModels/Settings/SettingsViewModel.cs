@@ -17,6 +17,7 @@ using GlucoDesk.Desktop.ViewModels.Settings.Selections;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
+using GlucoDesk.Core.Glucose.ValueObjects;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -60,6 +61,15 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _targetHighMgDlText = "180";
+
+    [ObservableProperty]
+    private string _targetRangeUnitLabel = "mg/dL";
+    
+    [ObservableProperty]
+    private string _targetLowPlaceholderText = "70";
+    
+    [ObservableProperty]
+    private string _targetHighPlaceholderText = "180";
 
     [ObservableProperty]
     private string _dashboardRefreshIntervalSecondsText = "30";
@@ -458,7 +468,242 @@ public sealed partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Sanitizes a target value input using the currently selected glucose unit.
+    /// </summary>
+    /// <param name="text">The raw target input text.</param>
+    /// <returns>The sanitized target input text.</returns>
+    public string SanitizeTargetValueInput(string text)
+    {
+        return SanitizeTargetValueText(
+            text,
+            SelectedPreferredUnit?.Unit ?? GlucoseUnit.MgDl);
+    }
+
     #region Helpers
+
+    /// <summary>
+    /// Updates target range unit labels and placeholders for the selected glucose unit.
+    /// </summary>
+    /// <param name="unit">The selected glucose unit.</param>
+    private void UpdateTargetRangeUnitPresentation(GlucoseUnit unit)
+    {
+        TargetRangeUnitLabel = FormatGlucoseUnitLabel(unit);
+
+        if (unit == GlucoseUnit.MmolL)
+        {
+            TargetLowPlaceholderText = "3.9";
+            TargetHighPlaceholderText = "10.0";
+            return;
+        }
+
+        TargetLowPlaceholderText = "70";
+        TargetHighPlaceholderText = "180";
+    }
+
+    /// <summary>
+    /// Converts editable target text from one display unit to another.
+    /// </summary>
+    /// <param name="text">The editable target text.</param>
+    /// <param name="sourceUnit">The source glucose unit.</param>
+    /// <param name="targetUnit">The target glucose unit.</param>
+    /// <returns>The converted editable target text, or the original sanitized text when conversion is not possible.</returns>
+    private static string ConvertEditableTargetText(
+        string text,
+        GlucoseUnit sourceUnit,
+        GlucoseUnit targetUnit)
+    {
+        if (!TryParseTargetValueMgDl(text, sourceUnit, out var valueMgDl))
+        {
+            return SanitizeTargetValueText(text, targetUnit);
+        }
+
+        return FormatTargetValueForUnit(valueMgDl, targetUnit);
+    }
+
+    /// <summary>
+    /// Formats a target value stored in mg/dL for the selected display unit.
+    /// </summary>
+    /// <param name="valueMgDl">The target value expressed in mg/dL.</param>
+    /// <param name="unit">The selected display unit.</param>
+    /// <returns>The formatted target value.</returns>
+    private static string FormatTargetValueForUnit(
+        int valueMgDl,
+        GlucoseUnit unit)
+    {
+        var value = new GlucoseValue(valueMgDl, GlucoseUnit.MgDl)
+            .ConvertTo(unit);
+
+        return unit switch
+        {
+            GlucoseUnit.MgDl => value.Amount.ToString("0", CultureInfo.InvariantCulture),
+            GlucoseUnit.MmolL => value.Amount.ToString("0.0", CultureInfo.InvariantCulture),
+            _ => valueMgDl.ToString(CultureInfo.InvariantCulture)
+        };
+    }
+
+    /// <summary>
+    /// Parses an editable target value and converts it to mg/dL.
+    /// </summary>
+    /// <param name="text">The editable target text.</param>
+    /// <param name="unit">The unit used by the editable target text.</param>
+    /// <param name="valueMgDl">The parsed value expressed in mg/dL.</param>
+    /// <returns>True when parsing succeeds; otherwise false.</returns>
+    private static bool TryParseTargetValueMgDl(
+        string text,
+        GlucoseUnit unit,
+        out int valueMgDl)
+    {
+        valueMgDl = 0;
+
+        var sanitizedText = SanitizeTargetValueText(text, unit);
+
+        if (string.IsNullOrWhiteSpace(sanitizedText))
+        {
+            return false;
+        }
+
+        if (unit == GlucoseUnit.MgDl)
+        {
+            return int.TryParse(
+                    sanitizedText,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out valueMgDl)
+                && valueMgDl > 0;
+        }
+
+        if (!decimal.TryParse(
+                sanitizedText,
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out var displayValue)
+            || displayValue <= 0)
+        {
+            return false;
+        }
+
+        var convertedValue = new GlucoseValue(displayValue, unit)
+            .ConvertTo(GlucoseUnit.MgDl);
+
+        if (convertedValue.Amount <= 0 || convertedValue.Amount > int.MaxValue)
+        {
+            return false;
+        }
+
+        valueMgDl = (int)convertedValue.Amount;
+        return true;
+    }
+
+    /// <summary>
+    /// Removes unsupported characters from target value input text.
+    /// </summary>
+    /// <param name="text">The raw input text.</param>
+    /// <param name="unit">The selected glucose unit.</param>
+    /// <returns>The sanitized input text.</returns>
+    private static string SanitizeTargetValueText(
+        string text,
+        GlucoseUnit unit)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder();
+        var hasDecimalSeparator = false;
+        var allowDecimalSeparator = unit == GlucoseUnit.MmolL;
+
+        foreach (var character in text)
+        {
+            if (char.IsDigit(character))
+            {
+                builder.Append(character);
+                continue;
+            }
+
+            if (!allowDecimalSeparator || character is not ('.' or ',') || hasDecimalSeparator)
+            {
+                continue;
+            }
+
+            if (builder.Length == 0)
+            {
+                builder.Append('0');
+            }
+
+            builder.Append('.');
+            hasDecimalSeparator = true;
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Formats glucose unit labels for user-facing UI.
+    /// </summary>
+    /// <param name="unit">The glucose unit.</param>
+    /// <returns>The display label for the glucose unit.</returns>
+    private static string FormatGlucoseUnitLabel(GlucoseUnit unit)
+    {
+        return unit switch
+        {
+            GlucoseUnit.MgDl => "mg/dL",
+            GlucoseUnit.MmolL => "mmol/L",
+            _ => FormatEnumName(unit.ToString())
+        };
+    }
+
+    /// <summary>
+    /// Handles preferred glucose unit changes by updating labels and converting editable target values.
+    /// </summary>
+    /// <param name="oldValue">The previous selected glucose unit option.</param>
+    /// <param name="newValue">The new selected glucose unit option.</param>
+    partial void OnSelectedPreferredUnitChanged(
+        GlucoseUnitSelectionItem? oldValue,
+        GlucoseUnitSelectionItem? newValue)
+    {
+        var previousUnit = oldValue?.Unit ?? GlucoseUnit.MgDl;
+        var nextUnit = newValue?.Unit ?? GlucoseUnit.MgDl;
+
+        UpdateTargetRangeUnitPresentation(nextUnit);
+
+        if (previousUnit == nextUnit)
+        {
+            return;
+        }
+
+        TargetLowMgDlText = ConvertEditableTargetText(TargetLowMgDlText, previousUnit, nextUnit);
+        TargetHighMgDlText = ConvertEditableTargetText(TargetHighMgDlText, previousUnit, nextUnit);
+    }
+
+    /// <summary>
+    /// Sanitizes the target low input when the user edits the text.
+    /// </summary>
+    /// <param name="value">The edited target low text.</param>
+    partial void OnTargetLowMgDlTextChanged(string value)
+    {
+        var sanitizedValue = SanitizeTargetValueText(value, SelectedPreferredUnit?.Unit ?? GlucoseUnit.MgDl);
+
+        if (sanitizedValue != value)
+        {
+            TargetLowMgDlText = sanitizedValue;
+        }
+    }
+
+    /// <summary>
+    /// Sanitizes the target high input when the user edits the text.
+    /// </summary>
+    /// <param name="value">The edited target high text.</param>
+    partial void OnTargetHighMgDlTextChanged(string value)
+    {
+        var sanitizedValue = SanitizeTargetValueText(value, SelectedPreferredUnit?.Unit ?? GlucoseUnit.MgDl);
+
+        if (sanitizedValue != value)
+        {
+            TargetHighMgDlText = sanitizedValue;
+        }
+    }
 
     /// <summary>
     /// Updates the availability of the Nightscout activation action.
@@ -604,9 +849,10 @@ public sealed partial class SettingsViewModel : ViewModelBase
         SelectedLiveProvider = liveProvider;
         SelectedHistoricalProvider = historicalProvider;
         SelectedPreferredUnit = FindPreferredUnitOption(settings.PreferredUnit);
+        UpdateTargetRangeUnitPresentation(settings.PreferredUnit);
 
-        TargetLowMgDlText = settings.TargetLowMgDl.ToString(CultureInfo.InvariantCulture);
-        TargetHighMgDlText = settings.TargetHighMgDl.ToString(CultureInfo.InvariantCulture);
+        TargetLowMgDlText = FormatTargetValueForUnit(settings.TargetLowMgDl, settings.PreferredUnit);
+        TargetHighMgDlText = FormatTargetValueForUnit(settings.TargetHighMgDl, settings.PreferredUnit);
         DashboardRefreshIntervalSecondsText = ((int)settings.DashboardRefreshInterval.TotalSeconds)
             .ToString(CultureInfo.InvariantCulture);
         SelectedChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
@@ -665,15 +911,17 @@ public sealed partial class SettingsViewModel : ViewModelBase
             return null;
         }
 
-        if (!TryParsePositiveInteger(TargetLowMgDlText, out var targetLowMgDl))
+        var selectedUnit = SelectedPreferredUnit.Unit;
+        
+        if (!TryParseTargetValueMgDl(TargetLowMgDlText, selectedUnit, out var targetLowMgDl))
         {
-            validationMessage = "Target low must be a positive integer.";
+            validationMessage = $"Target low must be a positive glucose value expressed in {FormatGlucoseUnitLabel(selectedUnit)}.";
             return null;
         }
-
-        if (!TryParsePositiveInteger(TargetHighMgDlText, out var targetHighMgDl))
+        
+        if (!TryParseTargetValueMgDl(TargetHighMgDlText, selectedUnit, out var targetHighMgDl))
         {
-            validationMessage = "Target high must be a positive integer.";
+            validationMessage = $"Target high must be a positive glucose value expressed in {FormatGlucoseUnitLabel(selectedUnit)}.";
             return null;
         }
 
@@ -920,7 +1168,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         return Enum
             .GetValues<GlucoseUnit>()
-            .Select(unit => new GlucoseUnitSelectionItem(unit, FormatEnumName(unit.ToString())))
+            .Select(unit => new GlucoseUnitSelectionItem(unit, FormatGlucoseUnitLabel(unit)))
             .ToArray();
     }
 

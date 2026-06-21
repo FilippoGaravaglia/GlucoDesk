@@ -187,7 +187,9 @@ public sealed class SettingsViewModelTests
 
         Assert.True(viewModel.HasError);
         Assert.Equal("Settings validation failed", viewModel.StatusMessage);
-        Assert.Equal("Target low must be a positive integer.", viewModel.ErrorMessage);
+        Assert.Equal(
+            "Target low must be a positive glucose value expressed in mg/dL.",
+            viewModel.ErrorMessage);
     }
 
     [Fact]
