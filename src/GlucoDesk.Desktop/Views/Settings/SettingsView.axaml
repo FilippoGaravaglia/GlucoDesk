@@ -228,8 +228,8 @@
                                HorizontalAlignment="Stretch" />
 
                       <TextBlock Text="{Binding TargetRangeUnitLabel}"
-                                Classes="muted"
-                                FontSize="12" />
+                                 Classes="muted"
+                                 FontSize="12" />
                     </StackPanel>
                   </Border>
 
@@ -292,10 +292,11 @@
                                Classes="metric-label" />
 
                     <ComboBox ItemsSource="{Binding ChartMaximumOptions}"
-                              SelectedItem="{Binding SelectedChartMaximumMgDl}"
+                              SelectedValue="{Binding SelectedChartMaximumMgDl, Mode=TwoWay}"
+                              SelectedValueBinding="{Binding ValueMgDl}"
                               HorizontalAlignment="Stretch" />
 
-                    <TextBlock Text="mg/dL"
+                    <TextBlock Text="{Binding ChartMaximumUnitLabel}"
                                Classes="muted"
                                FontSize="12" />
                   </StackPanel>
@@ -308,17 +309,20 @@
 
           <Border Classes="surface-card">
             <Grid ColumnDefinitions="Auto,*"
-                  ColumnSpacing="18">
+                  ColumnSpacing="18"
+                  VerticalAlignment="Center">
               <Button Grid.Column="0"
                       Content="Save settings"
                       Command="{Binding SaveCommand}"
-                      VerticalAlignment="Top" />
+                      VerticalAlignment="Center" />
 
               <StackPanel Grid.Column="1"
-                          Spacing="8">
+                          Spacing="8"
+                          VerticalAlignment="Center">
                 <TextBlock Text="{Binding StatusMessage}"
                            Classes="secondary"
-                           TextWrapping="Wrap" />
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center" />
 
                 <Border IsVisible="{Binding HasError}"
                         Background="{StaticResource GlucoDesk.Brush.DangerSoft}"
