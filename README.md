@@ -398,7 +398,12 @@ Users should still protect their computer account, disk, backups and operating-s
 
 ## Installation preview
 
-Download the latest preview package from GitHub Releases.
+Download the latest ready-to-run preview package from the [GitHub Releases page](https://github.com/FilippoGaravaglia/GlucoDesk/releases).
+
+> [!IMPORTANT]
+> The green **Code → Download ZIP** button downloads the source code, not the ready-to-run app.
+>
+> To install or try GlucoDesk, download one of the packages attached to the latest GitHub Release.
 
 Available package targets:
 
@@ -408,11 +413,18 @@ GlucoDesk-0.2.0-preview-osx-x64.zip
 GlucoDesk-0.2.0-preview-win-x64-portable.zip
 ```
 
-Use:
+Choose the package for your operating system:
 
-* `osx-arm64` for Apple Silicon Macs;
-* `osx-x64` for Intel Macs;
-* `win-x64-portable` for Windows 64-bit preview usage.
+| System              | Download                                       |
+| ------------------- | ---------------------------------------------- |
+| macOS Apple Silicon | `GlucoDesk-0.2.0-preview-osx-arm64.zip`        |
+| macOS Intel         | `GlucoDesk-0.2.0-preview-osx-x64.zip`          |
+| Windows 64-bit      | `GlucoDesk-0.2.0-preview-win-x64-portable.zip` |
+
+Not sure which macOS package to use?
+
+* Choose `osx-arm64` for Apple Silicon Macs with M1, M2, M3, M4 or newer chips.
+* Choose `osx-x64` for Intel Macs.
 
 ### macOS
 
@@ -453,6 +465,10 @@ It does not install the app into the Start Menu and does not create a system ins
 
 ## Build from source
 
+This section is intended for developers who want to inspect, modify or build the project locally.
+
+If you only want to try the app, use the packages attached to the latest GitHub Release instead of cloning or downloading the source code.
+
 ### Requirements
 
 * .NET 10 SDK;
@@ -488,6 +504,10 @@ or:
 ---
 
 ## Create local preview packages
+
+This section is intended for developers and maintainers who want to generate release packages locally.
+
+Regular users should download ready-to-run packages from the GitHub Releases page.
 
 ### macOS Apple Silicon
 
