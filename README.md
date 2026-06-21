@@ -1,8 +1,4 @@
 <p align="center">
-  <img src="./docs/assets/glucodesk-social-preview.png" alt="GlucoDesk - A calm desktop companion for glucose awareness" width="100%" />
-</p>
-
-<p align="center">
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Avalonia-UI-0B8CE9" alt="Avalonia UI" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license" />
@@ -27,6 +23,10 @@
 </p>
 
 ---
+
+<p align="center">
+  <img src="./docs/assets/glucodesk-social-preview.png" alt="GlucoDesk - A calm desktop companion for glucose awareness" width="100%" />
+</p>
 
 > [!IMPORTANT]
 > **Safety notice**
