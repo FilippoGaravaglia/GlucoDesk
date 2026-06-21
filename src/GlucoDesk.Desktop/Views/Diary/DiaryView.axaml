@@ -3,148 +3,199 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <ScrollViewer>
-    <Grid RowDefinitions="Auto,Auto,*"
-          Margin="32"
-          MaxWidth="920">
+  <Border Classes="page-shell">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+      <Grid RowDefinitions="Auto,*"
+            Margin="30"
+            RowSpacing="26"
+            MaxWidth="1120"
+            HorizontalAlignment="Center">
 
-      <StackPanel Grid.Row="0"
-                  Spacing="8"
-                  Margin="0,0,0,24">
-        <TextBlock Text="Glycemic diary"
-                   FontSize="30"
-                   FontWeight="SemiBold"
-                   Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,Auto"
+              ColumnSpacing="24">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Glycemic diary"
+                       Classes="page-title" />
 
-        <TextBlock Text="Export a clean daily diary from your local glucose history."
-                   FontSize="15"
-                   Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                   TextWrapping="Wrap" />
-      </StackPanel>
+            <TextBlock Text="Export a clean daily diary from your local glucose history."
+                       Classes="secondary"
+                       FontSize="16"
+                       TextWrapping="Wrap" />
+          </StackPanel>
 
-      <Border Grid.Row="1"
-              Classes="dashboard-card"
-              Padding="24"
-              Margin="0,0,0,18">
-        <StackPanel Spacing="20">
+          <Border Grid.Column="1"
+                  Classes="badge-accent"
+                  VerticalAlignment="Top">
+            <TextBlock Text="Local export"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+          </Border>
+        </Grid>
 
-          <Grid ColumnDefinitions="*,*"
-                ColumnSpacing="20">
+        <StackPanel Grid.Row="1"
+                    Spacing="22">
 
-            <StackPanel Grid.Column="0"
-                        Spacing="6">
-              <TextBlock Text="Period"
-                         FontWeight="SemiBold"
-                         Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+          <Border Classes="surface-card"
+                  Padding="26">
+            <StackPanel Spacing="24">
 
-              <ComboBox ItemsSource="{Binding PeriodPresets}"
-                        SelectedItem="{Binding SelectedPeriodPreset}"
+              <Grid ColumnDefinitions="*,Auto"
+                    ColumnSpacing="24">
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Export setup"
+                             Classes="section-title" />
+
+                  <TextBlock Text="Choose the diary period and file format before refreshing the data preview."
+                             Classes="secondary"
+                             FontSize="13"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Content="{Binding RefreshPreviewButtonText}"
+                        Command="{Binding RefreshPreviewCommand}"
                         IsEnabled="{Binding CanEditSelection}"
-                        MinWidth="280" />
+                        VerticalAlignment="Center" />
+              </Grid>
 
-              <TextBlock Text="{Binding SelectedPeriodPreset.Description}"
-                         FontSize="12"
-                         Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                         TextWrapping="Wrap" />
+              <Grid ColumnDefinitions="*,*"
+                    ColumnSpacing="22">
+
+                <StackPanel Grid.Column="0"
+                            Spacing="8">
+                  <TextBlock Text="Period"
+                             Classes="metric-label" />
+
+                  <ComboBox ItemsSource="{Binding PeriodPresets}"
+                            SelectedItem="{Binding SelectedPeriodPreset}"
+                            IsEnabled="{Binding CanEditSelection}"
+                            HorizontalAlignment="Stretch" />
+
+                  <TextBlock Text="{Binding SelectedPeriodPreset.Description}"
+                             Classes="muted"
+                             FontSize="12"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Spacing="8">
+                  <TextBlock Text="Format"
+                             Classes="metric-label" />
+
+                  <ComboBox ItemsSource="{Binding Formats}"
+                            SelectedItem="{Binding SelectedFormat}"
+                            IsEnabled="{Binding CanEditSelection}"
+                            HorizontalAlignment="Stretch" />
+
+                  <TextBlock Text="{Binding SelectedFormat.Description}"
+                             Classes="muted"
+                             FontSize="12"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+              </Grid>
+
+              <Border Height="1"
+                      Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+
+              <Grid ColumnDefinitions="1.15*,0.85*"
+                    ColumnSpacing="28">
+
+                <StackPanel Grid.Column="0"
+                            Spacing="8">
+                  <TextBlock Text="Data preview"
+                             Classes="section-title" />
+
+                  <TextBlock Text="{Binding PreviewStatusText}"
+                             Classes="secondary"
+                             FontSize="13"
+                             TextWrapping="Wrap" />
+
+                  <TextBlock Text="{Binding PreviewCoverageText}"
+                             FontSize="13"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}"
+                             TextWrapping="Wrap" />
+
+                  <TextBlock Text="{Binding PreviewDetailsText}"
+                             Classes="muted"
+                             FontSize="12"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Padding="20"
+                        CornerRadius="18"
+                        Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+                  <StackPanel Spacing="12">
+                    <TextBlock Text="{Binding StatusTitle}"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock Text="{Binding StatusText}"
+                               Classes="secondary"
+                               FontSize="13"
+                               TextWrapping="Wrap" />
+
+                    <Button Content="{Binding ExportButtonText}"
+                            Classes="primary-button"
+                            Command="{Binding ExportCommand}"
+                            HorizontalAlignment="Left"
+                            IsEnabled="{Binding CanEditSelection}"
+                            Margin="0,8,0,0" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+
             </StackPanel>
+          </Border>
 
-            <StackPanel Grid.Column="1"
-                        Spacing="6">
-              <TextBlock Text="Format"
-                         FontWeight="SemiBold"
-                         Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+          <Grid ColumnDefinitions="1.1*,0.9*"
+                ColumnSpacing="22">
 
-              <ComboBox ItemsSource="{Binding Formats}"
-                        SelectedItem="{Binding SelectedFormat}"
-                        IsEnabled="{Binding CanEditSelection}"
-                        MinWidth="280" />
+            <Border Grid.Column="0"
+                    Classes="surface-card"
+                    Padding="24">
+              <StackPanel Spacing="10">
+                <TextBlock Text="What is included"
+                           Classes="section-title" />
 
-              <TextBlock Text="{Binding SelectedFormat.Description}"
-                         FontSize="12"
-                         Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                         TextWrapping="Wrap" />
-            </StackPanel>
-          </Grid>
-
-          <Border Padding="14"
-                  CornerRadius="14"
-                  Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
-            <Grid ColumnDefinitions="*,Auto"
-                  ColumnSpacing="16">
-              <StackPanel Grid.Column="0"
-                          Spacing="6">
-                <TextBlock Text="{Binding PreviewStatusTitle}"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
-
-                <TextBlock Text="{Binding PreviewStatusText}"
-                           FontSize="13"
-                           Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                           TextWrapping="Wrap" />
-
-                <TextBlock Text="{Binding PreviewCoverageText}"
-                           FontSize="13"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}"
-                           TextWrapping="Wrap" />
-
-                <TextBlock Text="{Binding PreviewDetailsText}"
-                           FontSize="12"
-                           Foreground="{StaticResource GlucoDesk.Brush.TextMuted}"
+                <TextBlock Text="Daily summaries, breakfast/lunch/dinner/pre-night values, time-in-range, data coverage and incomplete-data indicators."
+                           Classes="secondary"
                            TextWrapping="Wrap" />
               </StackPanel>
+            </Border>
 
-              <Button Grid.Column="1"
-                      Content="{Binding RefreshPreviewButtonText}"
-                      Command="{Binding RefreshPreviewCommand}"
-                      IsEnabled="{Binding CanEditSelection}"
-                      VerticalAlignment="Center" />
-            </Grid>
-          </Border>
+            <Border Grid.Column="1"
+                    Padding="24"
+                    CornerRadius="22"
+                    BorderThickness="1"
+                    BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                    Background="{StaticResource GlucoDesk.Brush.AccentPale}">
+              <Grid ColumnDefinitions="Auto,*"
+                    ColumnSpacing="12">
+                <Border Width="10"
+                        Height="10"
+                        CornerRadius="999"
+                        Background="{StaticResource GlucoDesk.Brush.Indigo}"
+                        VerticalAlignment="Top"
+                        Margin="0,5,0,0" />
 
-          <Border Padding="14"
-                  CornerRadius="14"
-                  Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
-            <StackPanel Spacing="6">
-              <TextBlock Text="{Binding StatusTitle}"
-                         FontWeight="SemiBold"
-                         Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+                <TextBlock Grid.Column="1"
+                           Text="GlucoDesk is not a medical device. The exported diary is for personal awareness and must not be used for treatment decisions."
+                           Classes="secondary"
+                           FontSize="13"
+                           TextWrapping="Wrap" />
+              </Grid>
+            </Border>
 
-              <TextBlock Text="{Binding StatusText}"
-                         FontSize="13"
-                         Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                         TextWrapping="Wrap" />
-            </StackPanel>
-          </Border>
-
-          <Button Content="{Binding ExportButtonText}"
-                  Classes="primary-button"
-                  Command="{Binding ExportCommand}"
-                  HorizontalAlignment="Left"
-                  IsEnabled="{Binding CanEditSelection}" />
+          </Grid>
 
         </StackPanel>
-      </Border>
-
-      <Border Grid.Row="2"
-              Classes="dashboard-card"
-              Padding="18">
-        <StackPanel Spacing="8">
-          <TextBlock Text="What is included"
-                     FontWeight="SemiBold"
-                     Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
-
-          <TextBlock Text="The diary contains daily summaries, breakfast/lunch/dinner/pre-night values, time-in-range, data coverage and incomplete-data indicators."
-                     Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
-                     TextWrapping="Wrap" />
-
-          <TextBlock Text="GlucoDesk is not a medical device. The exported diary is for personal awareness and must not be used for treatment decisions."
-                     Foreground="{StaticResource GlucoDesk.Brush.TextMuted}"
-                     FontSize="12"
-                     TextWrapping="Wrap" />
-        </StackPanel>
-      </Border>
-
-    </Grid>
-  </ScrollViewer>
+      </Grid>
+    </ScrollViewer>
+  </Border>
 </UserControl>
