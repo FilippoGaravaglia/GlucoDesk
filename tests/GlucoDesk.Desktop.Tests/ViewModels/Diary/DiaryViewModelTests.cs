@@ -6,6 +6,9 @@ using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Application.Settings.Abstractions;
+using GlucoDesk.Application.Settings.Models;
+using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.Diary.Results;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Diary;
@@ -23,12 +26,10 @@ public sealed class DiaryViewModelTests
         var pdfService = new FakePdfExportService();
         var saveService = new FakeFileSaveService();
 
-        var viewModel = new DiaryViewModel(
-            new FakeGlycemicDiaryService(),
-            excelService,
-            pdfService,
-            saveService,
-            TimeProvider.System);
+        var viewModel = CreateViewModel(
+            excelService: excelService,
+            pdfService: pdfService,
+            saveService: saveService);
 
         viewModel.SelectedFormat = viewModel.Formats.Single(format =>
             format.Kind == DiaryExportFormatKind.Excel);
@@ -52,12 +53,10 @@ public sealed class DiaryViewModelTests
         var pdfService = new FakePdfExportService();
         var saveService = new FakeFileSaveService();
 
-        var viewModel = new DiaryViewModel(
-            new FakeGlycemicDiaryService(),
-            excelService,
-            pdfService,
-            saveService,
-            TimeProvider.System);
+        var viewModel = CreateViewModel(
+            excelService: excelService,
+            pdfService: pdfService,
+            saveService: saveService);
 
         viewModel.SelectedFormat = viewModel.Formats.Single(format =>
             format.Kind == DiaryExportFormatKind.Pdf);
@@ -74,6 +73,58 @@ public sealed class DiaryViewModelTests
     }
 
     [Fact]
+    public async Task ExportCommand_ShouldPassPreferredUnitToExcelExport_WhenSettingsUseMmolL()
+    {
+        // Arrange
+        var excelService = new FakeExcelExportService();
+
+        var settingsService = new FakeApplicationSettingsService
+        {
+            Settings = new ApplicationSettings(preferredUnit: GlucoseUnit.MmolL)
+        };
+
+        var viewModel = CreateViewModel(
+            excelService: excelService,
+            settingsService: settingsService);
+
+        viewModel.SelectedFormat = viewModel.Formats.Single(format =>
+            format.Kind == DiaryExportFormatKind.Excel);
+
+        // Act
+        await viewModel.ExportCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.NotNull(excelService.LastRequest);
+        Assert.Equal(GlucoseUnit.MmolL, excelService.LastRequest.PreferredUnit);
+    }
+
+    [Fact]
+    public async Task ExportCommand_ShouldPassPreferredUnitToPdfExport_WhenSettingsUseMmolL()
+    {
+        // Arrange
+        var pdfService = new FakePdfExportService();
+
+        var settingsService = new FakeApplicationSettingsService
+        {
+            Settings = new ApplicationSettings(preferredUnit: GlucoseUnit.MmolL)
+        };
+
+        var viewModel = CreateViewModel(
+            pdfService: pdfService,
+            settingsService: settingsService);
+
+        viewModel.SelectedFormat = viewModel.Formats.Single(format =>
+            format.Kind == DiaryExportFormatKind.Pdf);
+
+        // Act
+        await viewModel.ExportCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.NotNull(pdfService.LastRequest);
+        Assert.Equal(GlucoseUnit.MmolL, pdfService.LastRequest.PreferredUnit);
+    }
+
+    [Fact]
     public async Task ExportCommand_ShouldShowError_WhenExportFails()
     {
         // Arrange
@@ -82,12 +133,8 @@ public sealed class DiaryViewModelTests
             ShouldFail = true
         };
 
-        var viewModel = new DiaryViewModel(
-            new FakeGlycemicDiaryService(),
-            excelService,
-            new FakePdfExportService(),
-            new FakeFileSaveService(),
-            TimeProvider.System);
+        var viewModel = CreateViewModel(
+            excelService: excelService);
 
         // Act
         await viewModel.ExportCommand.ExecuteAsync(null);
@@ -99,6 +146,33 @@ public sealed class DiaryViewModelTests
     }
 
     [Fact]
+    public async Task ExportCommand_ShouldShowError_WhenSettingsCannotBeLoaded()
+    {
+        // Arrange
+        var excelService = new FakeExcelExportService();
+        var saveService = new FakeFileSaveService();
+
+        var settingsService = new FakeApplicationSettingsService
+        {
+            ShouldFail = true
+        };
+
+        var viewModel = CreateViewModel(
+            excelService: excelService,
+            saveService: saveService,
+            settingsService: settingsService);
+
+        // Act
+        await viewModel.ExportCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.True(viewModel.HasError);
+        Assert.False(viewModel.HasSuccess);
+        Assert.Equal(0, excelService.ExportCount);
+        Assert.Equal(0, saveService.SaveCount);
+    }
+
+    [Fact]
     public async Task ExportCommand_ShouldNotShowSuccess_WhenSaveIsCanceled()
     {
         // Arrange
@@ -107,12 +181,8 @@ public sealed class DiaryViewModelTests
             ShouldCancel = true
         };
 
-        var viewModel = new DiaryViewModel(
-            new FakeGlycemicDiaryService(),
-            new FakeExcelExportService(),
-            new FakePdfExportService(),
-            saveService,
-            TimeProvider.System);
+        var viewModel = CreateViewModel(
+            saveService: saveService);
 
         // Act
         await viewModel.ExportCommand.ExecuteAsync(null);
@@ -129,12 +199,7 @@ public sealed class DiaryViewModelTests
     public void Constructor_ShouldExposeReadyStatus()
     {
         // Arrange & Act
-        var viewModel = new DiaryViewModel(
-            new FakeGlycemicDiaryService(),
-            new FakeExcelExportService(),
-            new FakePdfExportService(),
-            new FakeFileSaveService(),
-            TimeProvider.System);
+        var viewModel = CreateViewModel();
 
         // Assert
         Assert.False(viewModel.IsExporting);
@@ -166,12 +231,8 @@ public sealed class DiaryViewModelTests
             ShouldFail = true
         };
 
-        var viewModel = new DiaryViewModel(
-            new FakeGlycemicDiaryService(),
-            new FakeExcelExportService(),
-            new FakePdfExportService(),
-            saveService,
-            TimeProvider.System);
+        var viewModel = CreateViewModel(
+            saveService: saveService);
 
         // Act
         await viewModel.ExportCommand.ExecuteAsync(null);
@@ -192,12 +253,8 @@ public sealed class DiaryViewModelTests
             ShouldThrow = true
         };
 
-        var viewModel = new DiaryViewModel(
-            new FakeGlycemicDiaryService(),
-            excelService,
-            new FakePdfExportService(),
-            new FakeFileSaveService(),
-            TimeProvider.System);
+        var viewModel = CreateViewModel(
+            excelService: excelService);
 
         // Act
         await viewModel.ExportCommand.ExecuteAsync(null);
@@ -217,12 +274,8 @@ public sealed class DiaryViewModelTests
             ShouldFail = true
         };
 
-        var viewModel = new DiaryViewModel(
-            diaryService,
-            new FakeExcelExportService(),
-            new FakePdfExportService(),
-            new FakeFileSaveService(),
-            TimeProvider.System);
+        var viewModel = CreateViewModel(
+            diaryService: diaryService);
 
         // Act
         await viewModel.RefreshPreviewCommand.ExecuteAsync(null);
@@ -236,6 +289,31 @@ public sealed class DiaryViewModelTests
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Creates a diary view model for tests.
+    /// </summary>
+    /// <param name="diaryService">The optional diary service.</param>
+    /// <param name="excelService">The optional Excel export service.</param>
+    /// <param name="pdfService">The optional PDF export service.</param>
+    /// <param name="saveService">The optional file save service.</param>
+    /// <param name="settingsService">The optional settings service.</param>
+    /// <returns>The diary view model.</returns>
+    private static DiaryViewModel CreateViewModel(
+        IGlycemicDiaryService? diaryService = null,
+        FakeExcelExportService? excelService = null,
+        FakePdfExportService? pdfService = null,
+        FakeFileSaveService? saveService = null,
+        IApplicationSettingsService? settingsService = null)
+    {
+        return new DiaryViewModel(
+            diaryService ?? new FakeGlycemicDiaryService(),
+            excelService ?? new FakeExcelExportService(),
+            pdfService ?? new FakePdfExportService(),
+            saveService ?? new FakeFileSaveService(),
+            settingsService ?? new FakeApplicationSettingsService(),
+            TimeProvider.System);
+    }
 
     private sealed class FakeGlycemicDiaryService : IGlycemicDiaryService
     {
@@ -265,6 +343,8 @@ public sealed class DiaryViewModelTests
     {
         public int ExportCount { get; private set; }
 
+        public GlycemicDiaryExcelExportRequest? LastRequest { get; private set; }
+
         public bool ShouldFail { get; init; }
 
         public bool ShouldThrow { get; init; }
@@ -277,6 +357,7 @@ public sealed class DiaryViewModelTests
             ArgumentNullException.ThrowIfNull(request);
             cancellationToken.ThrowIfCancellationRequested();
 
+            LastRequest = request;
             ExportCount++;
 
             if (ShouldThrow)
@@ -304,6 +385,8 @@ public sealed class DiaryViewModelTests
     {
         public int ExportCount { get; private set; }
 
+        public GlycemicDiaryPdfExportRequest? LastRequest { get; private set; }
+
         /// <inheritdoc />
         public Task<Result<GlycemicDiaryExportFile>> ExportAsync(
             GlycemicDiaryPdfExportRequest request,
@@ -312,6 +395,7 @@ public sealed class DiaryViewModelTests
             ArgumentNullException.ThrowIfNull(request);
             cancellationToken.ThrowIfCancellationRequested();
 
+            LastRequest = request;
             ExportCount++;
 
             return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
@@ -352,6 +436,40 @@ public sealed class DiaryViewModelTests
                 ShouldCancel
                     ? DiaryExportSaveResult.Canceled()
                     : DiaryExportSaveResult.Saved(file.FileName)));
+        }
+    }
+
+    private sealed class FakeApplicationSettingsService : IApplicationSettingsService
+    {
+        public bool ShouldFail { get; init; }
+
+        public ApplicationSettings Settings { get; init; } = ApplicationSettings.Default;
+
+        /// <inheritdoc />
+        public Task<Result<ApplicationSettings>> GetSettingsAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (ShouldFail)
+            {
+                return Task.FromResult(Result<ApplicationSettings>.Failure(
+                    new Error(
+                        "Settings.LoadFailed",
+                        "Unable to load settings.")));
+            }
+
+            return Task.FromResult(Result<ApplicationSettings>.Success(Settings));
+        }
+
+        /// <inheritdoc />
+        public Task<Result> SaveSettingsAsync(
+            ApplicationSettings settings,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(settings);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(Result.Success());
         }
     }
 
