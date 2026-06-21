@@ -485,7 +485,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Handles preferred glucose unit changes by updating labels and converting editable target values.
+    /// Handles preferred glucose unit changes by updating labels, preserving chart scale selection and converting editable target values.
     /// </summary>
     /// <param name="oldValue">The previous selected glucose unit option.</param>
     /// <param name="newValue">The new selected glucose unit option.</param>
@@ -495,9 +495,10 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         var previousUnit = oldValue?.Unit ?? GlucoseUnit.MgDl;
         var nextUnit = newValue?.Unit ?? GlucoseUnit.MgDl;
+        var currentChartMaximumMgDl = NormalizeChartMaximumMgDl(SelectedChartMaximumMgDl);
 
         UpdateTargetRangeUnitPresentation(nextUnit);
-        UpdateChartMaximumPresentation(nextUnit);
+        UpdateChartMaximumPresentation(nextUnit, currentChartMaximumMgDl);
 
         if (previousUnit == nextUnit)
         {
@@ -684,18 +685,19 @@ public sealed partial class SettingsViewModel : ViewModelBase
             || historicalProvider.Kind != settings.HistoricalProvider;
 
         var selectedUnit = NormalizeDisplayUnit(settings.PreferredUnit);
+        var selectedChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
 
         SelectedLiveProvider = liveProvider;
         SelectedHistoricalProvider = historicalProvider;
+        SelectedChartMaximumMgDl = selectedChartMaximumMgDl;
         SelectedPreferredUnit = FindPreferredUnitOption(selectedUnit);
         UpdateTargetRangeUnitPresentation(selectedUnit);
-        UpdateChartMaximumPresentation(selectedUnit);
+        UpdateChartMaximumPresentation(selectedUnit, selectedChartMaximumMgDl);
 
         TargetLowMgDlText = FormatTargetValueForUnit(settings.TargetLowMgDl, selectedUnit);
         TargetHighMgDlText = FormatTargetValueForUnit(settings.TargetHighMgDl, selectedUnit);
         DashboardRefreshIntervalSecondsText = ((int)settings.DashboardRefreshInterval.TotalSeconds)
             .ToString(CultureInfo.InvariantCulture);
-        SelectedChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
 
         return usedProviderFallback;
     }
@@ -744,13 +746,25 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Updates chart maximum options and unit label for the selected glucose unit.
+    /// Updates chart maximum options and unit label for the selected glucose unit while preserving the selected logical chart maximum.
     /// </summary>
     /// <param name="unit">The selected glucose unit.</param>
-    private void UpdateChartMaximumPresentation(GlucoseUnit unit)
+    /// <param name="chartMaximumMgDl">The chart maximum value to preserve, expressed in mg/dL.</param>
+    private void UpdateChartMaximumPresentation(
+        GlucoseUnit unit,
+        int? chartMaximumMgDl = null)
     {
+        var selectedChartMaximumMgDl = NormalizeChartMaximumMgDl(
+            chartMaximumMgDl ?? SelectedChartMaximumMgDl);
+    
         ChartMaximumUnitLabel = FormatGlucoseUnitLabel(unit);
         ChartMaximumOptions = BuildChartMaximumOptions(unit);
+    
+        SelectedChartMaximumMgDl = selectedChartMaximumMgDl;
+    
+        // The selected logical value can remain the same while the ItemsSource changes.
+        // Raising the notification explicitly forces the ComboBox to re-match the new display option.
+        OnPropertyChanged(nameof(SelectedChartMaximumMgDl));
     }
 
     /// <summary>

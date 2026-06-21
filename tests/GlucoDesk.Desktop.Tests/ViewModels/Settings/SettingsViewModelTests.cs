@@ -396,6 +396,61 @@ public sealed class SettingsViewModelTests
         Assert.Equal("Settings.SaveFailed: Unable to save settings.", viewModel.ErrorMessage);
     }
 
+    [Theory]
+    [InlineData(300, "16.6", "300")]
+    [InlineData(400, "22.2", "400")]
+    public async Task SelectedPreferredUnit_ShouldPreserveChartMaximumSelection_WhenUnitChanges(
+        int chartMaximumMgDl,
+        string expectedMmolDisplayName,
+        string expectedMgDlDisplayName)
+    {
+        // Arrange
+        var settings = new ApplicationSettings(
+            activeLiveProvider: CgmProviderKind.Mock,
+            historicalProvider: CgmProviderKind.Mock,
+            preferredUnit: GlucoseUnit.MgDl,
+            targetLowMgDl: 70,
+            targetHighMgDl: 180,
+            dashboardRefreshInterval: TimeSpan.FromSeconds(30),
+            chartMaximumMgDl: chartMaximumMgDl);
+
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(Result<ApplicationSettings>.Success(settings)),
+            [new FakeMetadataProvider(CgmProviderKind.Mock, "Mock")]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        var mmolOption = viewModel.PreferredUnitOptions.Single(option =>
+            option.Unit == GlucoseUnit.MmolL);
+
+        var mgDlOption = viewModel.PreferredUnitOptions.Single(option =>
+            option.Unit == GlucoseUnit.MgDl);
+
+        // Act
+        viewModel.SelectedPreferredUnit = mmolOption;
+
+        // Assert
+        Assert.Equal(chartMaximumMgDl, viewModel.SelectedChartMaximumMgDl);
+        Assert.Equal("mmol/L", viewModel.ChartMaximumUnitLabel);
+
+        var selectedMmolChartOption = viewModel.ChartMaximumOptions.Single(option =>
+            option.ValueMgDl == chartMaximumMgDl);
+
+        Assert.Equal(expectedMmolDisplayName, selectedMmolChartOption.DisplayName);
+
+        // Act
+        viewModel.SelectedPreferredUnit = mgDlOption;
+
+        // Assert
+        Assert.Equal(chartMaximumMgDl, viewModel.SelectedChartMaximumMgDl);
+        Assert.Equal("mg/dL", viewModel.ChartMaximumUnitLabel);
+
+        var selectedMgDlChartOption = viewModel.ChartMaximumOptions.Single(option =>
+            option.ValueMgDl == chartMaximumMgDl);
+
+        Assert.Equal(expectedMgDlDisplayName, selectedMgDlChartOption.DisplayName);
+    }
+
     #region Helpers
 
     private sealed class FakeDexcomDesktopConnectionService : IDexcomDesktopConnectionService
