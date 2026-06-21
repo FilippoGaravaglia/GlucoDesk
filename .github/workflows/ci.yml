@@ -59,3 +59,76 @@ jobs:
           name: test-results-${{ matrix.os }}
           path: TestResults/**/*.trx
           if-no-files-found: ignore
+
+  publish-windows-preview:
+    name: Publish Windows preview
+    runs-on: windows-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Show .NET info
+        run: dotnet --info
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish Windows portable
+        run: >
+          dotnet publish src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=false
+          -o artifacts/publish/GlucoDesk-win-x64
+
+      - name: Verify Windows executable
+        shell: pwsh
+        run: |
+          $executablePath = "artifacts/publish/GlucoDesk-win-x64/GlucoDesk.Desktop.exe"
+
+          if (-not (Test-Path $executablePath)) {
+            throw "Windows executable was not produced at '$executablePath'."
+          }
+
+          Write-Host "Windows executable produced successfully:"
+          Write-Host $executablePath
+
+      - name: Create Windows portable archive
+        shell: pwsh
+        run: |
+          $publishDirectory = "artifacts/publish/GlucoDesk-win-x64"
+          $releaseDirectory = "artifacts/releases"
+          $archivePath = "$releaseDirectory/GlucoDesk-win-x64-portable.zip"
+
+          New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
+
+          if (Test-Path $archivePath) {
+            Remove-Item $archivePath -Force
+          }
+
+          Compress-Archive `
+            -Path "$publishDirectory/*" `
+            -DestinationPath $archivePath `
+            -Force
+
+          if (-not (Test-Path $archivePath)) {
+            throw "Windows portable archive was not produced."
+          }
+
+          Write-Host "Windows portable archive produced successfully:"
+          Write-Host $archivePath
+
+      - name: Upload Windows portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GlucoDesk-win-x64-portable
+          path: artifacts/releases/GlucoDesk-win-x64-portable.zip
+          if-no-files-found: error
