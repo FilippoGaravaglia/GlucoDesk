@@ -1,16 +1,17 @@
 <p align="center">
+  <img src="./docs/assets/glucodesk-social-preview.png" alt="GlucoDesk - A calm desktop companion for glucose awareness" width="100%" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Avalonia-UI-0B8CE9" alt="Avalonia UI" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license" />
   <img src="https://img.shields.io/badge/status-v0.1.0--preview-blue" alt="v0.1.0 preview" />
+  <img src="https://img.shields.io/badge/preview-macOS--only-00AEEF" alt="macOS-only preview" />
   <img src="https://img.shields.io/badge/local--first-yes-00AEEF" alt="Local-first" />
 </p>
 
 <h1 align="center">GlucoDesk</h1>
-
-<p align="center">
-  <img src="docs/assets/glucodesk-social-preview.png" alt="GlucoDesk - A calm desktop companion for glucose awareness" />
-</p>
 
 <p align="center">
   <strong>A calm desktop companion for glucose awareness.</strong>
@@ -32,6 +33,20 @@
 > GlucoDesk is not a medical device and must not be used for treatment decisions.
 >
 > Always use approved medical devices and official medical apps for therapy decisions.
+
+> [!WARNING]
+> **Platform support**
+>
+> GlucoDesk **v0.1.0-preview is currently intended for macOS only**.
+>
+> The available preview packages target:
+>
+> * macOS Apple Silicon (`osx-arm64`);
+> * macOS Intel (`osx-x64`).
+>
+> Windows and Linux are part of the long-term cross-platform direction, but they are **not supported in the current preview**.
+>
+> The app may build or start on other platforms, but some runtime features, especially account configuration and secure credential storage, are currently validated only on macOS.
 
 ---
 
@@ -76,6 +91,8 @@ The goal is simple:
 
 > Make glucose awareness more comfortable during desktop work, without replacing official medical apps or devices.
 
+GlucoDesk is designed with a provider-based architecture so the project can evolve beyond a single data source over time.
+
 ---
 
 ## Preview
@@ -85,12 +102,17 @@ GlucoDesk is currently in **v0.1.0-preview**.
 The preview already includes the first complete product loop:
 
 ```text
-Connect a CGM data source
+Connect an optional CGM data source
 → show glucose awareness on desktop
 → keep local history updated
 → reduce local history gaps
 → export a readable glycemic diary
 ```
+
+> [!NOTE]
+> The current public preview is validated on macOS.
+>
+> Windows and Linux are future runtime targets, but they are not supported in v0.1.0-preview.
 
 ### Dashboard
 
@@ -103,6 +125,9 @@ The dashboard shows the current glucose value, trend, data freshness, provider s
 ![GlucoDesk account](docs/assets/screenshots/account.png)
 
 The Account page allows local account configuration, connection testing and secure credential handling.
+
+> [!NOTE]
+> In the current preview, account configuration and secure credential storage are validated on macOS only.
 
 ### Glycemic diary export
 
@@ -161,7 +186,18 @@ The preview focuses on:
 * app branding;
 * first macOS preview packaging.
 
-The app is usable for early testing, but still evolving.
+Current runtime support:
+
+| Platform            | Status            |
+| ------------------- | ----------------- |
+| macOS Apple Silicon | Preview supported |
+| macOS Intel         | Preview supported |
+| Windows             | Not supported yet |
+| Linux               | Not supported yet |
+
+The app is usable for early testing on macOS, but still evolving.
+
+Windows and Linux remain part of the cross-platform roadmap, but the current preview release should be considered **macOS-only**.
 
 ---
 
@@ -196,6 +232,11 @@ GlucoDesk is designed so sensitive credentials stay on the user’s computer.
 On macOS, account credentials are handled through the configured secure credential store, using the macOS Keychain for the current preview flow.
 
 Credentials are not stored in local JSON settings files and must never be committed to Git.
+
+> [!WARNING]
+> Secure credential storage is currently validated only on macOS.
+>
+> Windows and Linux credential-store implementations are not supported in v0.1.0-preview.
 
 ### Automatic reconnect
 
@@ -282,13 +323,21 @@ Users should still protect their computer account, disk, backups and operating-s
 
 Download the latest preview package from GitHub Releases.
 
-For macOS Apple Silicon, the package name is expected to look like:
+GlucoDesk v0.1.0-preview is currently distributed as a **macOS preview build**.
+
+Available package targets:
 
 ```text
 GlucoDesk-0.1.0-preview-osx-arm64.zip
+GlucoDesk-0.1.0-preview-osx-x64.zip
 ```
 
-Unzip it and open:
+Use:
+
+* `osx-arm64` for Apple Silicon Macs;
+* `osx-x64` for Intel Macs.
+
+Unzip the package and open:
 
 ```text
 GlucoDesk.app
@@ -304,6 +353,11 @@ Right click → Open
 
 This is expected for an unsigned preview build.
 
+> [!NOTE]
+> Windows and Linux builds are not available in the current preview.
+>
+> Even if the project can be built from source on other platforms, the runtime experience is currently validated only on macOS.
+
 ---
 
 ## Build from source
@@ -311,8 +365,9 @@ This is expected for an unsigned preview build.
 ### Requirements
 
 * .NET 10 SDK;
-* macOS, Windows or Linux for development;
-* macOS required for the current `.app` preview packaging script.
+* macOS for the supported preview runtime;
+* macOS required for the current `.app` preview packaging script;
+* Windows or Linux can be used for source-level experimentation, but they are not supported runtime targets in v0.1.0-preview.
 
 ### Restore, build, test and run
 
@@ -324,6 +379,11 @@ dotnet build -c Release
 dotnet test -c Release
 dotnet run --project src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj
 ```
+
+> [!WARNING]
+> Running the desktop app from source on Windows or Linux is not supported in the current preview.
+>
+> Some UI paths may open, but account configuration, secure credential storage and provider runtime behavior are currently validated only on macOS.
 
 ---
 
@@ -459,11 +519,14 @@ GlucoDesk is still a preview.
 
 Current limitations:
 
+* v0.1.0-preview is currently supported and validated only on macOS;
+* available preview packages target macOS Apple Silicon and macOS Intel;
+* Windows and Linux runtime support is not available yet;
+* Windows and Linux installers are not finalized yet;
+* account configuration and secure credential storage are currently validated only on macOS;
+* provider runtime behavior may depend on platform, region and account configuration;
 * macOS packages are not signed or notarized yet;
 * app icon and brand assets may still evolve;
-* packaging is currently focused on macOS;
-* Windows and Linux installers are not finalized yet;
-* provider availability may depend on region and account configuration;
 * local history completeness depends on sync availability and app runtime;
 * the app is not intended for treatment decisions;
 * the app is not a medical device.
@@ -481,6 +544,7 @@ Planned improvements include:
 * stronger release automation;
 * Windows packaging improvements;
 * Linux packaging improvements;
+* platform-specific secure credential storage hardening;
 * richer diary and data-completeness reporting;
 * macOS widget exploration;
 * additional provider abstraction hardening;
