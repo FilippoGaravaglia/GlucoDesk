@@ -1,14 +1,17 @@
+using System.Globalization;
+using System.Reflection;
 using GlucoDesk.Application.Cgm.Diary.Exports.Requests;
 using GlucoDesk.Application.Cgm.Diary.Exports.Results;
 using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.Options;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using System.Reflection;
 
 namespace GlucoDesk.Infrastructure.Cgm.Diary.Pdf.Services;
 
@@ -17,8 +20,6 @@ namespace GlucoDesk.Infrastructure.Cgm.Diary.Pdf.Services;
 /// </summary>
 public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExportService
 {
-    private readonly IGlycemicDiaryService _diaryService;
-    private readonly GlycemicDiaryPdfExportOptions _options;
     private const string BrandBlue = "#0F7BFF";
     private const string BrandBlueDark = "#0A4FA3";
     private const string BrandBlueSoft = "#EAF4FF";
@@ -26,7 +27,6 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private const string SuccessSoft = "#EAFBF1";
     private const string WarningSoft = "#FFF6E5";
     private const string NeutralSoft = "#F7F9FC";
-    private const string TextPrimary = "#14213D";
     private const string TextSecondary = "#5C6B82";
     private const string TextMuted = "#8A96A8";
     private const string White = "#FFFFFF";
@@ -34,7 +34,11 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private const string SuccessText = "#137333";
     private const string WarningText = "#B26A00";
     private const string WarningBorder = "#F1D18A";
+
     private static readonly byte[]? BrandLogoBytes = LoadBrandLogoBytes();
+
+    private readonly IGlycemicDiaryService _diaryService;
+    private readonly GlycemicDiaryPdfExportOptions _options;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QuestPdfGlycemicDiaryPdfExportService"/> class.
@@ -71,7 +75,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         QuestPDF.Settings.License = LicenseType.Community;
 
         var content = Document
-            .Create(container => ComposeDocument(container, diaryResult.Value))
+            .Create(container => ComposeDocument(
+                container,
+                diaryResult.Value,
+                request.PreferredUnit))
             .GeneratePdf();
 
         var file = new GlycemicDiaryExportFile(
@@ -89,9 +96,11 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// </summary>
     /// <param name="container">The document container.</param>
     /// <param name="report">The glycemic diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
     private void ComposeDocument(
         IDocumentContainer container,
-        GlycemicDiaryReport report)
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
     {
         container.Page(page =>
         {
@@ -100,7 +109,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             page.DefaultTextStyle(style => style.FontSize(9));
 
             page.Header().Element(header => ComposeHeader(header, report));
-            page.Content().Element(content => ComposeContent(content, report));
+            page.Content().Element(content => ComposeContent(content, report, preferredUnit));
             page.Footer().Element(ComposeFooter);
         });
     }
@@ -110,7 +119,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// </summary>
     /// <param name="container">The container.</param>
     /// <param name="report">The glycemic diary report.</param>
-    private void ComposeHeader(
+    private static void ComposeHeader(
         IContainer container,
         GlycemicDiaryReport report)
     {
@@ -183,43 +192,30 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     }
 
     /// <summary>
-    /// Applies the standard PDF metric box style.
-    /// </summary>
-    /// <param name="container">The target container.</param>
-    /// <returns>The styled container.</returns>
-    private static IContainer MetricBox(IContainer container)
-    {
-        return container
-            .Background(NeutralSoft)
-            .Border(1)
-            .BorderColor(BrandBorder)
-            .CornerRadius(8)
-            .Padding(10);
-    }
-
-    /// <summary>
     /// Composes the PDF content.
     /// </summary>
     /// <param name="container">The container.</param>
     /// <param name="report">The glycemic diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
     private void ComposeContent(
         IContainer container,
-        GlycemicDiaryReport report)
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
     {
         container.Column(column =>
         {
             column.Spacing(14);
-    
+
             column.Item()
                 .PaddingTop(8)
-                .Element(content => ComposeOverview(content, report));
-    
+                .Element(content => ComposeOverview(content, report, preferredUnit));
+
             column.Item()
-                .Element(content => ComposeDailyDiaryTable(content, report));
-    
+                .Element(content => ComposeDailyDiaryTable(content, report, preferredUnit));
+
             column.Item()
                 .Element(content => ComposeDataCompleteness(content, report));
-    
+
             column.Item()
                 .Element(ComposeSafetyNotice);
         });
@@ -230,9 +226,11 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// </summary>
     /// <param name="container">The container.</param>
     /// <param name="report">The glycemic diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
     private static void ComposeOverview(
         IContainer container,
-        GlycemicDiaryReport report)
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
     {
         container.Element(Card).Column(column =>
         {
@@ -247,7 +245,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                         .SemiBold()
                         .FontColor(BrandBlueDark);
 
-                    title.Item().Text("Summary of the selected glucose history period.")
+                    title.Item().Text($"Summary of the selected glucose history period. Values shown in {FormatGlucoseUnitLabel(preferredUnit)}.")
                         .FontSize(8)
                         .FontColor(TextMuted);
                 });
@@ -271,14 +269,14 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                     columns.RelativeColumn();
                 });
 
-                WriteMetric(table, "Average", FormatMgDl(report.AverageMgDl));
-                WriteMetric(table, "Range", $"{FormatPlain(report.MinimumMgDl)} - {FormatPlain(report.MaximumMgDl)} mg/dL");
+                WriteMetric(table, "Average", FormatGlucoseValue(report.AverageMgDl, preferredUnit));
+                WriteMetric(table, "Range", FormatGlucoseRange(report.MinimumMgDl, report.MaximumMgDl, preferredUnit));
                 WriteMetric(table, "Time in range", FormatPercentage(report.TimeInRangePercentage));
                 WriteMetric(table, "Data coverage", FormatPercentage(report.OverallContinuity.DataCoveragePercentage));
-                WriteMetric(table, "Readings", report.ReadingsCount.ToString());
-                WriteMetric(table, "Detected gaps", report.OverallContinuity.Gaps.Count.ToString());
-                WriteMetric(table, "Incomplete days", report.IncompleteDaysCount.ToString());
-                WriteMetric(table, "Empty days", report.EmptyDaysCount.ToString());
+                WriteMetric(table, "Readings", report.ReadingsCount.ToString(CultureInfo.InvariantCulture));
+                WriteMetric(table, "Detected gaps", report.OverallContinuity.Gaps.Count.ToString(CultureInfo.InvariantCulture));
+                WriteMetric(table, "Incomplete days", report.IncompleteDaysCount.ToString(CultureInfo.InvariantCulture));
+                WriteMetric(table, "Empty days", report.EmptyDaysCount.ToString(CultureInfo.InvariantCulture));
             });
         });
     }
@@ -288,9 +286,11 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// </summary>
     /// <param name="container">The container.</param>
     /// <param name="report">The glycemic diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
     private static void ComposeDailyDiaryTable(
         IContainer container,
-        GlycemicDiaryReport report)
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
     {
         container.Element(Card).Column(column =>
         {
@@ -305,7 +305,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                     .SemiBold()
                     .FontColor(BrandBlueDark);
 
-                title.Item().Text("Daily glucose summaries and key time-block values.")
+                title.Item().Text($"Daily glucose summaries and key time-block values shown in {FormatGlucoseUnitLabel(preferredUnit)}.")
                     .FontSize(8)
                     .FontColor(TextMuted);
             });
@@ -370,15 +370,15 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 {
                     var isAlternate = rowIndex % 2 != 0;
 
-                    DailyBodyCell(table.Cell(), isAlternate).Text(day.Date.ToString("yyyy-MM-dd"));
-                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(day.AverageMgDl));
-                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(day.MinimumMgDl));
-                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(day.MaximumMgDl));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(day.AverageMgDl, preferredUnit));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(day.MinimumMgDl, preferredUnit));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(day.MaximumMgDl, preferredUnit));
                     DailyBodyCell(table.Cell(), isAlternate).Text(FormatPercentage(day.TimeInRangePercentage));
-                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(GetBlockValue(day, "Breakfast")));
-                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(GetBlockValue(day, "Lunch")));
-                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(GetBlockValue(day, "Dinner")));
-                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPlain(GetBlockValue(day, "Pre-night")));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(GetBlockValue(day, "Breakfast"), preferredUnit));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(GetBlockValue(day, "Lunch"), preferredUnit));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(GetBlockValue(day, "Dinner"), preferredUnit));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(GetBlockValue(day, "Pre-night"), preferredUnit));
 
                     rowIndex++;
                 }
@@ -386,7 +386,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         });
     }
 
-   /// <summary>
+    /// <summary>
     /// Composes the data completeness section.
     /// </summary>
     /// <param name="container">The container.</param>
@@ -473,14 +473,14 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                         var dayStatusColor = day.IsDataComplete ? SuccessText : WarningText;
                         var dayStatusText = day.IsDataComplete ? "Complete" : "Partial";
 
-                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.Date.ToString("yyyy-MM-dd"));
+                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
                         CompletenessBodyCell(table.Cell(), isAlternate).Text(FormatPercentage(day.DataCoveragePercentage));
 
                         CompletenessBodyCell(table.Cell(), isAlternate).Text(dayStatusText)
                             .SemiBold()
                             .FontColor(dayStatusColor);
 
-                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.GapCount.ToString());
+                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.GapCount.ToString(CultureInfo.InvariantCulture));
 
                         rowIndex++;
                     }
@@ -597,37 +597,6 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     }
 
     /// <summary>
-    /// Styles a table header cell.
-    /// </summary>
-    /// <param name="container">The container.</param>
-    /// <returns>The styled container.</returns>
-    private static IContainer HeaderCell(IContainer container)
-    {
-        return container
-            .Background(Colors.Grey.Lighten3)
-            .Border(1)
-            .BorderColor(Colors.Grey.Lighten2)
-            .PaddingVertical(4)
-            .PaddingHorizontal(3)
-            .DefaultTextStyle(style => style.FontSize(7).SemiBold());
-    }
-
-    /// <summary>
-    /// Styles a table body cell.
-    /// </summary>
-    /// <param name="container">The container.</param>
-    /// <returns>The styled container.</returns>
-    private static IContainer BodyCell(IContainer container)
-    {
-        return container
-            .Border(1)
-            .BorderColor(Colors.Grey.Lighten3)
-            .PaddingVertical(4)
-            .PaddingHorizontal(3)
-            .DefaultTextStyle(style => style.FontSize(7));
-    }
-
-    /// <summary>
     /// Gets a representative time block value by label.
     /// </summary>
     /// <param name="day">The daily diary entry.</param>
@@ -653,27 +622,107 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <returns>The formatted date.</returns>
     private static string FormatDate(DateTimeOffset timestamp)
     {
-        return timestamp.ToLocalTime().ToString("yyyy-MM-dd");
+        return timestamp.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 
     /// <summary>
     /// Formats a nullable glucose value with unit.
     /// </summary>
-    /// <param name="value">The glucose value.</param>
-    /// <returns>The formatted value.</returns>
-    private static string FormatMgDl(decimal? value)
+    /// <param name="valueMgDl">The nullable glucose value expressed in mg/dL.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The formatted glucose value.</returns>
+    private static string FormatGlucoseValue(
+        decimal? valueMgDl,
+        GlucoseUnit preferredUnit)
     {
-        return value is null ? "—" : $"{value:0} mg/dL";
+        return valueMgDl is null
+            ? "—"
+            : $"{FormatGlucoseAmount(valueMgDl, preferredUnit)} {FormatGlucoseUnitLabel(preferredUnit)}";
     }
 
     /// <summary>
-    /// Formats a nullable decimal without unit.
+    /// Formats a nullable glucose range with unit.
     /// </summary>
-    /// <param name="value">The decimal value.</param>
-    /// <returns>The formatted value.</returns>
-    private static string FormatPlain(decimal? value)
+    /// <param name="minimumMgDl">The nullable minimum glucose value expressed in mg/dL.</param>
+    /// <param name="maximumMgDl">The nullable maximum glucose value expressed in mg/dL.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The formatted glucose range.</returns>
+    private static string FormatGlucoseRange(
+        decimal? minimumMgDl,
+        decimal? maximumMgDl,
+        GlucoseUnit preferredUnit)
     {
-        return value is null ? "—" : $"{value:0}";
+        if (minimumMgDl is null || maximumMgDl is null)
+        {
+            return "—";
+        }
+
+        return $"{FormatGlucoseAmount(minimumMgDl, preferredUnit)} - {FormatGlucoseAmount(maximumMgDl, preferredUnit)} {FormatGlucoseUnitLabel(preferredUnit)}";
+    }
+
+    /// <summary>
+    /// Formats a nullable glucose value without unit.
+    /// </summary>
+    /// <param name="valueMgDl">The nullable glucose value expressed in mg/dL.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The formatted glucose amount.</returns>
+    private static string FormatGlucoseAmount(
+        decimal? valueMgDl,
+        GlucoseUnit preferredUnit)
+    {
+        var convertedValue = ConvertGlucoseAmount(valueMgDl, preferredUnit);
+
+        if (convertedValue is null)
+        {
+            return "—";
+        }
+
+        return preferredUnit switch
+        {
+            GlucoseUnit.MgDl => convertedValue.Value.ToString("0", CultureInfo.InvariantCulture),
+            GlucoseUnit.MmolL => convertedValue.Value.ToString("0.0", CultureInfo.InvariantCulture),
+            _ => throw new ArgumentOutOfRangeException(nameof(preferredUnit), preferredUnit, "Unsupported glucose unit.")
+        };
+    }
+
+    /// <summary>
+    /// Converts a nullable mg/dL glucose value to the preferred unit.
+    /// </summary>
+    /// <param name="valueMgDl">The nullable glucose value expressed in mg/dL.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The converted nullable glucose amount.</returns>
+    private static decimal? ConvertGlucoseAmount(
+        decimal? valueMgDl,
+        GlucoseUnit preferredUnit)
+    {
+        if (valueMgDl is null)
+        {
+            return null;
+        }
+
+        if (preferredUnit == GlucoseUnit.MgDl)
+        {
+            return decimal.Round(valueMgDl.Value, 0, MidpointRounding.AwayFromZero);
+        }
+
+        return new GlucoseValue(valueMgDl.Value, GlucoseUnit.MgDl)
+            .ConvertTo(preferredUnit)
+            .Amount;
+    }
+
+    /// <summary>
+    /// Formats a glucose unit label.
+    /// </summary>
+    /// <param name="unit">The glucose unit.</param>
+    /// <returns>The formatted unit label.</returns>
+    private static string FormatGlucoseUnitLabel(GlucoseUnit unit)
+    {
+        return unit switch
+        {
+            GlucoseUnit.MgDl => "mg/dL",
+            GlucoseUnit.MmolL => "mmol/L",
+            _ => throw new ArgumentOutOfRangeException(nameof(unit), unit, "Unsupported glucose unit.")
+        };
     }
 
     /// <summary>
@@ -683,7 +732,9 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <returns>The formatted percentage.</returns>
     private static string FormatPercentage(decimal? value)
     {
-        return value is null ? "—" : $"{value:0.##}%";
+        return value is null
+            ? "—"
+            : $"{value.Value.ToString("0.##", CultureInfo.InvariantCulture)}%";
     }
 
     /// <summary>
@@ -742,7 +793,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             .BorderColor(BrandBorder)
             .PaddingVertical(5)
             .PaddingHorizontal(4);
-    }   
+    }
 
     /// <summary>
     /// Applies the daily diary table body cell style.

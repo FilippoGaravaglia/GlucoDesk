@@ -39,11 +39,11 @@
                     Spacing="22">
 
           <Border Classes="hero-card">
-            <Grid ColumnDefinitions="1.18*,0.82*"
-                  ColumnSpacing="30">
+            <Grid ColumnDefinitions="1.15*,0.85*"
+                  ColumnSpacing="34">
 
               <StackPanel Grid.Column="0"
-                          Spacing="22">
+                          Spacing="20">
                 <StackPanel Spacing="10">
                   <TextBlock Text="CURRENT GLUCOSE"
                              Classes="eyebrow" />
@@ -70,68 +70,33 @@
                                  FontSize="13" />
                     </StackPanel>
                   </Grid>
-
-                  <TextBlock Text="{Binding DataSourceStatusText}"
-                             Classes="secondary"
-                             FontSize="14"
-                             TextWrapping="Wrap"
-                             MaxWidth="780" />
                 </StackPanel>
 
-                <WrapPanel Orientation="Horizontal">
-                  <Border Classes="signal-chip"
-                          Margin="0,0,10,10">
-                    <StackPanel Spacing="3">
-                      <TextBlock Text="Trend"
-                                 Classes="metric-label" />
-
-                      <TextBlock Text="{Binding TrendText}"
-                                 FontSize="13"
-                                 FontWeight="SemiBold"
-                                 Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
-                    </StackPanel>
-                  </Border>
-
-                  <Border Classes="signal-chip"
-                          Margin="0,0,10,10">
-                    <StackPanel Spacing="3">
-                      <TextBlock Text="Data"
-                                 Classes="metric-label" />
-
-                      <TextBlock Text="{Binding FreshnessText}"
-                                 FontSize="13"
-                                 FontWeight="SemiBold"
-                                 Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
-                    </StackPanel>
-                  </Border>
-
-                  <Border Classes="signal-chip"
-                          Margin="0,0,10,10">
-                    <StackPanel Spacing="3">
-                      <TextBlock Text="Updated"
-                                 Classes="metric-label" />
-
-                      <TextBlock Text="{Binding LastUpdatedText}"
-                                 FontSize="13"
-                                 FontWeight="SemiBold"
-                                 Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
-                    </StackPanel>
-                  </Border>
+                <WrapPanel Orientation="Horizontal"
+                           VerticalAlignment="Center">
+                  <TextBlock Text="{Binding TrendText}"
+                             FontSize="13"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
                 </WrapPanel>
               </StackPanel>
 
               <Border Grid.Column="1"
-                      Classes="hero-side-card"
-                      VerticalAlignment="Stretch">
-                <StackPanel Spacing="16">
+                      BorderThickness="1,0,0,0"
+                      BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                      Padding="28,0,0,0"
+                      VerticalAlignment="Center">
+                <StackPanel Spacing="14">
+
                   <Grid ColumnDefinitions="*,Auto"
                         ColumnSpacing="16">
                     <StackPanel Spacing="5">
-                      <TextBlock Text="Connected to Dexcom Share"
+                      <TextBlock Text="Provider connected"
                                  Classes="section-title" />
 
-                      <TextBlock Text="{Binding DashboardContextText}"
+                      <TextBlock Text="{Binding DataSourceStatusText}"
                                  Classes="secondary"
+                                 FontSize="13"
                                  TextWrapping="Wrap" />
                     </StackPanel>
 
@@ -142,42 +107,30 @@
                   </Grid>
 
                   <Border Height="1"
-                          Background="{StaticResource GlucoDesk.Brush.Border}" />
+                          Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
 
-                  <Grid ColumnDefinitions="*,*"
-                        ColumnSpacing="12">
-                    <Border Grid.Column="0"
-                            Classes="compact-refresh-row">
-                      <StackPanel Spacing="4">
-                        <TextBlock Text="Data quality"
-                                   Classes="metric-label" />
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="18">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Updated"
+                                 Classes="metric-label" />
 
-                        <TextBlock Text="{Binding DataHealthBadgeText}"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
-                      </StackPanel>
-                    </Border>
+                      <TextBlock Text="{Binding LastUpdatedText}"
+                                 FontSize="13"
+                                 FontWeight="SemiBold"
+                                 Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+                    </StackPanel>
 
                     <Border Grid.Column="1"
-                            Classes="compact-refresh-row">
-                      <StackPanel Spacing="4">
-                        <TextBlock Text="Provider"
-                                   Classes="metric-label" />
-
-                        <TextBlock Text="{Binding ProviderDisplayName}"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}"
-                                   TextWrapping="Wrap" />
-                      </StackPanel>
+                            Classes="badge"
+                            VerticalAlignment="Top">
+                      <TextBlock Text="{Binding FreshnessText}"
+                                 FontSize="12"
+                                 FontWeight="SemiBold"
+                                 Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
                     </Border>
                   </Grid>
 
-                  <TextBlock Text="{Binding AutoRefreshStatusText}"
-                             Classes="muted"
-                             FontSize="12"
-                             TextWrapping="Wrap" />
                 </StackPanel>
               </Border>
             </Grid>
@@ -255,13 +208,15 @@
                     TargetLowMgDl="{Binding TargetLowMgDl}"
                     TargetHighMgDl="{Binding TargetHighMgDl}"
                     WindowHours="{Binding SelectedChartWindowHours}"
-                    MaxVisibleMgDl="{Binding ChartMaximumMgDl}" />
+                    MaxVisibleMgDl="{Binding ChartMaximumMgDl}"
+                    DisplayUnit="{Binding PreferredUnit}" />
               </Border>
             </StackPanel>
           </Border>
 
-          <Border Classes="insight-section-card">
-            <StackPanel Spacing="20">
+          <Border Classes="surface-card"
+                  Padding="24">
+            <StackPanel Spacing="22">
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="18">
                 <StackPanel Spacing="4">
@@ -346,16 +301,16 @@
                 </StackPanel>
               </Grid>
 
-              <Grid ColumnDefinitions="*,*"
-                    RowDefinitions="Auto,Auto"
-                    ColumnSpacing="18"
-                    RowSpacing="18"
+              <Grid ColumnDefinitions="1.1*,0.9*"
+                    ColumnSpacing="22"
                     IsVisible="{Binding IsStatisticsCardsVisible}">
 
-                <Border Grid.Row="0"
-                        Grid.Column="0"
-                        Classes="insight-card-primary"
-                        MinHeight="156"
+                <Border Grid.Column="0"
+                        Padding="22"
+                        CornerRadius="24"
+                        BorderThickness="1"
+                        BorderBrush="#86EFAC"
+                        Background="{StaticResource GlucoDesk.Brush.SuccessPale}"
                         HorizontalAlignment="Stretch">
                   <StackPanel Spacing="14">
                     <Grid ColumnDefinitions="*,Auto">
@@ -388,69 +343,74 @@
                   </StackPanel>
                 </Border>
 
-                <Border Grid.Row="0"
-                        Grid.Column="1"
-                        Classes="insight-card"
-                        MinHeight="156"
-                        HorizontalAlignment="Stretch">
-                  <StackPanel Spacing="12">
-                    <TextBlock Text="Average glucose"
-                               Classes="metric-label" />
+                <Grid Grid.Column="1"
+                      RowDefinitions="Auto,Auto,Auto"
+                      RowSpacing="18">
 
-                    <TextBlock Text="{Binding StatisticsAverageGlucoseText}"
-                               Classes="insight-value" />
+                  <Grid Grid.Row="0"
+                        ColumnDefinitions="*,Auto"
+                        ColumnSpacing="14">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Average glucose"
+                                 Classes="metric-label" />
 
-                    <TextBlock Text="{Binding StatisticsAverageInsightText}"
-                               Classes="insight-copy"
-                               TextWrapping="Wrap" />
-                  </StackPanel>
-                </Border>
+                      <TextBlock Text="{Binding StatisticsAverageGlucoseText}"
+                                 Classes="metric-value" />
 
-                <Border Grid.Row="1"
-                        Grid.Column="0"
-                        Classes="insight-card-danger"
-                        MinHeight="156"
-                        HorizontalAlignment="Stretch">
-                  <StackPanel Spacing="14">
-                    <TextBlock Text="Below range"
-                               Classes="metric-label" />
+                      <TextBlock Text="{Binding StatisticsAverageInsightText}"
+                                 Classes="secondary"
+                                 FontSize="13"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Grid>
 
-                    <TextBlock Text="{Binding StatisticsBelowRangeText}"
-                               Classes="insight-value" />
+                  <Border Grid.Row="1"
+                          Height="1"
+                          Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
 
-                    <ProgressBar Classes="insight-progress-danger"
-                                 Minimum="0"
-                                 Maximum="100"
-                                 Value="{Binding StatisticsBelowRangePercentValue}" />
+                  <Grid Grid.Row="2"
+                        ColumnDefinitions="*,*"
+                        ColumnSpacing="22">
 
-                    <TextBlock Text="{Binding StatisticsBelowRangeInsightText}"
-                               Classes="insight-copy"
-                               TextWrapping="Wrap" />
-                  </StackPanel>
-                </Border>
+                    <StackPanel Grid.Column="0"
+                                Spacing="8">
+                      <TextBlock Text="Below range"
+                                 Classes="metric-label" />
 
-                <Border Grid.Row="1"
-                        Grid.Column="1"
-                        Classes="insight-card-warning"
-                        MinHeight="156"
-                        HorizontalAlignment="Stretch">
-                  <StackPanel Spacing="14">
-                    <TextBlock Text="Above range"
-                               Classes="metric-label" />
+                      <TextBlock Text="{Binding StatisticsBelowRangeText}"
+                                 Classes="metric-value" />
 
-                    <TextBlock Text="{Binding StatisticsAboveRangeText}"
-                               Classes="insight-value" />
+                      <ProgressBar Classes="insight-progress-danger"
+                                   Minimum="0"
+                                   Maximum="100"
+                                   Value="{Binding StatisticsBelowRangePercentValue}" />
 
-                    <ProgressBar Classes="insight-progress-warning"
-                                 Minimum="0"
-                                 Maximum="100"
-                                 Value="{Binding StatisticsAboveRangePercentValue}" />
+                      <TextBlock Text="{Binding StatisticsBelowRangeInsightText}"
+                                 Classes="secondary"
+                                 FontSize="13"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
 
-                    <TextBlock Text="{Binding StatisticsAboveRangeInsightText}"
-                               Classes="insight-copy"
-                               TextWrapping="Wrap" />
-                  </StackPanel>
-                </Border>
+                    <StackPanel Grid.Column="1"
+                                Spacing="8">
+                      <TextBlock Text="Above range"
+                                 Classes="metric-label" />
+
+                      <TextBlock Text="{Binding StatisticsAboveRangeText}"
+                                 Classes="metric-value" />
+
+                      <ProgressBar Classes="insight-progress-warning"
+                                   Minimum="0"
+                                   Maximum="100"
+                                   Value="{Binding StatisticsAboveRangePercentValue}" />
+
+                      <TextBlock Text="{Binding StatisticsAboveRangeInsightText}"
+                                 Classes="secondary"
+                                 FontSize="13"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Grid>
+                </Grid>
               </Grid>
 
               <Border Classes="insight-empty-state"
@@ -484,31 +444,6 @@
                                Classes="muted"
                                FontSize="12" />
                   </StackPanel>
-                </Grid>
-              </Border>
-
-              <Border Classes="source-strip">
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="18">
-                  <StackPanel Spacing="5">
-                    <TextBlock Text="{Binding ProviderStatusTitle}"
-                               FontWeight="SemiBold"
-                               FontSize="14" />
-
-                    <TextBlock Text="{Binding ProviderStatusMessage}"
-                               Classes="secondary"
-                               FontSize="13"
-                               TextWrapping="Wrap" />
-                  </StackPanel>
-
-                  <Border Grid.Column="1"
-                          Classes="badge"
-                          VerticalAlignment="Top">
-                    <TextBlock Text="{Binding ProviderStatusBadgeText}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
-                  </Border>
                 </Grid>
               </Border>
             </StackPanel>
@@ -547,11 +482,20 @@
             </Grid>
           </Border>
 
-          <Border Classes="notice-card-info">
+          <Border Padding="18"
+                  CornerRadius="22"
+                  BorderThickness="1"
+                  BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                  Background="{StaticResource GlucoDesk.Brush.AccentPale}"
+                  Margin="0,0,0,24">
             <Grid ColumnDefinitions="Auto,*"
                   ColumnSpacing="14">
-              <Border Classes="notice-dot-info"
-                      VerticalAlignment="Top" />
+              <Border Width="10"
+                      Height="10"
+                      CornerRadius="999"
+                      Background="{StaticResource GlucoDesk.Brush.Indigo}"
+                      VerticalAlignment="Top"
+                      Margin="0,5,0,0" />
 
               <TextBlock Grid.Column="1"
                          Text="GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications."

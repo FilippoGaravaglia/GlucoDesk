@@ -9,6 +9,7 @@ using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 using GlucoDesk.Desktop.ViewModels.Common;
@@ -62,6 +63,15 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private string _targetHighMgDlText = "180";
 
     [ObservableProperty]
+    private string _targetRangeUnitLabel = "mg/dL";
+
+    [ObservableProperty]
+    private string _targetLowPlaceholderText = "70";
+
+    [ObservableProperty]
+    private string _targetHighPlaceholderText = "180";
+
+    [ObservableProperty]
     private string _dashboardRefreshIntervalSecondsText = "30";
 
     [ObservableProperty]
@@ -91,10 +101,12 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _canUseNightscoutProvider;
 
-    /// <summary>
-    /// Gets the supported chart maximum options expressed in mg/dL.
-    /// </summary>
-    public IReadOnlyList<int> ChartMaximumOptions { get; } = [300, 400];
+    [ObservableProperty]
+    private IReadOnlyList<ChartMaximumSelectionItem> _chartMaximumOptions =
+        BuildChartMaximumOptions(GlucoseUnit.MgDl);
+
+    [ObservableProperty]
+    private string _chartMaximumUnitLabel = "mg/dL";
 
     [ObservableProperty]
     private int _selectedChartMaximumMgDl = 300;
@@ -137,6 +149,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
         SelectedLiveProvider = FindAvailableProviderOptionOrFallback(CgmProviderKind.Mock);
         SelectedHistoricalProvider = FindAvailableProviderOptionOrFallback(CgmProviderKind.Mock);
         SelectedPreferredUnit = PreferredUnitOptions[0];
+        UpdateTargetRangeUnitPresentation(SelectedPreferredUnit.Unit);
+        UpdateChartMaximumPresentation(SelectedPreferredUnit.Unit);
 
         ProviderAvailabilityStatusText = BuildProviderAvailabilityStatusText(ProviderOptions);
         UpdateNightscoutProviderActionAvailability();
@@ -458,6 +472,75 @@ public sealed partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Sanitizes a target value input using the currently selected glucose unit.
+    /// </summary>
+    /// <param name="text">The raw target input text.</param>
+    /// <returns>The sanitized target input text.</returns>
+    public string SanitizeTargetValueInput(string text)
+    {
+        return SanitizeTargetValueText(
+            text,
+            SelectedPreferredUnit?.Unit ?? GlucoseUnit.MgDl);
+    }
+
+    /// <summary>
+    /// Handles preferred glucose unit changes by updating labels, preserving chart scale selection and converting editable target values.
+    /// </summary>
+    /// <param name="oldValue">The previous selected glucose unit option.</param>
+    /// <param name="newValue">The new selected glucose unit option.</param>
+    partial void OnSelectedPreferredUnitChanged(
+        GlucoseUnitSelectionItem? oldValue,
+        GlucoseUnitSelectionItem? newValue)
+    {
+        var previousUnit = oldValue?.Unit ?? GlucoseUnit.MgDl;
+        var nextUnit = newValue?.Unit ?? GlucoseUnit.MgDl;
+        var currentChartMaximumMgDl = NormalizeChartMaximumMgDl(SelectedChartMaximumMgDl);
+
+        UpdateTargetRangeUnitPresentation(nextUnit);
+        UpdateChartMaximumPresentation(nextUnit, currentChartMaximumMgDl);
+
+        if (previousUnit == nextUnit)
+        {
+            return;
+        }
+
+        TargetLowMgDlText = ConvertEditableTargetText(TargetLowMgDlText, previousUnit, nextUnit);
+        TargetHighMgDlText = ConvertEditableTargetText(TargetHighMgDlText, previousUnit, nextUnit);
+    }
+
+    /// <summary>
+    /// Sanitizes the target low input when the user edits the text.
+    /// </summary>
+    /// <param name="value">The edited target low text.</param>
+    partial void OnTargetLowMgDlTextChanged(string value)
+    {
+        var sanitizedValue = SanitizeTargetValueText(
+            value,
+            SelectedPreferredUnit?.Unit ?? GlucoseUnit.MgDl);
+
+        if (sanitizedValue != value)
+        {
+            TargetLowMgDlText = sanitizedValue;
+        }
+    }
+
+    /// <summary>
+    /// Sanitizes the target high input when the user edits the text.
+    /// </summary>
+    /// <param name="value">The edited target high text.</param>
+    partial void OnTargetHighMgDlTextChanged(string value)
+    {
+        var sanitizedValue = SanitizeTargetValueText(
+            value,
+            SelectedPreferredUnit?.Unit ?? GlucoseUnit.MgDl);
+
+        if (sanitizedValue != value)
+        {
+            TargetHighMgDlText = sanitizedValue;
+        }
+    }
+
     #region Helpers
 
     /// <summary>
@@ -601,15 +684,20 @@ public sealed partial class SettingsViewModel : ViewModelBase
             liveProvider.Kind != settings.ActiveLiveProvider
             || historicalProvider.Kind != settings.HistoricalProvider;
 
+        var selectedUnit = NormalizeDisplayUnit(settings.PreferredUnit);
+        var selectedChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
+
         SelectedLiveProvider = liveProvider;
         SelectedHistoricalProvider = historicalProvider;
-        SelectedPreferredUnit = FindPreferredUnitOption(settings.PreferredUnit);
+        SelectedChartMaximumMgDl = selectedChartMaximumMgDl;
+        SelectedPreferredUnit = FindPreferredUnitOption(selectedUnit);
+        UpdateTargetRangeUnitPresentation(selectedUnit);
+        UpdateChartMaximumPresentation(selectedUnit, selectedChartMaximumMgDl);
 
-        TargetLowMgDlText = settings.TargetLowMgDl.ToString(CultureInfo.InvariantCulture);
-        TargetHighMgDlText = settings.TargetHighMgDl.ToString(CultureInfo.InvariantCulture);
+        TargetLowMgDlText = FormatTargetValueForUnit(settings.TargetLowMgDl, selectedUnit);
+        TargetHighMgDlText = FormatTargetValueForUnit(settings.TargetHighMgDl, selectedUnit);
         DashboardRefreshIntervalSecondsText = ((int)settings.DashboardRefreshInterval.TotalSeconds)
             .ToString(CultureInfo.InvariantCulture);
-        SelectedChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
 
         return usedProviderFallback;
     }
@@ -624,6 +712,251 @@ public sealed partial class SettingsViewModel : ViewModelBase
         return chartMaximumMgDl is 400
             ? 400
             : 300;
+    }
+
+    /// <summary>
+    /// Normalizes unsupported glucose display units to the default display unit.
+    /// </summary>
+    /// <param name="unit">The requested glucose display unit.</param>
+    /// <returns>The normalized glucose display unit.</returns>
+    private static GlucoseUnit NormalizeDisplayUnit(GlucoseUnit unit)
+    {
+        return Enum.IsDefined(unit)
+            ? unit
+            : GlucoseUnit.MgDl;
+    }
+
+    /// <summary>
+    /// Updates target range unit labels and placeholders for the selected glucose unit.
+    /// </summary>
+    /// <param name="unit">The selected glucose unit.</param>
+    private void UpdateTargetRangeUnitPresentation(GlucoseUnit unit)
+    {
+        TargetRangeUnitLabel = FormatGlucoseUnitLabel(unit);
+
+        if (unit == GlucoseUnit.MmolL)
+        {
+            TargetLowPlaceholderText = "3.9";
+            TargetHighPlaceholderText = "10.0";
+            return;
+        }
+
+        TargetLowPlaceholderText = "70";
+        TargetHighPlaceholderText = "180";
+    }
+
+    /// <summary>
+    /// Updates chart maximum options and unit label for the selected glucose unit while preserving the selected logical chart maximum.
+    /// </summary>
+    /// <param name="unit">The selected glucose unit.</param>
+    /// <param name="chartMaximumMgDl">The chart maximum value to preserve, expressed in mg/dL.</param>
+    private void UpdateChartMaximumPresentation(
+        GlucoseUnit unit,
+        int? chartMaximumMgDl = null)
+    {
+        var selectedChartMaximumMgDl = NormalizeChartMaximumMgDl(
+            chartMaximumMgDl ?? SelectedChartMaximumMgDl);
+    
+        ChartMaximumUnitLabel = FormatGlucoseUnitLabel(unit);
+        ChartMaximumOptions = BuildChartMaximumOptions(unit);
+    
+        SelectedChartMaximumMgDl = selectedChartMaximumMgDl;
+    
+        // The selected logical value can remain the same while the ItemsSource changes.
+        // Raising the notification explicitly forces the ComboBox to re-match the new display option.
+        OnPropertyChanged(nameof(SelectedChartMaximumMgDl));
+    }
+
+    /// <summary>
+    /// Builds chart maximum selection options for the selected glucose unit.
+    /// </summary>
+    /// <param name="unit">The selected glucose unit.</param>
+    /// <returns>The chart maximum options.</returns>
+    private static IReadOnlyList<ChartMaximumSelectionItem> BuildChartMaximumOptions(GlucoseUnit unit)
+    {
+        return
+        [
+            new ChartMaximumSelectionItem(
+                300,
+                FormatChartMaximumValueForUnit(300, unit)),
+            new ChartMaximumSelectionItem(
+                400,
+                FormatChartMaximumValueForUnit(400, unit))
+        ];
+    }
+
+    /// <summary>
+    /// Converts editable target text from one display unit to another.
+    /// </summary>
+    /// <param name="text">The editable target text.</param>
+    /// <param name="sourceUnit">The source glucose unit.</param>
+    /// <param name="targetUnit">The target glucose unit.</param>
+    /// <returns>The converted editable target text, or the original sanitized text when conversion is not possible.</returns>
+    private static string ConvertEditableTargetText(
+        string text,
+        GlucoseUnit sourceUnit,
+        GlucoseUnit targetUnit)
+    {
+        if (!TryParseTargetValueMgDl(text, sourceUnit, out var valueMgDl))
+        {
+            return SanitizeTargetValueText(text, targetUnit);
+        }
+
+        return FormatTargetValueForUnit(valueMgDl, targetUnit);
+    }
+
+    /// <summary>
+    /// Formats a target value stored in mg/dL for the selected display unit.
+    /// </summary>
+    /// <param name="valueMgDl">The target value expressed in mg/dL.</param>
+    /// <param name="unit">The selected display unit.</param>
+    /// <returns>The formatted target value.</returns>
+    private static string FormatTargetValueForUnit(
+        int valueMgDl,
+        GlucoseUnit unit)
+    {
+        var value = new GlucoseValue(valueMgDl, GlucoseUnit.MgDl)
+            .ConvertTo(unit);
+
+        return unit switch
+        {
+            GlucoseUnit.MgDl => value.Amount.ToString("0", CultureInfo.InvariantCulture),
+            GlucoseUnit.MmolL => value.Amount.ToString("0.0", CultureInfo.InvariantCulture),
+            _ => valueMgDl.ToString(CultureInfo.InvariantCulture)
+        };
+    }
+
+    /// <summary>
+    /// Formats a chart maximum value stored in mg/dL for the selected display unit.
+    /// </summary>
+    /// <param name="valueMgDl">The chart maximum value expressed in mg/dL.</param>
+    /// <param name="unit">The selected display unit.</param>
+    /// <returns>The formatted chart maximum value.</returns>
+    private static string FormatChartMaximumValueForUnit(
+        int valueMgDl,
+        GlucoseUnit unit)
+    {
+        var value = new GlucoseValue(valueMgDl, GlucoseUnit.MgDl)
+            .ConvertTo(unit);
+
+        return unit switch
+        {
+            GlucoseUnit.MgDl => value.Amount.ToString("0", CultureInfo.InvariantCulture),
+            GlucoseUnit.MmolL => value.Amount.ToString("0.0", CultureInfo.InvariantCulture),
+            _ => valueMgDl.ToString(CultureInfo.InvariantCulture)
+        };
+    }
+
+    /// <summary>
+    /// Parses an editable target value and converts it to mg/dL.
+    /// </summary>
+    /// <param name="text">The editable target text.</param>
+    /// <param name="unit">The unit used by the editable target text.</param>
+    /// <param name="valueMgDl">The parsed value expressed in mg/dL.</param>
+    /// <returns>True when parsing succeeds; otherwise false.</returns>
+    private static bool TryParseTargetValueMgDl(
+        string text,
+        GlucoseUnit unit,
+        out int valueMgDl)
+    {
+        valueMgDl = 0;
+
+        var sanitizedText = SanitizeTargetValueText(text, unit);
+
+        if (string.IsNullOrWhiteSpace(sanitizedText))
+        {
+            return false;
+        }
+
+        if (unit == GlucoseUnit.MgDl)
+        {
+            return int.TryParse(
+                    sanitizedText,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out valueMgDl)
+                && valueMgDl > 0;
+        }
+
+        if (!decimal.TryParse(
+                sanitizedText,
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out var displayValue)
+            || displayValue <= 0)
+        {
+            return false;
+        }
+
+        var convertedValue = new GlucoseValue(displayValue, unit)
+            .ConvertTo(GlucoseUnit.MgDl);
+
+        if (convertedValue.Amount <= 0 || convertedValue.Amount > int.MaxValue)
+        {
+            return false;
+        }
+
+        valueMgDl = (int)convertedValue.Amount;
+        return true;
+    }
+
+    /// <summary>
+    /// Removes unsupported characters from target value input text.
+    /// </summary>
+    /// <param name="text">The raw input text.</param>
+    /// <param name="unit">The selected glucose unit.</param>
+    /// <returns>The sanitized input text.</returns>
+    private static string SanitizeTargetValueText(
+        string text,
+        GlucoseUnit unit)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder();
+        var hasDecimalSeparator = false;
+        var allowDecimalSeparator = unit == GlucoseUnit.MmolL;
+
+        foreach (var character in text)
+        {
+            if (char.IsDigit(character))
+            {
+                builder.Append(character);
+                continue;
+            }
+
+            if (!allowDecimalSeparator || character is not ('.' or ',') || hasDecimalSeparator)
+            {
+                continue;
+            }
+
+            if (builder.Length == 0)
+            {
+                builder.Append('0');
+            }
+
+            builder.Append('.');
+            hasDecimalSeparator = true;
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Formats glucose unit labels for user-facing UI.
+    /// </summary>
+    /// <param name="unit">The glucose unit.</param>
+    /// <returns>The display label for the glucose unit.</returns>
+    private static string FormatGlucoseUnitLabel(GlucoseUnit unit)
+    {
+        return unit switch
+        {
+            GlucoseUnit.MgDl => "mg/dL",
+            GlucoseUnit.MmolL => "mmol/L",
+            _ => FormatEnumName(unit.ToString())
+        };
     }
 
     /// <summary>
@@ -665,15 +998,17 @@ public sealed partial class SettingsViewModel : ViewModelBase
             return null;
         }
 
-        if (!TryParsePositiveInteger(TargetLowMgDlText, out var targetLowMgDl))
+        var selectedUnit = SelectedPreferredUnit.Unit;
+
+        if (!TryParseTargetValueMgDl(TargetLowMgDlText, selectedUnit, out var targetLowMgDl))
         {
-            validationMessage = "Target low must be a positive integer.";
+            validationMessage = $"Target low must be a positive glucose value expressed in {FormatGlucoseUnitLabel(selectedUnit)}.";
             return null;
         }
 
-        if (!TryParsePositiveInteger(TargetHighMgDlText, out var targetHighMgDl))
+        if (!TryParseTargetValueMgDl(TargetHighMgDlText, selectedUnit, out var targetHighMgDl))
         {
-            validationMessage = "Target high must be a positive integer.";
+            validationMessage = $"Target high must be a positive glucose value expressed in {FormatGlucoseUnitLabel(selectedUnit)}.";
             return null;
         }
 
@@ -920,7 +1255,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         return Enum
             .GetValues<GlucoseUnit>()
-            .Select(unit => new GlucoseUnitSelectionItem(unit, FormatEnumName(unit.ToString())))
+            .Select(unit => new GlucoseUnitSelectionItem(unit, FormatGlucoseUnitLabel(unit)))
             .ToArray();
     }
 
@@ -996,4 +1331,20 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     #endregion
+}
+
+/// <summary>
+/// Represents a selectable chart maximum option.
+/// </summary>
+/// <param name="ValueMgDl">The persisted chart maximum value expressed in mg/dL.</param>
+/// <param name="DisplayName">The user-facing chart maximum label.</param>
+public sealed record ChartMaximumSelectionItem(
+    int ValueMgDl,
+    string DisplayName)
+{
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return DisplayName;
+    }
 }

@@ -1,12 +1,13 @@
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
 using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Settings;
-using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
 
 namespace GlucoDesk.Desktop.ViewModels.Main;
 
@@ -29,11 +30,6 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isSettingsSelected;
-
-    /// <summary>
-    /// Gets the history continuity synchronization status ViewModel.
-    /// </summary>
-    public DesktopHistoryContinuitySyncStatusViewModel HistoryContinuitySyncStatus { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
@@ -66,6 +62,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         Diary = diary;
         HistoryContinuitySyncStatus = historyContinuitySyncStatus;
 
+        BackgroundSyncStatus.PropertyChanged += OnBackgroundSyncStatusPropertyChanged;
+
         SelectSection(Dashboard);
     }
 
@@ -93,6 +91,33 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     /// Gets the diary view model.
     /// </summary>
     public DiaryViewModel Diary { get; }
+
+    /// <summary>
+    /// Gets the history continuity synchronization status ViewModel.
+    /// </summary>
+    public DesktopHistoryContinuitySyncStatusViewModel HistoryContinuitySyncStatus { get; }
+
+    /// <summary>
+    /// Gets the consumer-facing local history status text.
+    /// </summary>
+    public string LocalHistoryStatusText =>
+        BackgroundSyncStatus.HasSuccessfulSync
+            ? "Up to date"
+            : BackgroundSyncStatus.StatusText;
+
+    /// <summary>
+    /// Gets the consumer-facing local history badge text.
+    /// </summary>
+    public string LocalHistoryBadgeText =>
+        BackgroundSyncStatus.HasSuccessfulSync
+            ? "Synced"
+            : "Updating";
+
+    /// <summary>
+    /// Gets the consumer-facing local history description text.
+    /// </summary>
+    public string LocalHistoryDescriptionText =>
+        "Your recent glucose history is saved locally on this device.";
 
     /// <summary>
     /// Selects the dashboard section.
@@ -135,6 +160,24 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Handles background sync status changes and refreshes consumer-facing sidebar properties.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="eventArgs">The property changed event arguments.</param>
+    private void OnBackgroundSyncStatusPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs eventArgs)
+    {
+        if (eventArgs.PropertyName is null ||
+            eventArgs.PropertyName == nameof(BackgroundSyncStatusViewModel.HasSuccessfulSync) ||
+            eventArgs.PropertyName == nameof(BackgroundSyncStatusViewModel.StatusText))
+        {
+            OnPropertyChanged(nameof(LocalHistoryStatusText));
+            OnPropertyChanged(nameof(LocalHistoryBadgeText));
+        }
+    }
 
     /// <summary>
     /// Selects the active main window section and updates navigation state.

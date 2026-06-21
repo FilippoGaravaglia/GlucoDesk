@@ -2,9 +2,16 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifiers>osx-x64;osx-arm64;win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <UseAppHost>true</UseAppHost>
+    <AssemblyName>GlucoDesk.Desktop</AssemblyName>
+    <Product>GlucoDesk</Product>
+    <Company>Filippo Garavaglia</Company>
+    <Authors>Filippo Garavaglia</Authors>
+    <Description>Desktop companion for glucose awareness.</Description>
   </PropertyGroup>
 
   <ItemGroup>

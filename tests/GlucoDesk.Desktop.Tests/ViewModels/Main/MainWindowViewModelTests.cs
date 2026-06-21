@@ -45,57 +45,58 @@ public sealed class MainWindowViewModelTests
     [Fact]
     public void Constructor_ShouldSelectDashboardByDefault()
     {
-    var viewModel = CreateViewModel();
+        var viewModel = CreateViewModel();
+
         Assert.True(viewModel.IsDashboardSelected);
         Assert.False(viewModel.IsAccountSelected);
         Assert.False(viewModel.IsSettingsSelected);
         Assert.Same(viewModel.Dashboard, viewModel.CurrentContent);
     }
-    
+
     [Fact]
     public async Task ShowAccountCommand_ShouldSelectAccount()
     {
         var viewModel = CreateViewModel();
-    
+
         await viewModel.ShowAccountCommand.ExecuteAsync(null);
-    
+
         Assert.False(viewModel.IsDashboardSelected);
         Assert.True(viewModel.IsAccountSelected);
         Assert.False(viewModel.IsSettingsSelected);
         Assert.Same(viewModel.Account, viewModel.CurrentContent);
     }
-    
+
     [Fact]
     public void ShowSettingsCommand_ShouldSelectSettings()
     {
         var viewModel = CreateViewModel();
-    
+
         viewModel.ShowSettingsCommand.Execute(null);
-    
+
         Assert.False(viewModel.IsDashboardSelected);
         Assert.False(viewModel.IsAccountSelected);
         Assert.True(viewModel.IsSettingsSelected);
         Assert.Same(viewModel.Settings, viewModel.CurrentContent);
     }
-    
+
     [Fact]
     public void ShowDashboardCommand_ShouldSelectDashboard()
     {
         var viewModel = CreateViewModel();
-    
+
         viewModel.ShowSettingsCommand.Execute(null);
         viewModel.ShowDashboardCommand.Execute(null);
-    
+
         Assert.True(viewModel.IsDashboardSelected);
         Assert.False(viewModel.IsAccountSelected);
         Assert.False(viewModel.IsSettingsSelected);
         Assert.Same(viewModel.Dashboard, viewModel.CurrentContent);
     }
-    
+
     #region Helpers
-    
+
     private static readonly DateTimeOffset FixedNow = new(2026, 6, 7, 10, 0, 0, TimeSpan.Zero);
-    
+
     /// <summary>
     /// Creates a main window view model for navigation tests.
     /// </summary>
@@ -103,7 +104,7 @@ public sealed class MainWindowViewModelTests
     private static MainWindowViewModel CreateViewModel()
     {
         var settingsService = new FakeApplicationSettingsService();
-    
+
         return new MainWindowViewModel(
             new DashboardViewModel(
                 new FakeGlucoseDataService(),
@@ -115,10 +116,10 @@ public sealed class MainWindowViewModelTests
                 settingsService),
             new SettingsViewModel(settingsService),
             CreateBackgroundSyncStatusViewModel(),
-            CreateDiaryViewModel(),
+            CreateDiaryViewModel(settingsService),
             CreateHistoryContinuitySyncStatusViewModel());
     }
-    
+
     /// <summary>
     /// Creates a background sync status view model for navigation tests.
     /// </summary>
@@ -129,21 +130,24 @@ public sealed class MainWindowViewModelTests
             new BackgroundSyncStateService(),
             new ImmediateBackgroundSyncUiDispatcher());
     }
-    
+
     /// <summary>
     /// Creates a diary view model for navigation tests.
     /// </summary>
+    /// <param name="settingsService">The application settings service.</param>
     /// <returns>The diary view model.</returns>
-    private static DiaryViewModel CreateDiaryViewModel()
+    private static DiaryViewModel CreateDiaryViewModel(
+        IApplicationSettingsService settingsService)
     {
         return new DiaryViewModel(
             new FakeGlycemicDiaryService(),
             new FakeGlycemicDiaryExcelExportService(),
             new FakeGlycemicDiaryPdfExportService(),
             new FakeDiaryExportFileSaveService(),
+            settingsService,
             TimeProvider.System);
     }
-    
+
     /// <summary>
     /// Creates a history continuity synchronization status ViewModel for navigation tests.
     /// </summary>
@@ -155,7 +159,7 @@ public sealed class MainWindowViewModelTests
             new ImmediateDesktopUiDispatcher(),
             new FakeDesktopHistoryContinuitySyncCoordinator());
     }
-    
+
     /// <summary>
     /// Creates a dashboard snapshot used by navigation tests.
     /// </summary>
@@ -174,7 +178,7 @@ public sealed class MainWindowViewModelTests
             FixedNow,
             TimeSpan.FromMinutes(15));
     }
-    
+
     /// <summary>
     /// Creates provider metadata used by navigation tests.
     /// </summary>
@@ -188,7 +192,7 @@ public sealed class MainWindowViewModelTests
             supportsLiveReadings: true,
             supportsHistoricalReadings: true);
     }
-    
+
     /// <summary>
     /// Creates a glucose reading for the supplied timestamp.
     /// </summary>
@@ -203,35 +207,35 @@ public sealed class MainWindowViewModelTests
             CgmProviderKind.Mock,
             GlucoseDataFreshness.NearRealTime);
     }
-    
+
     #endregion
-    
+
     private sealed class FakeGlucoseDataService : IGlucoseDataService
     {
         /// <inheritdoc />
         public Task<Result<CgmProviderMetadata>> GetProviderMetadataAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<CgmProviderMetadata>.Success(CreateMetadata()));
         }
-    
+
         /// <inheritdoc />
         public Task<Result<LatestGlucoseReadingResult>> GetLatestReadingAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<LatestGlucoseReadingResult>.Success(
                 new LatestGlucoseReadingResult(CreateReading(FixedNow), FixedNow)));
         }
-    
+
         /// <inheritdoc />
         public Task<Result<GlucoseReadingsResult>> GetRecentReadingsAsync(
             GlucoseReadingsRequest request,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<GlucoseReadingsResult>.Success(
                 new GlucoseReadingsResult(
                     [
@@ -240,7 +244,7 @@ public sealed class MainWindowViewModelTests
                     ],
                     FixedNow)));
         }
-    
+
         /// <inheritdoc />
         public Task<Result<GlucoseReadingsResult>> GetHistoricalReadingsAsync(
             GlucoseReadingsRequest request,
@@ -248,78 +252,80 @@ public sealed class MainWindowViewModelTests
         {
             return GetRecentReadingsAsync(request, cancellationToken);
         }
-    
+
         /// <inheritdoc />
         public Task<Result<GlucoseDashboardSnapshot>> GetDashboardSnapshotAsync(
             GlucoseDashboardRequest request,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<GlucoseDashboardSnapshot>.Success(CreateSnapshot()));
         }
     }
-    
+
     private sealed class FakeApplicationSettingsService : IApplicationSettingsService
     {
         /// <inheritdoc />
         public Task<Result<ApplicationSettings>> GetSettingsAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<ApplicationSettings>.Success(ApplicationSettings.Default));
         }
-    
+
         /// <inheritdoc />
         public Task<Result> SaveSettingsAsync(
             ApplicationSettings settings,
             CancellationToken cancellationToken)
         {
+            ArgumentNullException.ThrowIfNull(settings);
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result.Success());
         }
     }
-    
+
     private sealed class FakeDexcomShareCredentialStore : IDexcomShareCredentialStore
     {
         /// <inheritdoc />
         public Task<DexcomShareCredentials?> ReadAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult<DexcomShareCredentials?>(null);
         }
-    
+
         /// <inheritdoc />
         public Task SaveAsync(
             DexcomShareCredentials credentials,
             CancellationToken cancellationToken)
         {
+            ArgumentNullException.ThrowIfNull(credentials);
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.CompletedTask;
         }
-    
+
         /// <inheritdoc />
         public Task ClearAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.CompletedTask;
         }
     }
-    
+
     private sealed class FakeDexcomShareClient : IDexcomShareClient
     {
         /// <inheritdoc />
         public Task<Result<string>> AuthenticateAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<string>.Success("test-session-id"));
         }
-    
+
         /// <inheritdoc />
         public Task<Result<string>> AuthenticateAsync(
             DexcomShareOptions options,
@@ -327,10 +333,10 @@ public sealed class MainWindowViewModelTests
         {
             ArgumentNullException.ThrowIfNull(options);
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<string>.Success("test-session-id"));
         }
-    
+
         /// <inheritdoc />
         public Task<Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>> GetLatestGlucoseValuesAsync(
             string sessionId,
@@ -339,11 +345,11 @@ public sealed class MainWindowViewModelTests
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(
                 Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>.Success([]));
         }
-    
+
         /// <inheritdoc />
         public Task<Result<IReadOnlyCollection<DexcomShareGlucoseValueDto>>> GetLatestGlucoseValuesAsync(
             DexcomShareOptions options,
@@ -352,20 +358,20 @@ public sealed class MainWindowViewModelTests
             CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(options);
-    
+
             return GetLatestGlucoseValuesAsync(
                 "fake-session",
                 minutes,
                 maxCount,
                 cancellationToken);
         }
-    
+
         /// <inheritdoc />
         public void InvalidateSession()
         {
         }
     }
-    
+
     private sealed class FakeGlycemicDiaryService : IGlycemicDiaryService
     {
         /// <inheritdoc />
@@ -375,11 +381,11 @@ public sealed class MainWindowViewModelTests
         {
             ArgumentNullException.ThrowIfNull(request);
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             throw new NotSupportedException("Preview generation is not used by navigation tests.");
         }
     }
-    
+
     private sealed class FakeGlycemicDiaryExcelExportService : IGlycemicDiaryExcelExportService
     {
         /// <inheritdoc />
@@ -389,7 +395,7 @@ public sealed class MainWindowViewModelTests
         {
             ArgumentNullException.ThrowIfNull(request);
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
                 new GlycemicDiaryExportFile(
                     "diary.xlsx",
@@ -397,7 +403,7 @@ public sealed class MainWindowViewModelTests
                     [1, 2, 3])));
         }
     }
-    
+
     private sealed class FakeGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExportService
     {
         /// <inheritdoc />
@@ -407,7 +413,7 @@ public sealed class MainWindowViewModelTests
         {
             ArgumentNullException.ThrowIfNull(request);
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<GlycemicDiaryExportFile>.Success(
                 new GlycemicDiaryExportFile(
                     "diary.pdf",
@@ -415,7 +421,7 @@ public sealed class MainWindowViewModelTests
                     [1, 2, 3])));
         }
     }
-    
+
     private sealed class FakeDiaryExportFileSaveService : IDiaryExportFileSaveService
     {
         /// <inheritdoc />
@@ -425,34 +431,34 @@ public sealed class MainWindowViewModelTests
         {
             ArgumentNullException.ThrowIfNull(file);
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<DiaryExportSaveResult>.Success(
                 DiaryExportSaveResult.Saved(file.FileName)));
         }
     }
-    
+
     private sealed class ImmediateBackgroundSyncUiDispatcher : IBackgroundSyncUiDispatcher
     {
         /// <inheritdoc />
         public void Post(Action action)
         {
             ArgumentNullException.ThrowIfNull(action);
-    
+
             action();
         }
     }
-    
+
     private sealed class ImmediateDesktopUiDispatcher : IDesktopUiDispatcher
     {
         /// <inheritdoc />
         public void Post(Action action)
         {
             ArgumentNullException.ThrowIfNull(action);
-    
+
             action();
         }
     }
-    
+
     private sealed class FakeDesktopHistoryContinuitySyncCoordinator : IDesktopHistoryContinuitySyncCoordinator
     {
         /// <inheritdoc />
@@ -460,33 +466,33 @@ public sealed class MainWindowViewModelTests
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<DesktopHistoryContinuitySyncRunResult>.Success(
                 DesktopHistoryContinuitySyncRunResult.Skipped(CgmHistoryContinuitySyncTrigger.Startup)));
         }
-    
+
         /// <inheritdoc />
         public Task<Result<DesktopHistoryContinuitySyncRunResult>> RunResumeSyncAsync(
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<DesktopHistoryContinuitySyncRunResult>.Success(
                 DesktopHistoryContinuitySyncRunResult.Skipped(CgmHistoryContinuitySyncTrigger.Resume)));
         }
-    
+
         /// <inheritdoc />
         public Task<Result<DesktopHistoryContinuitySyncRunResult>> RunManualSyncAsync(
             TimeSpan lookback,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-    
+
             return Task.FromResult(Result<DesktopHistoryContinuitySyncRunResult>.Success(
                 DesktopHistoryContinuitySyncRunResult.Skipped(CgmHistoryContinuitySyncTrigger.Manual)));
         }
     }
-    
+
     private sealed class FakeDesktopHistoryContinuitySyncStatusStore : IDesktopHistoryContinuitySyncStatusStore
     {
         public event EventHandler<DesktopHistoryContinuitySyncStatusSnapshot>? StatusChanged
@@ -494,21 +500,21 @@ public sealed class MainWindowViewModelTests
             add
             {
             }
-    
+
             remove
             {
             }
         }
-    
+
         public DesktopHistoryContinuitySyncStatusSnapshot Current { get; private set; } =
             DesktopHistoryContinuitySyncStatusSnapshot.Idle;
-    
+
         /// <inheritdoc />
         public void MarkRunning(CgmHistoryContinuitySyncTrigger trigger)
         {
             throw new NotSupportedException();
         }
-    
+
         /// <inheritdoc />
         public void MarkSucceeded(
             CgmHistoryContinuitySyncTrigger trigger,
@@ -516,7 +522,7 @@ public sealed class MainWindowViewModelTests
         {
             throw new NotSupportedException();
         }
-    
+
         /// <inheritdoc />
         public void MarkSkipped(
             CgmHistoryContinuitySyncTrigger trigger,
@@ -524,7 +530,7 @@ public sealed class MainWindowViewModelTests
         {
             throw new NotSupportedException();
         }
-    
+
         /// <inheritdoc />
         public void MarkFailed(
             CgmHistoryContinuitySyncTrigger trigger,
@@ -532,7 +538,7 @@ public sealed class MainWindowViewModelTests
         {
             throw new NotSupportedException();
         }
-    
+
         /// <inheritdoc />
         public void MarkCanceled(CgmHistoryContinuitySyncTrigger trigger)
         {

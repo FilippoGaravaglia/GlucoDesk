@@ -5,6 +5,8 @@ using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Infrastructure.Cgm.Diary.Excel.Options;
 
 namespace GlucoDesk.Infrastructure.Cgm.Diary.Excel.Services;
@@ -51,9 +53,9 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
 
         using var workbook = new XLWorkbook();
 
-        CreateOverviewWorksheet(workbook, diaryResult.Value);
-        CreateDailyDiaryWorksheet(workbook, diaryResult.Value);
-        CreateTimeBlocksWorksheet(workbook, diaryResult.Value);
+        CreateOverviewWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
+        CreateDailyDiaryWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
+        CreateTimeBlocksWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
         CreateDataCompletenessWorksheet(workbook, diaryResult.Value);
 
         using var stream = new MemoryStream();
@@ -74,9 +76,11 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     /// </summary>
     /// <param name="workbook">The workbook.</param>
     /// <param name="report">The diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
     private void CreateOverviewWorksheet(
         XLWorkbook workbook,
-        GlycemicDiaryReport report)
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
     {
         var worksheet = workbook.Worksheets.Add("Overview");
 
@@ -88,12 +92,12 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("B5").Value = report.PeriodEndsAt.LocalDateTime;
         worksheet.Cell("A6").Value = "Readings";
         worksheet.Cell("B6").Value = report.ReadingsCount;
-        worksheet.Cell("A7").Value = "Average mg/dL";
-        worksheet.Cell("B7").Value = ToNullableDouble(report.AverageMgDl);
-        worksheet.Cell("A8").Value = "Minimum mg/dL";
-        worksheet.Cell("B8").Value = ToNullableDouble(report.MinimumMgDl);
-        worksheet.Cell("A9").Value = "Maximum mg/dL";
-        worksheet.Cell("B9").Value = ToNullableDouble(report.MaximumMgDl);
+        worksheet.Cell("A7").Value = CreateGlucoseHeader("Average", preferredUnit);
+        worksheet.Cell("B7").Value = ToNullableGlucoseDouble(report.AverageMgDl, preferredUnit);
+        worksheet.Cell("A8").Value = CreateGlucoseHeader("Minimum", preferredUnit);
+        worksheet.Cell("B8").Value = ToNullableGlucoseDouble(report.MinimumMgDl, preferredUnit);
+        worksheet.Cell("A9").Value = CreateGlucoseHeader("Maximum", preferredUnit);
+        worksheet.Cell("B9").Value = ToNullableGlucoseDouble(report.MaximumMgDl, preferredUnit);
         worksheet.Cell("A10").Value = "Time in range %";
         worksheet.Cell("B10").Value = ToNullableDouble(report.TimeInRangePercentage);
         worksheet.Cell("A11").Value = "Data coverage %";
@@ -115,6 +119,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Range("A4:A16").Style.Font.Bold = true;
         worksheet.Range("A4:B14").Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
         worksheet.Range("A4:B14").Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+        worksheet.Range("B7:B9").Style.NumberFormat.Format = GetGlucoseNumberFormat(preferredUnit);
         worksheet.Column("A").Width = 24;
         worksheet.Column("B").Width = 42;
         worksheet.Cell("B16").Style.Alignment.WrapText = true;
@@ -126,9 +131,11 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     /// </summary>
     /// <param name="workbook">The workbook.</param>
     /// <param name="report">The diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
     private static void CreateDailyDiaryWorksheet(
         XLWorkbook workbook,
-        GlycemicDiaryReport report)
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
     {
         var worksheet = workbook.Worksheets.Add("Daily diary");
 
@@ -136,17 +143,17 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         {
             "Date",
             "Readings",
-            "Average mg/dL",
-            "Minimum mg/dL",
-            "Maximum mg/dL",
+            CreateGlucoseHeader("Average", preferredUnit),
+            CreateGlucoseHeader("Minimum", preferredUnit),
+            CreateGlucoseHeader("Maximum", preferredUnit),
             "Time in range %",
             "Data coverage %",
             "Complete data",
             "Gaps",
-            "Breakfast",
-            "Lunch",
-            "Dinner",
-            "Pre-night"
+            CreateGlucoseHeader("Breakfast", preferredUnit),
+            CreateGlucoseHeader("Lunch", preferredUnit),
+            CreateGlucoseHeader("Dinner", preferredUnit),
+            CreateGlucoseHeader("Pre-night", preferredUnit)
         };
 
         WriteHeaderRow(worksheet, headers);
@@ -157,23 +164,29 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         {
             worksheet.Cell(row, 1).Value = day.Date.ToDateTime(TimeOnly.MinValue);
             worksheet.Cell(row, 2).Value = day.ReadingsCount;
-            worksheet.Cell(row, 3).Value = ToNullableDouble(day.AverageMgDl);
-            worksheet.Cell(row, 4).Value = ToNullableDouble(day.MinimumMgDl);
-            worksheet.Cell(row, 5).Value = ToNullableDouble(day.MaximumMgDl);
+            worksheet.Cell(row, 3).Value = ToNullableGlucoseDouble(day.AverageMgDl, preferredUnit);
+            worksheet.Cell(row, 4).Value = ToNullableGlucoseDouble(day.MinimumMgDl, preferredUnit);
+            worksheet.Cell(row, 5).Value = ToNullableGlucoseDouble(day.MaximumMgDl, preferredUnit);
             worksheet.Cell(row, 6).Value = ToNullableDouble(day.TimeInRangePercentage);
             worksheet.Cell(row, 7).Value = ToNullableDouble(day.DataCoveragePercentage);
             worksheet.Cell(row, 8).Value = day.IsDataComplete ? "Yes" : "Partial";
             worksheet.Cell(row, 9).Value = day.GapCount;
-            worksheet.Cell(row, 10).Value = ToNullableDouble(GetBlockValue(day, "Breakfast"));
-            worksheet.Cell(row, 11).Value = ToNullableDouble(GetBlockValue(day, "Lunch"));
-            worksheet.Cell(row, 12).Value = ToNullableDouble(GetBlockValue(day, "Dinner"));
-            worksheet.Cell(row, 13).Value = ToNullableDouble(GetBlockValue(day, "Pre-night"));
+            worksheet.Cell(row, 10).Value = ToNullableGlucoseDouble(GetBlockValue(day, "Breakfast"), preferredUnit);
+            worksheet.Cell(row, 11).Value = ToNullableGlucoseDouble(GetBlockValue(day, "Lunch"), preferredUnit);
+            worksheet.Cell(row, 12).Value = ToNullableGlucoseDouble(GetBlockValue(day, "Dinner"), preferredUnit);
+            worksheet.Cell(row, 13).Value = ToNullableGlucoseDouble(GetBlockValue(day, "Pre-night"), preferredUnit);
 
             row++;
         }
 
         FormatUsedRangeAsTable(worksheet, "DailyDiaryTable");
         worksheet.Column(1).Style.DateFormat.Format = "yyyy-mm-dd";
+
+        foreach (var columnIndex in new[] { 3, 4, 5, 10, 11, 12, 13 })
+        {
+            worksheet.Column(columnIndex).Style.NumberFormat.Format = GetGlucoseNumberFormat(preferredUnit);
+        }
+
         worksheet.Columns().AdjustToContents();
         worksheet.SheetView.FreezeRows(1);
     }
@@ -183,9 +196,11 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     /// </summary>
     /// <param name="workbook">The workbook.</param>
     /// <param name="report">The diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
     private static void CreateTimeBlocksWorksheet(
         XLWorkbook workbook,
-        GlycemicDiaryReport report)
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
     {
         var worksheet = workbook.Worksheets.Add("Time blocks");
 
@@ -196,11 +211,11 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
             "From",
             "To",
             "Readings",
-            "Representative mg/dL",
+            CreateGlucoseHeader("Representative", preferredUnit),
             "Representative timestamp",
-            "Average mg/dL",
-            "Minimum mg/dL",
-            "Maximum mg/dL"
+            CreateGlucoseHeader("Average", preferredUnit),
+            CreateGlucoseHeader("Minimum", preferredUnit),
+            CreateGlucoseHeader("Maximum", preferredUnit)
         };
 
         WriteHeaderRow(worksheet, headers);
@@ -216,11 +231,11 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
                 worksheet.Cell(row, 3).Value = block.StartsAt.ToString("HH:mm");
                 worksheet.Cell(row, 4).Value = block.EndsAt.ToString("HH:mm");
                 worksheet.Cell(row, 5).Value = block.ReadingsCount;
-                worksheet.Cell(row, 6).Value = ToNullableDouble(block.RepresentativeValueMgDl);
+                worksheet.Cell(row, 6).Value = ToNullableGlucoseDouble(block.RepresentativeValueMgDl, preferredUnit);
                 worksheet.Cell(row, 7).Value = block.RepresentativeTimestamp?.LocalDateTime;
-                worksheet.Cell(row, 8).Value = ToNullableDouble(block.AverageMgDl);
-                worksheet.Cell(row, 9).Value = ToNullableDouble(block.MinimumMgDl);
-                worksheet.Cell(row, 10).Value = ToNullableDouble(block.MaximumMgDl);
+                worksheet.Cell(row, 8).Value = ToNullableGlucoseDouble(block.AverageMgDl, preferredUnit);
+                worksheet.Cell(row, 9).Value = ToNullableGlucoseDouble(block.MinimumMgDl, preferredUnit);
+                worksheet.Cell(row, 10).Value = ToNullableGlucoseDouble(block.MaximumMgDl, preferredUnit);
 
                 row++;
             }
@@ -229,6 +244,12 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         FormatUsedRangeAsTable(worksheet, "TimeBlocksTable");
         worksheet.Column(1).Style.DateFormat.Format = "yyyy-mm-dd";
         worksheet.Column(7).Style.DateFormat.Format = "yyyy-mm-dd hh:mm";
+
+        foreach (var columnIndex in new[] { 6, 8, 9, 10 })
+        {
+            worksheet.Column(columnIndex).Style.NumberFormat.Format = GetGlucoseNumberFormat(preferredUnit);
+        }
+
         worksheet.Columns().AdjustToContents();
         worksheet.SheetView.FreezeRows(1);
     }
@@ -342,6 +363,91 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     private static double? ToNullableDouble(decimal? value)
     {
         return value is null ? null : decimal.ToDouble(value.Value);
+    }
+
+    /// <summary>
+    /// Converts a nullable mg/dL glucose value to the preferred unit for Excel cells.
+    /// </summary>
+    /// <param name="valueMgDl">The nullable glucose value expressed in mg/dL.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The converted nullable double value.</returns>
+    private static double? ToNullableGlucoseDouble(
+        decimal? valueMgDl,
+        GlucoseUnit preferredUnit)
+    {
+        var convertedValue = ConvertGlucoseAmount(valueMgDl, preferredUnit);
+
+        return convertedValue is null
+            ? null
+            : decimal.ToDouble(convertedValue.Value);
+    }
+
+    /// <summary>
+    /// Converts a nullable mg/dL glucose value to the preferred unit.
+    /// </summary>
+    /// <param name="valueMgDl">The nullable glucose value expressed in mg/dL.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The converted nullable glucose amount.</returns>
+    private static decimal? ConvertGlucoseAmount(
+        decimal? valueMgDl,
+        GlucoseUnit preferredUnit)
+    {
+        if (valueMgDl is null)
+        {
+            return null;
+        }
+
+        if (preferredUnit == GlucoseUnit.MgDl)
+        {
+            return decimal.Round(valueMgDl.Value, 0, MidpointRounding.AwayFromZero);
+        }
+
+        return new GlucoseValue(valueMgDl.Value, GlucoseUnit.MgDl)
+            .ConvertTo(preferredUnit)
+            .Amount;
+    }
+
+    /// <summary>
+    /// Creates a glucose worksheet header with the selected unit label.
+    /// </summary>
+    /// <param name="label">The metric label.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The worksheet header text.</returns>
+    private static string CreateGlucoseHeader(
+        string label,
+        GlucoseUnit preferredUnit)
+    {
+        return $"{label} {FormatGlucoseUnitLabel(preferredUnit)}";
+    }
+
+    /// <summary>
+    /// Formats a glucose unit label.
+    /// </summary>
+    /// <param name="unit">The glucose unit.</param>
+    /// <returns>The formatted unit label.</returns>
+    private static string FormatGlucoseUnitLabel(GlucoseUnit unit)
+    {
+        return unit switch
+        {
+            GlucoseUnit.MgDl => "mg/dL",
+            GlucoseUnit.MmolL => "mmol/L",
+            _ => throw new ArgumentOutOfRangeException(nameof(unit), unit, "Unsupported glucose unit.")
+        };
+    }
+
+    /// <summary>
+    /// Gets the Excel number format for the selected glucose unit.
+    /// </summary>
+    /// <param name="unit">The glucose unit.</param>
+    /// <returns>The Excel number format.</returns>
+    private static string GetGlucoseNumberFormat(GlucoseUnit unit)
+    {
+        return unit switch
+        {
+            GlucoseUnit.MgDl => "0",
+            GlucoseUnit.MmolL => "0.0",
+            _ => throw new ArgumentOutOfRangeException(nameof(unit), unit, "Unsupported glucose unit.")
+        };
     }
 
     /// <summary>

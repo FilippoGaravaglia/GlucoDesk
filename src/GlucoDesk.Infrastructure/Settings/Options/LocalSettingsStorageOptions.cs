@@ -1,3 +1,5 @@
+using GlucoDesk.Infrastructure.Storage;
+
 namespace GlucoDesk.Infrastructure.Settings.Options;
 
 /// <summary>
@@ -5,6 +7,8 @@ namespace GlucoDesk.Infrastructure.Settings.Options;
 /// </summary>
 public sealed record LocalSettingsStorageOptions
 {
+    private const string DefaultSettingsFileName = "settings.json";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="LocalSettingsStorageOptions"/> class.
     /// </summary>
@@ -14,7 +18,9 @@ public sealed record LocalSettingsStorageOptions
     {
         if (string.IsNullOrWhiteSpace(settingsFilePath))
         {
-            throw new ArgumentException("Settings file path must be specified.", nameof(settingsFilePath));
+            throw new ArgumentException(
+                "Settings file path must be specified.",
+                nameof(settingsFilePath));
         }
 
         SettingsFilePath = settingsFilePath.Trim();
@@ -23,30 +29,11 @@ public sealed record LocalSettingsStorageOptions
     /// <summary>
     /// Gets the default local settings storage options.
     /// </summary>
-    public static LocalSettingsStorageOptions Default { get; } = new(BuildDefaultSettingsFilePath());
+    public static LocalSettingsStorageOptions Default { get; } = new(
+        LocalApplicationDataDirectory.GetFilePath(DefaultSettingsFileName));
 
     /// <summary>
     /// Gets the settings file path.
     /// </summary>
     public string SettingsFilePath { get; }
-
-    #region Helpers
-
-    /// <summary>
-    /// Builds the default cross-platform settings file path.
-    /// </summary>
-    /// <returns>The default settings file path.</returns>
-    private static string BuildDefaultSettingsFilePath()
-    {
-        var applicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-
-        if (string.IsNullOrWhiteSpace(applicationDataPath))
-        {
-            applicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        }
-
-        return Path.Combine(applicationDataPath, "GlucoDesk", "settings.json");
-    }
-
-    #endregion
 }

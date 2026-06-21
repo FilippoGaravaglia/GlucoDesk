@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:accountViews="clr-namespace:GlucoDesk.Desktop.Views.Account"
     xmlns:accountViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Account"
-    xmlns:continuityViews="clr-namespace:GlucoDesk.Desktop.Views.Cgm.History.Continuity"
     xmlns:dashboardViews="clr-namespace:GlucoDesk.Desktop.Views.Dashboard"
     xmlns:dashboardViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Dashboard"
     xmlns:diaryViews="clr-namespace:GlucoDesk.Desktop.Views.Diary"
@@ -36,147 +35,168 @@
     </DataTemplate>
   </Window.DataTemplates>
 
-  <Grid
-      ColumnDefinitions="280,*"
-      Background="{StaticResource GlucoDesk.Brush.AppBackground}">
+  <Grid ColumnDefinitions="280,*"
+        Background="{StaticResource GlucoDesk.Brush.AppBackground}">
 
-    <Border
-        Grid.Column="0"
-        Classes="app-sidebar"
-        Padding="22">
+    <Border Grid.Column="0"
+            Classes="app-sidebar"
+            Padding="22">
 
-      <Grid RowDefinitions="Auto,*">
+      <Grid RowDefinitions="Auto,*,Auto">
 
-        <StackPanel
-            Grid.Row="0"
-            Spacing="24">
+        <StackPanel Grid.Row="0"
+                    Spacing="24">
 
           <StackPanel Spacing="10">
-            <Image
-                Source="avares://GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png"
-                Width="228"
-                Height="64"
-                Stretch="Uniform"
-                HorizontalAlignment="Left"
-                Margin="0,2,0,0" />
+            <Image Source="avares://GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png"
+                   Width="228"
+                   Height="64"
+                   Stretch="Uniform"
+                   HorizontalAlignment="Left"
+                   Margin="0,2,0,0" />
 
-            <TextBlock
-                Text="Desktop companion"
-                Classes="sidebar-subtitle"
-                Margin="4,0,0,0" />
+            <TextBlock Text="Glucose companion"
+                       Classes="sidebar-subtitle"
+                       Margin="4,0,0,0" />
           </StackPanel>
 
           <StackPanel Spacing="10">
-            <Button
-                Content="Dashboard"
-                Classes="nav-button"
-                Classes.accent="{Binding IsDashboardSelected}"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Command="{Binding ShowDashboardCommand}" />
+            <Button Content="Dashboard"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsDashboardSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowDashboardCommand}" />
 
-            <Button
-                Content="Diary"
-                Classes="nav-button"
-                Classes.accent="{Binding IsDiarySelected}"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Command="{Binding ShowDiaryCommand}" />
+            <Button Content="Diary"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsDiarySelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowDiaryCommand}" />
 
-            <Button
-                Content="Account"
-                Classes="nav-button"
-                Classes.accent="{Binding IsAccountSelected}"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Command="{Binding ShowAccountCommand}" />
+            <Button Content="Account"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsAccountSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowAccountCommand}" />
 
-            <Button
-                Content="Settings"
-                Classes="nav-button"
-                Classes.accent="{Binding IsSettingsSelected}"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Command="{Binding ShowSettingsCommand}" />
+            <Button Content="Settings"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsSettingsSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowSettingsCommand}" />
           </StackPanel>
         </StackPanel>
 
-        <ScrollViewer
-            Grid.Row="1"
-            Margin="0,18,0,0"
-            VerticalScrollBarVisibility="Auto"
-            HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Grid.Row="2"
+                    Spacing="14"
+                    VerticalAlignment="Bottom">
 
-          <StackPanel Spacing="12">
+          <Border Padding="18"
+                  CornerRadius="20"
+                  BorderThickness="1"
+                  BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                  Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+            <StackPanel Spacing="8">
 
-            <Border Classes="sync-status-card">
-              <StackPanel Spacing="6">
-                <TextBlock
-                    Text="{Binding BackgroundSyncStatus.Title}"
-                    Classes="sync-status-label" />
+              <Grid ColumnDefinitions="*,Auto"
+                    ColumnSpacing="12">
+                <StackPanel Spacing="3">
+                  <TextBlock Text="Local history"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
 
-                <TextBlock
-                    Text="{Binding BackgroundSyncStatus.StatusText}"
-                    Classes="sync-status-title" />
+                  <TextBlock Text="{Binding LocalHistoryStatusText}"
+                             FontSize="13"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}"
+                             TextWrapping="Wrap" />
+                </StackPanel>
 
-                <TextBlock
-                    Text="{Binding BackgroundSyncStatus.SummaryText}"
-                    Classes="sync-status-summary"
-                    TextWrapping="Wrap" />
+                <Border Grid.Column="1"
+                        Classes="badge"
+                        VerticalAlignment="Top">
+                  <TextBlock Text="{Binding LocalHistoryBadgeText}"
+                             FontSize="12"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+                </Border>
+              </Grid>
 
-                <TextBlock
-                    Text="{Binding BackgroundSyncStatus.SupportingText}"
-                    Classes="sync-status-supporting"
-                    TextWrapping="Wrap" />
+              <TextBlock Text="{Binding LocalHistoryDescriptionText}"
+                         TextWrapping="Wrap"
+                         Classes="sidebar-note" />
 
-                <TextBlock
-                    Text="{Binding BackgroundSyncStatus.LastUpdateText}"
-                    Classes="sync-status-meta"
-                    IsVisible="{Binding BackgroundSyncStatus.HasSuccessfulSync}" />
+              <TextBlock Text="{Binding BackgroundSyncStatus.LastUpdateText}"
+                         Classes="sync-status-meta"
+                         IsVisible="{Binding BackgroundSyncStatus.HasSuccessfulSync}"
+                         TextWrapping="Wrap" />
+
+            </StackPanel>
+          </Border>
+
+          <Border Padding="18"
+                  CornerRadius="20"
+                  BorderThickness="1"
+                  BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                  Background="{StaticResource GlucoDesk.Brush.AccentPale}">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="12">
+              <Border Width="10"
+                      Height="10"
+                      CornerRadius="999"
+                      Background="{StaticResource GlucoDesk.Brush.Accent}"
+                      VerticalAlignment="Top"
+                      Margin="0,5,0,0" />
+
+              <StackPanel Grid.Column="1"
+                          Spacing="6">
+                <TextBlock Text="Private by design"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+
+                <TextBlock Text="Your glucose history stays local on this desktop companion."
+                           TextWrapping="Wrap"
+                           Classes="sidebar-note" />
               </StackPanel>
-            </Border>
+            </Grid>
+          </Border>
 
-            <continuityViews:HistoryContinuitySyncStatusCard
-                DataContext="{Binding HistoryContinuitySyncStatus}" />
+          <Border Padding="18"
+                  CornerRadius="20"
+                  BorderThickness="1"
+                  BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                  Background="{StaticResource GlucoDesk.Brush.IndigoSoft}">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="12">
+              <Border Width="10"
+                      Height="10"
+                      CornerRadius="999"
+                      Background="{StaticResource GlucoDesk.Brush.Indigo}"
+                      VerticalAlignment="Top"
+                      Margin="0,5,0,0" />
 
-            <Border Classes="sidebar-note-card">
-              <StackPanel Spacing="8">
-                <TextBlock
-                    Text="Companion mode"
-                    FontWeight="SemiBold"
-                    Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+              <StackPanel Grid.Column="1"
+                          Spacing="6">
+                <TextBlock Text="Safety notice"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
 
-                <TextBlock
-                    Text="Private, local-first desktop experience for glucose awareness."
-                    TextWrapping="Wrap"
-                    Classes="sidebar-note" />
+                <TextBlock Text="Not a medical device. Do not use for treatment decisions."
+                           TextWrapping="Wrap"
+                           Classes="sidebar-note" />
               </StackPanel>
-            </Border>
+            </Grid>
+          </Border>
 
-            <Border
-                Classes="sidebar-note-card"
-                Background="{StaticResource GlucoDesk.Brush.IndigoSoft}">
-
-              <StackPanel Spacing="8">
-                <TextBlock
-                    Text="Safety notice"
-                    FontWeight="SemiBold"
-                    Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
-
-                <TextBlock
-                    Text="Not a medical device. Do not use for treatment decisions."
-                    TextWrapping="Wrap"
-                    Classes="sidebar-note" />
-              </StackPanel>
-            </Border>
-
-          </StackPanel>
-        </ScrollViewer>
+        </StackPanel>
       </Grid>
     </Border>
 
-    <ContentControl
-        Grid.Column="1"
-        Content="{Binding CurrentContent}" />
+    <ContentControl Grid.Column="1"
+                    Content="{Binding CurrentContent}" />
   </Grid>
 </Window>

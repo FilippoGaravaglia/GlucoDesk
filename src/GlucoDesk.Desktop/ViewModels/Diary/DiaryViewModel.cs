@@ -7,6 +7,7 @@ using GlucoDesk.Application.Cgm.Diary.Requests;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Diary.Enums;
@@ -23,6 +24,7 @@ public sealed class DiaryViewModel : ViewModelBase
     private readonly IGlycemicDiaryExcelExportService _excelExportService;
     private readonly IGlycemicDiaryPdfExportService _pdfExportService;
     private readonly IDiaryExportFileSaveService _fileSaveService;
+    private readonly IApplicationSettingsService _settingsService;
     private readonly TimeProvider _timeProvider;
 
     private DiaryExportPeriodPresetOption _selectedPeriodPreset;
@@ -49,24 +51,28 @@ public sealed class DiaryViewModel : ViewModelBase
     /// <param name="excelExportService">The Excel export service.</param>
     /// <param name="pdfExportService">The PDF export service.</param>
     /// <param name="fileSaveService">The file save service.</param>
+    /// <param name="settingsService">The application settings service.</param>
     /// <param name="timeProvider">The time provider.</param>
     public DiaryViewModel(
         IGlycemicDiaryService diaryService,
         IGlycemicDiaryExcelExportService excelExportService,
         IGlycemicDiaryPdfExportService pdfExportService,
         IDiaryExportFileSaveService fileSaveService,
+        IApplicationSettingsService settingsService,
         TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(diaryService);
         ArgumentNullException.ThrowIfNull(excelExportService);
         ArgumentNullException.ThrowIfNull(pdfExportService);
         ArgumentNullException.ThrowIfNull(fileSaveService);
+        ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
         _diaryService = diaryService;
         _excelExportService = excelExportService;
         _pdfExportService = pdfExportService;
         _fileSaveService = fileSaveService;
+        _settingsService = settingsService;
         _timeProvider = timeProvider;
 
         PeriodPresets =
@@ -479,20 +485,38 @@ public sealed class DiaryViewModel : ViewModelBase
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The exported diary file.</returns>
-    private Task<Result<GlycemicDiaryExportFile>> CreateExportFileAsync(
+    private async Task<Result<GlycemicDiaryExportFile>> CreateExportFileAsync(
         CancellationToken cancellationToken)
     {
+        var settingsResult = await _settingsService
+            .GetSettingsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (settingsResult.IsFailure)
+        {
+            return Result<GlycemicDiaryExportFile>.Failure(settingsResult.Error);
+        }
+
         var diaryRequest = CreateDiaryRequest();
+        var preferredUnit = settingsResult.Value.PreferredUnit;
 
         return SelectedFormat.Kind switch
         {
-            DiaryExportFormatKind.Excel => _excelExportService.ExportAsync(
-                new GlycemicDiaryExcelExportRequest(diaryRequest),
-                cancellationToken),
+            DiaryExportFormatKind.Excel => await _excelExportService
+                .ExportAsync(
+                    new GlycemicDiaryExcelExportRequest(
+                        diaryRequest,
+                        preferredUnit: preferredUnit),
+                    cancellationToken)
+                .ConfigureAwait(false),
 
-            DiaryExportFormatKind.Pdf => _pdfExportService.ExportAsync(
-                new GlycemicDiaryPdfExportRequest(diaryRequest),
-                cancellationToken),
+            DiaryExportFormatKind.Pdf => await _pdfExportService
+                .ExportAsync(
+                    new GlycemicDiaryPdfExportRequest(
+                        diaryRequest,
+                        preferredUnit: preferredUnit),
+                    cancellationToken)
+                .ConfigureAwait(false),
 
             _ => throw new InvalidOperationException("Unsupported diary export format.")
         };

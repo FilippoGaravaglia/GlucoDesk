@@ -3,6 +3,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
+using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Core.Glucose.ValueObjects;
 
 namespace GlucoDesk.Desktop.Views.Dashboard.Controls;
 
@@ -161,6 +163,14 @@ public sealed class GlucoseTrendChart : Control
         AvaloniaProperty.Register<GlucoseTrendChart, int>(
             nameof(MaxVisibleMgDl),
             defaultValue: 300);
+
+    /// <summary>
+    /// Defines the glucose display unit used for chart labels.
+    /// </summary>
+    public static readonly StyledProperty<GlucoseUnit> DisplayUnitProperty =
+        AvaloniaProperty.Register<GlucoseTrendChart, GlucoseUnit>(
+            nameof(DisplayUnit),
+            defaultValue: GlucoseUnit.MgDl);
         
     /// <summary>
     /// Gets or sets the maximum visible chart value expressed in mg/dL.
@@ -171,6 +181,15 @@ public sealed class GlucoseTrendChart : Control
         set => SetValue(MaxVisibleMgDlProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the glucose display unit used for chart labels.
+    /// </summary>
+    public GlucoseUnit DisplayUnit
+    {
+        get => GetValue(DisplayUnitProperty);
+        set => SetValue(DisplayUnitProperty, value);
+    }
+
     static GlucoseTrendChart()
     {
         AffectsRender<GlucoseTrendChart>(
@@ -178,7 +197,8 @@ public sealed class GlucoseTrendChart : Control
             TargetLowMgDlProperty,
             TargetHighMgDlProperty,
             WindowHoursProperty,
-            MaxVisibleMgDlProperty);
+            MaxVisibleMgDlProperty,
+            DisplayUnitProperty);
     }
 
     /// <summary>
@@ -235,6 +255,7 @@ public sealed class GlucoseTrendChart : Control
 
         var targetRange = NormalizeTargetRange(TargetLowMgDl, TargetHighMgDl);
         var scale = CalculateScale(MaxVisibleMgDl);
+        var displayUnit = NormalizeDisplayUnit(DisplayUnit);
         var yTicks = CreateYAxisTicks(scale);
         var timeScale = CalculateTimeScale(WindowHours);
         var xTicks = CreateXAxisTicks(timeScale, points.Length);
@@ -243,9 +264,9 @@ public sealed class GlucoseTrendChart : Control
         DrawTargetRange(context, plotArea, scale, targetRange);
         DrawGrid(context, plotArea, scale, yTicks, timeScale, xTicks);
         DrawAxes(context, plotArea);
-        DrawYAxisLabels(context, plotArea, scale, yTicks);
+        DrawYAxisLabels(context, plotArea, scale, yTicks, displayUnit);
         DrawXAxisLabels(context, plotArea, timeScale, xTicks);
-        DrawTargetLabels(context, plotArea, scale, targetRange);
+        DrawTargetLabels(context, plotArea, scale, targetRange, displayUnit);
 
         if (points.Length == 0)
         {
@@ -261,6 +282,54 @@ public sealed class GlucoseTrendChart : Control
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Normalizes unsupported glucose display units to the default display unit.
+    /// </summary>
+    /// <param name="displayUnit">The requested display unit.</param>
+    /// <returns>The normalized display unit.</returns>
+    private static GlucoseUnit NormalizeDisplayUnit(GlucoseUnit displayUnit)
+    {
+        return Enum.IsDefined(displayUnit)
+            ? displayUnit
+            : GlucoseUnit.MgDl;
+    }
+    
+    /// <summary>
+    /// Formats a glucose value stored in mg/dL for the selected display unit.
+    /// </summary>
+    /// <param name="valueMgDl">The glucose value expressed in mg/dL.</param>
+    /// <param name="displayUnit">The glucose display unit.</param>
+    /// <returns>The formatted glucose value without unit suffix.</returns>
+    private static string FormatGlucoseValueLabel(
+        decimal valueMgDl,
+        GlucoseUnit displayUnit)
+    {
+        var convertedValue = new GlucoseValue(valueMgDl, GlucoseUnit.MgDl)
+            .ConvertTo(displayUnit);
+    
+        return displayUnit switch
+        {
+            GlucoseUnit.MgDl => convertedValue.Amount.ToString("0", CultureInfo.InvariantCulture),
+            GlucoseUnit.MmolL => convertedValue.Amount.ToString("0.0", CultureInfo.InvariantCulture),
+            _ => valueMgDl.ToString("0", CultureInfo.InvariantCulture)
+        };
+    }
+    
+    /// <summary>
+    /// Formats glucose unit labels for chart rendering.
+    /// </summary>
+    /// <param name="displayUnit">The glucose display unit.</param>
+    /// <returns>The formatted unit label.</returns>
+    private static string FormatGlucoseUnitLabel(GlucoseUnit displayUnit)
+    {
+        return displayUnit switch
+        {
+            GlucoseUnit.MgDl => "mg/dL",
+            GlucoseUnit.MmolL => "mmol/L",
+            _ => "mg/dL"
+        };
+    }
 
     /// <summary>
     /// Creates the drawable plot area using the control bounds.
@@ -475,20 +544,25 @@ public sealed class GlucoseTrendChart : Control
         context.DrawLine(AxisPen, new Point(plotArea.Left, plotArea.Bottom), new Point(plotArea.Right, plotArea.Bottom));
     }
 
-    /// <summary>
+   /// <summary>
     /// Draws Y axis labels.
     /// </summary>
     /// <param name="context">The drawing context.</param>
     /// <param name="plotArea">The chart plot area.</param>
     /// <param name="scale">The chart scale.</param>
     /// <param name="yTicks">The Y axis tick values.</param>
+    /// <param name="displayUnit">The glucose display unit.</param>
     private static void DrawYAxisLabels(
         DrawingContext context,
         Rect plotArea,
         ChartScale scale,
-        IReadOnlyList<decimal> yTicks)
+        IReadOnlyList<decimal> yTicks,
+        GlucoseUnit displayUnit)
     {
-        var unitText = CreateText("mg/dL", AxisTextBrush, TargetLabelFontSize);
+        var unitText = CreateText(
+            FormatGlucoseUnitLabel(displayUnit),
+            AxisTextBrush,
+            TargetLabelFontSize);
 
         context.DrawText(
             unitText,
@@ -498,7 +572,7 @@ public sealed class GlucoseTrendChart : Control
 
         foreach (var tick in yTicks)
         {
-            var label = decimal.ToInt32(tick).ToString(CultureInfo.InvariantCulture);
+            var label = FormatGlucoseValueLabel(tick, displayUnit);
             var text = CreateText(label, AxisTextBrush, AxisLabelFontSize);
 
             var y = ClampAxisLabelY(
@@ -562,14 +636,23 @@ public sealed class GlucoseTrendChart : Control
     /// <param name="plotArea">The chart plot area.</param>
     /// <param name="scale">The chart scale.</param>
     /// <param name="targetRange">The chart target range.</param>
+    /// <param name="displayUnit">The glucose display unit.</param>
     private static void DrawTargetLabels(
         DrawingContext context,
         Rect plotArea,
         ChartScale scale,
-        ChartTargetRange targetRange)
+        ChartTargetRange targetRange,
+        GlucoseUnit displayUnit)
     {
-        var highLabel = CreateText($"High {decimal.ToInt32(targetRange.HighMgDl)}", TargetTextBrush, TargetLabelFontSize);
-        var lowLabel = CreateText($"Low {decimal.ToInt32(targetRange.LowMgDl)}", TargetTextBrush, TargetLabelFontSize);
+        var highLabel = CreateText(
+            $"High {FormatGlucoseValueLabel(targetRange.HighMgDl, displayUnit)}",
+            TargetTextBrush,
+            TargetLabelFontSize);
+
+        var lowLabel = CreateText(
+            $"Low {FormatGlucoseValueLabel(targetRange.LowMgDl, displayUnit)}",
+            TargetTextBrush,
+            TargetLabelFontSize);
 
         var highY = MapValueToY(targetRange.HighMgDl, plotArea, scale) - highLabel.Height - 3;
         var lowY = MapValueToY(targetRange.LowMgDl, plotArea, scale) + 3;
