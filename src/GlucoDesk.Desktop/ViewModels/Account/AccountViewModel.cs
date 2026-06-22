@@ -8,6 +8,7 @@ using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
+using Avalonia.Threading;
 
 namespace GlucoDesk.Desktop.ViewModels.Account;
 
@@ -16,6 +17,9 @@ namespace GlucoDesk.Desktop.ViewModels.Account;
 /// </summary>
 public sealed partial class AccountViewModel : ViewModelBase
 {
+    private const string UnsupportedAccountConnectionMessage =
+        "Dexcom Share account connection is currently supported only on macOS and Windows in this preview. The current platform does not provide a supported secure credential store yet.";
+
     private readonly IDexcomShareCredentialStore _credentialStore;
     private readonly IDexcomShareClient _dexcomShareClient;
     private readonly IApplicationSettingsService _settingsService;
@@ -101,23 +105,56 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// <summary>
     /// Gets the user-facing secure credential storage state.
     /// </summary>
-    public string CredentialStorageStatusText => HasStoredCredentials
-        ? "Saved account available"
-        : "No saved account";
+    public string CredentialStorageStatusText
+    {
+        get
+        {
+            if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
+            {
+                return "Account connection unavailable";
+            }
+
+            return HasStoredCredentials
+                ? "Saved account available"
+                : "No saved account";
+        }
+    }
 
     /// <summary>
     /// Gets the user-facing secure credential storage description.
     /// </summary>
-    public string CredentialStorageDescriptionText => HasStoredCredentials
-        ? "Dexcom Share credentials are available from secure local storage. The password is not shown in the form."
-        : "Save your Dexcom Share account to enable automatic reconnect when GlucoDesk starts.";
+    public string CredentialStorageDescriptionText
+    {
+        get
+        {
+            if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
+            {
+                return "Secure credential storage for Dexcom Share is currently available only on macOS and Windows in this preview.";
+            }
+
+            return HasStoredCredentials
+                ? "Dexcom Share credentials are available from secure local storage. The password is not shown in the form."
+                : "Save your Dexcom Share account to enable automatic reconnect when GlucoDesk starts.";
+        }
+    }
 
     /// <summary>
     /// Gets the user-facing password help text.
     /// </summary>
-    public string PasswordHelpText => HasStoredCredentials
-        ? "Leave empty to keep the saved password. Enter a new password only if you want to replace it."
-        : "Required to connect to Dexcom Share. It will be saved using the configured secure credential store.";
+    public string PasswordHelpText
+    {
+        get
+        {
+            if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
+            {
+                return "Dexcom Share account connection is not available on this platform yet.";
+            }
+
+            return HasStoredCredentials
+                ? "Leave empty to keep the saved password. Enter a new password only if you want to replace it."
+                : "Required to connect to Dexcom Share. It will be saved using the configured secure credential store.";
+        }
+    }
 
     /// <summary>
     /// Loads persisted Dexcom Share account details.
@@ -137,6 +174,12 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         try
         {
+            if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
+            {
+                ApplyUnsupportedAccountConnectionFailure();
+                return;
+            }
+
             var credentials = await _credentialStore
                 .ReadAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -171,6 +214,10 @@ public sealed partial class AccountViewModel : ViewModelBase
         {
             StatusMessage = "Account load cancelled.";
         }
+        catch (PlatformNotSupportedException exception)
+        {
+            ApplyPlatformNotSupportedFailure(exception);
+        }
         catch (Exception exception)
         {
             ApplyUnexpectedFailure(exception, "Unexpected error while loading account.");
@@ -199,6 +246,12 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         try
         {
+            if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
+            {
+                ApplyUnsupportedAccountConnectionFailure();
+                return;
+            }
+
             var credentials = await BuildCredentialsFromCurrentFormAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -237,6 +290,10 @@ public sealed partial class AccountViewModel : ViewModelBase
         {
             StatusMessage = "Account save cancelled.";
         }
+        catch (PlatformNotSupportedException exception)
+        {
+            ApplyPlatformNotSupportedFailure(exception);
+        }
         catch (Exception exception)
         {
             ApplyUnexpectedFailure(exception, "Unexpected error while saving account.");
@@ -266,6 +323,12 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         try
         {
+            if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
+            {
+                ApplyUnsupportedAccountConnectionFailure();
+                return;
+            }
+
             var credentials = await BuildCredentialsFromCurrentFormAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -304,6 +367,10 @@ public sealed partial class AccountViewModel : ViewModelBase
             StatusMessage = "Connection test cancelled.";
             SetConnectionDiagnosticsPending("Connection test was cancelled. Run Test connection again when ready.");
         }
+        catch (PlatformNotSupportedException exception)
+        {
+            ApplyPlatformNotSupportedFailure(exception);
+        }
         catch (Exception exception)
         {
             SetConnectionDiagnosticsFailed(exception.Message);
@@ -333,6 +400,12 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         try
         {
+            if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
+            {
+                ApplyUnsupportedAccountConnectionFailure();
+                return;
+            }
+
             await _credentialStore
                 .ClearAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -353,6 +426,10 @@ public sealed partial class AccountViewModel : ViewModelBase
         {
             StatusMessage = "Clear account cancelled.";
         }
+        catch (PlatformNotSupportedException exception)
+        {
+            ApplyPlatformNotSupportedFailure(exception);
+        }
         catch (Exception exception)
         {
             ApplyUnexpectedFailure(exception, "Unexpected error while clearing account.");
@@ -364,6 +441,99 @@ public sealed partial class AccountViewModel : ViewModelBase
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Refreshes account command states on the UI thread.
+    /// </summary>
+    private void RefreshAccountCommandStates()
+    {
+        RunOnUiThread(() =>
+        {
+            LoadCommand.NotifyCanExecuteChanged();
+            SaveCommand.NotifyCanExecuteChanged();
+            TestConnectionCommand.NotifyCanExecuteChanged();
+            ClearCredentialsCommand.NotifyCanExecuteChanged();
+        });
+    }
+    
+    /// <summary>
+    /// Refreshes credential storage presentation properties on the UI thread.
+    /// </summary>
+    private void RefreshCredentialStorageState()
+    {
+        RunOnUiThread(() =>
+        {
+            OnPropertyChanged(nameof(CredentialStorageStatusText));
+            OnPropertyChanged(nameof(CredentialStorageDescriptionText));
+            OnPropertyChanged(nameof(PasswordHelpText));
+        });
+    }
+
+    /// <summary>
+    /// Runs the specified action on the Avalonia UI thread.
+    /// </summary>
+    /// <param name="action">The action to run.</param>
+    private static void RunOnUiThread(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(action);
+    }
+
+    /// <summary>
+    /// Determines whether Dexcom Share account connection is supported on the current platform.
+    /// </summary>
+    /// <returns>True when the current platform supports the account connection flow; otherwise false.</returns>
+    private static bool IsDexcomShareAccountConnectionSupportedOnCurrentPlatform()
+    {
+        return OperatingSystem.IsMacOS() || OperatingSystem.IsWindows();
+    }
+
+    /// <summary>
+    /// Applies a controlled failure when the Dexcom Share account flow is not supported on the current platform.
+    /// </summary>
+    private void ApplyUnsupportedAccountConnectionFailure()
+    {
+        HasStoredCredentials = false;
+        HasError = true;
+        ErrorMessage = UnsupportedAccountConnectionMessage;
+        StatusMessage = "Dexcom Share account connection is not available on this platform yet.";
+
+        SetConnectionDiagnosticsFailed(UnsupportedAccountConnectionMessage);
+
+        OnPropertyChanged(nameof(CredentialStorageStatusText));
+        OnPropertyChanged(nameof(CredentialStorageDescriptionText));
+        OnPropertyChanged(nameof(PasswordHelpText));
+    }
+
+    /// <summary>
+    /// Applies a controlled platform-not-supported failure.
+    /// </summary>
+    /// <param name="exception">The platform exception.</param>
+    private void ApplyPlatformNotSupportedFailure(PlatformNotSupportedException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        var message = string.IsNullOrWhiteSpace(exception.Message)
+            ? UnsupportedAccountConnectionMessage
+            : exception.Message;
+
+        HasError = true;
+        ErrorMessage = message;
+        StatusMessage = "Dexcom Share account connection is not available on this platform yet.";
+
+        SetConnectionDiagnosticsFailed(message);
+
+        OnPropertyChanged(nameof(CredentialStorageStatusText));
+        OnPropertyChanged(nameof(CredentialStorageDescriptionText));
+        OnPropertyChanged(nameof(PasswordHelpText));
+    }
 
     /// <summary>
     /// Determines whether an account operation can run.
@@ -380,7 +550,9 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// <returns>True when stored credentials exist and no operation is running; otherwise false.</returns>
     private bool CanClearStoredCredentials()
     {
-        return HasStoredCredentials && !IsBusy;
+        return HasStoredCredentials
+            && !IsBusy
+            && IsDexcomShareAccountConnectionSupportedOnCurrentPlatform();
     }
 
     /// <summary>
@@ -416,10 +588,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// <param name="value">The new busy state.</param>
     partial void OnIsBusyChanged(bool value)
     {
-        LoadCommand.NotifyCanExecuteChanged();
-        SaveCommand.NotifyCanExecuteChanged();
-        TestConnectionCommand.NotifyCanExecuteChanged();
-        ClearCredentialsCommand.NotifyCanExecuteChanged();
+        RefreshAccountCommandStates();
     }
 
     /// <summary>
@@ -428,11 +597,8 @@ public sealed partial class AccountViewModel : ViewModelBase
     /// <param name="value">The new stored credential state.</param>
     partial void OnHasStoredCredentialsChanged(bool value)
     {
-        OnPropertyChanged(nameof(CredentialStorageStatusText));
-        OnPropertyChanged(nameof(CredentialStorageDescriptionText));
-        OnPropertyChanged(nameof(PasswordHelpText));
-
-        ClearCredentialsCommand.NotifyCanExecuteChanged();
+        RefreshCredentialStorageState();
+        RefreshAccountCommandStates();
     }
 
     /// <summary>
@@ -543,13 +709,19 @@ public sealed partial class AccountViewModel : ViewModelBase
             return null;
         }
 
+        if (!string.IsNullOrWhiteSpace(PasswordText))
+        {
+            return new DexcomShareCredentials(
+                EmailText,
+                PasswordText,
+                SelectedRegion.Region);
+        }
+
         var existingCredentials = await _credentialStore
             .ReadAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var passwordToUse = string.IsNullOrWhiteSpace(PasswordText)
-            ? existingCredentials?.Password
-            : PasswordText;
+        var passwordToUse = existingCredentials?.Password;
 
         if (string.IsNullOrWhiteSpace(passwordToUse))
         {

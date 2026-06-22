@@ -1,39 +1,49 @@
 namespace GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
 
 /// <summary>
-/// Reads Dexcom Share credentials from secure storage first and falls back to development environment variables.
+/// Reads Dexcom Share credentials from the platform secure store first and falls back to development environment variables.
 /// </summary>
 public sealed class CompositeDexcomShareCredentialStore : IDexcomShareCredentialStore
 {
-    private readonly MacOsKeychainDexcomShareCredentialStore _secureStore;
+    private readonly MacOsKeychainDexcomShareCredentialStore _macOsSecureStore;
+    private readonly WindowsCredentialManagerDexcomShareCredentialStore _windowsSecureStore;
     private readonly EnvironmentDexcomShareCredentialStore _environmentStore;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompositeDexcomShareCredentialStore"/> class.
     /// </summary>
-    /// <param name="secureStore">The secure credential store.</param>
+    /// <param name="macOsSecureStore">The macOS secure credential store.</param>
+    /// <param name="windowsSecureStore">The Windows secure credential store.</param>
     /// <param name="environmentStore">The environment credential store.</param>
     public CompositeDexcomShareCredentialStore(
-        MacOsKeychainDexcomShareCredentialStore secureStore,
+        MacOsKeychainDexcomShareCredentialStore macOsSecureStore,
+        WindowsCredentialManagerDexcomShareCredentialStore windowsSecureStore,
         EnvironmentDexcomShareCredentialStore environmentStore)
     {
-        ArgumentNullException.ThrowIfNull(secureStore);
+        ArgumentNullException.ThrowIfNull(macOsSecureStore);
+        ArgumentNullException.ThrowIfNull(windowsSecureStore);
         ArgumentNullException.ThrowIfNull(environmentStore);
 
-        _secureStore = secureStore;
+        _macOsSecureStore = macOsSecureStore;
+        _windowsSecureStore = windowsSecureStore;
         _environmentStore = environmentStore;
     }
 
     /// <inheritdoc />
     public async Task<DexcomShareCredentials?> ReadAsync(CancellationToken cancellationToken)
     {
-        var storedCredentials = await _secureStore
-            .ReadAsync(cancellationToken)
-            .ConfigureAwait(false);
+        var secureStore = GetCurrentPlatformSecureStore();
 
-        if (storedCredentials?.IsConfigured == true)
+        if (secureStore is not null)
         {
-            return storedCredentials;
+            var storedCredentials = await secureStore
+                .ReadAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (storedCredentials?.IsConfigured == true)
+            {
+                return storedCredentials;
+            }
         }
 
         return await _environmentStore
@@ -46,12 +56,45 @@ public sealed class CompositeDexcomShareCredentialStore : IDexcomShareCredential
         DexcomShareCredentials credentials,
         CancellationToken cancellationToken)
     {
-        return _secureStore.SaveAsync(credentials, cancellationToken);
+        ArgumentNullException.ThrowIfNull(credentials);
+
+        var secureStore = GetCurrentPlatformSecureStore()
+            ?? throw new PlatformNotSupportedException(
+                "Secure Dexcom Share credential storage is currently supported only on macOS and Windows.");
+
+        return secureStore.SaveAsync(credentials, cancellationToken);
     }
 
     /// <inheritdoc />
     public Task ClearAsync(CancellationToken cancellationToken)
     {
-        return _secureStore.ClearAsync(cancellationToken);
+        var secureStore = GetCurrentPlatformSecureStore()
+            ?? throw new PlatformNotSupportedException(
+                "Secure Dexcom Share credential storage is currently supported only on macOS and Windows.");
+
+        return secureStore.ClearAsync(cancellationToken);
     }
+
+    #region Helpers
+
+    /// <summary>
+    /// Gets the secure credential store for the current platform.
+    /// </summary>
+    /// <returns>The current platform secure store, or null when unsupported.</returns>
+    private IDexcomShareCredentialStore? GetCurrentPlatformSecureStore()
+    {
+        if (OperatingSystem.IsMacOS())
+        {
+            return _macOsSecureStore;
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            return _windowsSecureStore;
+        }
+
+        return null;
+    }
+
+    #endregion
 }
