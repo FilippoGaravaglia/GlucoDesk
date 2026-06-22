@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Avalonia-UI-0B8CE9" alt="Avalonia UI" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license" />
-  <img src="https://img.shields.io/badge/status-v0.2.0--preview-blue" alt="v0.2.0 preview" />
+  <img src="https://img.shields.io/badge/status-v0.2.1--preview-blue" alt="v0.2.1 preview" />
   <img src="https://img.shields.io/badge/macOS-preview-00AEEF" alt="macOS preview" />
   <img src="https://img.shields.io/badge/Windows-portable--preview-0078D4" alt="Windows portable preview" />
   <img src="https://img.shields.io/badge/local--first-yes-00AEEF" alt="Local-first" />
@@ -42,7 +42,7 @@
 >
 > The app is intended for awareness, personal review and desktop convenience only.
 >
-> The current preview supports macOS packages and introduces a Windows portable preview package. Windows support should still be considered early until validated on real Windows machines across the main runtime flows.
+> The current preview supports macOS packages and a Windows x64 portable package. Windows support is available in preview and should still be considered early until validated across more real-world machines and runtime flows.
 
 ---
 
@@ -95,7 +95,7 @@ GlucoDesk uses a provider-based architecture so the project can evolve beyond a 
 
 ## Preview
 
-GlucoDesk is currently in **v0.2.0-preview**.
+GlucoDesk is currently in **v0.2.1-preview**.
 
 This preview focuses on turning the app into a more complete desktop product loop:
 
@@ -135,10 +135,12 @@ The Account page provides a cleaner place to configure provider-related account 
 
 It is designed around a local-first workflow and keeps account configuration separate from the main dashboard experience.
 
-> [!NOTE]
-> Platform-specific secure credential handling is still evolving.
->
-> macOS is the primary validated flow at this stage. Windows portable preview support has been introduced, but credential-store behavior should still be validated carefully on real Windows machines.
+The current preview supports secure local credential storage on:
+
+* macOS, through macOS Keychain;
+* Windows, through Windows Credential Manager.
+
+Credentials are used locally by the desktop app to connect to the configured provider. GlucoDesk does not provide a custom backend for handling user credentials.
 
 ### Glycemic diary export
 
@@ -204,7 +206,7 @@ It is a companion experience for awareness, personal review and desktop convenie
 Current version:
 
 ```text
-0.2.0-preview
+0.2.1-preview
 ```
 
 The preview focuses on:
@@ -221,7 +223,9 @@ The preview focuses on:
 * PDF diary export;
 * updated app branding and screenshots;
 * macOS preview packaging;
-* Windows portable preview packaging.
+* Windows portable preview packaging;
+* Windows Credential Manager support for Dexcom Share credentials;
+* improved account connection flow on Windows.
 
 Current runtime support:
 
@@ -309,6 +313,11 @@ The connection flow is designed to show whether the configured connection is:
 * failed;
 * stale after configuration changes.
 
+Credential persistence is platform-aware:
+
+* on macOS, credentials are stored through macOS Keychain;
+* on Windows, credentials are stored through Windows Credential Manager.
+
 ### Local history
 
 GlucoDesk stores glucose history locally on the user’s computer.
@@ -355,7 +364,7 @@ The current diary direction focuses on:
 
 ### Windows portable preview
 
-GlucoDesk now includes a Windows x64 portable preview build path.
+GlucoDesk includes a Windows x64 portable preview build.
 
 The Windows package is distributed as a zip archive.
 
@@ -380,7 +389,7 @@ By design:
 * glucose history is stored locally on the user’s computer;
 * app settings are stored locally;
 * dashboard and widget-related state are stored locally;
-* credentials should be handled through the configured secure credential store;
+* credentials are handled through the configured operating-system credential store where supported;
 * credentials must not be committed to Git;
 * GlucoDesk does not require a custom backend to handle user credentials or glucose history.
 
@@ -403,63 +412,155 @@ Download the latest ready-to-run preview package from the [GitHub Releases page]
 > [!IMPORTANT]
 > The green **Code → Download ZIP** button downloads the source code, not the ready-to-run app.
 >
-> To install or try GlucoDesk, download one of the packages attached to the latest GitHub Release.
+> To install or try GlucoDesk, download one of the packages attached to the latest GitHub Release under **Assets**.
 
-Available package targets:
+Available package targets for this preview:
 
 ```text
-GlucoDesk-0.2.0-preview-osx-arm64.zip
-GlucoDesk-0.2.0-preview-osx-x64.zip
-GlucoDesk-0.2.0-preview-win-x64-portable.zip
+GlucoDesk-0.2.1-preview-osx-arm64.zip
+GlucoDesk-0.2.1-preview-osx-x64.zip
+GlucoDesk-0.2.1-preview-win-x64-portable.zip
 ```
 
 Choose the package for your operating system:
 
 | System              | Download                                       |
 | ------------------- | ---------------------------------------------- |
-| macOS Apple Silicon | `GlucoDesk-0.2.0-preview-osx-arm64.zip`        |
-| macOS Intel         | `GlucoDesk-0.2.0-preview-osx-x64.zip`          |
-| Windows 64-bit      | `GlucoDesk-0.2.0-preview-win-x64-portable.zip` |
+| macOS Apple Silicon | `GlucoDesk-0.2.1-preview-osx-arm64.zip`        |
+| macOS Intel         | `GlucoDesk-0.2.1-preview-osx-x64.zip`          |
+| Windows 64-bit      | `GlucoDesk-0.2.1-preview-win-x64-portable.zip` |
 
 Not sure which macOS package to use?
 
 * Choose `osx-arm64` for Apple Silicon Macs with M1, M2, M3, M4 or newer chips.
 * Choose `osx-x64` for Intel Macs.
 
+### Updating an existing installation
+
+Replacing the application bundle or portable folder does not normally delete local data.
+
+GlucoDesk stores app data and credentials outside the application files:
+
+* macOS credentials are stored in macOS Keychain;
+* Windows credentials are stored in Windows Credential Manager;
+* local app data is stored in the operating-system application data location.
+
+To update:
+
+* close GlucoDesk;
+* download the new package from the latest GitHub Release;
+* replace the old app bundle or portable folder with the new one;
+* open GlucoDesk again.
+
 ### macOS
 
-Unzip the package and open:
+Download the correct macOS zip from the release assets.
+
+For Apple Silicon Macs such as M1, M2, M3 or newer, use:
 
 ```text
-GlucoDesk.app
+GlucoDesk-0.2.1-preview-osx-arm64.zip
 ```
 
-The preview app is not signed or notarized yet.
-
-On macOS, the first launch may require:
+For Intel Macs, use:
 
 ```text
-Right click → Open
+GlucoDesk-0.2.1-preview-osx-x64.zip
 ```
 
-This is expected for an unsigned preview build.
+After downloading:
+
+1. unzip the package;
+2. move `GlucoDesk.app` to the `Applications` folder;
+3. if macOS asks whether to replace an existing copy, choose **Replace**;
+4. open the app.
+
+The preview app is currently not signed or notarized.
+
+Because of this, macOS Gatekeeper may block the first launch.
+
+First try:
+
+```text
+Right click GlucoDesk.app → Open → Open
+```
+
+If macOS shows a message such as:
+
+```text
+"GlucoDesk" is damaged and can't be opened.
+```
+
+this usually means the downloaded preview app is blocked by the quarantine attribute because it is not signed/notarized yet.
+
+From Terminal, run:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/GlucoDesk.app
+```
+
+Then open the app again:
+
+```bash
+open /Applications/GlucoDesk.app
+```
+
+If you are testing directly from the Downloads folder instead of Applications, use:
+
+```bash
+xattr -dr com.apple.quarantine "$HOME/Downloads/GlucoDesk.app"
+open "$HOME/Downloads/GlucoDesk.app"
+```
+
+For normal usage, moving the app to `Applications` is recommended.
+
+> [!NOTE]
+> This manual macOS step is expected for the current unsigned preview build.
+>
+> A future release goal is to provide signed and notarized macOS packages so users do not need to run terminal commands.
 
 ### Windows
 
-Unzip the portable package and run:
+Download the Windows portable package from the release assets:
+
+```text
+GlucoDesk-0.2.1-preview-win-x64-portable.zip
+```
+
+Then:
+
+1. extract the zip into a normal folder;
+2. open the extracted folder;
+3. run:
 
 ```text
 GlucoDesk.Desktop.exe
 ```
 
-The Windows preview is currently portable.
+Do not run the app directly from inside the compressed zip preview. Extract it first.
 
-It does not install the app into the Start Menu and does not create a system installer entry.
+The Windows preview is portable.
+
+It does not currently:
+
+* install the app into the Start Menu;
+* create a desktop shortcut;
+* create a system installer entry;
+* register an uninstaller.
+
+To update the Windows portable preview:
+
+1. close GlucoDesk;
+2. download the new Windows zip;
+3. extract it to a new folder or replace the previous portable folder;
+4. run `GlucoDesk.Desktop.exe` again.
+
+Dexcom Share credentials are stored locally using Windows Credential Manager.
 
 > [!NOTE]
 > The Windows package is self-contained and is intended to include the required .NET runtime files.
 >
-> Windows support is still considered preview-level until the main runtime flows are validated on real Windows machines.
+> Windows support is still considered preview-level until the main runtime flows are validated on more real Windows machines.
 
 ---
 
@@ -673,10 +774,10 @@ Current limitations:
 * the app is not a medical device;
 * the app must not be used for treatment decisions;
 * macOS packages are not signed or notarized yet;
+* macOS may require a manual Gatekeeper quarantine workaround on first launch;
 * Windows support is currently distributed as a portable preview package, not a full installer;
-* Windows runtime behavior still needs broader real-machine validation;
+* Windows packages are not signed yet;
 * Linux runtime support is not available yet;
-* platform-specific secure credential storage hardening is still evolving;
 * provider runtime behavior may depend on platform, region and account configuration;
 * local history completeness depends on sync availability and app runtime;
 * data completeness reporting can only describe the available local history;
@@ -689,6 +790,7 @@ Current limitations:
 Planned improvements include:
 
 * polished public release packaging;
+* signed and notarized macOS packages;
 * stronger release automation;
 * Windows installer support;
 * Windows runtime validation and hardening;
