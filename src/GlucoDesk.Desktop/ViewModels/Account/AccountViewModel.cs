@@ -487,12 +487,15 @@ public sealed partial class AccountViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Determines whether Dexcom Share account connection is supported on the current platform.
+    /// Indicates whether the Dexcom Share account flow is enabled for this ViewModel.
     /// </summary>
-    /// <returns>True when the current platform supports the account connection flow; otherwise false.</returns>
+    /// <remarks>
+    /// Platform-specific credential persistence is handled by the concrete credential store registered by dependency injection.
+    /// The ViewModel intentionally stays platform-independent so it can be tested on Linux CI with fake stores.
+    /// </remarks>
     private static bool IsDexcomShareAccountConnectionSupportedOnCurrentPlatform()
     {
-        return OperatingSystem.IsMacOS() || OperatingSystem.IsWindows();
+        return true;
     }
 
     /// <summary>
