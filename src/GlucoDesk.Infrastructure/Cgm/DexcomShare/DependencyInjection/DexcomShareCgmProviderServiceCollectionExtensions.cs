@@ -24,8 +24,8 @@ public static class DexcomShareCgmProviderServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<MacOsKeychainDexcomShareCredentialStore>();
+        services.AddSingleton<WindowsCredentialManagerDexcomShareCredentialStore>();
         services.AddSingleton<EnvironmentDexcomShareCredentialStore>();
-
         services.AddSingleton<IDexcomShareCredentialStore, CompositeDexcomShareCredentialStore>();
         services.AddSingleton<IDexcomShareOptionsProvider, StoredDexcomShareOptionsProvider>();
 
