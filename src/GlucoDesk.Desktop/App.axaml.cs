@@ -2,8 +2,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap;
-using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
+using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.Views.Main;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,6 +14,7 @@ public partial class App : Avalonia.Application
 {
     private ServiceProvider? _serviceProvider;
     private IServiceScope? _applicationScope;
+    private bool _isExplicitShutdownRequested;
 
     /// <inheritdoc />
     public override void Initialize()
@@ -29,9 +30,27 @@ public partial class App : Avalonia.Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnExplicitShutdown;
+
             desktop.MainWindow = _applicationScope
                 .ServiceProvider
                 .GetRequiredService<MainWindow>();
+
+            desktop.ShutdownRequested += (_, _) =>
+            {
+                _isExplicitShutdownRequested = true;
+            };
+
+            desktop.MainWindow.Closing += (_, eventArgs) =>
+            {
+                if (_isExplicitShutdownRequested)
+                {
+                    return;
+                }
+
+                eventArgs.Cancel = true;
+                desktop.MainWindow.Hide();
+            };
 
             desktop.MainWindow.Opened += (_, _) =>
             {
@@ -45,6 +64,8 @@ public partial class App : Avalonia.Application
 
             desktop.Exit += async (_, _) =>
             {
+                _isExplicitShutdownRequested = true;
+
                 StopDesktopPresenceSafely(_applicationScope.ServiceProvider);
 
                 await StopBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider)
