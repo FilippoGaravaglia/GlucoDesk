@@ -65,6 +65,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddDesktopCommonServices();
 
         services.AddSingleton<IDesktopPresenceTextFormatter, DesktopPresenceTextFormatter>();
+        services.AddSingleton<IDesktopPresenceDashboardTextFormatter, DesktopPresenceDashboardTextFormatter>();
         services.AddSingleton<IDesktopPresenceLifecycleService, AvaloniaDesktopPresenceLifecycleService>();
 
         return services.BuildServiceProvider(
