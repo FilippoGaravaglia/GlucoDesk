@@ -2,6 +2,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap;
+using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
 using GlucoDesk.Desktop.Views.Main;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,12 +35,18 @@ public partial class App : Avalonia.Application
 
             desktop.MainWindow.Opened += (_, _) =>
             {
+                StartDesktopPresenceSafely(
+                    desktop,
+                    _applicationScope.ServiceProvider);
+
                 _ = StartBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider);
                 _ = RunStartupHistoryContinuitySyncSafelyAsync(_applicationScope.ServiceProvider);
             };
 
             desktop.Exit += async (_, _) =>
             {
+                StopDesktopPresenceSafely(_applicationScope.ServiceProvider);
+
                 await StopBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider)
                     .ConfigureAwait(false);
 
@@ -51,6 +58,58 @@ public partial class App : Avalonia.Application
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Starts the desktop presence indicator without breaking application startup.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="serviceProvider">The service provider.</param>
+    private static void StartDesktopPresenceSafely(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopPresenceLifecycleService>();
+
+            lifecycleService?.Start(desktop);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while starting the desktop presence indicator.");
+        }
+    }
+
+    /// <summary>
+    /// Stops the desktop presence indicator without breaking application shutdown.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    private static void StopDesktopPresenceSafely(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopPresenceLifecycleService>();
+
+            lifecycleService?.Stop();
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while stopping the desktop presence indicator.");
+        }
+    }
 
     /// <summary>
     /// Starts the desktop background sync lifecycle without breaking application startup.
