@@ -19,7 +19,8 @@ namespace GlucoDesk.Desktop.DesktopPresence.Services;
 /// </summary>
 public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLifecycleService
 {
-    private static readonly Uri IconUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png");
+    private static readonly Uri DefaultTrayIconUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png");
+    private static readonly Uri MacOsMenuBarIconUri = new("avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon.png");
 
     private readonly IDesktopPresenceTextFormatter _textFormatter;
     private readonly IDesktopPresenceDashboardTextFormatter _dashboardTextFormatter;
@@ -209,12 +210,23 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
+    /// Gets the platform-specific tray icon asset URI.
+    /// </summary>
+    /// <returns>The tray icon asset URI.</returns>
+    private static Uri GetTrayIconUri()
+    {
+        return OperatingSystem.IsMacOS()
+            ? MacOsMenuBarIconUri
+            : DefaultTrayIconUri;
+    }
+
+    /// <summary>
     /// Loads the tray icon from application assets.
     /// </summary>
     /// <returns>The loaded window icon.</returns>
     private static WindowIcon LoadTrayIcon()
     {
-        using var stream = AssetLoader.Open(IconUri);
+        using var stream = AssetLoader.Open(GetTrayIconUri());
 
         return new WindowIcon(stream);
     }
