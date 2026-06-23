@@ -28,8 +28,10 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     private TrayIcon? _trayIcon;
     private NativeMenuItem? _statusMenuItem;
     private NativeMenuItem? _refreshNowMenuItem;
+    private NativeMenuItem? _privacyModeMenuItem;
     private DashboardViewModel? _dashboardViewModel;
     private bool _isStarted;
+    private bool _isPrivacyModeEnabled;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AvaloniaDesktopPresenceLifecycleService"/> class.
@@ -74,7 +76,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                     desktopLifetime,
                     initialText,
                     out var statusMenuItem,
-                    out var refreshNowMenuItem);
+                    out var refreshNowMenuItem,
+                    out var privacyModeMenuItem);
 
                 var trayIcons = new TrayIcons
                 {
@@ -86,9 +89,11 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 _trayIcon = trayIcon;
                 _statusMenuItem = statusMenuItem;
                 _refreshNowMenuItem = refreshNowMenuItem;
+                _privacyModeMenuItem = privacyModeMenuItem;
                 _isStarted = true;
 
                 AttachDashboardState(desktopLifetime);
+                UpdatePrivacyMenuState();
                 RefreshFromDashboardState();
 
                 _logger.LogInformation("Desktop presence indicator started.");
@@ -127,6 +132,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 _trayIcon = null;
                 _statusMenuItem = null;
                 _refreshNowMenuItem = null;
+                _privacyModeMenuItem = null;
                 _isStarted = false;
 
                 _logger.LogInformation("Desktop presence indicator stopped.");
@@ -165,12 +171,14 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <param name="initialText">The initial formatted desktop presence text.</param>
     /// <param name="statusMenuItem">The created status menu item.</param>
     /// <param name="refreshNowMenuItem">The created refresh menu item.</param>
+    /// <param name="privacyModeMenuItem">The created privacy mode menu item.</param>
     /// <returns>The created tray icon.</returns>
     private TrayIcon CreateTrayIcon(
         IClassicDesktopStyleApplicationLifetime desktopLifetime,
         DesktopPresenceText initialText,
         out NativeMenuItem statusMenuItem,
-        out NativeMenuItem refreshNowMenuItem)
+        out NativeMenuItem refreshNowMenuItem,
+        out NativeMenuItem privacyModeMenuItem)
     {
         statusMenuItem = new NativeMenuItem(initialText.MenuHeader)
         {
@@ -182,7 +190,10 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             IsEnabled = false
         };
 
+        privacyModeMenuItem = new NativeMenuItem("Privacy mode: Off");
+
         refreshNowMenuItem.Click += (_, _) => _ = RefreshDashboardFromTraySafelyAsync();
+        privacyModeMenuItem.Click += (_, _) => TogglePrivacyMode();
 
         return new TrayIcon
         {
@@ -191,7 +202,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             Menu = CreateTrayMenu(
                 desktopLifetime,
                 statusMenuItem,
-                refreshNowMenuItem),
+                refreshNowMenuItem,
+                privacyModeMenuItem),
             IsVisible = true
         };
     }
@@ -213,11 +225,13 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <param name="desktopLifetime">The desktop application lifetime.</param>
     /// <param name="statusMenuItem">The status menu item.</param>
     /// <param name="refreshNowMenuItem">The refresh menu item.</param>
+    /// <param name="privacyModeMenuItem">The privacy mode menu item.</param>
     /// <returns>The native tray menu.</returns>
     private static NativeMenu CreateTrayMenu(
         IClassicDesktopStyleApplicationLifetime desktopLifetime,
         NativeMenuItem statusMenuItem,
-        NativeMenuItem refreshNowMenuItem)
+        NativeMenuItem refreshNowMenuItem,
+        NativeMenuItem privacyModeMenuItem)
     {
         var openItem = new NativeMenuItem("Open GlucoDesk");
         openItem.Click += (_, _) => ShowMainWindow(desktopLifetime);
@@ -233,6 +247,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 new NativeMenuItemSeparator(),
                 openItem,
                 refreshNowMenuItem,
+                privacyModeMenuItem,
                 new NativeMenuItemSeparator(),
                 quitItem
             }
@@ -302,6 +317,20 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
+    /// Toggles desktop presence privacy mode.
+    /// </summary>
+    private void TogglePrivacyMode()
+    {
+        RunOnUiThread(() =>
+        {
+            _isPrivacyModeEnabled = !_isPrivacyModeEnabled;
+
+            UpdatePrivacyMenuState();
+            RefreshFromDashboardState();
+        });
+    }
+
+    /// <summary>
     /// Refreshes the dashboard from the tray menu without breaking the desktop presence indicator.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
@@ -351,6 +380,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             if (_dashboardViewModel is null)
             {
                 UpdateRefreshMenuState();
+                UpdatePrivacyMenuState();
                 return;
             }
 
@@ -359,6 +389,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
             ApplyDesktopPresenceText(text);
             UpdateRefreshMenuState();
+            UpdatePrivacyMenuState();
         });
     }
 
@@ -399,11 +430,26 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
+    /// Updates the privacy mode menu item state.
+    /// </summary>
+    private void UpdatePrivacyMenuState()
+    {
+        if (_privacyModeMenuItem is null)
+        {
+            return;
+        }
+
+        _privacyModeMenuItem.Header = _isPrivacyModeEnabled
+            ? "Privacy mode: On"
+            : "Privacy mode: Off";
+    }
+
+    /// <summary>
     /// Creates desktop presence dashboard state from the dashboard view model.
     /// </summary>
     /// <param name="dashboardViewModel">The dashboard view model.</param>
     /// <returns>The desktop presence dashboard state.</returns>
-    private static DesktopPresenceDashboardState CreateDashboardState(DashboardViewModel dashboardViewModel)
+    private DesktopPresenceDashboardState CreateDashboardState(DashboardViewModel dashboardViewModel)
     {
         return new DesktopPresenceDashboardState(
             dashboardViewModel.ProviderDisplayName,
@@ -411,7 +457,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             dashboardViewModel.TrendText,
             dashboardViewModel.FreshnessText,
             dashboardViewModel.LastUpdatedText,
-            dashboardViewModel.StatusText);
+            dashboardViewModel.StatusText,
+            _isPrivacyModeEnabled);
     }
 
     /// <summary>

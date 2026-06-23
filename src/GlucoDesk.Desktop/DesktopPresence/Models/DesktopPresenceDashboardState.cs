@@ -9,10 +9,12 @@ namespace GlucoDesk.Desktop.DesktopPresence.Models;
 /// <param name="FreshnessText">The data freshness text.</param>
 /// <param name="LastUpdatedText">The last updated text.</param>
 /// <param name="StatusText">The dashboard status text.</param>
+/// <param name="IsPrivacyModeEnabled">Whether the exact glucose value should be hidden in desktop presence.</param>
 public sealed record DesktopPresenceDashboardState(
     string ProviderDisplayName,
     string LatestValueText,
     string TrendText,
     string FreshnessText,
     string LastUpdatedText,
-    string StatusText);
+    string StatusText,
+    bool IsPrivacyModeEnabled = false);

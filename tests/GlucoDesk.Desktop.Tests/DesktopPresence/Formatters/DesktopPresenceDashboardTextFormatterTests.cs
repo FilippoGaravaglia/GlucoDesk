@@ -48,6 +48,27 @@ public sealed class DesktopPresenceDashboardTextFormatterTests
     }
 
     [Fact]
+    public void Format_ShouldHideGlucoseValue_WhenPrivacyModeIsEnabled()
+    {
+        // Arrange
+        var state = new DesktopPresenceDashboardState(
+            "Dexcom Share",
+            "123 mg/dL",
+            "→ Stable",
+            "Near real-time",
+            "12:30",
+            "In range",
+            IsPrivacyModeEnabled: true);
+
+        // Act
+        var result = _formatter.Format(state);
+
+        // Assert
+        Assert.Equal("Glucose hidden", result.MenuHeader);
+        Assert.Equal("GlucoDesk · glucose hidden · Near real-time · updated 12:30 · In range", result.Tooltip);
+    }
+
+    [Fact]
     public void Format_ShouldShowWaitingState_WhenDashboardHasNoCurrentReading()
     {
         // Arrange

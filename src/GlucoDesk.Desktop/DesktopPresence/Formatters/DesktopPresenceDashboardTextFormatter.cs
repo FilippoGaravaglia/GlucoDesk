@@ -20,15 +20,18 @@ public sealed class DesktopPresenceDashboardTextFormatter : IDesktopPresenceDash
             return FormatUnavailableState(state);
         }
 
-        var trendSymbol = ExtractTrendSymbol(state.TrendText);
-        var menuHeader = string.IsNullOrWhiteSpace(trendSymbol)
-            ? Normalize(state.LatestValueText)
-            : $"{Normalize(state.LatestValueText)} {trendSymbol}";
+        var menuHeader = state.IsPrivacyModeEnabled
+            ? "Glucose hidden"
+            : FormatGlucoseMenuHeader(state);
+
+        var tooltipValueText = state.IsPrivacyModeEnabled
+            ? "glucose hidden"
+            : menuHeader;
 
         var tooltipParts = new[]
             {
                 ProductName,
-                menuHeader,
+                tooltipValueText,
                 NormalizeOptional(state.FreshnessText),
                 FormatLastUpdated(state.LastUpdatedText),
                 NormalizeOptional(state.StatusText)
@@ -41,6 +44,20 @@ public sealed class DesktopPresenceDashboardTextFormatter : IDesktopPresenceDash
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Formats the glucose menu header from dashboard value and trend text.
+    /// </summary>
+    /// <param name="state">The dashboard presentation state.</param>
+    /// <returns>The formatted glucose menu header.</returns>
+    private static string FormatGlucoseMenuHeader(DesktopPresenceDashboardState state)
+    {
+        var trendSymbol = ExtractTrendSymbol(state.TrendText);
+
+        return string.IsNullOrWhiteSpace(trendSymbol)
+            ? Normalize(state.LatestValueText)
+            : $"{Normalize(state.LatestValueText)} {trendSymbol}";
+    }
 
     /// <summary>
     /// Formats a dashboard state without a current glucose value.
