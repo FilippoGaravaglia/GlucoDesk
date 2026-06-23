@@ -30,6 +30,9 @@ using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
 using GlucoDesk.Desktop.Common.Dispatching;
 using GlucoDesk.Desktop.Common.Dispatching.Abstractions;
 
+using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
+using GlucoDesk.Desktop.DesktopPresence.Services;
+using GlucoDesk.Desktop.DesktopPresence.Formatters;
 namespace GlucoDesk.Desktop.Bootstrap;
 
 /// <summary>
@@ -60,6 +63,10 @@ internal static class DesktopServiceProviderBuilder
         services.AddDesktopHistoryContinuitySync();
         services.AddDesktopShell();
         services.AddDesktopCommonServices();
+
+        services.AddSingleton<IDesktopPresenceTextFormatter, DesktopPresenceTextFormatter>();
+        services.AddSingleton<IDesktopPresenceDashboardTextFormatter, DesktopPresenceDashboardTextFormatter>();
+        services.AddSingleton<IDesktopPresenceLifecycleService, AvaloniaDesktopPresenceLifecycleService>();
 
         return services.BuildServiceProvider(
             new ServiceProviderOptions
