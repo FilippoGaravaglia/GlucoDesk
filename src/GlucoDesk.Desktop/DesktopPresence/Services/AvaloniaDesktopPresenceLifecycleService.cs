@@ -27,6 +27,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
     private TrayIcon? _trayIcon;
     private NativeMenuItem? _statusMenuItem;
+    private NativeMenuItem? _refreshNowMenuItem;
     private DashboardViewModel? _dashboardViewModel;
     private bool _isStarted;
 
@@ -72,7 +73,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 var trayIcon = CreateTrayIcon(
                     desktopLifetime,
                     initialText,
-                    out var statusMenuItem);
+                    out var statusMenuItem,
+                    out var refreshNowMenuItem);
 
                 var trayIcons = new TrayIcons
                 {
@@ -83,6 +85,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
                 _trayIcon = trayIcon;
                 _statusMenuItem = statusMenuItem;
+                _refreshNowMenuItem = refreshNowMenuItem;
                 _isStarted = true;
 
                 AttachDashboardState(desktopLifetime);
@@ -123,6 +126,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 _trayIcon?.Dispose();
                 _trayIcon = null;
                 _statusMenuItem = null;
+                _refreshNowMenuItem = null;
                 _isStarted = false;
 
                 _logger.LogInformation("Desktop presence indicator stopped.");
@@ -160,22 +164,34 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <param name="desktopLifetime">The desktop application lifetime.</param>
     /// <param name="initialText">The initial formatted desktop presence text.</param>
     /// <param name="statusMenuItem">The created status menu item.</param>
+    /// <param name="refreshNowMenuItem">The created refresh menu item.</param>
     /// <returns>The created tray icon.</returns>
-    private static TrayIcon CreateTrayIcon(
+    private TrayIcon CreateTrayIcon(
         IClassicDesktopStyleApplicationLifetime desktopLifetime,
         DesktopPresenceText initialText,
-        out NativeMenuItem statusMenuItem)
+        out NativeMenuItem statusMenuItem,
+        out NativeMenuItem refreshNowMenuItem)
     {
         statusMenuItem = new NativeMenuItem(initialText.MenuHeader)
         {
             IsEnabled = false
         };
 
+        refreshNowMenuItem = new NativeMenuItem("Refresh now")
+        {
+            IsEnabled = false
+        };
+
+        refreshNowMenuItem.Click += (_, _) => _ = RefreshDashboardFromTraySafelyAsync();
+
         return new TrayIcon
         {
             Icon = LoadTrayIcon(),
             ToolTipText = initialText.Tooltip,
-            Menu = CreateTrayMenu(desktopLifetime, statusMenuItem),
+            Menu = CreateTrayMenu(
+                desktopLifetime,
+                statusMenuItem,
+                refreshNowMenuItem),
             IsVisible = true
         };
     }
@@ -196,10 +212,12 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// </summary>
     /// <param name="desktopLifetime">The desktop application lifetime.</param>
     /// <param name="statusMenuItem">The status menu item.</param>
+    /// <param name="refreshNowMenuItem">The refresh menu item.</param>
     /// <returns>The native tray menu.</returns>
     private static NativeMenu CreateTrayMenu(
         IClassicDesktopStyleApplicationLifetime desktopLifetime,
-        NativeMenuItem statusMenuItem)
+        NativeMenuItem statusMenuItem,
+        NativeMenuItem refreshNowMenuItem)
     {
         var openItem = new NativeMenuItem("Open GlucoDesk");
         openItem.Click += (_, _) => ShowMainWindow(desktopLifetime);
@@ -214,6 +232,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 statusMenuItem,
                 new NativeMenuItemSeparator(),
                 openItem,
+                refreshNowMenuItem,
                 new NativeMenuItemSeparator(),
                 quitItem
             }
@@ -278,7 +297,48 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                || string.Equals(propertyName, nameof(DashboardViewModel.TrendText), StringComparison.Ordinal)
                || string.Equals(propertyName, nameof(DashboardViewModel.FreshnessText), StringComparison.Ordinal)
                || string.Equals(propertyName, nameof(DashboardViewModel.LastUpdatedText), StringComparison.Ordinal)
-               || string.Equals(propertyName, nameof(DashboardViewModel.StatusText), StringComparison.Ordinal);
+               || string.Equals(propertyName, nameof(DashboardViewModel.StatusText), StringComparison.Ordinal)
+               || string.Equals(propertyName, nameof(DashboardViewModel.IsBusy), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Refreshes the dashboard from the tray menu without breaking the desktop presence indicator.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private async Task RefreshDashboardFromTraySafelyAsync()
+    {
+        var dashboardViewModel = _dashboardViewModel;
+
+        if (dashboardViewModel is null)
+        {
+            UpdateRefreshMenuStateSafely();
+            return;
+        }
+
+        if (dashboardViewModel.IsBusy)
+        {
+            UpdateRefreshMenuStateSafely();
+            return;
+        }
+
+        try
+        {
+            UpdateRefreshMenuStateSafely();
+
+            await dashboardViewModel
+                .RefreshCommand
+                .ExecuteAsync(null);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "Unable to refresh dashboard data from the desktop presence indicator.");
+        }
+        finally
+        {
+            RefreshFromDashboardState();
+        }
     }
 
     /// <summary>
@@ -290,6 +350,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         {
             if (_dashboardViewModel is null)
             {
+                UpdateRefreshMenuState();
                 return;
             }
 
@@ -297,7 +358,44 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 CreateDashboardState(_dashboardViewModel));
 
             ApplyDesktopPresenceText(text);
+            UpdateRefreshMenuState();
         });
+    }
+
+    /// <summary>
+    /// Updates the refresh menu item on the UI thread.
+    /// </summary>
+    private void UpdateRefreshMenuStateSafely()
+    {
+        RunOnUiThread(UpdateRefreshMenuState);
+    }
+
+    /// <summary>
+    /// Updates the refresh menu item state.
+    /// </summary>
+    private void UpdateRefreshMenuState()
+    {
+        if (_refreshNowMenuItem is null)
+        {
+            return;
+        }
+
+        if (_dashboardViewModel is null)
+        {
+            _refreshNowMenuItem.Header = "Refresh now";
+            _refreshNowMenuItem.IsEnabled = false;
+            return;
+        }
+
+        if (_dashboardViewModel.IsBusy)
+        {
+            _refreshNowMenuItem.Header = "Refreshing...";
+            _refreshNowMenuItem.IsEnabled = false;
+            return;
+        }
+
+        _refreshNowMenuItem.Header = "Refresh now";
+        _refreshNowMenuItem.IsEnabled = true;
     }
 
     /// <summary>
