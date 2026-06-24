@@ -94,6 +94,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
             .ConfigureAwait(false);
 
         CreateOverviewWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
+        CreateExportMetadataWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
 
         if (weeklyReviewResult.IsSuccess)
         {
@@ -185,6 +186,82 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("B17").Style.Alignment.WrapText = true;
         worksheet.Cell("B19").Style.Alignment.WrapText = true;
         worksheet.SheetView.FreezeRows(3);
+    }
+
+    /// <summary>
+    /// Creates the export metadata worksheet.
+    /// </summary>
+    /// <param name="workbook">The workbook.</param>
+    /// <param name="report">The glycemic diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    private static void CreateExportMetadataWorksheet(
+        XLWorkbook workbook,
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
+    {
+        var worksheet = workbook.Worksheets.Add("Export metadata");
+
+        worksheet.Cell("A1").Value = "Export metadata";
+        worksheet.Cell("A3").Value = "Generated at";
+        worksheet.Cell("B3").Value = FormatGeneratedAt(DateTimeOffset.Now);
+        worksheet.Cell("A4").Value = "Unit";
+        worksheet.Cell("B4").Value = FormatUnit(preferredUnit);
+        worksheet.Cell("A5").Value = "Target range";
+        worksheet.Cell("B5").Value = FormatTargetRange(preferredUnit);
+        worksheet.Cell("A6").Value = "Source";
+        worksheet.Cell("B6").Value = "Local glucose history";
+        worksheet.Cell("A7").Value = "Report type";
+        worksheet.Cell("B7").Value = "Local-first glycemic diary export";
+        worksheet.Cell("A8").Value = "Period";
+        worksheet.Cell("B8").Value = FormatDateRange(report.PeriodStartsAt, report.PeriodEndsAt);
+
+        worksheet.Range("A1:B1").Merge();
+        worksheet.Cell("A1").Style.Font.Bold = true;
+        worksheet.Cell("A1").Style.Font.FontSize = 16;
+
+        worksheet.Range("A3:A8").Style.Font.Bold = true;
+        worksheet.Range("A3:B8").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+        worksheet.Range("B3:B8").Style.Font.FontColor = XLColor.Gray;
+
+        worksheet.Column("A").Width = 22;
+        worksheet.Column("B").Width = 60;
+    }
+
+    /// <summary>
+    /// Formats the export generation timestamp.
+    /// </summary>
+    /// <param name="generatedAt">The generation timestamp.</param>
+    /// <returns>The formatted timestamp.</returns>
+    private static string FormatGeneratedAt(
+        DateTimeOffset generatedAt)
+    {
+        return generatedAt.ToString("yyyy-MM-dd HH:mm zzz", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// Formats the glucose unit for export display.
+    /// </summary>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The formatted unit.</returns>
+    private static string FormatUnit(
+        GlucoseUnit preferredUnit)
+    {
+        return preferredUnit.ToString().Contains("Mmol", StringComparison.OrdinalIgnoreCase)
+            ? "mmol/L"
+            : "mg/dL";
+    }
+
+    /// <summary>
+    /// Formats the target range for export display.
+    /// </summary>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The formatted target range.</returns>
+    private static string FormatTargetRange(
+        GlucoseUnit preferredUnit)
+    {
+        return preferredUnit.ToString().Contains("Mmol", StringComparison.OrdinalIgnoreCase)
+            ? "3.9-10.0 mmol/L"
+            : "70-180 mg/dL";
     }
 
     /// <summary>
