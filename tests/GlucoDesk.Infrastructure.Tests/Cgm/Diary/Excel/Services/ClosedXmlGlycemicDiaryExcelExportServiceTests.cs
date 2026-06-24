@@ -53,10 +53,84 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         using var stream = new MemoryStream(result.Value.Content);
         using var workbook = new XLWorkbook(stream);
 
-        Assert.Contains("Overview", workbook.Worksheets.Select(sheet => sheet.Name));
-        Assert.Contains("Daily diary", workbook.Worksheets.Select(sheet => sheet.Name));
-        Assert.Contains("Time blocks", workbook.Worksheets.Select(sheet => sheet.Name));
-        Assert.Contains("Data completeness", workbook.Worksheets.Select(sheet => sheet.Name));
+        var worksheetNames = workbook.Worksheets
+            .Select(sheet => sheet.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Assert.Contains("Overview", worksheetNames);
+        Assert.Contains("Export metadata", worksheetNames);
+        Assert.Contains("Weekly review", worksheetNames);
+        Assert.Contains("Patterns", worksheetNames);
+        Assert.Contains("Daily diary", worksheetNames);
+        Assert.Contains("Time blocks", worksheetNames);
+        Assert.Contains("Data completeness", worksheetNames);
+    }
+
+    [Fact]
+    public async Task ExportAsync_ShouldWriteExportMetadataWorksheet()
+    {
+        // Arrange
+        var report = CreateReport();
+        var service = CreateService(Result<GlycemicDiaryReport>.Success(report));
+
+        // Act
+        var result = await service.ExportAsync(
+            new GlycemicDiaryExcelExportRequest(
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                preferredUnit: GlucoseUnit.MgDl),
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+
+        using var stream = new MemoryStream(result.Value.Content);
+        using var workbook = new XLWorkbook(stream);
+
+        var worksheet = workbook.Worksheet("Export metadata");
+
+        Assert.Equal("Export metadata", worksheet.Cell("A1").GetString());
+        Assert.Equal("Generated at", worksheet.Cell("A3").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(worksheet.Cell("B3").GetString()));
+        Assert.Equal("Unit", worksheet.Cell("A4").GetString());
+        Assert.Equal("mg/dL", worksheet.Cell("B4").GetString());
+        Assert.Equal("Target range", worksheet.Cell("A5").GetString());
+        Assert.Equal("70-180 mg/dL", worksheet.Cell("B5").GetString());
+        Assert.Equal("Source", worksheet.Cell("A6").GetString());
+        Assert.Equal("Local glucose history", worksheet.Cell("B6").GetString());
+        Assert.Equal("Report type", worksheet.Cell("A7").GetString());
+        Assert.Equal("Local-first glycemic diary export", worksheet.Cell("B7").GetString());
+        Assert.Equal("Period", worksheet.Cell("A8").GetString());
+        Assert.Contains("2026-06-19", worksheet.Cell("B8").GetString());
+    }
+
+    [Fact]
+    public async Task ExportAsync_ShouldWriteWeeklyReviewWorksheet()
+    {
+        // Arrange
+        var report = CreateReport();
+        var service = CreateService(Result<GlycemicDiaryReport>.Success(report));
+
+        // Act
+        var result = await service.ExportAsync(
+            new GlycemicDiaryExcelExportRequest(
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                preferredUnit: GlucoseUnit.MgDl),
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+
+        using var stream = new MemoryStream(result.Value.Content);
+        using var workbook = new XLWorkbook(stream);
+
+        var worksheet = workbook.Worksheet("Weekly review");
+
+        Assert.Equal("Weekly review", worksheet.Cell("A1").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(worksheet.Cell("A2").GetString()));
+        Assert.False(string.IsNullOrWhiteSpace(worksheet.Cell("A3").GetString()));
+        Assert.Contains("Current period:", worksheet.Cell("A5").GetString());
+        Assert.Contains("Previous period:", worksheet.Cell("A5").GetString());
+        Assert.Equal("Metric", worksheet.Cell("A6").GetString());
     }
 
     [Fact]

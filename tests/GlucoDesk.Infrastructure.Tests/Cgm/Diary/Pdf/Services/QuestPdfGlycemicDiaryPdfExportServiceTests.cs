@@ -8,6 +8,7 @@ using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.Options;
 using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.Services;
+using UglyToad.PdfPig;
 
 namespace GlucoDesk.Infrastructure.Tests.Cgm.Diary.Pdf.Services;
 
@@ -55,6 +56,35 @@ public sealed class QuestPdfGlycemicDiaryPdfExportServiceTests
             Math.Min(4, result.Value.Content.Length));
 
         Assert.Equal("%PDF", header);
+    }
+
+    [Fact]
+    public async Task ExportAsync_ShouldContainCoreDiarySections()
+    {
+        // Arrange
+        var report = CreateReport();
+        var service = CreateService(Result<GlycemicDiaryReport>.Success(report));
+
+        // Act
+        var result = await service.ExportAsync(
+            new GlycemicDiaryPdfExportRequest(
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt)),
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+
+        var text = ExtractPdfText(result.Value.Content);
+
+        Assert.Contains("Glycemic diary", text);
+        Assert.Contains("Overview", text);
+        Assert.Contains("Glucose story", text);
+        Assert.Contains("Weekly review", text);
+        Assert.Contains("Local patterns", text);
+        Assert.Contains("Daily diary", text);
+        Assert.Contains("Data completeness", text);
+        Assert.Contains("Export metadata", text);
+        Assert.Contains("Safety notice", text);
     }
 
     [Fact]
@@ -215,6 +245,21 @@ public sealed class QuestPdfGlycemicDiaryPdfExportServiceTests
             100m,
             continuity,
             [dailyEntry]);
+    }
+
+    /// <summary>
+    /// Extracts readable text from a generated PDF.
+    /// </summary>
+    /// <param name="content">The PDF content.</param>
+    /// <returns>The extracted PDF text.</returns>
+    private static string ExtractPdfText(
+        byte[] content)
+    {
+        using var document = PdfDocument.Open(content);
+
+        return string.Join(
+            Environment.NewLine,
+            document.GetPages().Select(page => page.Text));
     }
 
     private sealed class FakeGlycemicDiaryService : IGlycemicDiaryService
