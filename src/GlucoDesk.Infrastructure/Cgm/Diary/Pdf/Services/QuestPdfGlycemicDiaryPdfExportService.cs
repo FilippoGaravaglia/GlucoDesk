@@ -455,6 +455,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 .FontSize(8)
                 .FontColor(TextMuted);
 
+            column.Item().Text(BuildComparisonPeriodText(weeklyReview))
+                .FontSize(8)
+                .FontColor(TextMuted);
+
             foreach (var change in weeklyReview.Changes.Take(4))
             {
                 column.Item()
@@ -484,6 +488,30 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                     });
             }
         });
+    }
+
+    /// <summary>
+    /// Builds the comparison period text for a weekly review.
+    /// </summary>
+    /// <param name="weeklyReview">The weekly review.</param>
+    /// <returns>The comparison period text.</returns>
+    private static string BuildComparisonPeriodText(
+        GlycemicDiaryWeeklyReview weeklyReview)
+    {
+        return $"Current period: {FormatDateRange(weeklyReview.CurrentPeriodStartsAt, weeklyReview.CurrentPeriodEndsAt)} · Previous period: {FormatDateRange(weeklyReview.PreviousPeriodStartsAt, weeklyReview.PreviousPeriodEndsAt)}";
+    }
+
+    /// <summary>
+    /// Formats a date range for PDF display.
+    /// </summary>
+    /// <param name="startsAt">The period start.</param>
+    /// <param name="endsAt">The period end.</param>
+    /// <returns>The formatted date range.</returns>
+    private static string FormatDateRange(
+        DateTimeOffset startsAt,
+        DateTimeOffset endsAt)
+    {
+        return $"{startsAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)} - {endsAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
     }
 
     /// <summary>

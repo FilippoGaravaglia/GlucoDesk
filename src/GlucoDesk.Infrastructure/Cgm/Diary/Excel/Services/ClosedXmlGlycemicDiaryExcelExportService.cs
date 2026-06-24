@@ -1,3 +1,4 @@
+using System.Globalization;
 using ClosedXML.Excel;
 using GlucoDesk.Application.Cgm.Diary.Exports.Requests;
 using GlucoDesk.Application.Cgm.Diary.Exports.Results;
@@ -187,6 +188,30 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     }
 
     /// <summary>
+    /// Builds the comparison period text for a weekly review.
+    /// </summary>
+    /// <param name="weeklyReview">The weekly review.</param>
+    /// <returns>The comparison period text.</returns>
+    private static string BuildComparisonPeriodText(
+        GlycemicDiaryWeeklyReview weeklyReview)
+    {
+        return $"Current period: {FormatDateRange(weeklyReview.CurrentPeriodStartsAt, weeklyReview.CurrentPeriodEndsAt)} · Previous period: {FormatDateRange(weeklyReview.PreviousPeriodStartsAt, weeklyReview.PreviousPeriodEndsAt)}";
+    }
+
+    /// <summary>
+    /// Formats a date range for export display.
+    /// </summary>
+    /// <param name="startsAt">The period start.</param>
+    /// <param name="endsAt">The period end.</param>
+    /// <returns>The formatted date range.</returns>
+    private static string FormatDateRange(
+        DateTimeOffset startsAt,
+        DateTimeOffset endsAt)
+    {
+        return $"{startsAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)} - {endsAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
+    }
+
+    /// <summary>
     /// Creates the weekly review unavailable worksheet.
     /// </summary>
     /// <param name="workbook">The workbook.</param>
@@ -227,11 +252,13 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("A2").Value = weeklyReview.Headline;
         worksheet.Cell("A3").Value = weeklyReview.SummaryText;
         worksheet.Cell("A4").Value = weeklyReview.CurrentHistoryReliabilityText;
+        worksheet.Cell("A5").Value = BuildComparisonPeriodText(weeklyReview);
 
         worksheet.Range("A1:F1").Merge();
         worksheet.Range("A2:F2").Merge();
         worksheet.Range("A3:F3").Merge();
         worksheet.Range("A4:F4").Merge();
+        worksheet.Range("A5:F5").Merge();
 
         worksheet.Cell("A1").Style.Font.Bold = true;
         worksheet.Cell("A1").Style.Font.FontSize = 16;
@@ -239,6 +266,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("A3").Style.Alignment.WrapText = true;
         worksheet.Cell("A4").Style.Alignment.WrapText = true;
         worksheet.Cell("A4").Style.Font.FontColor = XLColor.Gray;
+        worksheet.Cell("A5").Style.Font.FontColor = XLColor.Gray;
 
         worksheet.Cell("A6").Value = "Metric";
         worksheet.Cell("B6").Value = "Previous";
