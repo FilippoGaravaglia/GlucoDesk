@@ -61,8 +61,8 @@ public sealed class GlycemicDiaryWeeklyReviewService : IGlycemicDiaryWeeklyRevie
             previousReport.PeriodEndsAt,
             currentReport.PeriodStartsAt,
             currentReport.PeriodEndsAt,
-            BuildHeadline(currentReport, currentCompleteness, changes),
-            BuildSummary(currentReport, currentCompleteness, changes),
+            BuildHeadline(currentReport, previousReport, currentCompleteness, changes),
+            BuildSummary(currentReport, previousReport, currentCompleteness, changes),
             BuildHistoryReliabilityText(currentCompleteness),
             changes,
             BuildHighlights(changes));
@@ -289,17 +289,24 @@ public sealed class GlycemicDiaryWeeklyReviewService : IGlycemicDiaryWeeklyRevie
     /// Builds the review headline.
     /// </summary>
     /// <param name="currentReport">The current report.</param>
+    /// <param name="previousReport">The previous report.</param>
     /// <param name="currentCompleteness">The current completeness score.</param>
     /// <param name="changes">The metric changes.</param>
     /// <returns>The headline.</returns>
     private static string BuildHeadline(
         GlycemicDiaryReport currentReport,
+        GlycemicDiaryReport previousReport,
         GlucoseHistoryCompletenessScore currentCompleteness,
         IReadOnlyCollection<GlycemicDiaryMetricChange> changes)
     {
         if (currentReport.ReadingsCount == 0)
         {
             return "Weekly review: no local readings available";
+        }
+
+        if (previousReport.ReadingsCount == 0)
+        {
+            return "Weekly review: comparison limited by missing previous data";
         }
 
         if (currentCompleteness.RequiresCaution)
@@ -333,17 +340,31 @@ public sealed class GlycemicDiaryWeeklyReviewService : IGlycemicDiaryWeeklyRevie
     /// Builds the review summary.
     /// </summary>
     /// <param name="currentReport">The current report.</param>
+    /// <param name="previousReport">The previous report.</param>
     /// <param name="currentCompleteness">The current completeness score.</param>
     /// <param name="changes">The metric changes.</param>
     /// <returns>The summary.</returns>
     private static string BuildSummary(
         GlycemicDiaryReport currentReport,
+        GlycemicDiaryReport previousReport,
         GlucoseHistoryCompletenessScore currentCompleteness,
         IReadOnlyCollection<GlycemicDiaryMetricChange> changes)
     {
         if (currentReport.ReadingsCount == 0)
         {
             return "The current period has no local readings, so no meaningful comparison can be generated.";
+        }
+
+        if (previousReport.ReadingsCount == 0)
+        {
+            var comparisonSummary = "The previous equivalent period has no local readings, so this review cannot produce a true week-over-week comparison. The current period is summarized on its own.";
+
+            if (currentCompleteness.RequiresCaution)
+            {
+                comparisonSummary += $" Current local history reliability is {currentCompleteness.StatusText} · {currentCompleteness.CoverageText}, so values should be interpreted carefully.";
+            }
+
+            return comparisonSummary;
         }
 
         var meaningfulChanges = changes
@@ -430,12 +451,12 @@ public sealed class GlycemicDiaryWeeklyReviewService : IGlycemicDiaryWeeklyRevie
     {
         if (direction == GlycemicDiaryReviewChangeDirection.NewlyAvailable)
         {
-            return $"{displayName} is now available at {FormatDecimalValue(currentValue, suffix)}.";
+            return $"{displayName} has no comparable previous-period value. Current value is {FormatDecimalValue(currentValue, suffix)}.";
         }
 
         if (direction == GlycemicDiaryReviewChangeDirection.NoLongerAvailable)
         {
-            return $"{displayName} is no longer available in the current period.";
+            return $"{displayName} is not available in the current period. Previous value was {FormatDecimalValue(previousValue, suffix)}.";
         }
 
         if (direction == GlycemicDiaryReviewChangeDirection.Unchanged)
