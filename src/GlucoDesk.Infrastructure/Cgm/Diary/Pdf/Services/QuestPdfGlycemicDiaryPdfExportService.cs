@@ -272,8 +272,87 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 .Element(content => ComposeDataCompleteness(content, report));
 
             column.Item()
+                .Element(content => ComposeExportMetadata(content, report, preferredUnit));
+
+            column.Item()
                 .Element(ComposeSafetyNotice);
         });
+    }
+
+    /// <summary>
+    /// Composes the export metadata section.
+    /// </summary>
+    /// <param name="container">The container.</param>
+    /// <param name="report">The glycemic diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    private static void ComposeExportMetadata(
+        IContainer container,
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
+    {
+        container.Element(Card).Column(column =>
+        {
+            column.Spacing(6);
+
+            column.Item().Text("Export metadata")
+                .FontSize(12)
+                .SemiBold()
+                .FontColor(BrandBlueDark);
+
+            column.Item().Text(BuildExportMetadataText(report, preferredUnit))
+                .FontSize(8)
+                .FontColor(TextSecondary);
+        });
+    }
+
+    /// <summary>
+    /// Builds the export metadata text.
+    /// </summary>
+    /// <param name="report">The glycemic diary report.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The export metadata text.</returns>
+    private static string BuildExportMetadataText(
+        GlycemicDiaryReport report,
+        GlucoseUnit preferredUnit)
+    {
+        return $"Generated at: {FormatGeneratedAt(DateTimeOffset.Now)} · Unit: {FormatUnit(preferredUnit)} · Target range: {FormatTargetRange(preferredUnit)} · Source: Local glucose history · Report type: Local-first glycemic diary export · Period: {FormatDateRange(report.PeriodStartsAt, report.PeriodEndsAt)}";
+    }
+
+    /// <summary>
+    /// Formats the export generation timestamp.
+    /// </summary>
+    /// <param name="generatedAt">The generation timestamp.</param>
+    /// <returns>The formatted timestamp.</returns>
+    private static string FormatGeneratedAt(
+        DateTimeOffset generatedAt)
+    {
+        return generatedAt.ToString("yyyy-MM-dd HH:mm zzz", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// Formats the glucose unit for export display.
+    /// </summary>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The formatted unit.</returns>
+    private static string FormatUnit(
+        GlucoseUnit preferredUnit)
+    {
+        return preferredUnit.ToString().Contains("Mmol", StringComparison.OrdinalIgnoreCase)
+            ? "mmol/L"
+            : "mg/dL";
+    }
+
+    /// <summary>
+    /// Formats the target range for export display.
+    /// </summary>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <returns>The formatted target range.</returns>
+    private static string FormatTargetRange(
+        GlucoseUnit preferredUnit)
+    {
+        return preferredUnit.ToString().Contains("Mmol", StringComparison.OrdinalIgnoreCase)
+            ? "3.9-10.0 mmol/L"
+            : "70-180 mg/dL";
     }
 
     /// <summary>
