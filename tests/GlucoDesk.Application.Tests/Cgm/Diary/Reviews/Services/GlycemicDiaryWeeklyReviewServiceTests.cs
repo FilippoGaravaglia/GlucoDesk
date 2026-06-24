@@ -187,6 +187,49 @@ public sealed class GlycemicDiaryWeeklyReviewServiceTests
     }
 
     [Fact]
+    public void CreateReview_ShouldExplainLimitedComparison_WhenPreviousReportHasNoReadings()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var previous = CreateReport(
+            PreviousStartsAt,
+            PreviousEndsAt,
+            readingsCount: 0,
+            averageMgDl: null,
+            minimumMgDl: null,
+            maximumMgDl: null,
+            timeInRangePercentage: null,
+            coveragePercentage: 0m);
+
+        var current = CreateReport(
+            CurrentStartsAt,
+            CurrentEndsAt,
+            readingsCount: 96,
+            averageMgDl: 129m,
+            minimumMgDl: 60m,
+            maximumMgDl: 262m,
+            timeInRangePercentage: 91m,
+            coveragePercentage: 40m);
+
+        // Act
+        var review = service.CreateReview(current, previous);
+
+        // Assert
+        Assert.Equal("Weekly review: comparison limited by missing previous data", review.Headline);
+        Assert.Contains("previous equivalent period has no local readings", review.SummaryText);
+        Assert.Contains("Current local history reliability is Poor", review.SummaryText);
+
+        var averageChange = Assert.Single(
+            review.Changes,
+            change => change.Kind == GlycemicDiaryReviewMetricKind.AverageGlucose);
+
+        Assert.Equal(GlycemicDiaryReviewChangeDirection.NewlyAvailable, averageChange.Direction);
+        Assert.Contains("no comparable previous-period value", averageChange.Description);
+        Assert.Equal("129 mg/dL", averageChange.CurrentValueText);
+    }
+
+    [Fact]
     public void CreateReview_ShouldThrow_WhenCurrentReportIsNull()
     {
         // Arrange
