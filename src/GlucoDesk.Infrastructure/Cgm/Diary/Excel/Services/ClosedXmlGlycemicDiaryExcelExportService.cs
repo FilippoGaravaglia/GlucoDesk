@@ -195,7 +195,26 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     private static string BuildComparisonPeriodText(
         GlycemicDiaryWeeklyReview weeklyReview)
     {
-        return $"Current period: {FormatDateRange(weeklyReview.CurrentPeriodStartsAt, weeklyReview.CurrentPeriodEndsAt)} · Previous period: {FormatDateRange(weeklyReview.PreviousPeriodStartsAt, weeklyReview.PreviousPeriodEndsAt)}";
+        var comparisonPeriodText = $"Current period: {FormatDateRange(weeklyReview.CurrentPeriodStartsAt, weeklyReview.CurrentPeriodEndsAt)} · Previous period: {FormatDateRange(weeklyReview.PreviousPeriodStartsAt, weeklyReview.PreviousPeriodEndsAt)}";
+
+        if (HasSharedBoundaryDate(weeklyReview))
+        {
+            comparisonPeriodText += " (previous period ends before the current period starts)";
+        }
+
+        return comparisonPeriodText;
+    }
+
+    /// <summary>
+    /// Determines whether the previous period end and current period start share the same displayed date.
+    /// </summary>
+    /// <param name="weeklyReview">The weekly review.</param>
+    /// <returns><c>true</c> when the displayed boundary date is shared; otherwise, <c>false</c>.</returns>
+    private static bool HasSharedBoundaryDate(
+        GlycemicDiaryWeeklyReview weeklyReview)
+    {
+        return weeklyReview.PreviousPeriodEndsAt.Date == weeklyReview.CurrentPeriodStartsAt.Date
+            && weeklyReview.PreviousPeriodEndsAt <= weeklyReview.CurrentPeriodStartsAt;
     }
 
     /// <summary>
