@@ -213,13 +213,7 @@ public sealed class DesktopPresencePopoverWindow : Window
             Spacing = 12,
             Children =
             {
-                new TextBlock
-                {
-                    Text = "GlucoDesk",
-                    FontSize = 13,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = CaptionBrush
-                },
+                CreateHeaderControl(),
                 _headerTextBlock,
                 _detailsTextBlock,
                 _refreshActionBorder,
@@ -238,6 +232,75 @@ public sealed class DesktopPresencePopoverWindow : Window
             BorderThickness = new Thickness(1),
             Child = contentPanel
         };
+    }
+
+    /// <summary>
+    /// Creates the popover header with title and close action.
+    /// </summary>
+    /// <returns>The header control.</returns>
+    private Control CreateHeaderControl()
+    {
+        var title = new TextBlock
+        {
+            Text = "GlucoDesk",
+            FontSize = 13,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = CaptionBrush,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var closeLabel = new TextBlock
+        {
+            Text = "×",
+            Foreground = CaptionBrush,
+            FontSize = 20,
+            FontWeight = FontWeight.SemiBold,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var closeButton = new Border
+        {
+            Width = 28,
+            Height = 28,
+            Background = Brushes.Transparent,
+            CornerRadius = new CornerRadius(8),
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Child = closeLabel
+        };
+
+        closeButton.PointerEntered += (_, _) =>
+        {
+            closeButton.Background = SecondaryButtonBrush;
+            closeLabel.Foreground = PrimaryTextBrush;
+        };
+
+        closeButton.PointerExited += (_, _) =>
+        {
+            closeButton.Background = Brushes.Transparent;
+            closeLabel.Foreground = CaptionBrush;
+        };
+
+        closeButton.PointerReleased += (_, _) => CloseFromCode();
+
+        var header = new Grid
+        {
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto)
+            },
+            Children =
+            {
+                title,
+                closeButton
+            }
+        };
+
+        Grid.SetColumn(title, 0);
+        Grid.SetColumn(closeButton, 1);
+
+        return header;
     }
 
     /// <summary>
