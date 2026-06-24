@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
@@ -7,6 +8,7 @@ using GlucoDesk.Desktop.DesktopPresence.Enums;
 using GlucoDesk.Desktop.DesktopPresence.Formatters;
 using GlucoDesk.Desktop.DesktopPresence.Models;
 using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
+using GlucoDesk.Desktop.DesktopPresence.Windows;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Main;
 using Microsoft.Extensions.Logging;
@@ -19,6 +21,9 @@ namespace GlucoDesk.Desktop.DesktopPresence.Services;
 /// </summary>
 public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLifecycleService
 {
+    private const int PopoverWidth = 340;
+    private const int PopoverMargin = 14;
+
     private static readonly Uri DefaultTrayIconUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png");
     private static readonly Uri MacOsMenuBarIconUri = new("avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon.png");
 
@@ -28,8 +33,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
     private TrayIcon? _trayIcon;
     private NativeMenuItem? _statusMenuItem;
-    private NativeMenuItem? _refreshNowMenuItem;
-    private NativeMenuItem? _privacyModeMenuItem;
+    private NativeMenuItem? _presencePanelMenuItem;
+    private DesktopPresencePopoverWindow? _popoverWindow;
     private DashboardViewModel? _dashboardViewModel;
     private bool _isStarted;
     private bool _isPrivacyModeEnabled;
@@ -77,8 +82,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                     desktopLifetime,
                     initialText,
                     out var statusMenuItem,
-                    out var refreshNowMenuItem,
-                    out var privacyModeMenuItem);
+                    out var presencePanelMenuItem);
 
                 var trayIcons = new TrayIcons
                 {
@@ -89,12 +93,10 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
                 _trayIcon = trayIcon;
                 _statusMenuItem = statusMenuItem;
-                _refreshNowMenuItem = refreshNowMenuItem;
-                _privacyModeMenuItem = privacyModeMenuItem;
+                _presencePanelMenuItem = presencePanelMenuItem;
                 _isStarted = true;
 
                 AttachDashboardState(desktopLifetime);
-                UpdatePrivacyMenuState();
                 RefreshFromDashboardState();
 
                 _logger.LogInformation("Desktop presence indicator started.");
@@ -120,6 +122,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
             try
             {
+                ClosePopover();
+
                 DetachDashboardState();
 
                 var application = AvaloniaApplication.Current;
@@ -132,8 +136,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 _trayIcon?.Dispose();
                 _trayIcon = null;
                 _statusMenuItem = null;
-                _refreshNowMenuItem = null;
-                _privacyModeMenuItem = null;
+                _presencePanelMenuItem = null;
                 _isStarted = false;
 
                 _logger.LogInformation("Desktop presence indicator stopped.");
@@ -171,30 +174,21 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <param name="desktopLifetime">The desktop application lifetime.</param>
     /// <param name="initialText">The initial formatted desktop presence text.</param>
     /// <param name="statusMenuItem">The created status menu item.</param>
-    /// <param name="refreshNowMenuItem">The created refresh menu item.</param>
-    /// <param name="privacyModeMenuItem">The created privacy mode menu item.</param>
+    /// <param name="presencePanelMenuItem">The created presence panel menu item.</param>
     /// <returns>The created tray icon.</returns>
     private TrayIcon CreateTrayIcon(
         IClassicDesktopStyleApplicationLifetime desktopLifetime,
         DesktopPresenceText initialText,
         out NativeMenuItem statusMenuItem,
-        out NativeMenuItem refreshNowMenuItem,
-        out NativeMenuItem privacyModeMenuItem)
+        out NativeMenuItem presencePanelMenuItem)
     {
         statusMenuItem = new NativeMenuItem(initialText.MenuHeader)
         {
             IsEnabled = false
         };
 
-        refreshNowMenuItem = new NativeMenuItem("Refresh now")
-        {
-            IsEnabled = false
-        };
-
-        privacyModeMenuItem = new NativeMenuItem("Privacy mode: Off");
-
-        refreshNowMenuItem.Click += (_, _) => _ = RefreshDashboardFromTraySafelyAsync();
-        privacyModeMenuItem.Click += (_, _) => TogglePrivacyMode();
+        presencePanelMenuItem = new NativeMenuItem("Show presence panel");
+        presencePanelMenuItem.Click += (_, _) => TogglePopover(desktopLifetime);
 
         return new TrayIcon
         {
@@ -203,8 +197,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             Menu = CreateTrayMenu(
                 desktopLifetime,
                 statusMenuItem,
-                refreshNowMenuItem,
-                privacyModeMenuItem),
+                presencePanelMenuItem),
             IsVisible = true
         };
     }
@@ -236,14 +229,12 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// </summary>
     /// <param name="desktopLifetime">The desktop application lifetime.</param>
     /// <param name="statusMenuItem">The status menu item.</param>
-    /// <param name="refreshNowMenuItem">The refresh menu item.</param>
-    /// <param name="privacyModeMenuItem">The privacy mode menu item.</param>
+    /// <param name="presencePanelMenuItem">The presence panel menu item.</param>
     /// <returns>The native tray menu.</returns>
     private static NativeMenu CreateTrayMenu(
         IClassicDesktopStyleApplicationLifetime desktopLifetime,
         NativeMenuItem statusMenuItem,
-        NativeMenuItem refreshNowMenuItem,
-        NativeMenuItem privacyModeMenuItem)
+        NativeMenuItem presencePanelMenuItem)
     {
         var openItem = new NativeMenuItem("Open GlucoDesk");
         openItem.Click += (_, _) => ShowMainWindow(desktopLifetime);
@@ -257,9 +248,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             {
                 statusMenuItem,
                 new NativeMenuItemSeparator(),
+                presencePanelMenuItem,
                 openItem,
-                refreshNowMenuItem,
-                privacyModeMenuItem,
                 new NativeMenuItemSeparator(),
                 quitItem
             }
@@ -329,6 +319,93 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
+    /// Toggles the persistent desktop presence popover.
+    /// </summary>
+    /// <param name="desktopLifetime">The desktop application lifetime.</param>
+    private void TogglePopover(IClassicDesktopStyleApplicationLifetime desktopLifetime)
+    {
+        RunOnUiThread(() =>
+        {
+            if (_popoverWindow is not null)
+            {
+                ClosePopover();
+                return;
+            }
+
+            ShowPopover(desktopLifetime);
+        });
+    }
+
+    /// <summary>
+    /// Shows the persistent desktop presence popover.
+    /// </summary>
+    /// <param name="desktopLifetime">The desktop application lifetime.</param>
+    private void ShowPopover(IClassicDesktopStyleApplicationLifetime desktopLifetime)
+    {
+        var popoverWindow = new DesktopPresencePopoverWindow(
+            RefreshDashboardFromTraySafelyAsync,
+            TogglePrivacyMode,
+            () => ShowMainWindow(desktopLifetime),
+            () => desktopLifetime.Shutdown());
+
+        popoverWindow.Position = CalculatePopoverPosition(desktopLifetime.MainWindow);
+        popoverWindow.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_popoverWindow, popoverWindow))
+            {
+                _popoverWindow = null;
+                UpdatePresencePanelMenuState();
+            }
+        };
+
+        _popoverWindow = popoverWindow;
+
+        UpdatePresencePanelMenuState();
+        RefreshPopoverState();
+
+        popoverWindow.Show();
+        popoverWindow.Activate();
+    }
+
+    /// <summary>
+    /// Calculates the popover position near the top-right area of the primary screen.
+    /// </summary>
+    /// <param name="mainWindow">The main window.</param>
+    /// <returns>The calculated popover position.</returns>
+    private static PixelPoint CalculatePopoverPosition(Window? mainWindow)
+    {
+        var screen = mainWindow?.Screens.Primary;
+
+        if (screen is null)
+        {
+            return new PixelPoint(PopoverMargin, PopoverMargin);
+        }
+
+        var workingArea = screen.WorkingArea;
+
+        return new PixelPoint(
+            workingArea.X + workingArea.Width - PopoverWidth - PopoverMargin,
+            workingArea.Y + PopoverMargin);
+    }
+
+    /// <summary>
+    /// Closes the persistent desktop presence popover.
+    /// </summary>
+    private void ClosePopover()
+    {
+        var popoverWindow = _popoverWindow;
+
+        if (popoverWindow is null)
+        {
+            return;
+        }
+
+        _popoverWindow = null;
+        popoverWindow.CloseFromCode();
+        UpdatePresencePanelMenuState();
+    }
+
+    /// <summary>
     /// Toggles desktop presence privacy mode.
     /// </summary>
     private void TogglePrivacyMode()
@@ -337,13 +414,12 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         {
             _isPrivacyModeEnabled = !_isPrivacyModeEnabled;
 
-            UpdatePrivacyMenuState();
             RefreshFromDashboardState();
         });
     }
 
     /// <summary>
-    /// Refreshes the dashboard from the tray menu without breaking the desktop presence indicator.
+    /// Refreshes the dashboard from the popover without closing it.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
     private async Task RefreshDashboardFromTraySafelyAsync()
@@ -352,19 +428,19 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
         if (dashboardViewModel is null)
         {
-            UpdateRefreshMenuStateSafely();
+            RefreshFromDashboardState();
             return;
         }
 
         if (dashboardViewModel.IsBusy)
         {
-            UpdateRefreshMenuStateSafely();
+            RefreshFromDashboardState();
             return;
         }
 
         try
         {
-            UpdateRefreshMenuStateSafely();
+            RefreshFromDashboardState();
 
             await dashboardViewModel
                 .RefreshCommand
@@ -374,7 +450,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         {
             _logger.LogError(
                 exception,
-                "Unable to refresh dashboard data from the desktop presence indicator.");
+                "Unable to refresh dashboard data from the desktop presence popover.");
         }
         finally
         {
@@ -391,8 +467,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         {
             if (_dashboardViewModel is null)
             {
-                UpdateRefreshMenuState();
-                UpdatePrivacyMenuState();
+                RefreshPopoverState();
                 return;
             }
 
@@ -400,60 +475,55 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 CreateDashboardState(_dashboardViewModel));
 
             ApplyDesktopPresenceText(text);
-            UpdateRefreshMenuState();
-            UpdatePrivacyMenuState();
+            RefreshPopoverState(text);
         });
     }
 
     /// <summary>
-    /// Updates the refresh menu item on the UI thread.
+    /// Updates the presence panel menu item state.
     /// </summary>
-    private void UpdateRefreshMenuStateSafely()
+    private void UpdatePresencePanelMenuState()
     {
-        RunOnUiThread(UpdateRefreshMenuState);
-    }
-
-    /// <summary>
-    /// Updates the refresh menu item state.
-    /// </summary>
-    private void UpdateRefreshMenuState()
-    {
-        if (_refreshNowMenuItem is null)
+        if (_presencePanelMenuItem is null)
         {
             return;
         }
 
+        _presencePanelMenuItem.Header = _popoverWindow is null
+            ? "Show presence panel"
+            : "Hide presence panel";
+    }
+
+    /// <summary>
+    /// Refreshes the popover state using current dashboard data.
+    /// </summary>
+    private void RefreshPopoverState()
+    {
         if (_dashboardViewModel is null)
         {
-            _refreshNowMenuItem.Header = "Refresh now";
-            _refreshNowMenuItem.IsEnabled = false;
             return;
         }
 
-        if (_dashboardViewModel.IsBusy)
-        {
-            _refreshNowMenuItem.Header = "Refreshing...";
-            _refreshNowMenuItem.IsEnabled = false;
-            return;
-        }
-
-        _refreshNowMenuItem.Header = "Refresh now";
-        _refreshNowMenuItem.IsEnabled = true;
+        RefreshPopoverState(
+            _dashboardTextFormatter.Format(
+                CreateDashboardState(_dashboardViewModel)));
     }
 
     /// <summary>
-    /// Updates the privacy mode menu item state.
+    /// Refreshes the popover state using formatted desktop presence text.
     /// </summary>
-    private void UpdatePrivacyMenuState()
+    /// <param name="text">The formatted desktop presence text.</param>
+    private void RefreshPopoverState(DesktopPresenceText text)
     {
-        if (_privacyModeMenuItem is null)
+        if (_popoverWindow is null)
         {
             return;
         }
 
-        _privacyModeMenuItem.Header = _isPrivacyModeEnabled
-            ? "Privacy mode: On"
-            : "Privacy mode: Off";
+        _popoverWindow.Update(
+            text,
+            _isPrivacyModeEnabled,
+            _dashboardViewModel?.IsBusy ?? false);
     }
 
     /// <summary>
