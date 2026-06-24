@@ -48,6 +48,11 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private const string WarningText = "#B26A00";
     private const string WarningBorder = "#F1D18A";
 
+    private const float FirstReportSectionTopPadding = 18;
+    private const float ReportSectionTopPadding = 14;
+
+
+
     private static readonly byte[]? BrandLogoBytes = LoadBrandLogoBytes();
 
     private readonly IGlycemicDiaryService _diaryService;
@@ -250,31 +255,44 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     {
         container.Column(column =>
         {
-            column.Spacing(14);
+            column.Spacing(0);
 
             column.Item()
-                .PaddingTop(8)
+                .PaddingTop(FirstReportSectionTopPadding)
+                .ShowEntire()
                 .Element(content => ComposeOverview(content, report, preferredUnit));
 
             column.Item()
+                .PaddingTop(ReportSectionTopPadding)
+                .ShowEntire()
                 .Element(content => ComposeStory(content, report));
 
             column.Item()
+                .PaddingTop(ReportSectionTopPadding)
+                .ShowEntire()
                 .Element(content => ComposeWeeklyReview(content, weeklyReview));
 
             column.Item()
+                .PaddingTop(ReportSectionTopPadding)
+                .ShowEntire()
                 .Element(content => ComposeLocalPatterns(content, report));
 
             column.Item()
+                .PaddingTop(ReportSectionTopPadding)
                 .Element(content => ComposeDailyDiaryTable(content, report, preferredUnit));
 
             column.Item()
+                .PaddingTop(ReportSectionTopPadding)
                 .Element(content => ComposeDataCompleteness(content, report));
 
             column.Item()
+                .PaddingTop(ReportSectionTopPadding)
+                .ShowEntire()
                 .Element(content => ComposeExportMetadata(content, report, preferredUnit));
 
             column.Item()
+                .PaddingTop(ReportSectionTopPadding)
+                .ShowEntire()
                 .Element(ComposeSafetyNotice);
         });
     }
