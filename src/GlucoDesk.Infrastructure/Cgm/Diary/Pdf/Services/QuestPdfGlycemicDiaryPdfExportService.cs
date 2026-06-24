@@ -5,6 +5,8 @@ using GlucoDesk.Application.Cgm.Diary.Exports.Results;
 using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
+using GlucoDesk.Application.Cgm.History.Completeness.Services;
+using GlucoDesk.Application.Cgm.History.Completeness.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.ValueObjects;
@@ -39,21 +41,26 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
     private readonly IGlycemicDiaryService _diaryService;
     private readonly GlycemicDiaryPdfExportOptions _options;
+    private readonly IGlucoseHistoryCompletenessScoringService _completenessScoringService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QuestPdfGlycemicDiaryPdfExportService"/> class.
     /// </summary>
     /// <param name="diaryService">The glycemic diary service.</param>
     /// <param name="options">The PDF export options.</param>
+    /// <param name="completenessScoringService">The optional history completeness scoring service.</param>
     public QuestPdfGlycemicDiaryPdfExportService(
         IGlycemicDiaryService diaryService,
-        GlycemicDiaryPdfExportOptions options)
+        GlycemicDiaryPdfExportOptions options,
+        IGlucoseHistoryCompletenessScoringService? completenessScoringService = null)
     {
         ArgumentNullException.ThrowIfNull(diaryService);
         ArgumentNullException.ThrowIfNull(options);
 
         _diaryService = diaryService;
         _options = options;
+        _completenessScoringService = completenessScoringService
+            ?? new GlucoseHistoryCompletenessScoringService();
     }
 
     /// <inheritdoc />
@@ -227,11 +234,13 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <param name="container">The container.</param>
     /// <param name="report">The glycemic diary report.</param>
     /// <param name="preferredUnit">The preferred glucose display unit.</param>
-    private static void ComposeOverview(
+    private void ComposeOverview(
         IContainer container,
         GlycemicDiaryReport report,
         GlucoseUnit preferredUnit)
     {
+        var completenessScore = _completenessScoringService.Calculate(report.OverallContinuity);
+
         container.Element(Card).Column(column =>
         {
             column.Spacing(10);
@@ -250,10 +259,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                         .FontColor(TextMuted);
                 });
 
-                row.ConstantItem(110)
+                row.ConstantItem(150)
                     .AlignRight()
                     .AlignMiddle()
-                    .Text($"Coverage {FormatPercentage(report.OverallContinuity.DataCoveragePercentage)}")
+                    .Text($"{completenessScore.StatusText} · {completenessScore.CoverageText}")
                     .FontSize(9)
                     .SemiBold()
                     .FontColor(BrandBlueDark);
@@ -272,9 +281,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 WriteMetric(table, "Average", FormatGlucoseValue(report.AverageMgDl, preferredUnit));
                 WriteMetric(table, "Range", FormatGlucoseRange(report.MinimumMgDl, report.MaximumMgDl, preferredUnit));
                 WriteMetric(table, "Time in range", FormatPercentage(report.TimeInRangePercentage));
-                WriteMetric(table, "Data coverage", FormatPercentage(report.OverallContinuity.DataCoveragePercentage));
+                WriteMetric(table, "History reliability", completenessScore.StatusText);
+                WriteMetric(table, "Data coverage", completenessScore.CoverageText);
                 WriteMetric(table, "Readings", report.ReadingsCount.ToString(CultureInfo.InvariantCulture));
-                WriteMetric(table, "Detected gaps", report.OverallContinuity.Gaps.Count.ToString(CultureInfo.InvariantCulture));
+                WriteMetric(table, "Detected gaps", completenessScore.DetectedGapCount.ToString(CultureInfo.InvariantCulture));
                 WriteMetric(table, "Incomplete days", report.IncompleteDaysCount.ToString(CultureInfo.InvariantCulture));
                 WriteMetric(table, "Empty days", report.EmptyDaysCount.ToString(CultureInfo.InvariantCulture));
             });
@@ -391,15 +401,16 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// </summary>
     /// <param name="container">The container.</param>
     /// <param name="report">The glycemic diary report.</param>
-    private static void ComposeDataCompleteness(
+    private void ComposeDataCompleteness(
         IContainer container,
         GlycemicDiaryReport report)
     {
-        var hasGoodCoverage = report.OverallContinuity.DataCoveragePercentage >= 90;
+        var completenessScore = _completenessScoringService.Calculate(report.OverallContinuity);
+        var hasGoodCoverage = !completenessScore.RequiresCaution;
         var backgroundColor = hasGoodCoverage ? SuccessSoft : WarningSoft;
         var borderColor = hasGoodCoverage ? SuccessBorder : WarningBorder;
         var statusColor = hasGoodCoverage ? SuccessText : WarningText;
-        var statusText = hasGoodCoverage ? "Good coverage" : "Partial coverage";
+        var statusText = $"{completenessScore.StatusText} · {completenessScore.CoverageText}";
 
         container
             .Background(backgroundColor)
@@ -422,12 +433,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                             .SemiBold()
                             .FontColor(BrandBlueDark);
 
-                        title.Item().Text("Days marked as partial may contain missing CGM history and should be interpreted carefully.")
+                        title.Item().Text($"{completenessScore.DetailText} Days marked as partial may contain missing CGM history and should be interpreted carefully.")
                             .FontSize(8)
                             .FontColor(TextSecondary);
                     });
 
-                    row.ConstantItem(120)
+                    row.ConstantItem(150)
                         .AlignRight()
                         .AlignMiddle()
                         .Text(statusText)
