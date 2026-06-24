@@ -2,6 +2,7 @@ using GlucoDesk.Application.Cgm.Backfill.Options;
 using GlucoDesk.Application.Cgm.Backfill.Services;
 using GlucoDesk.Application.Cgm.Backfill.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.DependencyInjection;
+using GlucoDesk.Application.Cgm.Diary.Patterns.DependencyInjection;
 using GlucoDesk.Application.Cgm.Diary.Stories.DependencyInjection;
 using GlucoDesk.Application.Cgm.History.Analytics.Services;
 using GlucoDesk.Application.Cgm.History.Analytics.Services.Abstractions;
@@ -47,6 +48,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddHistoryCompletenessServices();
         services.AddGlycemicDiary();
         services.AddGlycemicDiaryStoryServices();
+        services.AddGlycemicDiaryPatternServices();
 
         return services;
     }
