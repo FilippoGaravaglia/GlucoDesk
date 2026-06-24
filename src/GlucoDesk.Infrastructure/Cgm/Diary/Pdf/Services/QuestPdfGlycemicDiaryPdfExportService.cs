@@ -7,6 +7,10 @@ using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Stories.Services;
 using GlucoDesk.Application.Cgm.Diary.Stories.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.Patterns.Enums;
+using GlucoDesk.Application.Cgm.Diary.Patterns.Results;
+using GlucoDesk.Application.Cgm.Diary.Patterns.Services;
+using GlucoDesk.Application.Cgm.Diary.Patterns.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Completeness.Services;
 using GlucoDesk.Application.Cgm.History.Completeness.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
@@ -45,6 +49,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private readonly GlycemicDiaryPdfExportOptions _options;
     private readonly IGlucoseHistoryCompletenessScoringService _completenessScoringService;
     private readonly IGlycemicDiaryStoryService _storyService;
+    private readonly IGlycemicDiaryPatternAnalysisService _patternAnalysisService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QuestPdfGlycemicDiaryPdfExportService"/> class.
@@ -53,11 +58,13 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <param name="options">The PDF export options.</param>
     /// <param name="completenessScoringService">The optional history completeness scoring service.</param>
     /// <param name="storyService">The optional glycemic diary story service.</param>
+    /// <param name="patternAnalysisService">The optional glycemic diary pattern analysis service.</param>
     public QuestPdfGlycemicDiaryPdfExportService(
         IGlycemicDiaryService diaryService,
         GlycemicDiaryPdfExportOptions options,
         IGlucoseHistoryCompletenessScoringService? completenessScoringService = null,
-        IGlycemicDiaryStoryService? storyService = null)
+        IGlycemicDiaryStoryService? storyService = null,
+        IGlycemicDiaryPatternAnalysisService? patternAnalysisService = null)
     {
         ArgumentNullException.ThrowIfNull(diaryService);
         ArgumentNullException.ThrowIfNull(options);
@@ -68,6 +75,8 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             ?? new GlucoseHistoryCompletenessScoringService();
         _storyService = storyService
             ?? new GlycemicDiaryStoryService(_completenessScoringService);
+        _patternAnalysisService = patternAnalysisService
+            ?? new GlycemicDiaryPatternAnalysisService(_completenessScoringService);
     }
 
     /// <inheritdoc />
@@ -228,6 +237,9 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 .Element(content => ComposeStory(content, report));
 
             column.Item()
+                .Element(content => ComposeLocalPatterns(content, report));
+
+            column.Item()
                 .Element(content => ComposeDailyDiaryTable(content, report, preferredUnit));
 
             column.Item()
@@ -352,6 +364,161 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 .FontSize(8)
                 .FontColor(TextMuted);
         });
+    }
+
+    /// <summary>
+    /// Composes the local patterns section.
+    /// </summary>
+    /// <param name="container">The container.</param>
+    /// <param name="report">The glycemic diary report.</param>
+    private void ComposeLocalPatterns(
+        IContainer container,
+        GlycemicDiaryReport report)
+    {
+        var analysis = _patternAnalysisService.Analyze(report);
+        var patterns = analysis.Patterns
+            .OrderByDescending(GetPatternSeverityRank)
+            .ThenBy(pattern => pattern.Kind)
+            .Take(5)
+            .ToArray();
+
+        var patternSummaryText = analysis.Patterns.Count > patterns.Length
+            ? $"Top {patterns.Length} of {analysis.Patterns.Count}"
+            : analysis.HasPatterns
+                ? $"{analysis.Patterns.Count} detected"
+                : "None detected";
+
+        container.Element(Card).Column(column =>
+        {
+            column.Spacing(8);
+
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Column(title =>
+                {
+                    title.Item().Text("Local patterns")
+                        .FontSize(15)
+                        .SemiBold()
+                        .FontColor(BrandBlueDark);
+
+                    title.Item().Text("Recurring local glucose tendencies detected from diary time blocks.")
+                        .FontSize(8)
+                        .FontColor(TextMuted);
+                });
+
+                row.ConstantItem(120)
+                    .AlignRight()
+                    .AlignMiddle()
+                    .Text(patternSummaryText)
+                    .FontSize(9)
+                    .SemiBold()
+                    .FontColor(BrandBlueDark);
+            });
+
+            if (patterns.Length == 0)
+            {
+                column.Item().Text("No recurring local patterns were detected for the selected period.")
+                    .FontSize(9)
+                    .FontColor(TextSecondary);
+
+                return;
+            }
+
+            foreach (var pattern in patterns)
+            {
+                column.Item()
+                    .PaddingTop(4)
+                    .BorderTop(1)
+                    .BorderColor(BrandBorder)
+                    .PaddingTop(6)
+                    .Column(patternColumn =>
+                    {
+                        patternColumn.Spacing(2);
+
+                        patternColumn.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text(pattern.Title)
+                                .FontSize(10)
+                                .SemiBold()
+                                .FontColor(BrandBlueDark);
+
+                            row.ConstantItem(80)
+                                .AlignRight()
+                                .Text(pattern.Severity.ToString())
+                                .FontSize(8)
+                                .SemiBold()
+                                .FontColor(GetPatternSeverityColor(pattern.Severity));
+                        });
+
+                        patternColumn.Item().Text(pattern.Description)
+                            .FontSize(8)
+                            .FontColor(TextSecondary);
+
+                        patternColumn.Item().Text(BuildPatternSupportText(pattern))
+                            .FontSize(7)
+                            .FontColor(TextMuted);
+                    });
+            }
+        });
+    }
+
+    /// <summary>
+    /// Builds the support text for a detected pattern.
+    /// </summary>
+    /// <param name="pattern">The detected pattern.</param>
+    /// <returns>The support text.</returns>
+    private static string BuildPatternSupportText(GlycemicDiaryPattern pattern)
+    {
+        var scope = pattern.TimeBlockLabel is null
+            ? "overall period"
+            : pattern.TimeBlockLabel;
+
+        return $"{pattern.SupportingDaysCount} supporting {Pluralize("day", pattern.SupportingDaysCount)} · {scope}";
+    }
+
+    /// <summary>
+    /// Pluralizes a singular noun.
+    /// </summary>
+    /// <param name="singular">The singular noun.</param>
+    /// <param name="count">The item count.</param>
+    /// <returns>The pluralized noun.</returns>
+    private static string Pluralize(string singular, int count)
+    {
+        return count == 1
+            ? singular
+            : $"{singular}s";
+    }
+
+    /// <summary>
+    /// Gets a deterministic severity rank for pattern ordering.
+    /// </summary>
+    /// <param name="pattern">The detected pattern.</param>
+    /// <returns>The severity rank.</returns>
+    private static int GetPatternSeverityRank(GlycemicDiaryPattern pattern)
+    {
+        return pattern.Severity switch
+        {
+            GlycemicDiaryPatternSeverity.Important => 3,
+            GlycemicDiaryPatternSeverity.Caution => 2,
+            GlycemicDiaryPatternSeverity.Info => 1,
+            _ => 0
+        };
+    }
+
+    /// <summary>
+    /// Gets the display color for a pattern severity.
+    /// </summary>
+    /// <param name="severity">The pattern severity.</param>
+    /// <returns>The display color.</returns>
+    private static string GetPatternSeverityColor(GlycemicDiaryPatternSeverity severity)
+    {
+        return severity switch
+        {
+            GlycemicDiaryPatternSeverity.Important => WarningText,
+            GlycemicDiaryPatternSeverity.Caution => WarningText,
+            GlycemicDiaryPatternSeverity.Info => SuccessText,
+            _ => TextSecondary
+        };
     }
 
     /// <summary>

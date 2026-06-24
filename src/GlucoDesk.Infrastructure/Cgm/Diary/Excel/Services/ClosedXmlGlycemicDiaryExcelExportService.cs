@@ -6,6 +6,10 @@ using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Stories.Services;
 using GlucoDesk.Application.Cgm.Diary.Stories.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.Patterns.Enums;
+using GlucoDesk.Application.Cgm.Diary.Patterns.Results;
+using GlucoDesk.Application.Cgm.Diary.Patterns.Services;
+using GlucoDesk.Application.Cgm.Diary.Patterns.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Completeness.Services;
 using GlucoDesk.Application.Cgm.History.Completeness.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
@@ -24,6 +28,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     private readonly GlycemicDiaryExcelExportOptions _options;
     private readonly IGlucoseHistoryCompletenessScoringService _completenessScoringService;
     private readonly IGlycemicDiaryStoryService _storyService;
+    private readonly IGlycemicDiaryPatternAnalysisService _patternAnalysisService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ClosedXmlGlycemicDiaryExcelExportService"/> class.
@@ -32,11 +37,13 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     /// <param name="options">The Excel export options.</param>
     /// <param name="completenessScoringService">The optional history completeness scoring service.</param>
     /// <param name="storyService">The optional glycemic diary story service.</param>
+    /// <param name="patternAnalysisService">The optional glycemic diary pattern analysis service.</param>
     public ClosedXmlGlycemicDiaryExcelExportService(
         IGlycemicDiaryService diaryService,
         GlycemicDiaryExcelExportOptions options,
         IGlucoseHistoryCompletenessScoringService? completenessScoringService = null,
-        IGlycemicDiaryStoryService? storyService = null)
+        IGlycemicDiaryStoryService? storyService = null,
+        IGlycemicDiaryPatternAnalysisService? patternAnalysisService = null)
     {
         ArgumentNullException.ThrowIfNull(diaryService);
         ArgumentNullException.ThrowIfNull(options);
@@ -47,6 +54,8 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
             ?? new GlucoseHistoryCompletenessScoringService();
         _storyService = storyService
             ?? new GlycemicDiaryStoryService(_completenessScoringService);
+        _patternAnalysisService = patternAnalysisService
+            ?? new GlycemicDiaryPatternAnalysisService(_completenessScoringService);
     }
 
     /// <inheritdoc />
@@ -68,6 +77,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         using var workbook = new XLWorkbook();
 
         CreateOverviewWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
+        CreatePatternsWorksheet(workbook, diaryResult.Value);
         CreateDailyDiaryWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
         CreateTimeBlocksWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
         CreateDataCompletenessWorksheet(workbook, diaryResult.Value);
@@ -148,6 +158,89 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("B17").Style.Alignment.WrapText = true;
         worksheet.Cell("B19").Style.Alignment.WrapText = true;
         worksheet.SheetView.FreezeRows(3);
+    }
+
+    /// <summary>
+    /// Creates the local patterns worksheet.
+    /// </summary>
+    /// <param name="workbook">The workbook.</param>
+    /// <param name="report">The glycemic diary report.</param>
+    private void CreatePatternsWorksheet(
+        XLWorkbook workbook,
+        GlycemicDiaryReport report)
+    {
+        var worksheet = workbook.Worksheets.Add("Patterns");
+        var analysis = _patternAnalysisService.Analyze(report);
+
+        worksheet.Cell("A1").Value = "Local patterns";
+        worksheet.Cell("A2").Value = "Recurring local glucose tendencies detected from diary time blocks.";
+
+        worksheet.Cell("A4").Value = "Severity";
+        worksheet.Cell("B4").Value = "Kind";
+        worksheet.Cell("C4").Value = "Time block";
+        worksheet.Cell("D4").Value = "Supporting days";
+        worksheet.Cell("E4").Value = "Title";
+        worksheet.Cell("F4").Value = "Description";
+
+        var header = worksheet.Range("A4:F4");
+        header.Style.Font.Bold = true;
+        header.Style.Fill.BackgroundColor = XLColor.FromHtml("#EAF4FF");
+        header.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        header.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+        if (!analysis.HasPatterns)
+        {
+            worksheet.Cell("A5").Value = "No recurring local patterns detected.";
+            worksheet.Range("A5:F5").Merge();
+            worksheet.Cell("A5").Style.Font.Italic = true;
+            worksheet.Cell("A5").Style.Font.FontColor = XLColor.Gray;
+            worksheet.Columns().AdjustToContents();
+
+            return;
+        }
+
+        var row = 5;
+
+        foreach (var pattern in analysis.Patterns.OrderByDescending(GetPatternSeverityRank).ThenBy(pattern => pattern.Kind))
+        {
+            worksheet.Cell(row, 1).Value = pattern.Severity.ToString();
+            worksheet.Cell(row, 2).Value = pattern.Kind.ToString();
+            worksheet.Cell(row, 3).Value = pattern.TimeBlockLabel ?? "Overall";
+            worksheet.Cell(row, 4).Value = pattern.SupportingDaysCount;
+            worksheet.Cell(row, 5).Value = pattern.Title;
+            worksheet.Cell(row, 6).Value = pattern.Description;
+
+            row++;
+        }
+
+        var dataRange = worksheet.Range(4, 1, row - 1, 6);
+        dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+        worksheet.Column("A").Width = 14;
+        worksheet.Column("B").Width = 24;
+        worksheet.Column("C").Width = 18;
+        worksheet.Column("D").Width = 18;
+        worksheet.Column("E").Width = 34;
+        worksheet.Column("F").Width = 72;
+        worksheet.Column("F").Style.Alignment.WrapText = true;
+        worksheet.SheetView.FreezeRows(4);
+    }
+
+    /// <summary>
+    /// Gets a deterministic severity rank for pattern ordering.
+    /// </summary>
+    /// <param name="pattern">The pattern.</param>
+    /// <returns>The severity rank.</returns>
+    private static int GetPatternSeverityRank(GlycemicDiaryPattern pattern)
+    {
+        return pattern.Severity switch
+        {
+            GlycemicDiaryPatternSeverity.Important => 3,
+            GlycemicDiaryPatternSeverity.Caution => 2,
+            GlycemicDiaryPatternSeverity.Info => 1,
+            _ => 0
+        };
     }
 
     /// <summary>
