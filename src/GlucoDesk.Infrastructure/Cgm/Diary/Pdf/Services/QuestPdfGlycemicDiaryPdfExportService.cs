@@ -11,6 +11,11 @@ using GlucoDesk.Application.Cgm.Diary.Patterns.Enums;
 using GlucoDesk.Application.Cgm.Diary.Patterns.Results;
 using GlucoDesk.Application.Cgm.Diary.Patterns.Services;
 using GlucoDesk.Application.Cgm.Diary.Patterns.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Enums;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Requests;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Results;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Services;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Completeness.Services;
 using GlucoDesk.Application.Cgm.History.Completeness.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
@@ -50,6 +55,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private readonly IGlucoseHistoryCompletenessScoringService _completenessScoringService;
     private readonly IGlycemicDiaryStoryService _storyService;
     private readonly IGlycemicDiaryPatternAnalysisService _patternAnalysisService;
+    private readonly IGlycemicDiaryWeeklyReviewGenerationService _weeklyReviewGenerationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QuestPdfGlycemicDiaryPdfExportService"/> class.
@@ -59,12 +65,14 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <param name="completenessScoringService">The optional history completeness scoring service.</param>
     /// <param name="storyService">The optional glycemic diary story service.</param>
     /// <param name="patternAnalysisService">The optional glycemic diary pattern analysis service.</param>
+    /// <param name="weeklyReviewGenerationService">The optional weekly review generation service.</param>
     public QuestPdfGlycemicDiaryPdfExportService(
         IGlycemicDiaryService diaryService,
         GlycemicDiaryPdfExportOptions options,
         IGlucoseHistoryCompletenessScoringService? completenessScoringService = null,
         IGlycemicDiaryStoryService? storyService = null,
-        IGlycemicDiaryPatternAnalysisService? patternAnalysisService = null)
+        IGlycemicDiaryPatternAnalysisService? patternAnalysisService = null,
+        IGlycemicDiaryWeeklyReviewGenerationService? weeklyReviewGenerationService = null)
     {
         ArgumentNullException.ThrowIfNull(diaryService);
         ArgumentNullException.ThrowIfNull(options);
@@ -77,6 +85,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             ?? new GlycemicDiaryStoryService(_completenessScoringService);
         _patternAnalysisService = patternAnalysisService
             ?? new GlycemicDiaryPatternAnalysisService(_completenessScoringService);
+        _weeklyReviewGenerationService = weeklyReviewGenerationService
+            ?? new GlycemicDiaryWeeklyReviewGenerationService(
+                _diaryService,
+                new GlycemicDiaryWeeklyReviewService(
+                    _completenessScoringService,
+                    _patternAnalysisService));
     }
 
     /// <inheritdoc />
@@ -95,17 +109,22 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             return Result<GlycemicDiaryExportFile>.Failure(diaryResult.Error);
         }
 
+        var report = diaryResult.Value;
+        var weeklyReviewResult = await CreateWeeklyReviewAsync(report, cancellationToken)
+            .ConfigureAwait(false);
+
         QuestPDF.Settings.License = LicenseType.Community;
 
         var content = Document
             .Create(container => ComposeDocument(
                 container,
-                diaryResult.Value,
-                request.PreferredUnit))
+                report,
+                request.PreferredUnit,
+                weeklyReviewResult.IsSuccess ? weeklyReviewResult.Value : null))
             .GeneratePdf();
 
         var file = new GlycemicDiaryExportFile(
-            CreateFileName(request, diaryResult.Value),
+            CreateFileName(request, report),
             GlycemicDiaryPdfExportOptions.PdfContentType,
             content);
 
@@ -120,10 +139,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <param name="container">The document container.</param>
     /// <param name="report">The glycemic diary report.</param>
     /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <param name="weeklyReview">The optional weekly review.</param>
     private void ComposeDocument(
         IDocumentContainer container,
         GlycemicDiaryReport report,
-        GlucoseUnit preferredUnit)
+        GlucoseUnit preferredUnit,
+        GlycemicDiaryWeeklyReview? weeklyReview)
     {
         container.Page(page =>
         {
@@ -132,7 +153,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             page.DefaultTextStyle(style => style.FontSize(9));
 
             page.Header().Element(header => ComposeHeader(header, report));
-            page.Content().Element(content => ComposeContent(content, report, preferredUnit));
+            page.Content().Element(content => ComposeContent(content, report, preferredUnit, weeklyReview));
             page.Footer().Element(ComposeFooter);
         });
     }
@@ -220,10 +241,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <param name="container">The container.</param>
     /// <param name="report">The glycemic diary report.</param>
     /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <param name="weeklyReview">The optional weekly review.</param>
     private void ComposeContent(
         IContainer container,
         GlycemicDiaryReport report,
-        GlucoseUnit preferredUnit)
+        GlucoseUnit preferredUnit,
+        GlycemicDiaryWeeklyReview? weeklyReview)
     {
         container.Column(column =>
         {
@@ -235,6 +258,9 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
             column.Item()
                 .Element(content => ComposeStory(content, report));
+
+            column.Item()
+                .Element(content => ComposeWeeklyReview(content, weeklyReview));
 
             column.Item()
                 .Element(content => ComposeLocalPatterns(content, report));
@@ -364,6 +390,134 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 .FontSize(8)
                 .FontColor(TextMuted);
         });
+    }
+
+    /// <summary>
+    /// Composes the weekly review section.
+    /// </summary>
+    /// <param name="container">The container.</param>
+    /// <param name="weeklyReview">The optional weekly review.</param>
+    private static void ComposeWeeklyReview(
+        IContainer container,
+        GlycemicDiaryWeeklyReview? weeklyReview)
+    {
+        container.Element(Card).Column(column =>
+        {
+            column.Spacing(8);
+
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Column(title =>
+                {
+                    title.Item().Text("Weekly review")
+                        .FontSize(15)
+                        .SemiBold()
+                        .FontColor(BrandBlueDark);
+
+                    title.Item().Text("Comparison with the previous equivalent period.")
+                        .FontSize(8)
+                        .FontColor(TextMuted);
+                });
+
+                row.ConstantItem(90)
+                    .AlignRight()
+                    .AlignMiddle()
+                    .Text(weeklyReview?.RequiresCaution == true ? "Caution" : "Info")
+                    .FontSize(9)
+                    .SemiBold()
+                    .FontColor(weeklyReview?.RequiresCaution == true ? WarningText : SuccessText);
+            });
+
+            if (weeklyReview is null)
+            {
+                column.Item().Text("Weekly review unavailable")
+                    .FontSize(11)
+                    .SemiBold()
+                    .FontColor(BrandBlueDark);
+
+                column.Item().Text("The weekly comparison could not be generated for this export. The diary data below is still available.")
+                    .FontSize(9)
+                    .FontColor(TextSecondary);
+
+                return;
+            }
+
+            column.Item().Text(weeklyReview.Headline)
+                .FontSize(11)
+                .SemiBold()
+                .FontColor(BrandBlueDark);
+
+            column.Item().Text(weeklyReview.SummaryText)
+                .FontSize(9)
+                .FontColor(TextSecondary);
+
+            column.Item().Text(weeklyReview.CurrentHistoryReliabilityText)
+                .FontSize(8)
+                .FontColor(TextMuted);
+
+            foreach (var change in weeklyReview.Changes.Take(4))
+            {
+                column.Item()
+                    .PaddingTop(4)
+                    .BorderTop(1)
+                    .BorderColor(BrandBorder)
+                    .PaddingTop(6)
+                    .Row(row =>
+                    {
+                        row.RelativeItem(2).Text(change.DisplayName)
+                            .FontSize(8)
+                            .SemiBold()
+                            .FontColor(BrandBlueDark);
+
+                        row.RelativeItem().AlignRight().Text(change.PreviousValueText)
+                            .FontSize(8)
+                            .FontColor(TextSecondary);
+
+                        row.RelativeItem().AlignRight().Text(change.CurrentValueText)
+                            .FontSize(8)
+                            .FontColor(TextSecondary);
+
+                        row.RelativeItem().AlignRight().Text(change.DeltaText)
+                            .FontSize(8)
+                            .SemiBold()
+                            .FontColor(GetWeeklyReviewSeverityColor(change.Severity));
+                    });
+            }
+        });
+    }
+
+    /// <summary>
+    /// Creates a weekly review for the exported diary report.
+    /// </summary>
+    /// <param name="report">The diary report.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The weekly review generation result.</returns>
+    private Task<Result<GlycemicDiaryWeeklyReview>> CreateWeeklyReviewAsync(
+        GlycemicDiaryReport report,
+        CancellationToken cancellationToken)
+    {
+        return _weeklyReviewGenerationService.GenerateAsync(
+            new GlycemicDiaryWeeklyReviewRequest(
+                report.PeriodStartsAt,
+                report.PeriodEndsAt),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Gets the display color for a weekly review severity.
+    /// </summary>
+    /// <param name="severity">The signal severity.</param>
+    /// <returns>The display color.</returns>
+    private static string GetWeeklyReviewSeverityColor(
+        GlycemicDiaryReviewSignalSeverity severity)
+    {
+        return severity switch
+        {
+            GlycemicDiaryReviewSignalSeverity.Important => WarningText,
+            GlycemicDiaryReviewSignalSeverity.Caution => WarningText,
+            GlycemicDiaryReviewSignalSeverity.Info => SuccessText,
+            _ => TextSecondary
+        };
     }
 
     /// <summary>

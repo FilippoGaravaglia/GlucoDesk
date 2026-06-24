@@ -10,6 +10,10 @@ using GlucoDesk.Application.Cgm.Diary.Patterns.Enums;
 using GlucoDesk.Application.Cgm.Diary.Patterns.Results;
 using GlucoDesk.Application.Cgm.Diary.Patterns.Services;
 using GlucoDesk.Application.Cgm.Diary.Patterns.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Requests;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Results;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Services;
+using GlucoDesk.Application.Cgm.Diary.Reviews.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Completeness.Services;
 using GlucoDesk.Application.Cgm.History.Completeness.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
@@ -29,6 +33,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     private readonly IGlucoseHistoryCompletenessScoringService _completenessScoringService;
     private readonly IGlycemicDiaryStoryService _storyService;
     private readonly IGlycemicDiaryPatternAnalysisService _patternAnalysisService;
+    private readonly IGlycemicDiaryWeeklyReviewGenerationService _weeklyReviewGenerationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ClosedXmlGlycemicDiaryExcelExportService"/> class.
@@ -38,12 +43,14 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     /// <param name="completenessScoringService">The optional history completeness scoring service.</param>
     /// <param name="storyService">The optional glycemic diary story service.</param>
     /// <param name="patternAnalysisService">The optional glycemic diary pattern analysis service.</param>
+    /// <param name="weeklyReviewGenerationService">The optional weekly review generation service.</param>
     public ClosedXmlGlycemicDiaryExcelExportService(
         IGlycemicDiaryService diaryService,
         GlycemicDiaryExcelExportOptions options,
         IGlucoseHistoryCompletenessScoringService? completenessScoringService = null,
         IGlycemicDiaryStoryService? storyService = null,
-        IGlycemicDiaryPatternAnalysisService? patternAnalysisService = null)
+        IGlycemicDiaryPatternAnalysisService? patternAnalysisService = null,
+        IGlycemicDiaryWeeklyReviewGenerationService? weeklyReviewGenerationService = null)
     {
         ArgumentNullException.ThrowIfNull(diaryService);
         ArgumentNullException.ThrowIfNull(options);
@@ -56,6 +63,12 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
             ?? new GlycemicDiaryStoryService(_completenessScoringService);
         _patternAnalysisService = patternAnalysisService
             ?? new GlycemicDiaryPatternAnalysisService(_completenessScoringService);
+        _weeklyReviewGenerationService = weeklyReviewGenerationService
+            ?? new GlycemicDiaryWeeklyReviewGenerationService(
+                _diaryService,
+                new GlycemicDiaryWeeklyReviewService(
+                    _completenessScoringService,
+                    _patternAnalysisService));
     }
 
     /// <inheritdoc />
@@ -76,7 +89,20 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
 
         using var workbook = new XLWorkbook();
 
+        var weeklyReviewResult = await CreateWeeklyReviewAsync(diaryResult.Value, cancellationToken)
+            .ConfigureAwait(false);
+
         CreateOverviewWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
+
+        if (weeklyReviewResult.IsSuccess)
+        {
+            CreateWeeklyReviewWorksheet(workbook, weeklyReviewResult.Value);
+        }
+        else
+        {
+            CreateWeeklyReviewUnavailableWorksheet(workbook);
+        }
+
         CreatePatternsWorksheet(workbook, diaryResult.Value);
         CreateDailyDiaryWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
         CreateTimeBlocksWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
@@ -158,6 +184,135 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("B17").Style.Alignment.WrapText = true;
         worksheet.Cell("B19").Style.Alignment.WrapText = true;
         worksheet.SheetView.FreezeRows(3);
+    }
+
+    /// <summary>
+    /// Creates the weekly review unavailable worksheet.
+    /// </summary>
+    /// <param name="workbook">The workbook.</param>
+    private static void CreateWeeklyReviewUnavailableWorksheet(
+        XLWorkbook workbook)
+    {
+        var worksheet = workbook.Worksheets.Add("Weekly review");
+
+        worksheet.Cell("A1").Value = "Weekly review";
+        worksheet.Cell("A2").Value = "Weekly review unavailable";
+        worksheet.Cell("A3").Value = "The weekly comparison could not be generated for this export. The diary data is still available.";
+
+        worksheet.Range("A1:F1").Merge();
+        worksheet.Range("A2:F2").Merge();
+        worksheet.Range("A3:F3").Merge();
+
+        worksheet.Cell("A1").Style.Font.Bold = true;
+        worksheet.Cell("A1").Style.Font.FontSize = 16;
+        worksheet.Cell("A2").Style.Font.Bold = true;
+        worksheet.Cell("A3").Style.Alignment.WrapText = true;
+        worksheet.Cell("A3").Style.Font.FontColor = XLColor.Gray;
+
+        worksheet.Column("A").Width = 72;
+    }
+
+    /// <summary>
+    /// Creates the weekly review worksheet.
+    /// </summary>
+    /// <param name="workbook">The workbook.</param>
+    /// <param name="weeklyReview">The weekly review.</param>
+    private static void CreateWeeklyReviewWorksheet(
+        XLWorkbook workbook,
+        GlycemicDiaryWeeklyReview weeklyReview)
+    {
+        var worksheet = workbook.Worksheets.Add("Weekly review");
+
+        worksheet.Cell("A1").Value = "Weekly review";
+        worksheet.Cell("A2").Value = weeklyReview.Headline;
+        worksheet.Cell("A3").Value = weeklyReview.SummaryText;
+        worksheet.Cell("A4").Value = weeklyReview.CurrentHistoryReliabilityText;
+
+        worksheet.Range("A1:F1").Merge();
+        worksheet.Range("A2:F2").Merge();
+        worksheet.Range("A3:F3").Merge();
+        worksheet.Range("A4:F4").Merge();
+
+        worksheet.Cell("A1").Style.Font.Bold = true;
+        worksheet.Cell("A1").Style.Font.FontSize = 16;
+        worksheet.Cell("A2").Style.Font.Bold = true;
+        worksheet.Cell("A3").Style.Alignment.WrapText = true;
+        worksheet.Cell("A4").Style.Alignment.WrapText = true;
+        worksheet.Cell("A4").Style.Font.FontColor = XLColor.Gray;
+
+        worksheet.Cell("A6").Value = "Metric";
+        worksheet.Cell("B6").Value = "Previous";
+        worksheet.Cell("C6").Value = "Current";
+        worksheet.Cell("D6").Value = "Delta";
+        worksheet.Cell("E6").Value = "Direction";
+        worksheet.Cell("F6").Value = "Severity";
+        worksheet.Cell("G6").Value = "Description";
+
+        var header = worksheet.Range("A6:G6");
+        header.Style.Font.Bold = true;
+        header.Style.Fill.BackgroundColor = XLColor.FromHtml("#EAF4FF");
+        header.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        header.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+        var row = 7;
+
+        foreach (var change in weeklyReview.Changes)
+        {
+            worksheet.Cell(row, 1).Value = change.DisplayName;
+            worksheet.Cell(row, 2).Value = change.PreviousValueText;
+            worksheet.Cell(row, 3).Value = change.CurrentValueText;
+            worksheet.Cell(row, 4).Value = change.DeltaText;
+            worksheet.Cell(row, 5).Value = change.Direction.ToString();
+            worksheet.Cell(row, 6).Value = change.Severity.ToString();
+            worksheet.Cell(row, 7).Value = change.Description;
+
+            row++;
+        }
+
+        if (weeklyReview.Highlights.Count > 0)
+        {
+            row += 2;
+            worksheet.Cell(row, 1).Value = "Highlights";
+            worksheet.Cell(row, 1).Style.Font.Bold = true;
+            row++;
+
+            foreach (var highlight in weeklyReview.Highlights)
+            {
+                worksheet.Cell(row, 1).Value = highlight;
+                worksheet.Range(row, 1, row, 7).Merge();
+                row++;
+            }
+        }
+
+        worksheet.Range(6, 1, Math.Max(row - 1, 6), 7).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        worksheet.Range(6, 1, Math.Max(row - 1, 6), 7).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+        worksheet.Column("A").Width = 24;
+        worksheet.Column("B").Width = 18;
+        worksheet.Column("C").Width = 18;
+        worksheet.Column("D").Width = 14;
+        worksheet.Column("E").Width = 18;
+        worksheet.Column("F").Width = 14;
+        worksheet.Column("G").Width = 72;
+        worksheet.Column("G").Style.Alignment.WrapText = true;
+        worksheet.SheetView.FreezeRows(6);
+    }
+
+    /// <summary>
+    /// Creates a weekly review for the exported diary report.
+    /// </summary>
+    /// <param name="report">The diary report.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The weekly review generation result.</returns>
+    private Task<Result<GlycemicDiaryWeeklyReview>> CreateWeeklyReviewAsync(
+        GlycemicDiaryReport report,
+        CancellationToken cancellationToken)
+    {
+        return _weeklyReviewGenerationService.GenerateAsync(
+            new GlycemicDiaryWeeklyReviewRequest(
+                report.PeriodStartsAt,
+                report.PeriodEndsAt),
+            cancellationToken);
     }
 
     /// <summary>
