@@ -20,6 +20,7 @@ public static class GlycemicDiaryReviewServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.TryAddScoped<IGlycemicDiaryWeeklyReviewService, GlycemicDiaryWeeklyReviewService>();
+        services.TryAddScoped<IGlycemicDiaryWeeklyReviewGenerationService, GlycemicDiaryWeeklyReviewGenerationService>();
 
         return services;
     }
