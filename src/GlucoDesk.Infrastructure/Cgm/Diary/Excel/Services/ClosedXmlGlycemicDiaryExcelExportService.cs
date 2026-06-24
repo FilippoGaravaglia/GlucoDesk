@@ -4,6 +4,8 @@ using GlucoDesk.Application.Cgm.Diary.Exports.Results;
 using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.Stories.Services;
+using GlucoDesk.Application.Cgm.Diary.Stories.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Completeness.Services;
 using GlucoDesk.Application.Cgm.History.Completeness.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
@@ -21,6 +23,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     private readonly IGlycemicDiaryService _diaryService;
     private readonly GlycemicDiaryExcelExportOptions _options;
     private readonly IGlucoseHistoryCompletenessScoringService _completenessScoringService;
+    private readonly IGlycemicDiaryStoryService _storyService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ClosedXmlGlycemicDiaryExcelExportService"/> class.
@@ -28,10 +31,12 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     /// <param name="diaryService">The glycemic diary service.</param>
     /// <param name="options">The Excel export options.</param>
     /// <param name="completenessScoringService">The optional history completeness scoring service.</param>
+    /// <param name="storyService">The optional glycemic diary story service.</param>
     public ClosedXmlGlycemicDiaryExcelExportService(
         IGlycemicDiaryService diaryService,
         GlycemicDiaryExcelExportOptions options,
-        IGlucoseHistoryCompletenessScoringService? completenessScoringService = null)
+        IGlucoseHistoryCompletenessScoringService? completenessScoringService = null,
+        IGlycemicDiaryStoryService? storyService = null)
     {
         ArgumentNullException.ThrowIfNull(diaryService);
         ArgumentNullException.ThrowIfNull(options);
@@ -40,6 +45,8 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         _options = options;
         _completenessScoringService = completenessScoringService
             ?? new GlucoseHistoryCompletenessScoringService();
+        _storyService = storyService
+            ?? new GlycemicDiaryStoryService(_completenessScoringService);
     }
 
     /// <inheritdoc />
@@ -91,6 +98,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     {
         var worksheet = workbook.Worksheets.Add("Overview");
         var completenessScore = _completenessScoringService.Calculate(report.OverallContinuity);
+        var story = _storyService.CreateStory(report);
 
         worksheet.Cell("A1").Value = _options.ApplicationName;
         worksheet.Cell("A2").Value = "Glycemic diary";
@@ -120,22 +128,25 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("B15").Value = $"{completenessScore.StatusText} · {completenessScore.CoverageText}";
         worksheet.Cell("A16").Value = "Reliability details";
         worksheet.Cell("B16").Value = completenessScore.DetailText;
-        worksheet.Cell("A18").Value = "Safety notice";
-        worksheet.Cell("B18").Value = _options.SafetyDisclaimer;
+        worksheet.Cell("A17").Value = "Glucose story";
+        worksheet.Cell("B17").Value = $"{story.Headline}: {story.SummaryText}";
+        worksheet.Cell("A19").Value = "Safety notice";
+        worksheet.Cell("B19").Value = _options.SafetyDisclaimer;
 
         worksheet.Cell("A1").Style.Font.Bold = true;
         worksheet.Cell("A1").Style.Font.FontSize = 18;
         worksheet.Cell("A2").Style.Font.Bold = true;
         worksheet.Cell("A2").Style.Font.FontSize = 14;
 
-        worksheet.Range("A4:A18").Style.Font.Bold = true;
-        worksheet.Range("A4:B16").Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        worksheet.Range("A4:B16").Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+        worksheet.Range("A4:A19").Style.Font.Bold = true;
+        worksheet.Range("A4:B17").Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        worksheet.Range("A4:B17").Style.Border.InsideBorder = XLBorderStyleValues.Thin;
         worksheet.Range("B7:B9").Style.NumberFormat.Format = GetGlucoseNumberFormat(preferredUnit);
         worksheet.Column("A").Width = 24;
         worksheet.Column("B").Width = 42;
         worksheet.Cell("B16").Style.Alignment.WrapText = true;
-        worksheet.Cell("B18").Style.Alignment.WrapText = true;
+        worksheet.Cell("B17").Style.Alignment.WrapText = true;
+        worksheet.Cell("B19").Style.Alignment.WrapText = true;
         worksheet.SheetView.FreezeRows(3);
     }
 

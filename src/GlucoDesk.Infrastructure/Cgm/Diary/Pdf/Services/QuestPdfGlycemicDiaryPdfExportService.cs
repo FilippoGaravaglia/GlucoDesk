@@ -5,6 +5,8 @@ using GlucoDesk.Application.Cgm.Diary.Exports.Results;
 using GlucoDesk.Application.Cgm.Diary.Exports.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
+using GlucoDesk.Application.Cgm.Diary.Stories.Services;
+using GlucoDesk.Application.Cgm.Diary.Stories.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Completeness.Services;
 using GlucoDesk.Application.Cgm.History.Completeness.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
@@ -42,6 +44,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private readonly IGlycemicDiaryService _diaryService;
     private readonly GlycemicDiaryPdfExportOptions _options;
     private readonly IGlucoseHistoryCompletenessScoringService _completenessScoringService;
+    private readonly IGlycemicDiaryStoryService _storyService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QuestPdfGlycemicDiaryPdfExportService"/> class.
@@ -49,10 +52,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <param name="diaryService">The glycemic diary service.</param>
     /// <param name="options">The PDF export options.</param>
     /// <param name="completenessScoringService">The optional history completeness scoring service.</param>
+    /// <param name="storyService">The optional glycemic diary story service.</param>
     public QuestPdfGlycemicDiaryPdfExportService(
         IGlycemicDiaryService diaryService,
         GlycemicDiaryPdfExportOptions options,
-        IGlucoseHistoryCompletenessScoringService? completenessScoringService = null)
+        IGlucoseHistoryCompletenessScoringService? completenessScoringService = null,
+        IGlycemicDiaryStoryService? storyService = null)
     {
         ArgumentNullException.ThrowIfNull(diaryService);
         ArgumentNullException.ThrowIfNull(options);
@@ -61,6 +66,8 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         _options = options;
         _completenessScoringService = completenessScoringService
             ?? new GlucoseHistoryCompletenessScoringService();
+        _storyService = storyService
+            ?? new GlycemicDiaryStoryService(_completenessScoringService);
     }
 
     /// <inheritdoc />
@@ -218,6 +225,9 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 .Element(content => ComposeOverview(content, report, preferredUnit));
 
             column.Item()
+                .Element(content => ComposeStory(content, report));
+
+            column.Item()
                 .Element(content => ComposeDailyDiaryTable(content, report, preferredUnit));
 
             column.Item()
@@ -288,6 +298,59 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 WriteMetric(table, "Incomplete days", report.IncompleteDaysCount.ToString(CultureInfo.InvariantCulture));
                 WriteMetric(table, "Empty days", report.EmptyDaysCount.ToString(CultureInfo.InvariantCulture));
             });
+        });
+    }
+
+    /// <summary>
+    /// Composes the glucose story section.
+    /// </summary>
+    /// <param name="container">The container.</param>
+    /// <param name="report">The glycemic diary report.</param>
+    private void ComposeStory(
+        IContainer container,
+        GlycemicDiaryReport report)
+    {
+        var story = _storyService.CreateStory(report);
+
+        container.Element(Card).Column(column =>
+        {
+            column.Spacing(8);
+
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Column(title =>
+                {
+                    title.Item().Text("Glucose story")
+                        .FontSize(15)
+                        .SemiBold()
+                        .FontColor(BrandBlueDark);
+
+                    title.Item().Text("Human-readable interpretation of the selected diary period.")
+                        .FontSize(8)
+                        .FontColor(TextMuted);
+                });
+
+                row.ConstantItem(110)
+                    .AlignRight()
+                    .AlignMiddle()
+                    .Text(story.Level.ToString())
+                    .FontSize(9)
+                    .SemiBold()
+                    .FontColor(BrandBlueDark);
+            });
+
+            column.Item().Text(story.Headline)
+                .FontSize(12)
+                .SemiBold()
+                .FontColor(BrandBlueDark);
+
+            column.Item().Text(story.SummaryText)
+                .FontSize(9)
+                .FontColor(TextSecondary);
+
+            column.Item().Text(story.HistoryReliabilityText)
+                .FontSize(8)
+                .FontColor(TextMuted);
         });
     }
 
