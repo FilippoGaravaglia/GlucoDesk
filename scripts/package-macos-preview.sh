@@ -171,6 +171,7 @@ fi
 require_command dotnet
 require_command ditto
 require_command hdiutil
+require_command shasum
 
 if [[ -z "$RID" ]]; then
   RID="$(detect_runtime_identifier)"
@@ -188,6 +189,7 @@ MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 ZIP_PATH="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}.zip"
 DMG_PATH="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}.dmg"
+CHECKSUMS_PATH="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}-checksums.sha256"
 
 info "packaging ${APP_NAME} ${VERSION} for ${RID}"
 
@@ -261,12 +263,20 @@ hdiutil create \
   -format UDZO \
   "$DMG_PATH" >/dev/null
 
+info "creating SHA256 checksums"
+rm -f "$CHECKSUMS_PATH"
+(
+  cd "$ARTIFACT_ROOT"
+  shasum -a 256 "$(basename "$ZIP_PATH")" "$(basename "$DMG_PATH")" > "$(basename "$CHECKSUMS_PATH")"
+)
+
 info "package completed"
 echo
 echo "Artifacts:"
 echo "  App: $APP_BUNDLE"
 echo "  Zip: $ZIP_PATH"
 echo "  DMG: $DMG_PATH"
+echo "  Checksums: $CHECKSUMS_PATH"
 echo
 echo "Manual smoke test:"
 echo "  open \"$APP_BUNDLE\""
