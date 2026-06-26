@@ -6,6 +6,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$windowsIconPath = Join-Path (Split-Path -Parent $PSScriptRoot) "src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.ico"
+
+if (-not (Test-Path $windowsIconPath -PathType Leaf)) {
+    throw "error: Windows application icon not found: $windowsIconPath. Generate it with scripts/create-windows-app-icon.sh from macOS before creating Windows release assets."
+}
+
+
+
 $AppName = "GlucoDesk"
 
 $RootDir = Resolve-Path (Join-Path $PSScriptRoot "..")
