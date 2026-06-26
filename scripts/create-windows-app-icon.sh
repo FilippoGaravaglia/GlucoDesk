@@ -7,7 +7,7 @@ APP_NAME="GlucoDesk"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE_ICON="$ROOT_DIR/src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png"
 OUTPUT_ICON="$ROOT_DIR/src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.ico"
-TEMP_DIR="$ROOT_DIR/artifacts/icon-generation/windows-ico"
+TOOLS_DIR="$ROOT_DIR/artifacts/icon-generation/windows-icon-tools"
 
 fail() {
   echo "error: $*" >&2
@@ -25,81 +25,113 @@ require_command() {
 }
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-  fail "Windows icon generation currently uses macOS sips and must be run on macOS"
+  fail "Windows icon generation currently runs from macOS because it optimizes the existing macOS artwork source"
 fi
 
-require_command sips
 require_command python3
 
 if [[ ! -f "$SOURCE_ICON" ]]; then
   fail "source icon not found: $SOURCE_ICON"
 fi
 
-info "generating Windows .ico for $APP_NAME"
+PYTHON_BIN="python3"
 
-rm -rf "$TEMP_DIR"
-mkdir -p "$TEMP_DIR"
+if ! "$PYTHON_BIN" - <<'PY' >/dev/null 2>&1
+from PIL import Image
+PY
+then
+  info "Pillow not found, creating local icon-generation virtual environment"
+  rm -rf "$TOOLS_DIR"
+  python3 -m venv "$TOOLS_DIR"
+  PYTHON_BIN="$TOOLS_DIR/bin/python"
+  "$PYTHON_BIN" -m pip install --upgrade pip >/dev/null
+  "$PYTHON_BIN" -m pip install pillow >/dev/null
+fi
 
-for size in 16 24 32 48 64 128 256; do
-  sips -z "$size" "$size" "$SOURCE_ICON" --out "$TEMP_DIR/icon_${size}x${size}.png" >/dev/null
-done
+info "generating Windows-optimized .ico for $APP_NAME"
 
-python3 - "$TEMP_DIR" "$OUTPUT_ICON" <<'PY'
+"$PYTHON_BIN" - "$SOURCE_ICON" "$OUTPUT_ICON" <<'PY'
 from pathlib import Path
-import struct
+from PIL import Image
+
 import sys
 
-temp_dir = Path(sys.argv[1])
+source_icon = Path(sys.argv[1])
 output_icon = Path(sys.argv[2])
 
 sizes = [16, 24, 32, 48, 64, 128, 256]
-entries = []
+target_fill_ratio = 0.88
+white_threshold = 245
+alpha_threshold = 12
 
-for size in sizes:
-    png_path = temp_dir / f"icon_{size}x{size}.png"
+image = Image.open(source_icon).convert("RGBA")
+pixels = image.load()
 
-    if not png_path.exists():
-        raise SystemExit(f"missing PNG icon size: {png_path}")
+width, height = image.size
 
-    data = png_path.read_bytes()
-    width_byte = 0 if size >= 256 else size
-    height_byte = 0 if size >= 256 else size
+# Convert white / near-white background pixels to transparent.
+# This removes the white square that looks bad on the Windows taskbar.
+for y in range(height):
+    for x in range(width):
+        r, g, b, a = pixels[x, y]
 
-    entries.append((size, width_byte, height_byte, data))
+        if a <= alpha_threshold:
+            pixels[x, y] = (r, g, b, 0)
+            continue
 
-header_size = 6
-directory_entry_size = 16
-image_offset = header_size + directory_entry_size * len(entries)
+        if r >= white_threshold and g >= white_threshold and b >= white_threshold:
+            pixels[x, y] = (r, g, b, 0)
 
-ico = bytearray()
+bbox = image.getbbox()
 
-ico += struct.pack("<HHH", 0, 1, len(entries))
+if bbox is None:
+    raise SystemExit("source icon appears empty after background cleanup")
 
-for _size, width_byte, height_byte, data in entries:
-    ico += struct.pack(
-        "<BBBBHHII",
-        width_byte,
-        height_byte,
-        0,
-        0,
-        1,
-        32,
-        len(data),
-        image_offset,
-    )
+cropped = image.crop(bbox)
 
-    image_offset += len(data)
+# Add a tiny transparent padding before resizing, so the logo does not touch edges.
+padding = max(2, round(max(cropped.size) * 0.04))
+padded = Image.new(
+    "RGBA",
+    (cropped.width + padding * 2, cropped.height + padding * 2),
+    (0, 0, 0, 0),
+)
+padded.alpha_composite(cropped, (padding, padding))
 
-for _size, _width_byte, _height_byte, data in entries:
-    ico += data
+base_size = 256
+max_logo_size = round(base_size * target_fill_ratio)
+scale = max_logo_size / max(padded.width, padded.height)
+
+resized = padded.resize(
+    (
+        max(1, round(padded.width * scale)),
+        max(1, round(padded.height * scale)),
+    ),
+    Image.Resampling.LANCZOS,
+)
+
+canvas = Image.new("RGBA", (base_size, base_size), (0, 0, 0, 0))
+canvas.alpha_composite(
+    resized,
+    (
+        (base_size - resized.width) // 2,
+        (base_size - resized.height) // 2,
+    ),
+)
 
 output_icon.parent.mkdir(parents=True, exist_ok=True)
-output_icon.write_bytes(ico)
+
+canvas.save(
+    output_icon,
+    format="ICO",
+    sizes=[(size, size) for size in sizes],
+)
 
 print(f"created {output_icon}")
+print(f"source size: {image.size}")
+print(f"content bbox: {bbox}")
+print(f"optimized logo size: {resized.size}")
 PY
-
-rm -rf "$TEMP_DIR"
 
 info "Windows .ico generated successfully"
 echo "Icon:"
