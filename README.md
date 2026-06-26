@@ -657,6 +657,108 @@ The `artifacts/` directory is ignored by Git.
 
 ---
 
+<!-- GLUCODESK_PREVIEW_INSTALL_START -->
+## Preview installation
+
+GlucoDesk is currently distributed as a preview desktop application.
+
+> Safety notice: GlucoDesk is not a medical device. It must not be used to make insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions. Always rely on your official CGM system, insulin pump, glucose meter, and clinical guidance for medical decisions.
+
+### macOS preview
+
+Recommended asset:
+
+```text
+GlucoDesk-<version>-osx-arm64.dmg
+```
+
+Installation flow:
+
+1. Download the macOS DMG from the GitHub Release.
+2. Open the `.dmg` file.
+3. Drag `GlucoDesk.app` to `Applications`, if the DMG layout provides that shortcut.
+4. Open GlucoDesk from `Applications`.
+
+If macOS Gatekeeper warns that the app cannot be opened because it is not notarized yet, this is expected for the preview. Notarization is planned as a production-readiness step.
+
+Alternative macOS asset:
+
+```text
+GlucoDesk-<version>-osx-arm64.zip
+```
+
+The ZIP is useful for testing and manual extraction, while the DMG is the preferred user-facing macOS preview package.
+
+### Windows preview
+
+Recommended asset:
+
+```text
+GlucoDesk-<version>-win-x64-setup.exe
+```
+
+The Windows setup installer:
+
+- installs GlucoDesk for the current Windows user;
+- does not require administrator privileges;
+- adds Start Menu shortcuts;
+- can optionally create a desktop shortcut;
+- includes the MIT license page;
+- includes a safety notice page before installation;
+- supports standard Windows uninstall.
+
+Windows may show a SmartScreen warning because the preview installer is not code-signed yet. This is expected until Windows code signing is added.
+
+Alternative Windows asset:
+
+```text
+GlucoDesk-<version>-win-x64-portable.zip
+```
+
+Portable ZIP usage:
+
+1. Download the ZIP from the GitHub Release.
+2. Extract it to a local folder.
+3. Run `GlucoDesk.Desktop.exe`.
+
+The portable ZIP does not create Start Menu shortcuts and does not register an uninstall entry.
+
+### Verify release checksums
+
+Each preview release includes SHA256 checksum files.
+
+On macOS or Linux:
+
+```bash
+shasum -a 256 -c GlucoDesk-<version>-osx-arm64-checksums.sha256
+```
+
+On Windows PowerShell:
+
+```powershell
+Get-FileHash .\GlucoDesk-<version>-win-x64-setup.exe -Algorithm SHA256
+Get-FileHash .\GlucoDesk-<version>-win-x64-portable.zip -Algorithm SHA256
+```
+
+Compare the output with:
+
+```text
+GlucoDesk-<version>-win-x64-checksums.sha256
+```
+
+### Current preview limitations
+
+The preview is intentionally limited:
+
+- macOS notarization is not available yet;
+- Windows code signing is not available yet;
+- auto-update is not available yet;
+- Windows support currently targets `win-x64`;
+- macOS preview packaging currently targets Apple Silicon;
+- data completeness depends on local history availability and provider connectivity;
+- exports are intended for personal review and discussion with healthcare professionals, not urgent or automated medical decisions.
+<!-- GLUCODESK_PREVIEW_INSTALL_END -->
+
 ## Architecture overview
 
 GlucoDesk follows a layered .NET architecture.
