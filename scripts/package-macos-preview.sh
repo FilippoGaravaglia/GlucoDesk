@@ -10,6 +10,11 @@ CONFIGURATION="${CONFIGURATION:-Release}"
 RUN_TESTS="${RUN_TESTS:-true}"
 ADHOC_SIGN="${GLUCODESK_ADHOC_SIGN:-true}"
 SIGNING_IDENTITY="${GLUCODESK_CODESIGN_IDENTITY:-}"
+NOTARIZE="${GLUCODESK_NOTARIZE:-false}"
+NOTARY_KEYCHAIN_PROFILE="${GLUCODESK_NOTARY_KEYCHAIN_PROFILE:-}"
+NOTARY_APPLE_ID="${GLUCODESK_NOTARY_APPLE_ID:-}"
+NOTARY_TEAM_ID="${GLUCODESK_NOTARY_TEAM_ID:-}"
+NOTARY_PASSWORD="${GLUCODESK_NOTARY_PASSWORD:-}"
 
 VERSION="${1:-0.2.1-preview}"
 RID="${2:-}"
@@ -181,6 +186,46 @@ Always rely on approved CGM apps, pump systems, glucose meters, and healthcare p
 SAFETY
 }
 
+
+notarize_dmg_if_configured() {
+  local dmg_path="$1"
+
+  if [[ "$NOTARIZE" != "true" ]]; then
+    info "skipping macOS notarization because GLUCODESK_NOTARIZE=${NOTARIZE}"
+    return 0
+  fi
+
+  if [[ -z "$SIGNING_IDENTITY" ]]; then
+    fail "macOS notarization requires GLUCODESK_CODESIGN_IDENTITY to be set to a valid Developer ID Application certificate"
+  fi
+
+  require_command xcrun
+
+  info "submitting dmg for Apple notarization"
+
+  if [[ -n "$NOTARY_KEYCHAIN_PROFILE" ]]; then
+    xcrun notarytool submit "$dmg_path" \
+      --keychain-profile "$NOTARY_KEYCHAIN_PROFILE" \
+      --wait
+  else
+    if [[ -z "$NOTARY_APPLE_ID" || -z "$NOTARY_TEAM_ID" || -z "$NOTARY_PASSWORD" ]]; then
+      fail "macOS notarization requires either GLUCODESK_NOTARY_KEYCHAIN_PROFILE or GLUCODESK_NOTARY_APPLE_ID, GLUCODESK_NOTARY_TEAM_ID and GLUCODESK_NOTARY_PASSWORD"
+    fi
+
+    xcrun notarytool submit "$dmg_path" \
+      --apple-id "$NOTARY_APPLE_ID" \
+      --team-id "$NOTARY_TEAM_ID" \
+      --password "$NOTARY_PASSWORD" \
+      --wait
+  fi
+
+  info "stapling notarization ticket to dmg"
+  xcrun stapler staple "$dmg_path"
+
+  info "validating stapled notarization ticket"
+  xcrun stapler validate "$dmg_path"
+}
+
 if [[ "$(uname -s)" != "Darwin" ]]; then
   fail "macOS packaging must be run on macOS"
 fi
@@ -290,6 +335,8 @@ hdiutil create \
   -ov \
   -format UDZO \
   "$DMG_PATH" >/dev/null
+
+notarize_dmg_if_configured "$DMG_PATH"
 
 info "creating SHA256 checksums"
 rm -f "$CHECKSUMS_PATH"
