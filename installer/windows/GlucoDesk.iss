@@ -101,8 +101,9 @@ var
 
 procedure InitializeWizard;
 var
-  DescriptionLabel: TNewStaticText;
   GroupLabel: TNewStaticText;
+  ContentLeft: Integer;
+  ContentWidth: Integer;
 begin
   AdditionalTasksPage := CreateCustomPage(
     wpSelectDir,
@@ -110,28 +111,23 @@ begin
     'Which additional tasks should be performed?'
   );
 
-  DescriptionLabel := TNewStaticText.Create(WizardForm);
-  DescriptionLabel.Parent := AdditionalTasksPage.Surface;
-  DescriptionLabel.Left := ScaleX(8);
-  DescriptionLabel.Top := ScaleY(8);
-  DescriptionLabel.Width := AdditionalTasksPage.SurfaceWidth - ScaleX(16);
-  DescriptionLabel.Height := ScaleY(32);
-  DescriptionLabel.Caption := 'Choose whether GlucoDesk should create additional shortcuts.';
+  ContentLeft := ScaleX(40);
+  ContentWidth := AdditionalTasksPage.SurfaceWidth - ScaleX(80);
 
   GroupLabel := TNewStaticText.Create(WizardForm);
   GroupLabel.Parent := AdditionalTasksPage.Surface;
-  GroupLabel.Left := ScaleX(32);
-  GroupLabel.Top := ScaleY(76);
-  GroupLabel.Width := AdditionalTasksPage.SurfaceWidth - ScaleX(40);
-  GroupLabel.Height := ScaleY(20);
+  GroupLabel.Left := ContentLeft;
+  GroupLabel.Top := ScaleY(12);
+  GroupLabel.Width := ContentWidth;
+  GroupLabel.Height := ScaleY(22);
   GroupLabel.Caption := 'Additional shortcuts:';
 
   DesktopIconCheckBox := TNewCheckBox.Create(WizardForm);
   DesktopIconCheckBox.Parent := AdditionalTasksPage.Surface;
-  DesktopIconCheckBox.Left := ScaleX(32);
-  DesktopIconCheckBox.Top := ScaleY(108);
-  DesktopIconCheckBox.Width := AdditionalTasksPage.SurfaceWidth - ScaleX(40);
-  DesktopIconCheckBox.Height := ScaleY(24);
+  DesktopIconCheckBox.Left := ContentLeft;
+  DesktopIconCheckBox.Top := ScaleY(44);
+  DesktopIconCheckBox.Width := ContentWidth;
+  DesktopIconCheckBox.Height := ScaleY(28);
   DesktopIconCheckBox.Caption := 'Create a desktop shortcut';
   DesktopIconCheckBox.Checked := False;
 end;
