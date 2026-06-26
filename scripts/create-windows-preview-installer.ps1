@@ -22,6 +22,10 @@ $SetupPath = Join-Path $InstallerOutputDir "$AppName-$Version-$RuntimeIdentifier
 $SetupReleasePath = Join-Path $ArtifactRoot "$AppName-$Version-$RuntimeIdentifier-setup.exe"
 $ChecksumsPath = Join-Path $ArtifactRoot "$AppName-$Version-$RuntimeIdentifier-checksums.sha256"
 
+$InstallerLicensePath = Join-Path $ArtifactRoot "LICENSE.txt"
+$InstallerSafetyNoticePath = Join-Path $ArtifactRoot "WINDOWS-INSTALLER-SAFETY-NOTICE.txt"
+$InstallerAfterInstallPath = Join-Path $ArtifactRoot "WINDOWS-INSTALLER-AFTER-INSTALL.txt"
+
 function Write-Step {
     param([string]$Message)
 
@@ -126,6 +130,98 @@ function Test-ZipContainsExecutable {
     }
 }
 
+function Write-InstallerTextFiles {
+    $licenseSourcePath = Join-Path $RootDir "LICENSE"
+
+    if (-not (Test-Path $licenseSourcePath)) {
+        Fail "LICENSE file not found: $licenseSourcePath"
+    }
+
+    Copy-Item $licenseSourcePath $InstallerLicensePath -Force
+
+    @"
+GlucoDesk Windows Preview Safety Notice
+
+GlucoDesk is not a medical device.
+
+GlucoDesk does not provide medical advice, treatment decisions, insulin dosing guidance, alarms, or emergency notifications.
+
+Always rely on approved CGM/mobile apps, pump systems, and healthcare professionals for medical decisions.
+
+This Windows build is a preview release intended for awareness, personal review, and desktop convenience only.
+
+Preview limitations:
+- local history may be incomplete;
+- export quality depends on available local readings;
+- provider behavior depends on account configuration and external service availability;
+- Windows support is currently preview-level;
+- this installer is not code-signed yet and Windows SmartScreen may show warnings.
+
+Do not use GlucoDesk as a replacement for approved diabetes applications or medical devices.
+"@ | Set-Content -Path $InstallerSafetyNoticePath -Encoding UTF8
+
+    @"
+GlucoDesk Windows Preview Installed
+
+Thank you for installing GlucoDesk.
+
+Installed application:
+GlucoDesk.Desktop.exe
+
+This is a per-user installation. It does not require administrator privileges and is installed under the current user's local application data folder.
+
+Useful notes:
+- GlucoDesk stores local app data outside the installation folder.
+- Uninstalling the application removes the installed program files.
+- Local app data and operating-system credential storage may remain outside the installation folder.
+- Review exported PDF/Excel files carefully before sharing them.
+
+Safety reminder:
+GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications.
+"@ | Set-Content -Path $InstallerAfterInstallPath -Encoding UTF8
+}
+
+function Write-PortableDocumentation {
+    $releaseReadmePath = Join-Path $PublishDir "README-WINDOWS-PREVIEW.txt"
+    $portableSafetyPath = Join-Path $PublishDir "SAFETY-NOTICE.txt"
+    $licenseSourcePath = Join-Path $RootDir "LICENSE"
+
+    @"
+GlucoDesk $Version ($RuntimeIdentifier)
+
+This is a Windows preview build of GlucoDesk.
+
+How to use the portable package:
+1. Extract the zip into a normal folder.
+2. Do not run GlucoDesk directly from inside the compressed zip.
+3. Run GlucoDesk.Desktop.exe from the extracted folder.
+
+Safety notice:
+GlucoDesk is not a medical device. It does not provide medical advice, treatment decisions, insulin dosing guidance, alarms, or emergency notifications. Always rely on approved CGM apps, pump systems, and healthcare professionals for medical decisions.
+
+Preview limitations:
+- local history may be incomplete;
+- export quality depends on available local readings;
+- provider behavior depends on configuration and external service availability;
+- Windows support is currently preview-level;
+- the Windows installer is not code-signed yet and Windows SmartScreen may show warnings.
+"@ | Set-Content -Path $releaseReadmePath -Encoding UTF8
+
+    @"
+GlucoDesk Safety Notice
+
+GlucoDesk is not a medical device.
+
+Do not use GlucoDesk for treatment decisions, insulin dosing decisions, emergency alerts, or as a replacement for approved diabetes applications.
+
+Generated PDF/Excel exports are informational and depend on local data availability.
+
+Always use approved medical devices, official CGM/mobile apps, pump systems, and healthcare professional guidance for medical decisions.
+"@ | Set-Content -Path $portableSafetyPath -Encoding UTF8
+
+    Copy-Item $licenseSourcePath (Join-Path $PublishDir "LICENSE.txt") -Force
+}
+
 if ($env:OS -ne "Windows_NT") {
     Fail "Windows installer creation must be run on Windows."
 }
@@ -148,6 +244,8 @@ Remove-Item -Recurse -Force $ArtifactRoot -ErrorAction SilentlyContinue
 
 New-Item -ItemType Directory -Force -Path $PublishDir | Out-Null
 New-Item -ItemType Directory -Force -Path $InstallerOutputDir | Out-Null
+
+Write-InstallerTextFiles
 
 Push-Location $RootDir
 
@@ -186,28 +284,7 @@ if (-not (Test-Path $PublishedExePath)) {
     Fail "expected executable not found: $PublishedExePath"
 }
 
-$ReleaseReadmePath = Join-Path $PublishDir "README-WINDOWS-PREVIEW.txt"
-
-@"
-GlucoDesk $Version ($RuntimeIdentifier)
-
-This is a Windows preview build of GlucoDesk.
-
-Safety notice:
-GlucoDesk is not a medical device. It does not provide medical advice, treatment decisions, insulin dosing guidance, alarms, or emergency notifications. Always rely on approved CGM apps, pump systems, and healthcare professionals for medical decisions.
-
-Preview limitations:
-- local history may be incomplete;
-- export quality depends on available local readings;
-- provider behavior depends on configuration and external service availability;
-- Windows support is currently preview-level.
-"@ | Set-Content -Path $ReleaseReadmePath -Encoding UTF8
-
-$LicensePath = Join-Path $RootDir "LICENSE"
-
-if (Test-Path $LicensePath) {
-    Copy-Item $LicensePath (Join-Path $PublishDir "LICENSE.txt") -Force
-}
+Write-PortableDocumentation
 
 Write-Step "creating portable zip"
 Remove-Item -Force $PortableZipPath -ErrorAction SilentlyContinue
@@ -219,6 +296,9 @@ Write-Step "building Inno Setup installer"
     "/DRuntimeIdentifier=$RuntimeIdentifier" `
     "/DSourceDir=$PublishDir" `
     "/DOutputDir=$InstallerOutputDir" `
+    "/DLicenseFilePath=$InstallerLicensePath" `
+    "/DInfoBeforeFilePath=$InstallerSafetyNoticePath" `
+    "/DInfoAfterFilePath=$InstallerAfterInstallPath" `
     $InstallerScriptPath
 
 if (-not (Test-Path $SetupPath)) {
@@ -257,9 +337,13 @@ Write-Host "Artifacts:"
 Write-Host "  Portable ZIP: $PortableZipPath"
 Write-Host "  Setup EXE: $SetupReleasePath"
 Write-Host "  Checksums: $ChecksumsPath"
+Write-Host "  Installer safety notice: $InstallerSafetyNoticePath"
+Write-Host "  Installer after-install notes: $InstallerAfterInstallPath"
 Write-Host ""
 Write-Host "Manual smoke test:"
 Write-Host "  1. Run the setup EXE."
-Write-Host "  2. Complete the wizard."
-Write-Host "  3. Launch GlucoDesk."
-Write-Host "  4. Verify dashboard, account/settings, export flow and uninstall."
+Write-Host "  2. Confirm the MIT license page appears."
+Write-Host "  3. Confirm the safety notice page appears."
+Write-Host "  4. Complete the wizard."
+Write-Host "  5. Launch GlucoDesk."
+Write-Host "  6. Verify dashboard, account/settings, export flow and uninstall."

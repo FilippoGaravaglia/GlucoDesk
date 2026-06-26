@@ -16,6 +16,18 @@
 #define OutputDir "..\..\artifacts\windows\0.2.1-preview\win-x64\installer"
 #endif
 
+#ifndef LicenseFilePath
+#define LicenseFilePath "..\..\LICENSE"
+#endif
+
+#ifndef InfoBeforeFilePath
+#define InfoBeforeFilePath "WINDOWS-INSTALLER-SAFETY-NOTICE.txt"
+#endif
+
+#ifndef InfoAfterFilePath
+#define InfoAfterFilePath "WINDOWS-INSTALLER-AFTER-INSTALL.txt"
+#endif
+
 #define MyAppPublisher "Filippo Garavaglia"
 #define MyAppURL "https://github.com/FilippoGaravaglia/GlucoDesk"
 #define MyAppExeName "GlucoDesk.Desktop.exe"
@@ -24,11 +36,13 @@
 [Setup]
 AppId={#MyAppId}
 AppName={#MyAppName}
+AppVerName={#MyAppName} {#MyAppVersion}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+AppComments=A local-first desktop companion for glucose awareness.
 
 DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
@@ -50,6 +64,14 @@ ArchitecturesInstallIn64BitMode=x64compatible
 
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
+
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription={#MyAppName} Windows Preview Installer
+VersionInfoProductName={#MyAppName}
+
+LicenseFile={#LicenseFilePath}
+InfoBeforeFile={#InfoBeforeFilePath}
+InfoAfterFile={#InfoAfterFilePath}
 
 CloseApplications=yes
 RestartApplications=no
