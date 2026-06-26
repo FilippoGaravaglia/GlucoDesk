@@ -66,38 +66,18 @@ detect_runtime_identifier() {
 }
 
 create_icon_if_possible() {
-  local source_icon="$ROOT_DIR/src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png"
   local resources_dir="$1"
+  local source_icon="$ROOT_DIR/src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.icns"
+  local output_icon="$resources_dir/glucodesk-app-icon.icns"
 
   if [[ ! -f "$source_icon" ]]; then
-    info "app icon source not found, skipping .icns generation"
-    return 0
+    fail "optimized macOS app icon not found: $source_icon. Generate it with scripts/create-macos-app-icon.sh"
   fi
 
-  if ! command -v sips >/dev/null 2>&1 || ! command -v iconutil >/dev/null 2>&1; then
-    info "sips/iconutil not available, skipping .icns generation"
-    return 0
-  fi
+  mkdir -p "$resources_dir"
+  cp "$source_icon" "$output_icon"
 
-  local iconset_dir="$resources_dir/glucodesk-app-icon.iconset"
-  rm -rf "$iconset_dir"
-  mkdir -p "$iconset_dir"
-
-  sips -z 16 16     "$source_icon" --out "$iconset_dir/icon_16x16.png" >/dev/null
-  sips -z 32 32     "$source_icon" --out "$iconset_dir/icon_16x16@2x.png" >/dev/null
-  sips -z 32 32     "$source_icon" --out "$iconset_dir/icon_32x32.png" >/dev/null
-  sips -z 64 64     "$source_icon" --out "$iconset_dir/icon_32x32@2x.png" >/dev/null
-  sips -z 128 128   "$source_icon" --out "$iconset_dir/icon_128x128.png" >/dev/null
-  sips -z 256 256   "$source_icon" --out "$iconset_dir/icon_128x128@2x.png" >/dev/null
-  sips -z 256 256   "$source_icon" --out "$iconset_dir/icon_256x256.png" >/dev/null
-  sips -z 512 512   "$source_icon" --out "$iconset_dir/icon_256x256@2x.png" >/dev/null
-  sips -z 512 512   "$source_icon" --out "$iconset_dir/icon_512x512.png" >/dev/null
-  sips -z 1024 1024 "$source_icon" --out "$iconset_dir/icon_512x512@2x.png" >/dev/null
-
-  iconutil -c icns "$iconset_dir" -o "$resources_dir/glucodesk-app-icon.icns"
-  rm -rf "$iconset_dir"
-
-  info "generated macOS .icns app icon"
+  info "using optimized macOS .icns app icon"
 }
 
 write_info_plist() {
