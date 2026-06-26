@@ -67,7 +67,7 @@ preview_icon = Path(sys.argv[3])
 sizes = [16, 24, 32, 48, 64, 128, 256]
 
 # Large enough for Windows taskbar, but not so large that it touches edges.
-target_fill_ratio = 0.88
+target_fill_ratio = 0.96
 
 alpha_threshold = 12
 background_distance_threshold = 95
