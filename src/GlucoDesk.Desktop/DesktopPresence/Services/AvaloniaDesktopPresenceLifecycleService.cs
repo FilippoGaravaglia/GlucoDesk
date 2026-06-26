@@ -13,6 +13,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Main;
 using Microsoft.Extensions.Logging;
 using AvaloniaApplication = Avalonia.Application;
+using GlucoDesk.Desktop.DesktopPresence.Layout;
 
 namespace GlucoDesk.Desktop.DesktopPresence.Services;
 
@@ -348,7 +349,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             () => ShowMainWindow(desktopLifetime),
             () => desktopLifetime.Shutdown());
 
-        popoverWindow.Position = CalculatePopoverPosition(desktopLifetime.MainWindow);
+        popoverWindow.Position = CalculatePopoverPosition(desktopLifetime.MainWindow, popoverWindow);
         popoverWindow.Closed += (_, _) =>
         {
             if (ReferenceEquals(_popoverWindow, popoverWindow))
@@ -368,24 +369,82 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
-    /// Calculates the popover position near the top-right area of the primary screen.
+    /// Calculates a screen-aware popover position inside the current display working area.
     /// </summary>
-    /// <param name="mainWindow">The main window.</param>
+    /// <param name="mainWindow">The main window used to resolve the current screen.</param>
+    /// <param name="popoverWindow">The popover window being positioned.</param>
     /// <returns>The calculated popover position.</returns>
-    private static PixelPoint CalculatePopoverPosition(Window? mainWindow)
+    private static PixelPoint CalculatePopoverPosition(Window? mainWindow, Window popoverWindow)
     {
-        var screen = mainWindow?.Screens.Primary;
+        var screen = mainWindow?.Screens.ScreenFromWindow(mainWindow)
+            ?? mainWindow?.Screens.Primary;
 
         if (screen is null)
         {
-            return new PixelPoint(PopoverMargin, PopoverMargin);
+            return new PixelPoint(
+                DesktopPresencePopoverPositioner.EdgeMarginPixels,
+                DesktopPresencePopoverPositioner.EdgeMarginPixels);
         }
 
-        var workingArea = screen.WorkingArea;
+        var popoverSize = CalculatePopoverPixelSize(
+            popoverWindow,
+            screen.Scaling);
 
-        return new PixelPoint(
-            workingArea.X + workingArea.Width - PopoverWidth - PopoverMargin,
-            workingArea.Y + PopoverMargin);
+        return DesktopPresencePopoverPositioner.Calculate(
+            screen.WorkingArea,
+            popoverSize);
+    }
+
+    /// <summary>
+    /// Calculates the popover size in physical screen pixels.
+    /// </summary>
+    /// <param name="popoverWindow">The popover window.</param>
+    /// <param name="screenScaling">The scaling of the screen that will contain the popover.</param>
+    /// <returns>The popover size in physical pixels.</returns>
+    private static PixelSize CalculatePopoverPixelSize(Window popoverWindow, double screenScaling)
+    {
+        var scaling = screenScaling > 0
+            ? screenScaling
+            : 1;
+
+        var width = ResolveWindowDimension(
+            popoverWindow.Width,
+            popoverWindow.MinWidth,
+            DesktopPresencePopoverPositioner.DefaultPopoverWidthDip);
+
+        var height = ResolveWindowDimension(
+            popoverWindow.Height,
+            popoverWindow.MinHeight,
+            DesktopPresencePopoverPositioner.DefaultPopoverHeightDip);
+
+        return new PixelSize(
+            Math.Max(1, (int)Math.Ceiling(width * scaling)),
+            Math.Max(1, (int)Math.Ceiling(height * scaling)));
+    }
+
+    /// <summary>
+    /// Resolves an Avalonia window dimension, falling back when the value has not been measured yet.
+    /// </summary>
+    /// <param name="value">The preferred window dimension.</param>
+    /// <param name="minimumValue">The minimum window dimension.</param>
+    /// <param name="fallbackValue">The fallback dimension.</param>
+    /// <returns>The resolved dimension.</returns>
+    private static double ResolveWindowDimension(
+        double value,
+        double minimumValue,
+        double fallbackValue)
+    {
+        if (!double.IsNaN(value) && value > 0)
+        {
+            return value;
+        }
+
+        if (!double.IsNaN(minimumValue) && minimumValue > 0)
+        {
+            return minimumValue;
+        }
+
+        return fallbackValue;
     }
 
     /// <summary>
