@@ -19,6 +19,7 @@ $InstallerOutputDir = Join-Path $ArtifactRoot "installer"
 
 $PortableZipPath = Join-Path $ArtifactRoot "$AppName-$Version-$RuntimeIdentifier-portable.zip"
 $SetupPath = Join-Path $InstallerOutputDir "$AppName-$Version-$RuntimeIdentifier-setup.exe"
+$SetupReleasePath = Join-Path $ArtifactRoot "$AppName-$Version-$RuntimeIdentifier-setup.exe"
 $ChecksumsPath = Join-Path $ArtifactRoot "$AppName-$Version-$RuntimeIdentifier-checksums.sha256"
 
 function Write-Step {
@@ -50,7 +51,8 @@ function Resolve-InnoSetupCompiler {
 
     $candidates = @(
         "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-        "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+        "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+        "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
     )
 
     foreach ($candidate in $candidates) {
@@ -98,7 +100,7 @@ function Test-ChecksumFile {
             Fail "checksum mismatch for $fileName"
         }
 
-        Write-Host "$fileName: OK"
+        Write-Host "${fileName}: OK"
     }
 }
 
@@ -223,8 +225,14 @@ if (-not (Test-Path $SetupPath)) {
     Fail "expected setup executable not found: $SetupPath"
 }
 
-if ((Get-Item $SetupPath).Length -le 0) {
-    Fail "setup executable is empty: $SetupPath"
+Copy-Item $SetupPath $SetupReleasePath -Force
+
+if (-not (Test-Path $SetupReleasePath)) {
+    Fail "expected release setup executable not found: $SetupReleasePath"
+}
+
+if ((Get-Item $SetupReleasePath).Length -le 0) {
+    Fail "setup executable is empty: $SetupReleasePath"
 }
 
 if ((Get-Item $PortableZipPath).Length -le 0) {
@@ -237,7 +245,7 @@ Test-ZipContainsExecutable -ZipPath $PortableZipPath -ExecutableFileName $Execut
 Write-Step "creating SHA256 checksums"
 @(
     New-ChecksumLine -Path $PortableZipPath
-    New-ChecksumLine -Path $SetupPath
+    New-ChecksumLine -Path $SetupReleasePath
 ) | Set-Content -Path $ChecksumsPath -Encoding ASCII
 
 Write-Step "verifying SHA256 checksums"
@@ -247,7 +255,7 @@ Write-Step "Windows preview installer assets created successfully"
 Write-Host ""
 Write-Host "Artifacts:"
 Write-Host "  Portable ZIP: $PortableZipPath"
-Write-Host "  Setup EXE: $SetupPath"
+Write-Host "  Setup EXE: $SetupReleasePath"
 Write-Host "  Checksums: $ChecksumsPath"
 Write-Host ""
 Write-Host "Manual smoke test:"
