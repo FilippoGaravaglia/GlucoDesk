@@ -26,6 +26,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     private const int PopoverMargin = 14;
 
     private static readonly Uri DefaultTrayIconUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png");
+    private static readonly Uri WindowsTrayIconUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-windows-tray-icon.png");
     private static readonly Uri MacOsMenuBarIconUri = new("avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon.png");
 
     private readonly IDesktopPresenceTextFormatter _textFormatter;
@@ -209,9 +210,17 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <returns>The tray icon asset URI.</returns>
     private static Uri GetTrayIconUri()
     {
-        return OperatingSystem.IsMacOS()
-            ? MacOsMenuBarIconUri
-            : DefaultTrayIconUri;
+        if (OperatingSystem.IsMacOS())
+        {
+            return MacOsMenuBarIconUri;
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            return WindowsTrayIconUri;
+        }
+
+        return DefaultTrayIconUri;
     }
 
     /// <summary>
