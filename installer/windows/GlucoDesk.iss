@@ -95,3 +95,29 @@ Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: no
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
+
+[Code]
+
+procedure FixSelectTasksLayout;
+var
+  DesiredLeft: Integer;
+  DesiredWidth: Integer;
+begin
+  DesiredLeft := WizardForm.SelectTasksLabel.Left;
+
+  if DesiredLeft < ScaleX(16) then
+    DesiredLeft := ScaleX(16);
+
+  WizardForm.TasksList.Left := DesiredLeft;
+
+  DesiredWidth := WizardForm.TasksList.Parent.ClientWidth - DesiredLeft - ScaleX(16);
+
+  if DesiredWidth > 0 then
+    WizardForm.TasksList.Width := DesiredWidth;
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpSelectTasks then
+    FixSelectTasksLayout;
+end;
