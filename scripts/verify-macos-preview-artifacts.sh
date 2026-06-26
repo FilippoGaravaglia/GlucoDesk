@@ -5,6 +5,7 @@ set -euo pipefail
 APP_NAME="GlucoDesk"
 VERSION="${1:-0.2.1-preview}"
 RID="${2:-}"
+REQUIRE_NOTARIZATION="${GLUCODESK_REQUIRE_NOTARIZATION:-false}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -93,6 +94,28 @@ verify_dmg_install_layout() {
   info "dmg install layout verified"
 }
 
+
+verify_notarization_if_required() {
+  local dmg_path="$1"
+
+  if [[ "$REQUIRE_NOTARIZATION" != "true" ]]; then
+    info "skipping notarization validation because GLUCODESK_REQUIRE_NOTARIZATION=${REQUIRE_NOTARIZATION}"
+    return 0
+  fi
+
+  require_command xcrun
+
+  info "validating stapled notarization ticket"
+  xcrun stapler validate "$dmg_path" >/dev/null
+
+  if command -v spctl >/dev/null 2>&1; then
+    info "validating Gatekeeper assessment"
+    spctl -a -vv -t open --context context:primary-signature "$dmg_path" >/dev/null
+  fi
+
+  info "notarization validation completed"
+}
+
 if [[ -z "$RID" ]]; then
   RID="$(detect_runtime_identifier)"
 fi
@@ -145,6 +168,8 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 
   info "verifying dmg install layout"
   verify_dmg_install_layout "$DMG_PATH" "$DMG_MOUNT_DIR"
+
+  verify_notarization_if_required "$DMG_PATH"
 
   if command -v plutil >/dev/null 2>&1; then
     info "validating Info.plist"
