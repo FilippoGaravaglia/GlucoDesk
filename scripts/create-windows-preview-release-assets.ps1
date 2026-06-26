@@ -57,17 +57,12 @@ Assert-ScriptExists -Path $VerifyScriptPath
 
 Write-Step "creating Windows release assets for $AppName $Version $RuntimeIdentifier"
 
-$packageArgs = @(
-    "-Version", $Version,
-    "-RuntimeIdentifier", $RuntimeIdentifier
-)
-
 if ($SkipTests) {
-    $packageArgs += "-SkipTests"
+    & $PackageScriptPath -Version $Version -RuntimeIdentifier $RuntimeIdentifier -SkipTests
 }
-
-& $PackageScriptPath @packageArgs
-
+else {
+    & $PackageScriptPath -Version $Version -RuntimeIdentifier $RuntimeIdentifier
+}
 Write-Step "verifying generated Windows release assets"
 
 & $VerifyScriptPath -Version $Version -RuntimeIdentifier $RuntimeIdentifier

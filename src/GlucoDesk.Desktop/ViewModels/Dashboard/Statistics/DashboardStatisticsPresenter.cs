@@ -1,3 +1,4 @@
+using System.Globalization;
 using GlucoDesk.Application.Cgm.Statistics.Requests;
 using GlucoDesk.Application.Cgm.Statistics.Results;
 using GlucoDesk.Core.Glucose.Enums;
@@ -130,8 +131,8 @@ public static class DashboardStatisticsPresenter
     private static string FormatDecimal(decimal value)
     {
         return value % 1 == 0
-            ? value.ToString("0")
-            : value.ToString("0.0");
+            ? value.ToString("0", CultureInfo.InvariantCulture)
+            : value.ToString("0.0", CultureInfo.InvariantCulture);
     }
 
     /// <summary>

@@ -252,13 +252,16 @@ Push-Location $RootDir
 try {
     Write-Step "restoring solution"
     dotnet restore
+    if ($LASTEXITCODE -ne 0) { Fail "dotnet restore failed with exit code $LASTEXITCODE" }
 
     Write-Step "building solution"
     dotnet build -c Release --no-restore
+    if ($LASTEXITCODE -ne 0) { Fail "dotnet build failed with exit code $LASTEXITCODE" }
 
     if (-not $SkipTests) {
         Write-Step "running tests"
         dotnet test -c Release --no-build
+        if ($LASTEXITCODE -ne 0) { Fail "dotnet test failed with exit code $LASTEXITCODE" }
     }
     else {
         Write-Step "skipping tests because -SkipTests was provided"
@@ -273,6 +276,8 @@ try {
         -p:PublishSingleFile=false `
         -p:DebugType=None `
         -p:DebugSymbols=false
+
+    if ($LASTEXITCODE -ne 0) { Fail "dotnet publish failed with exit code $LASTEXITCODE" }
 }
 finally {
     Pop-Location
