@@ -16,6 +16,18 @@
 #define OutputDir "..\..\artifacts\windows\0.2.1-preview\win-x64\installer"
 #endif
 
+#ifndef LicenseFilePath
+#define LicenseFilePath "..\..\LICENSE"
+#endif
+
+#ifndef InfoBeforeFilePath
+#define InfoBeforeFilePath "WINDOWS-INSTALLER-SAFETY-NOTICE.txt"
+#endif
+
+#ifndef InfoAfterFilePath
+#define InfoAfterFilePath "WINDOWS-INSTALLER-AFTER-INSTALL.txt"
+#endif
+
 #define MyAppPublisher "Filippo Garavaglia"
 #define MyAppURL "https://github.com/FilippoGaravaglia/GlucoDesk"
 #define MyAppExeName "GlucoDesk.Desktop.exe"
@@ -24,11 +36,13 @@
 [Setup]
 AppId={#MyAppId}
 AppName={#MyAppName}
+AppVerName={#MyAppName} {#MyAppVersion}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+AppComments=A local-first desktop companion for glucose awareness.
 
 DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
@@ -51,14 +65,19 @@ ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription={#MyAppName} Windows Preview Installer
+VersionInfoProductName={#MyAppName}
+
+LicenseFile={#LicenseFilePath}
+InfoBeforeFile={#InfoBeforeFilePath}
+InfoAfterFile={#InfoAfterFilePath}
+
 CloseApplications=yes
 RestartApplications=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -66,10 +85,57 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Check: ShouldCreateDesktopIcon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
+
+[Code]
+
+var
+  AdditionalTasksPage: TWizardPage;
+  DesktopIconCheckBox: TNewCheckBox;
+
+procedure InitializeWizard;
+var
+  GroupLabel: TNewStaticText;
+  ContentLeft: Integer;
+  ContentWidth: Integer;
+begin
+  AdditionalTasksPage := CreateCustomPage(
+    wpSelectDir,
+    'Select Additional Tasks',
+    'Which additional tasks should be performed?'
+  );
+
+  ContentLeft := ScaleX(40);
+  ContentWidth := AdditionalTasksPage.SurfaceWidth - ScaleX(80);
+
+  GroupLabel := TNewStaticText.Create(WizardForm);
+  GroupLabel.Parent := AdditionalTasksPage.Surface;
+  GroupLabel.Left := ContentLeft;
+  GroupLabel.Top := ScaleY(12);
+  GroupLabel.Width := ContentWidth;
+  GroupLabel.Height := ScaleY(22);
+  GroupLabel.Caption := 'Additional shortcuts:';
+
+  DesktopIconCheckBox := TNewCheckBox.Create(WizardForm);
+  DesktopIconCheckBox.Parent := AdditionalTasksPage.Surface;
+  DesktopIconCheckBox.Left := ContentLeft;
+  DesktopIconCheckBox.Top := ScaleY(44);
+  DesktopIconCheckBox.Width := ContentWidth;
+  DesktopIconCheckBox.Height := ScaleY(28);
+  DesktopIconCheckBox.Caption := 'Create a desktop shortcut';
+  DesktopIconCheckBox.Checked := False;
+end;
+
+function ShouldCreateDesktopIcon: Boolean;
+begin
+  Result := False;
+
+  if DesktopIconCheckBox <> nil then
+    Result := DesktopIconCheckBox.Checked;
+end;
