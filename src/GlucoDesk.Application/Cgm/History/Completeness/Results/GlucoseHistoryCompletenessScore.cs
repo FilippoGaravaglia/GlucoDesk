@@ -1,3 +1,4 @@
+using System.Globalization;
 using GlucoDesk.Application.Cgm.History.Completeness.Enums;
 
 namespace GlucoDesk.Application.Cgm.History.Completeness.Results;
@@ -121,5 +122,5 @@ public sealed record GlucoseHistoryCompletenessScore
     /// <summary>
     /// Gets the display-ready coverage percentage text.
     /// </summary>
-    public string CoverageText => $"{DataCoveragePercentage:0.##}%";
+    public string CoverageText => $"{DataCoveragePercentage.ToString("0.##", CultureInfo.InvariantCulture)}%";
 }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Stories.Enums;
 using GlucoDesk.Application.Cgm.Diary.Stories.Results;
@@ -379,7 +380,7 @@ public sealed class GlycemicDiaryStoryService : IGlycemicDiaryStoryService
     private static string FormatPercentage(decimal? percentage)
     {
         return percentage.HasValue
-            ? $"{Math.Round(percentage.Value, 2, MidpointRounding.AwayFromZero):0.##}%"
+            ? $"{Math.Round(percentage.Value, 2, MidpointRounding.AwayFromZero).ToString("0.##", CultureInfo.InvariantCulture)}%"
             : "—";
     }
 
