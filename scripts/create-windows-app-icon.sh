@@ -25,7 +25,7 @@ require_command() {
 }
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-  fail "Windows icon generation currently runs from macOS because it optimizes the existing macOS artwork source"
+  fail "Windows icon generation currently runs from macOS because it optimizes the existing artwork source"
 fi
 
 require_command python3
@@ -51,6 +51,7 @@ fi
 info "generating Windows-optimized .ico for $APP_NAME"
 
 "$PYTHON_BIN" - "$SOURCE_ICON" "$OUTPUT_ICON" <<'PY'
+from collections import deque
 from pathlib import Path
 from PIL import Image
 
@@ -60,27 +61,59 @@ source_icon = Path(sys.argv[1])
 output_icon = Path(sys.argv[2])
 
 sizes = [16, 24, 32, 48, 64, 128, 256]
-target_fill_ratio = 0.88
-white_threshold = 245
+
+# Keep the real logo large, but leave a small safe margin for Windows taskbar rendering.
+target_fill_ratio = 0.92
+
+# Only near-white pixels connected to the image border are treated as background.
+# This avoids deleting intentional white parts inside the GlucoDesk "G" mark.
+background_threshold = 245
 alpha_threshold = 12
 
 image = Image.open(source_icon).convert("RGBA")
+width, height = image.size
 pixels = image.load()
 
-width, height = image.size
+def is_background_candidate(x: int, y: int) -> bool:
+    r, g, b, a = pixels[x, y]
 
-# Convert white / near-white background pixels to transparent.
-# This removes the white square that looks bad on the Windows taskbar.
+    if a <= alpha_threshold:
+        return True
+
+    return r >= background_threshold and g >= background_threshold and b >= background_threshold
+
+visited = set()
+queue = deque()
+
+for x in range(width):
+    queue.append((x, 0))
+    queue.append((x, height - 1))
+
 for y in range(height):
-    for x in range(width):
-        r, g, b, a = pixels[x, y]
+    queue.append((0, y))
+    queue.append((width - 1, y))
 
-        if a <= alpha_threshold:
-            pixels[x, y] = (r, g, b, 0)
-            continue
+while queue:
+    x, y = queue.popleft()
 
-        if r >= white_threshold and g >= white_threshold and b >= white_threshold:
-            pixels[x, y] = (r, g, b, 0)
+    if x < 0 or y < 0 or x >= width or y >= height:
+        continue
+
+    if (x, y) in visited:
+        continue
+
+    if not is_background_candidate(x, y):
+        continue
+
+    visited.add((x, y))
+
+    r, g, b, _a = pixels[x, y]
+    pixels[x, y] = (r, g, b, 0)
+
+    queue.append((x - 1, y))
+    queue.append((x + 1, y))
+    queue.append((x, y - 1))
+    queue.append((x, y + 1))
 
 bbox = image.getbbox()
 
@@ -89,23 +122,14 @@ if bbox is None:
 
 cropped = image.crop(bbox)
 
-# Add a tiny transparent padding before resizing, so the logo does not touch edges.
-padding = max(2, round(max(cropped.size) * 0.04))
-padded = Image.new(
-    "RGBA",
-    (cropped.width + padding * 2, cropped.height + padding * 2),
-    (0, 0, 0, 0),
-)
-padded.alpha_composite(cropped, (padding, padding))
-
 base_size = 256
 max_logo_size = round(base_size * target_fill_ratio)
-scale = max_logo_size / max(padded.width, padded.height)
+scale = max_logo_size / max(cropped.width, cropped.height)
 
-resized = padded.resize(
+resized = cropped.resize(
     (
-        max(1, round(padded.width * scale)),
-        max(1, round(padded.height * scale)),
+        max(1, round(cropped.width * scale)),
+        max(1, round(cropped.height * scale)),
     ),
     Image.Resampling.LANCZOS,
 )
@@ -129,6 +153,7 @@ canvas.save(
 
 print(f"created {output_icon}")
 print(f"source size: {image.size}")
+print(f"removed border/background pixels: {len(visited)}")
 print(f"content bbox: {bbox}")
 print(f"optimized logo size: {resized.size}")
 PY
