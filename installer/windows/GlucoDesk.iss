@@ -79,16 +79,13 @@ RestartApplications=no
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Check: ShouldCreateDesktopIcon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
@@ -98,26 +95,51 @@ Type: filesandordirs; Name: "{app}"
 
 [Code]
 
-procedure FixSelectTasksLayout;
 var
-  DesiredLeft: Integer;
-  DesiredWidth: Integer;
+  AdditionalTasksPage: TWizardPage;
+  DesktopIconCheckBox: TNewCheckBox;
+
+procedure InitializeWizard;
+var
+  DescriptionLabel: TNewStaticText;
+  GroupLabel: TNewStaticText;
 begin
-  DesiredLeft := WizardForm.SelectTasksLabel.Left;
+  AdditionalTasksPage := CreateCustomPage(
+    wpSelectDir,
+    'Select Additional Tasks',
+    'Which additional tasks should be performed?'
+  );
 
-  if DesiredLeft < ScaleX(16) then
-    DesiredLeft := ScaleX(16);
+  DescriptionLabel := TNewStaticText.Create(WizardForm);
+  DescriptionLabel.Parent := AdditionalTasksPage.Surface;
+  DescriptionLabel.Left := ScaleX(8);
+  DescriptionLabel.Top := ScaleY(8);
+  DescriptionLabel.Width := AdditionalTasksPage.SurfaceWidth - ScaleX(16);
+  DescriptionLabel.Height := ScaleY(32);
+  DescriptionLabel.Caption := 'Choose whether GlucoDesk should create additional shortcuts.';
 
-  WizardForm.TasksList.Left := DesiredLeft;
+  GroupLabel := TNewStaticText.Create(WizardForm);
+  GroupLabel.Parent := AdditionalTasksPage.Surface;
+  GroupLabel.Left := ScaleX(32);
+  GroupLabel.Top := ScaleY(76);
+  GroupLabel.Width := AdditionalTasksPage.SurfaceWidth - ScaleX(40);
+  GroupLabel.Height := ScaleY(20);
+  GroupLabel.Caption := 'Additional shortcuts:';
 
-  DesiredWidth := WizardForm.TasksList.Parent.ClientWidth - DesiredLeft - ScaleX(16);
-
-  if DesiredWidth > 0 then
-    WizardForm.TasksList.Width := DesiredWidth;
+  DesktopIconCheckBox := TNewCheckBox.Create(WizardForm);
+  DesktopIconCheckBox.Parent := AdditionalTasksPage.Surface;
+  DesktopIconCheckBox.Left := ScaleX(32);
+  DesktopIconCheckBox.Top := ScaleY(108);
+  DesktopIconCheckBox.Width := AdditionalTasksPage.SurfaceWidth - ScaleX(40);
+  DesktopIconCheckBox.Height := ScaleY(24);
+  DesktopIconCheckBox.Caption := 'Create a desktop shortcut';
+  DesktopIconCheckBox.Checked := False;
 end;
 
-procedure CurPageChanged(CurPageID: Integer);
+function ShouldCreateDesktopIcon: Boolean;
 begin
-  if CurPageID = wpSelectTasks then
-    FixSelectTasksLayout;
+  Result := False;
+
+  if DesktopIconCheckBox <> nil then
+    Result := DesktopIconCheckBox.Checked;
 end;
