@@ -164,6 +164,23 @@ If macOS blocks the app because it is not signed/notarized, document the limitat
 README
 }
 
+
+write_safety_notice() {
+  local safety_notice_path="$1"
+
+  cat > "$safety_notice_path" <<SAFETY
+GlucoDesk safety notice
+
+GlucoDesk is not a medical device.
+
+It does not provide medical advice, treatment decisions, insulin dosing guidance, alarms, or emergency notifications.
+
+Do not use GlucoDesk to make insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
+
+Always rely on approved CGM apps, pump systems, glucose meters, and healthcare professionals for medical decisions.
+SAFETY
+}
+
 if [[ "$(uname -s)" != "Darwin" ]]; then
   fail "macOS packaging must be run on macOS"
 fi
@@ -189,6 +206,7 @@ MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 ZIP_PATH="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}.zip"
 DMG_PATH="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}.dmg"
+DMG_STAGING_DIR="$ARTIFACT_ROOT/dmg-staging"
 CHECKSUMS_PATH="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}-checksums.sha256"
 
 info "packaging ${APP_NAME} ${VERSION} for ${RID}"
@@ -235,6 +253,7 @@ chmod +x "$MACOS_DIR/$EXECUTABLE_NAME"
 create_icon_if_possible "$RESOURCES_DIR"
 write_info_plist "$CONTENTS_DIR/Info.plist" "$SHORT_VERSION" "$BUNDLE_VERSION"
 write_release_readme "$STAGING_DIR/README.txt" "$RID"
+write_safety_notice "$STAGING_DIR/SAFETY-NOTICE.txt"
 
 if command -v codesign >/dev/null 2>&1; then
   if [[ -n "$SIGNING_IDENTITY" ]]; then
@@ -254,11 +273,20 @@ info "creating zip archive"
 rm -f "$ZIP_PATH"
 ditto -c -k --sequesterRsrc --keepParent "$STAGING_DIR" "$ZIP_PATH"
 
+info "creating dmg install staging directory"
+rm -rf "$DMG_STAGING_DIR"
+mkdir -p "$DMG_STAGING_DIR"
+
+ditto "$APP_BUNDLE" "$DMG_STAGING_DIR/${APP_NAME}.app"
+ln -s /Applications "$DMG_STAGING_DIR/Applications"
+cp "$STAGING_DIR/README.txt" "$DMG_STAGING_DIR/README.txt"
+cp "$STAGING_DIR/SAFETY-NOTICE.txt" "$DMG_STAGING_DIR/SAFETY-NOTICE.txt"
+
 info "creating dmg archive"
 rm -f "$DMG_PATH"
 hdiutil create \
   -volname "${APP_NAME} ${VERSION}" \
-  -srcfolder "$STAGING_DIR" \
+  -srcfolder "$DMG_STAGING_DIR" \
   -ov \
   -format UDZO \
   "$DMG_PATH" >/dev/null
