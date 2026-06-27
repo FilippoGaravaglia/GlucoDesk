@@ -145,7 +145,22 @@ Preview limitations:
 - provider behavior depends on configuration and external service availability;
 - this preview may be unsigned or not notarized depending on how it was built.
 
-If macOS blocks the app because it is not signed/notarized, document the limitation clearly in the GitHub release notes before distributing it publicly.
+First launch on macOS:
+This preview build may be unsigned or not notarized. On first launch, macOS may show a message saying that Apple cannot verify whether GlucoDesk contains malware.
+
+If that happens:
+1. Click "Done" or close the warning dialog.
+2. Open System Settings.
+3. Go to Privacy & Security.
+4. Scroll to the Security section.
+5. Find the GlucoDesk warning.
+6. Click "Open Anyway".
+7. Confirm with your password or Touch ID.
+8. Launch GlucoDesk again from Applications.
+
+This approval is normally required only the first time the app is opened.
+
+Do not use terminal commands such as xattr as the primary installation path for users. The recommended preview flow is Applications plus Privacy & Security approval.
 README
 }
 
