@@ -950,3 +950,21 @@ If macOS blocks GlucoDesk on first launch:
 This approval is normally required only once.
 
 GlucoDesk is not a medical device and must not be used for insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
+
+## Windows first launch note
+
+GlucoDesk preview builds are currently not code-signed.
+
+Windows may show a Microsoft Defender SmartScreen warning such as **"Windows protected your PC"** because the installer is not yet recognized.
+
+If this happens:
+
+1. Click **More info**.
+2. Verify that the app name is the GlucoDesk installer downloaded from the official GitHub Releases page.
+3. Click **Run anyway**.
+
+On Italian Windows, the buttons may appear as **Ulteriori informazioni** and **Esegui comunque**.
+
+Only continue if you downloaded GlucoDesk from the official GitHub Releases page.
+
+GlucoDesk is not a medical device and must not be used for insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
