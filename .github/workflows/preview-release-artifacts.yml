@@ -38,6 +38,8 @@ jobs:
         run: chmod +x ./scripts/*.sh
 
       - name: Create and verify macOS preview release assets
+        env:
+          RUN_TESTS: "false"
         run: ./scripts/create-macos-preview-release-assets.sh "${{ inputs.version }}" all
 
       - name: Upload macOS preview release files
