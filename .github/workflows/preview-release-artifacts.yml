@@ -37,11 +37,8 @@ jobs:
       - name: Ensure scripts are executable
         run: chmod +x ./scripts/*.sh
 
-      - name: Create macOS preview release assets
-        run: ./scripts/create-macos-preview-release-assets.sh "${{ inputs.version }}"
-
-      - name: Verify macOS preview artifacts
-        run: ./scripts/verify-macos-preview-artifacts.sh "${{ inputs.version }}"
+      - name: Create and verify macOS preview release assets
+        run: ./scripts/create-macos-preview-release-assets.sh "${{ inputs.version }}" all
 
       - name: Upload macOS preview artifacts
         uses: actions/upload-artifact@v4
