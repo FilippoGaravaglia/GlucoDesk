@@ -2,9 +2,9 @@
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Avalonia-UI-0B8CE9" alt="Avalonia UI" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license" />
-  <img src="https://img.shields.io/badge/status-v0.2.1--preview-blue" alt="v0.2.1 preview" />
-  <img src="https://img.shields.io/badge/macOS-preview-00AEEF" alt="macOS preview" />
-  <img src="https://img.shields.io/badge/Windows-portable--preview-0078D4" alt="Windows portable preview" />
+  <img src="https://img.shields.io/badge/status-v0.2.2--preview-blue" alt="v0.2.2 preview" />
+  <img src="https://img.shields.io/badge/macOS-DMG--preview-00AEEF" alt="macOS DMG preview" />
+  <img src="https://img.shields.io/badge/Windows-installer--preview-0078D4" alt="Windows installer preview" />
   <img src="https://img.shields.io/badge/local--first-yes-00AEEF" alt="Local-first" />
 </p>
 
@@ -31,9 +31,9 @@
 > [!IMPORTANT]
 > **Safety notice**
 >
-> GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications.
+> GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, alarms, diagnosis, or as a replacement for approved diabetes applications.
 >
-> Always use approved medical devices and official medical apps for therapy decisions.
+> Always use approved CGM apps, insulin pump systems, glucose meters, medical devices and healthcare professionals for therapy decisions.
 
 > [!WARNING]
 > **Preview status**
@@ -42,7 +42,9 @@
 >
 > The app is intended for awareness, personal review and desktop convenience only.
 >
-> The current preview supports macOS packages and a Windows x64 portable package. Windows support is available in preview and should still be considered early until validated across more real-world machines and runtime flows.
+> The current preview supports macOS Apple Silicon, macOS Intel and Windows x64 packages. macOS builds are not notarized yet and Windows builds are not code-signed yet, so first-launch approval may be required on both platforms.
+>
+> Linux is not supported in the current preview.
 
 ---
 
@@ -83,7 +85,9 @@ GlucoDesk focuses on:
 * glucose insights over selectable time windows;
 * readable glycemic diary export;
 * configurable display preferences;
-* privacy-conscious local storage.
+* secure local credential storage where supported by the operating system;
+* privacy-conscious local storage;
+* a quiet desktop presence through macOS menu bar and Windows tray companion flows.
 
 The goal is simple:
 
@@ -95,7 +99,7 @@ GlucoDesk uses a provider-based architecture so the project can evolve beyond a 
 
 ## Preview
 
-GlucoDesk is currently in **v0.2.1-preview**.
+GlucoDesk is currently in **v0.2.2-preview**.
 
 This preview focuses on turning the app into a more complete desktop product loop:
 
@@ -107,6 +111,7 @@ Connect an optional CGM data source
 → analyze recent glucose windows
 → export a readable glycemic diary
 → keep preferences consistent across app and exports
+→ package the app for real macOS and Windows installation flows
 ```
 
 ### Dashboard
@@ -125,7 +130,8 @@ The current preview includes:
 * average glucose;
 * below-range and above-range exposure;
 * local history status;
-* clear safety messaging.
+* clear safety messaging;
+* a calm desktop-first UI intended to stay readable during work.
 
 ### Account
 
@@ -140,7 +146,9 @@ The current preview supports secure local credential storage on:
 * macOS, through macOS Keychain;
 * Windows, through Windows Credential Manager.
 
-Credentials are used locally by the desktop app to connect to the configured provider. GlucoDesk does not provide a custom backend for handling user credentials.
+Credentials are used locally by the desktop app to connect to the configured provider.
+
+GlucoDesk does not provide a custom backend for handling user credentials.
 
 ### Glycemic diary export
 
@@ -193,7 +201,8 @@ GlucoDesk was created to make that experience calmer:
 * reduce missing local history where possible;
 * export a readable diary for personal review;
 * avoid unnecessary backend services;
-* keep the app focused, quiet and desktop-friendly.
+* keep the app focused, quiet and desktop-friendly;
+* provide a small desktop companion through the macOS menu bar or Windows tray.
 
 GlucoDesk is not intended to replace official apps.
 
@@ -206,10 +215,16 @@ It is a companion experience for awareness, personal review and desktop convenie
 Current version:
 
 ```text
-0.2.1-preview
+0.2.2-preview
 ```
 
-The preview focuses on:
+Latest preview release:
+
+```text
+https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.2.2-preview
+```
+
+The current preview includes:
 
 * redesigned desktop glucose dashboard;
 * optional CGM provider integration;
@@ -222,21 +237,25 @@ The preview focuses on:
 * Excel diary export;
 * PDF diary export;
 * updated app branding and screenshots;
-* macOS preview packaging;
-* Windows portable preview packaging;
+* macOS Apple Silicon DMG package;
+* macOS Intel DMG package;
+* Windows x64 installer with setup wizard;
+* Windows x64 portable ZIP;
+* macOS menu bar companion;
+* Windows tray companion;
 * Windows Credential Manager support for Dexcom Share credentials;
-* improved account connection flow on Windows.
+* improved account connection flow on Windows;
+* documented macOS Gatekeeper first-launch flow;
+* documented Windows SmartScreen first-launch flow.
 
 Current runtime support:
 
-| Platform            | Status                     | Notes                                 |
-| ------------------- | -------------------------- | ------------------------------------- |
-| macOS Apple Silicon | Preview supported          | Distributed as `osx-arm64` package    |
-| macOS Intel         | Preview supported          | Distributed as `osx-x64` package      |
-| Windows x64         | Portable preview available | Distributed as `win-x64` portable zip |
-| Linux               | Not supported yet          | Planned for a future step             |
-
-Windows support currently means a portable preview package, not a full installer.
+| Platform            | Status            | Package type                                                  | Notes                                           |
+| ------------------- | ----------------- | ------------------------------------------------------------- | ----------------------------------------------- |
+| macOS Apple Silicon | Preview supported | `macos-arm64-installable.zip` containing DMG                  | Tested on Apple Silicon                         |
+| macOS Intel         | Preview supported | `macos-x64-installable.zip` containing DMG                    | Built by CI, physical Intel validation may vary |
+| Windows x64         | Preview supported | `windows-x64-installable.zip` with installer and portable ZIP | Tested with installer and tray flow             |
+| Linux               | Not supported yet | Not available                                                 | Planned for a future step                       |
 
 Linux remains part of the cross-platform roadmap but is not a supported runtime target in this preview.
 
@@ -258,6 +277,19 @@ GlucoDesk shows:
 * safety notice.
 
 The UI is designed to stay calm, readable and useful during desktop work.
+
+### macOS menu bar and Windows tray companion
+
+GlucoDesk includes a small desktop presence outside the main window:
+
+* on macOS, GlucoDesk appears in the menu bar;
+* on Windows, GlucoDesk appears in the system tray / hidden icons area.
+
+The companion icon provides quick access to the desktop popup and keeps the app close without requiring the main window to stay in focus.
+
+This feature is intended for desktop convenience only.
+
+It is not an alarm system and must not be used for emergency or safety-critical notifications.
 
 ### Glucose insights
 
@@ -342,7 +374,7 @@ GlucoDesk includes a history continuity workflow to reduce missing local glucose
 
 The app can run startup or resume synchronization and store fetched readings locally.
 
-This is especially important for future diary export and completeness reporting.
+This is especially important for diary export and completeness reporting.
 
 ### Glycemic diary export
 
@@ -362,21 +394,22 @@ The current diary direction focuses on:
 * incomplete-data awareness;
 * structured data suitable for personal review.
 
-### Windows portable preview
+### Windows installer and portable mode
 
-GlucoDesk includes a Windows x64 portable preview build.
+GlucoDesk now includes a Windows x64 installer preview.
 
-The Windows package is distributed as a zip archive.
+The Windows installable package contains:
 
-The expected usage is:
+* a setup wizard;
+* per-user installation;
+* Start Menu shortcut support;
+* optional desktop shortcut support;
+* license page;
+* safety notice page;
+* uninstall support;
+* a portable ZIP alternative.
 
-```text
-Extract the zip
-→ open the extracted folder
-→ run GlucoDesk.Desktop.exe
-```
-
-This is not a Windows installer yet.
+The portable ZIP remains useful for manual testing or users who do not want to install the app.
 
 ---
 
@@ -388,7 +421,7 @@ By design:
 
 * glucose history is stored locally on the user’s computer;
 * app settings are stored locally;
-* dashboard and widget-related state are stored locally;
+* dashboard and tray/menu-bar state are stored locally;
 * credentials are handled through the configured operating-system credential store where supported;
 * credentials must not be committed to Git;
 * GlucoDesk does not require a custom backend to handle user credentials or glucose history.
@@ -414,30 +447,58 @@ Download the latest ready-to-run preview package from the [GitHub Releases page]
 >
 > To install or try GlucoDesk, download one of the packages attached to the latest GitHub Release under **Assets**.
 
+Latest recommended preview:
+
+```text
+v0.2.2-preview
+```
+
+Release page:
+
+```text
+https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.2.2-preview
+```
+
 Available package targets for this preview:
 
 ```text
-GlucoDesk-0.2.1-preview-osx-arm64.zip
-GlucoDesk-0.2.1-preview-osx-x64.zip
-GlucoDesk-0.2.1-preview-win-x64-portable.zip
+GlucoDesk-0.2.2-preview-macos-arm64-installable.zip
+GlucoDesk-0.2.2-preview-macos-x64-installable.zip
+GlucoDesk-0.2.2-preview-windows-x64-installable.zip
 ```
 
 Choose the package for your operating system:
 
-| System              | Download                                       |
-| ------------------- | ---------------------------------------------- |
-| macOS Apple Silicon | `GlucoDesk-0.2.1-preview-osx-arm64.zip`        |
-| macOS Intel         | `GlucoDesk-0.2.1-preview-osx-x64.zip`          |
-| Windows 64-bit      | `GlucoDesk-0.2.1-preview-win-x64-portable.zip` |
+| System              | Download                                              |
+| ------------------- | ----------------------------------------------------- |
+| macOS Apple Silicon | `GlucoDesk-0.2.2-preview-macos-arm64-installable.zip` |
+| macOS Intel         | `GlucoDesk-0.2.2-preview-macos-x64-installable.zip`   |
+| Windows 64-bit      | `GlucoDesk-0.2.2-preview-windows-x64-installable.zip` |
 
 Not sure which macOS package to use?
 
-* Choose `osx-arm64` for Apple Silicon Macs with M1, M2, M3, M4 or newer chips.
-* Choose `osx-x64` for Intel Macs.
+* Choose `macos-arm64` for Apple Silicon Macs with M1, M2, M3, M4 or newer chips.
+* Choose `macos-x64` for Intel Macs.
+
+### Package contents
+
+The macOS packages contain:
+
+* a platform-specific DMG;
+* a platform-specific app ZIP;
+* SHA256 checksum file;
+* platform README.
+
+The Windows package contains:
+
+* Windows setup installer;
+* Windows portable ZIP;
+* SHA256 checksum file;
+* platform README.
 
 ### Updating an existing installation
 
-Replacing the application bundle or portable folder does not normally delete local data.
+Replacing the application bundle, installer version or portable folder does not normally delete local data.
 
 GlucoDesk stores app data and credentials outside the application files:
 
@@ -449,118 +510,166 @@ To update:
 
 * close GlucoDesk;
 * download the new package from the latest GitHub Release;
-* replace the old app bundle or portable folder with the new one;
+* replace the old app bundle, reinstall with the new setup, or replace the previous portable folder;
 * open GlucoDesk again.
 
-### macOS
+### macOS Apple Silicon and Intel
 
-Download the correct macOS zip from the release assets.
+Download the correct macOS package from the release assets.
 
-For Apple Silicon Macs such as M1, M2, M3 or newer, use:
+For Apple Silicon Macs such as M1, M2, M3, M4 or newer, use:
 
 ```text
-GlucoDesk-0.2.1-preview-osx-arm64.zip
+GlucoDesk-0.2.2-preview-macos-arm64-installable.zip
 ```
 
 For Intel Macs, use:
 
 ```text
-GlucoDesk-0.2.1-preview-osx-x64.zip
+GlucoDesk-0.2.2-preview-macos-x64-installable.zip
 ```
 
 After downloading:
 
-1. unzip the package;
-2. move `GlucoDesk.app` to the `Applications` folder;
-3. if macOS asks whether to replace an existing copy, choose **Replace**;
-4. open the app.
+1. extract the installable ZIP;
+2. open the included `.dmg` file;
+3. drag `GlucoDesk.app` to the `Applications` folder;
+4. if macOS asks whether to replace an existing copy, choose **Replace**;
+5. open GlucoDesk from `Applications`.
 
-The preview app is currently not signed or notarized.
+The preview app is currently not signed with Apple Developer ID and is not notarized.
 
-Because of this, macOS Gatekeeper may block the first launch.
+Because of this, macOS Gatekeeper may block the first launch with a message saying that Apple cannot verify whether GlucoDesk contains malware.
 
-First try:
+If that happens:
 
-```text
-Right click GlucoDesk.app → Open → Open
-```
+1. click **Done** or close the warning dialog;
+2. open **System Settings**;
+3. go to **Privacy & Security**;
+4. scroll to the **Security** section;
+5. find the GlucoDesk warning;
+6. click **Open Anyway**;
+7. confirm with password or Touch ID;
+8. launch GlucoDesk again from `Applications`.
 
-If macOS shows a message such as:
-
-```text
-"GlucoDesk" is damaged and can't be opened.
-```
-
-this usually means the downloaded preview app is blocked by the quarantine attribute because it is not signed/notarized yet.
-
-From Terminal, run:
-
-```bash
-xattr -dr com.apple.quarantine /Applications/GlucoDesk.app
-```
-
-Then open the app again:
-
-```bash
-open /Applications/GlucoDesk.app
-```
-
-If you are testing directly from the Downloads folder instead of Applications, use:
-
-```bash
-xattr -dr com.apple.quarantine "$HOME/Downloads/GlucoDesk.app"
-open "$HOME/Downloads/GlucoDesk.app"
-```
-
-For normal usage, moving the app to `Applications` is recommended.
+This approval is normally required only once.
 
 > [!NOTE]
-> This manual macOS step is expected for the current unsigned preview build.
+> The recommended preview flow is:
 >
-> A future release goal is to provide signed and notarized macOS packages so users do not need to run terminal commands.
+> ```text
+> Download ZIP → extract → open DMG → drag to Applications → approve from Privacy & Security if required
+> ```
+>
+> Terminal commands such as `xattr` should not be needed as the primary user-facing installation path. A future release goal is to provide signed and notarized macOS packages.
 
-### Windows
+### Windows x64
 
-Download the Windows portable package from the release assets:
+Download the Windows package from the release assets:
 
 ```text
-GlucoDesk-0.2.1-preview-win-x64-portable.zip
+GlucoDesk-0.2.2-preview-windows-x64-installable.zip
 ```
 
-Then:
+After downloading:
 
-1. extract the zip into a normal folder;
+1. extract the installable ZIP;
+2. run `GlucoDesk-0.2.2-preview-win-x64-setup.exe`;
+3. follow the setup wizard;
+4. read the safety notice page;
+5. optionally create a desktop shortcut;
+6. launch GlucoDesk from the Start Menu.
+
+The Windows installer:
+
+* installs GlucoDesk for the current Windows user;
+* does not require administrator privileges;
+* adds Start Menu shortcuts;
+* can optionally create a desktop shortcut;
+* includes the MIT license page;
+* includes a safety notice page before installation;
+* supports standard Windows uninstall.
+
+The Windows preview build is currently not code-signed.
+
+Because of this, Microsoft Defender SmartScreen may show a warning such as:
+
+```text
+Windows protected your PC
+```
+
+If this happens:
+
+1. click **More info**;
+2. verify that the app name is the GlucoDesk installer downloaded from the official GitHub Release;
+3. click **Run anyway**.
+
+On Italian Windows, the buttons may appear as:
+
+```text
+Ulteriori informazioni
+Esegui comunque
+```
+
+Only continue if you downloaded GlucoDesk from the official GitHub Releases page.
+
+### Windows portable mode
+
+The Windows package also includes a portable ZIP:
+
+```text
+GlucoDesk-0.2.2-preview-win-x64-portable.zip
+```
+
+Portable usage:
+
+1. extract the portable ZIP to a normal local folder;
 2. open the extracted folder;
-3. run:
+3. run `GlucoDesk.Desktop.exe`.
 
-```text
-GlucoDesk.Desktop.exe
-```
+Do not run the app directly from inside the compressed ZIP. Extract it first.
 
-Do not run the app directly from inside the compressed zip preview. Extract it first.
-
-The Windows preview is portable.
-
-It does not currently:
+The portable ZIP does not:
 
 * install the app into the Start Menu;
 * create a desktop shortcut;
 * create a system installer entry;
 * register an uninstaller.
 
-To update the Windows portable preview:
-
-1. close GlucoDesk;
-2. download the new Windows zip;
-3. extract it to a new folder or replace the previous portable folder;
-4. run `GlucoDesk.Desktop.exe` again.
-
 Dexcom Share credentials are stored locally using Windows Credential Manager.
 
 > [!NOTE]
 > The Windows package is self-contained and is intended to include the required .NET runtime files.
->
-> Windows support is still considered preview-level until the main runtime flows are validated on more real Windows machines.
+
+### Linux
+
+Linux is not supported in the current preview.
+
+The project is built with cross-platform technologies, but Linux runtime packaging and validation have not been completed yet.
+
+### Verify release checksums
+
+Each preview release includes SHA256 checksum files.
+
+The top-level release also includes:
+
+```text
+GlucoDesk-0.2.2-preview-release-candidate-bundles.sha256
+```
+
+To verify the top-level installable bundles on macOS or Linux:
+
+```bash
+shasum -a 256 -c GlucoDesk-0.2.2-preview-release-candidate-bundles.sha256
+```
+
+On Windows PowerShell, you can calculate hashes manually:
+
+```powershell
+Get-FileHash .\GlucoDesk-0.2.2-preview-windows-x64-installable.zip -Algorithm SHA256
+```
+
+Then compare the value with the checksum file.
 
 ---
 
@@ -573,8 +682,8 @@ If you only want to try the app, use the packages attached to the latest GitHub 
 ### Requirements
 
 * .NET 10 SDK;
-* macOS for macOS app bundle packaging;
-* Windows for validating the Windows portable package on the target platform.
+* macOS for macOS app bundle and DMG packaging;
+* Windows for validating the Windows installer and tray behavior on the target platform.
 
 ### Restore, build, test and run
 
@@ -610,154 +719,71 @@ This section is intended for developers and maintainers who want to generate rel
 
 Regular users should download ready-to-run packages from the GitHub Releases page.
 
-### macOS Apple Silicon
+### macOS release assets
+
+On macOS:
 
 ```bash
-./scripts/package-preview.sh osx-arm64
+./scripts/create-macos-preview-release-assets.sh 0.2.2-preview all
 ```
 
-### macOS Intel
+This generates macOS preview assets for:
 
-```bash
-./scripts/package-preview.sh osx-x64
-```
-
-Generated macOS packages are written to:
-
-```text
-artifacts/releases/
-```
-
-### Windows x64 portable
-
-From macOS, Linux or Windows, the Windows publish output can be produced with:
-
-```bash
-dotnet publish src/GlucoDesk.Desktop/GlucoDesk.Desktop.csproj \
-  -c Release \
-  -r win-x64 \
-  --self-contained true \
-  -p:PublishSingleFile=false \
-  -o artifacts/publish/GlucoDesk-win-x64
-```
-
-On Windows, the portable zip can be generated with:
-
-```powershell
-.\scripts\publish-windows.ps1
-```
+* `osx-arm64`;
+* `osx-x64`.
 
 Generated artifacts are written under:
 
 ```text
-artifacts/
+artifacts/macos/
+```
+
+### Windows release assets
+
+On Windows PowerShell:
+
+```powershell
+.\scripts\create-windows-preview-release-assets.ps1 -Version "0.2.2-preview"
+```
+
+This generates:
+
+* Windows setup installer;
+* Windows portable ZIP;
+* Windows checksum file;
+* Windows release manifest.
+
+Generated artifacts are written under:
+
+```text
+artifacts/windows/
+```
+
+### GitHub Actions release artifacts
+
+Maintainers can generate release artifacts through the manual GitHub Actions workflow:
+
+```text
+Preview release artifacts
+```
+
+The workflow builds, tests, packages and uploads macOS and Windows preview artifacts.
+
+After downloading workflow artifacts, the installable release bundles can be generated with:
+
+```bash
+./scripts/create-preview-installable-bundles.sh 0.2.2-preview <RUN_ID> v0.2.2-preview
+```
+
+Generated release bundles are written under:
+
+```text
+artifacts/release-candidate/
 ```
 
 The `artifacts/` directory is ignored by Git.
 
 ---
-
-<!-- GLUCODESK_PREVIEW_INSTALL_START -->
-## Preview installation
-
-GlucoDesk is currently distributed as a preview desktop application.
-
-> Safety notice: GlucoDesk is not a medical device. It must not be used to make insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions. Always rely on your official CGM system, insulin pump, glucose meter, and clinical guidance for medical decisions.
-
-### macOS preview
-
-Recommended asset:
-
-```text
-GlucoDesk-<version>-osx-arm64.dmg
-```
-
-Installation flow:
-
-1. Download the macOS DMG from the GitHub Release.
-2. Open the `.dmg` file.
-3. Drag `GlucoDesk.app` to `Applications`, if the DMG layout provides that shortcut.
-4. Open GlucoDesk from `Applications`.
-
-If macOS Gatekeeper warns that the app cannot be opened because it is not notarized yet, this is expected for the preview. Notarization is planned as a production-readiness step.
-
-Alternative macOS asset:
-
-```text
-GlucoDesk-<version>-osx-arm64.zip
-```
-
-The ZIP is useful for testing and manual extraction, while the DMG is the preferred user-facing macOS preview package.
-
-### Windows preview
-
-Recommended asset:
-
-```text
-GlucoDesk-<version>-win-x64-setup.exe
-```
-
-The Windows setup installer:
-
-- installs GlucoDesk for the current Windows user;
-- does not require administrator privileges;
-- adds Start Menu shortcuts;
-- can optionally create a desktop shortcut;
-- includes the MIT license page;
-- includes a safety notice page before installation;
-- supports standard Windows uninstall.
-
-Windows may show a SmartScreen warning because the preview installer is not code-signed yet. This is expected until Windows code signing is added.
-
-Alternative Windows asset:
-
-```text
-GlucoDesk-<version>-win-x64-portable.zip
-```
-
-Portable ZIP usage:
-
-1. Download the ZIP from the GitHub Release.
-2. Extract it to a local folder.
-3. Run `GlucoDesk.Desktop.exe`.
-
-The portable ZIP does not create Start Menu shortcuts and does not register an uninstall entry.
-
-### Verify release checksums
-
-Each preview release includes SHA256 checksum files.
-
-On macOS or Linux:
-
-```bash
-shasum -a 256 -c GlucoDesk-<version>-osx-arm64-checksums.sha256
-```
-
-On Windows PowerShell:
-
-```powershell
-Get-FileHash .\GlucoDesk-<version>-win-x64-setup.exe -Algorithm SHA256
-Get-FileHash .\GlucoDesk-<version>-win-x64-portable.zip -Algorithm SHA256
-```
-
-Compare the output with:
-
-```text
-GlucoDesk-<version>-win-x64-checksums.sha256
-```
-
-### Current preview limitations
-
-The preview is intentionally limited:
-
-- macOS notarization is not available yet;
-- Windows code signing is not available yet;
-- auto-update is not available yet;
-- Windows support currently targets `win-x64`;
-- macOS preview packaging currently targets Apple Silicon;
-- data completeness depends on local history availability and provider connectivity;
-- exports are intended for personal review and discussion with healthcare professionals, not urgent or automated medical decisions.
-<!-- GLUCODESK_PREVIEW_INSTALL_END -->
 
 ## Architecture overview
 
@@ -827,6 +853,8 @@ This layer handles:
 * account configuration;
 * settings screens;
 * diary export user flow;
+* macOS menu bar integration;
+* Windows tray integration;
 * desktop file save dialogs.
 
 The desktop layer should remain focused on presentation and composition, while application and infrastructure behavior stay in dedicated layers.
@@ -850,9 +878,15 @@ Current quality practices include:
 * repository-level `.editorconfig`;
 * GitHub Actions continuous integration;
 * CI build and test on Ubuntu, macOS and Windows;
-* Windows portable publish workflow;
-* macOS preview packaging script;
-* release-readiness documentation.
+* manual GitHub Actions workflow for preview release artifacts;
+* macOS Apple Silicon and Intel packaging;
+* Windows setup installer packaging;
+* Windows portable packaging;
+* release artifact verification scripts;
+* checksum generation;
+* release smoke-test checklist;
+* documented macOS Gatekeeper flow;
+* documented Windows SmartScreen flow.
 
 Run the full local validation with:
 
@@ -875,14 +909,16 @@ Current limitations:
 
 * the app is not a medical device;
 * the app must not be used for treatment decisions;
-* macOS packages are not signed or notarized yet;
-* macOS may require a manual Gatekeeper quarantine workaround on first launch;
-* Windows support is currently distributed as a portable preview package, not a full installer;
-* Windows packages are not signed yet;
+* macOS packages are not signed with Apple Developer ID and are not notarized yet;
+* macOS may require approval from Privacy & Security on first launch;
+* Windows packages are not code-signed yet;
+* Windows may show a Microsoft Defender SmartScreen warning on first launch;
 * Linux runtime support is not available yet;
+* auto-update is not available yet;
 * provider runtime behavior may depend on platform, region and account configuration;
 * local history completeness depends on sync availability and app runtime;
 * data completeness reporting can only describe the available local history;
+* diary exports depend on locally available readings;
 * app icon and brand assets may still evolve.
 
 ---
@@ -891,21 +927,20 @@ Current limitations:
 
 Planned improvements include:
 
-* polished public release packaging;
 * signed and notarized macOS packages;
+* Windows code signing;
 * stronger release automation;
-* Windows installer support;
-* Windows runtime validation and hardening;
-* Linux packaging and runtime support;
-* platform-specific secure credential storage hardening;
 * improved first-run onboarding;
 * improved dashboard empty states;
 * improved dashboard error states;
 * richer diary and data-completeness reporting;
 * additional statistics views;
 * macOS widget exploration;
+* Linux packaging and runtime support;
+* platform-specific secure credential storage hardening;
 * additional provider abstraction hardening;
 * improved local history continuity and backfill behavior;
+* auto-update exploration;
 * README and release asset polish.
 
 ---
@@ -918,7 +953,7 @@ It is not affiliated with, endorsed by, approved by, or sponsored by Dexcom, Ins
 
 GlucoDesk is not a medical device.
 
-Do not use GlucoDesk for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications.
+Do not use GlucoDesk for treatment decisions, insulin dosing, emergency alerts, alarms, diagnosis, or as a replacement for approved diabetes applications.
 
 For therapy decisions, always use approved medical devices and official medical apps.
 
@@ -929,42 +964,3 @@ For therapy decisions, always use approved medical devices and official medical 
 This project is licensed under the MIT License.
 
 See [LICENSE](LICENSE) for details.
-
-## macOS first launch note
-
-GlucoDesk preview builds may be unsigned or not notarized.
-
-The macOS DMG supports the standard drag-to-Applications installation flow, but macOS Gatekeeper may still block the app the first time it is opened because Apple cannot verify non-notarized builds.
-
-If macOS blocks GlucoDesk on first launch:
-
-1. Click **Done** or close the warning dialog.
-2. Open **System Settings**.
-3. Go to **Privacy & Security**.
-4. Scroll to the **Security** section.
-5. Find the GlucoDesk warning.
-6. Click **Open Anyway**.
-7. Confirm with password or Touch ID.
-8. Launch GlucoDesk again from **Applications**.
-
-This approval is normally required only once.
-
-GlucoDesk is not a medical device and must not be used for insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
-
-## Windows first launch note
-
-GlucoDesk preview builds are currently not code-signed.
-
-Windows may show a Microsoft Defender SmartScreen warning such as **"Windows protected your PC"** because the installer is not yet recognized.
-
-If this happens:
-
-1. Click **More info**.
-2. Verify that the app name is the GlucoDesk installer downloaded from the official GitHub Releases page.
-3. Click **Run anyway**.
-
-On Italian Windows, the buttons may appear as **Ulteriori informazioni** and **Esegui comunque**.
-
-Only continue if you downloaded GlucoDesk from the official GitHub Releases page.
-
-GlucoDesk is not a medical device and must not be used for insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
