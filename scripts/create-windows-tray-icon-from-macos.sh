@@ -1,82 +1,108 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
-APP_NAME="GlucoDesk"
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SERVICE_PATH="$ROOT_DIR/src/GlucoDesk.Desktop/DesktopPresence/Services/AvaloniaDesktopPresenceLifecycleService.cs"
+
+SOURCE_ICON="$ROOT_DIR/src/GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon.png"
 OUTPUT_ICON="$ROOT_DIR/src/GlucoDesk.Desktop/Assets/AppIcon/glucodesk-windows-tray-icon.png"
+PREVIEW_ICON="$ROOT_DIR/artifacts/icon-generation/windows-tray-icon-preview.png"
+
+CANVAS_SIZE="${1:-64}"
+CONTENT_SCALE="${2:-0.92}"
+
+info() {
+  echo "==> $*"
+}
 
 fail() {
   echo "error: $*" >&2
   exit 1
 }
 
-info() {
-  echo "==> $*"
-}
-
-require_command() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    fail "required command '$1' was not found"
-  fi
-}
-
-require_command python3
-
-if [[ ! -f "$SERVICE_PATH" ]]; then
-  fail "desktop presence lifecycle service not found: $SERVICE_PATH"
+if [[ ! -f "$SOURCE_ICON" ]]; then
+  fail "source macOS menu bar icon not found: $SOURCE_ICON"
 fi
 
-info "creating Windows tray icon from existing macOS menu bar icon"
+if ! command -v python3 >/dev/null 2>&1; then
+  fail "python3 not found"
+fi
 
-python3 - "$ROOT_DIR" "$SERVICE_PATH" "$OUTPUT_ICON" <<'PY'
+VENV_DIR="$ROOT_DIR/artifacts/icon-generation/.venv-tray-icon"
+
+if ! python3 - <<'PY' >/dev/null 2>&1
+import PIL
+PY
+then
+  info "Pillow not found, creating local virtual environment"
+  python3 -m venv "$VENV_DIR"
+  # shellcheck disable=SC1091
+  source "$VENV_DIR/bin/activate"
+  pip install --quiet Pillow
+else
+  if [[ -d "$VENV_DIR" ]]; then
+    # shellcheck disable=SC1091
+    source "$VENV_DIR/bin/activate"
+  fi
+fi
+
+info "creating high-quality Windows tray icon from macOS menu bar icon"
+
+python3 - <<PY
 from pathlib import Path
-import re
-import shutil
-import sys
+from PIL import Image
 
-root_dir = Path(sys.argv[1])
-service_path = Path(sys.argv[2])
-output_icon = Path(sys.argv[3])
+source_icon = Path(r"$SOURCE_ICON")
+output_icon = Path(r"$OUTPUT_ICON")
+preview_icon = Path(r"$PREVIEW_ICON")
 
-content = service_path.read_text(encoding="utf-8")
+canvas_size = int("$CANVAS_SIZE")
+content_scale = float("$CONTENT_SCALE")
 
-uri_constants = dict(
-    re.findall(
-        r'private\s+static\s+readonly\s+Uri\s+(\w+)\s*=\s*new\("avares://GlucoDesk\.Desktop/([^"]+)"\);',
-        content,
-    )
-)
+if not 0.1 <= content_scale <= 1.0:
+    raise SystemExit(f"content scale must be between 0.1 and 1.0, got {content_scale}")
 
-mac_variable_match = re.search(
-    r'OperatingSystem\.IsMacOS\(\)\s*\?\s*(\w+)\s*:',
-    content,
-)
+image = Image.open(source_icon).convert("RGBA")
+alpha = image.getchannel("A")
+bbox = alpha.getbbox()
 
-if not mac_variable_match:
-    raise SystemExit("Could not detect the macOS tray/menu-bar icon variable from GetTrayIconUri.")
+if bbox is None:
+    raise SystemExit(f"source icon has no visible alpha content: {source_icon}")
 
-mac_variable = mac_variable_match.group(1)
+cropped = image.crop(bbox)
 
-if mac_variable not in uri_constants:
-    raise SystemExit(f"Could not resolve macOS tray icon URI variable: {mac_variable}")
+target_side = max(1, int(round(canvas_size * content_scale)))
+scale = min(target_side / cropped.width, target_side / cropped.height)
 
-mac_asset_relative_path = uri_constants[mac_variable]
-mac_asset_path = root_dir / "src/GlucoDesk.Desktop" / mac_asset_relative_path
+new_width = max(1, int(round(cropped.width * scale)))
+new_height = max(1, int(round(cropped.height * scale)))
 
-if not mac_asset_path.exists():
-    raise SystemExit(f"macOS tray icon asset not found: {mac_asset_path}")
+resized = cropped.resize((new_width, new_height), Image.LANCZOS)
+
+canvas = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+offset_x = (canvas_size - new_width) // 2
+offset_y = (canvas_size - new_height) // 2
+canvas.paste(resized, (offset_x, offset_y), resized)
 
 output_icon.parent.mkdir(parents=True, exist_ok=True)
-shutil.copyfile(mac_asset_path, output_icon)
+preview_icon.parent.mkdir(parents=True, exist_ok=True)
 
-print(f"macOS tray icon variable: {mac_variable}")
-print(f"macOS tray icon asset: {mac_asset_path}")
-print(f"Windows tray icon asset: {output_icon}")
+canvas.save(output_icon, format="PNG")
+canvas.save(preview_icon, format="PNG")
+
+print(f"source: {source_icon}")
+print(f"output: {output_icon}")
+print(f"preview: {preview_icon}")
+print(f"source size: {image.size}")
+print(f"source content bbox: {bbox}")
+print(f"canvas size: {canvas_size}x{canvas_size}")
+print(f"content scale: {content_scale}")
+print(f"final glyph size: {new_width}x{new_height}")
 PY
 
-info "Windows tray icon created successfully"
-echo "Icon:"
+info "Windows tray icon generated successfully"
+echo
+echo "Output:"
 echo "  $OUTPUT_ICON"
+echo
+echo "Preview:"
+echo "  $PREVIEW_ICON"
