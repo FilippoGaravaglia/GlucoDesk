@@ -1,0 +1,95 @@
+name: Preview release artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Preview version to package, for example 0.2.1-preview"
+        required: true
+        default: "0.2.1-preview"
+
+permissions:
+  contents: read
+
+jobs:
+  macos-preview-artifacts:
+    name: macOS preview artifacts
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Test
+        run: dotnet test -c Release --no-build
+
+      - name: Ensure scripts are executable
+        run: chmod +x ./scripts/*.sh
+
+      - name: Create macOS preview release assets
+        run: ./scripts/create-macos-preview-release-assets.sh "${{ inputs.version }}"
+
+      - name: Verify macOS preview artifacts
+        run: ./scripts/verify-macos-preview-artifacts.sh "${{ inputs.version }}"
+
+      - name: Upload macOS preview artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: glucodesk-${{ inputs.version }}-macos-preview-artifacts
+          path: artifacts/macos/${{ inputs.version }}/
+          if-no-files-found: error
+
+  windows-preview-artifacts:
+    name: Windows preview artifacts
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build -c Release --no-restore
+
+      - name: Test
+        shell: pwsh
+        run: dotnet test -c Release --no-build
+
+      - name: Create Windows preview release assets
+        shell: pwsh
+        run: .\scripts\create-windows-preview-release-assets.ps1 -Version "${{ inputs.version }}"
+
+      - name: Verify Windows preview artifacts
+        shell: pwsh
+        run: .\scripts\verify-windows-preview-artifacts.ps1 -Version "${{ inputs.version }}"
+
+      - name: Upload Windows preview artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: glucodesk-${{ inputs.version }}-windows-preview-artifacts
+          path: artifacts/windows/${{ inputs.version }}/
+          if-no-files-found: error
