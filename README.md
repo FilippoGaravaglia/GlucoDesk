@@ -929,3 +929,24 @@ For therapy decisions, always use approved medical devices and official medical 
 This project is licensed under the MIT License.
 
 See [LICENSE](LICENSE) for details.
+
+## macOS first launch note
+
+GlucoDesk preview builds may be unsigned or not notarized.
+
+The macOS DMG supports the standard drag-to-Applications installation flow, but macOS Gatekeeper may still block the app the first time it is opened because Apple cannot verify non-notarized builds.
+
+If macOS blocks GlucoDesk on first launch:
+
+1. Click **Done** or close the warning dialog.
+2. Open **System Settings**.
+3. Go to **Privacy & Security**.
+4. Scroll to the **Security** section.
+5. Find the GlucoDesk warning.
+6. Click **Open Anyway**.
+7. Confirm with password or Touch ID.
+8. Launch GlucoDesk again from **Applications**.
+
+This approval is normally required only once.
+
+GlucoDesk is not a medical device and must not be used for insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
