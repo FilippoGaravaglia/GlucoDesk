@@ -40,12 +40,20 @@ jobs:
       - name: Create and verify macOS preview release assets
         run: ./scripts/create-macos-preview-release-assets.sh "${{ inputs.version }}" all
 
-      - name: Upload macOS preview artifacts
+      - name: Upload macOS preview release files
         uses: actions/upload-artifact@v4
         with:
           name: glucodesk-${{ inputs.version }}-macos-preview-artifacts
-          path: artifacts/macos/${{ inputs.version }}/
+          compression-level: 0
           if-no-files-found: error
+          path: |
+            artifacts/macos/${{ inputs.version }}/*.txt
+            artifacts/macos/${{ inputs.version }}/osx-arm64/*.dmg
+            artifacts/macos/${{ inputs.version }}/osx-arm64/*.zip
+            artifacts/macos/${{ inputs.version }}/osx-arm64/*.sha256
+            artifacts/macos/${{ inputs.version }}/osx-x64/*.dmg
+            artifacts/macos/${{ inputs.version }}/osx-x64/*.zip
+            artifacts/macos/${{ inputs.version }}/osx-x64/*.sha256
 
   windows-preview-artifacts:
     name: Windows preview artifacts
@@ -78,15 +86,24 @@ jobs:
 
       - name: Create Windows preview release assets
         shell: pwsh
-        run: .\scripts\create-windows-preview-release-assets.ps1 -Version "${{ inputs.version }}"
+        run: '.\scripts\create-windows-preview-release-assets.ps1 -Version "${{ inputs.version }}"'
 
       - name: Verify Windows preview artifacts
         shell: pwsh
-        run: .\scripts\verify-windows-preview-artifacts.ps1 -Version "${{ inputs.version }}"
+        run: '.\scripts\verify-windows-preview-artifacts.ps1 -Version "${{ inputs.version }}"'
 
-      - name: Upload Windows preview artifacts
+      - name: Upload Windows preview release files
         uses: actions/upload-artifact@v4
         with:
           name: glucodesk-${{ inputs.version }}-windows-preview-artifacts
-          path: artifacts/windows/${{ inputs.version }}/
+          compression-level: 0
           if-no-files-found: error
+          path: |
+            artifacts/windows/${{ inputs.version }}/*.txt
+            artifacts/windows/${{ inputs.version }}/*.md
+            artifacts/windows/${{ inputs.version }}/*.sha256
+            artifacts/windows/${{ inputs.version }}/*.exe
+            artifacts/windows/${{ inputs.version }}/*.zip
+            artifacts/windows/${{ inputs.version }}/**/*.sha256
+            artifacts/windows/${{ inputs.version }}/**/*.exe
+            artifacts/windows/${{ inputs.version }}/**/*.zip
