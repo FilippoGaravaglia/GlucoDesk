@@ -388,6 +388,21 @@
                               IsChecked="{Binding NativeGlucoseNotificationsEnabled}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
 
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="14">
+                      <Button Grid.Column="0"
+                              Content="Send test notification"
+                              Command="{Binding SendNativeGlucoseTestNotificationCommand}"
+                              IsEnabled="{Binding CanSendNativeGlucoseTestNotification}" />
+
+                      <TextBlock Grid.Column="1"
+                                 Text="{Binding NativeGlucoseTestNotificationStatusText}"
+                                 Classes="muted"
+                                 FontSize="12"
+                                 TextWrapping="Wrap"
+                                 VerticalAlignment="Center" />
+                    </Grid>
+
                     <StackPanel Spacing="8">
                       <TextBlock Text="Repeat cooldown"
                                  Classes="metric-label" />

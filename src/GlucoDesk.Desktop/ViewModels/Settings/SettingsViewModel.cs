@@ -10,6 +10,7 @@ using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.ValueObjects;
+using GlucoDesk.Desktop.GlucoseAlerts.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 using GlucoDesk.Desktop.ViewModels.Common;
@@ -40,6 +41,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private readonly IReadOnlyCollection<IDexcomConnectionStatusService> _dexcomConnectionStatusServices;
     private readonly IReadOnlyCollection<IDexcomDesktopConnectionService> _dexcomDesktopConnectionServices;
     private readonly IReadOnlyCollection<INightscoutDesktopConnectionService> _nightscoutDesktopConnectionServices;
+    private readonly IGlucoseAlertNotificationTestService _glucoseAlertNotificationTestService;
 
     [ObservableProperty]
     private IReadOnlyList<ProviderSelectionItem> _providerOptions = [];
@@ -129,6 +131,13 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _glucoseAlertRepeatIntervalMinutesText = "30";
 
+    [ObservableProperty]
+    private bool _canSendNativeGlucoseTestNotification;
+
+    [ObservableProperty]
+    private string _nativeGlucoseTestNotificationStatusText =
+        "Enable native OS notifications to send a safe test notification.";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
@@ -137,12 +146,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// <param name="dexcomConnectionStatusServices">The registered Dexcom connection status services.</param>
     /// <param name="dexcomDesktopConnectionServices">The registered desktop Dexcom connection services.</param>
     /// <param name="nightscoutDesktopConnectionServices">The registered desktop Nightscout connection services.</param>
+    /// <param name="glucoseAlertNotificationTestService">The optional native glucose notification test service.</param>
     public SettingsViewModel(
         IApplicationSettingsService settingsService,
         IEnumerable<ICgmMetadataProvider>? metadataProviders = null,
         IEnumerable<IDexcomConnectionStatusService>? dexcomConnectionStatusServices = null,
         IEnumerable<IDexcomDesktopConnectionService>? dexcomDesktopConnectionServices = null,
-        IEnumerable<INightscoutDesktopConnectionService>? nightscoutDesktopConnectionServices = null)
+        IEnumerable<INightscoutDesktopConnectionService>? nightscoutDesktopConnectionServices = null,
+        IGlucoseAlertNotificationTestService? glucoseAlertNotificationTestService = null)
     {
         ArgumentNullException.ThrowIfNull(settingsService);
 
@@ -151,6 +162,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _dexcomConnectionStatusServices = dexcomConnectionStatusServices?.ToArray() ?? [];
         _dexcomDesktopConnectionServices = dexcomDesktopConnectionServices?.ToArray() ?? [];
         _nightscoutDesktopConnectionServices = nightscoutDesktopConnectionServices?.ToArray() ?? [];
+        _glucoseAlertNotificationTestService = glucoseAlertNotificationTestService
+            ?? new GlucoseAlertNotificationTestService(OperatingSystemGlucoseAlertNotificationService.Create());
 
         CanConnectDexcom = _dexcomDesktopConnectionServices.Count > 0;
         CanTestNightscoutConnection = _nightscoutDesktopConnectionServices.Count > 0;
@@ -169,6 +182,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         SelectedPreferredUnit = PreferredUnitOptions[0];
         UpdateTargetRangeUnitPresentation(SelectedPreferredUnit.Unit);
         UpdateChartMaximumPresentation(SelectedPreferredUnit.Unit);
+        UpdateNativeGlucoseTestNotificationAvailability();
 
         ProviderAvailabilityStatusText = BuildProviderAvailabilityStatusText(ProviderOptions);
         UpdateNightscoutProviderActionAvailability();
@@ -274,6 +288,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
             }
 
             StatusMessage = "Settings saved. Dashboard will use the selected provider on next refresh.";
+            UpdateNativeGlucoseTestNotificationAvailability();
         }
         catch (OperationCanceledException)
         {
@@ -286,6 +301,68 @@ public sealed partial class SettingsViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Sends a privacy-safe native OS test notification.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task SendNativeGlucoseTestNotificationAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (!GlucoseAlertsEnabled || !NativeGlucoseNotificationsEnabled)
+        {
+            NativeGlucoseTestNotificationStatusText =
+                "Enable glucose awareness and native OS notifications before sending a test notification.";
+            UpdateNativeGlucoseTestNotificationAvailability();
+            return;
+        }
+
+        IsBusy = true;
+        HasError = false;
+        ErrorMessage = null;
+        StatusMessage = "Sending native test notification...";
+        NativeGlucoseTestNotificationStatusText = "Sending test notification...";
+
+        try
+        {
+            var result = await _glucoseAlertNotificationTestService
+                .SendTestNotificationAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (result.IsFailure)
+            {
+                ApplyFailure(result, "Unable to send native test notification");
+                NativeGlucoseTestNotificationStatusText =
+                    "Unable to send the test notification. Check OS notification permissions.";
+                return;
+            }
+
+            StatusMessage = "Native test notification requested.";
+            NativeGlucoseTestNotificationStatusText =
+                "Test notification requested. Check your OS notification center.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Native test notification cancelled";
+            NativeGlucoseTestNotificationStatusText = "Test notification cancelled.";
+        }
+        catch (Exception exception)
+        {
+            ApplyUnexpectedFailure(exception, "Unexpected error while sending native test notification");
+            NativeGlucoseTestNotificationStatusText =
+                "Unexpected error while sending the test notification.";
+        }
+        finally
+        {
+            IsBusy = false;
+            UpdateNativeGlucoseTestNotificationAvailability();
         }
     }
 
@@ -573,7 +650,71 @@ public sealed partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Handles glucose alert toggle changes.
+    /// </summary>
+    /// <param name="value">The updated toggle value.</param>
+    partial void OnGlucoseAlertsEnabledChanged(bool value)
+    {
+        UpdateNativeGlucoseTestNotificationAvailability();
+    }
+
+    /// <summary>
+    /// Handles native glucose notification toggle changes.
+    /// </summary>
+    /// <param name="value">The updated toggle value.</param>
+    partial void OnNativeGlucoseNotificationsEnabledChanged(bool value)
+    {
+        UpdateNativeGlucoseTestNotificationAvailability();
+    }
+
+    /// <summary>
+    /// Handles busy state changes.
+    /// </summary>
+    /// <param name="value">The updated busy value.</param>
+    partial void OnIsBusyChanged(bool value)
+    {
+        UpdateNativeGlucoseTestNotificationAvailability();
+    }
+
     #region Helpers
+
+    /// <summary>
+    /// Updates native glucose test notification availability and helper text.
+    /// </summary>
+    private void UpdateNativeGlucoseTestNotificationAvailability()
+    {
+        CanSendNativeGlucoseTestNotification =
+            GlucoseAlertsEnabled &&
+            NativeGlucoseNotificationsEnabled &&
+            !IsBusy;
+
+        if (!GlucoseAlertsEnabled)
+        {
+            NativeGlucoseTestNotificationStatusText =
+                "Enable glucose awareness notifications to send a safe test notification.";
+            return;
+        }
+
+        if (!NativeGlucoseNotificationsEnabled)
+        {
+            NativeGlucoseTestNotificationStatusText =
+                "Enable native OS notifications to send a safe test notification.";
+            return;
+        }
+
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(NativeGlucoseTestNotificationStatusText) ||
+            NativeGlucoseTestNotificationStatusText.Contains("Enable ", StringComparison.OrdinalIgnoreCase))
+        {
+            NativeGlucoseTestNotificationStatusText =
+                "Send a safe test notification to verify OS permissions.";
+        }
+    }
 
     /// <summary>
     /// Sanitizes a text value so it only contains digits.
@@ -762,6 +903,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         GlucoseAlertPrivacyModeEnabled = settings.GlucoseAlertPrivacyModeEnabled;
         GlucoseAlertRepeatIntervalMinutesText = ((int)settings.GlucoseAlertRepeatInterval.TotalMinutes)
             .ToString(CultureInfo.InvariantCulture);
+        UpdateNativeGlucoseTestNotificationAvailability();
 
         return usedProviderFallback;
     }
