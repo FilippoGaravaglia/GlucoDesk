@@ -136,6 +136,44 @@
             </Grid>
           </Border>
 
+          <Border Classes="surface-card"
+                  Padding="20"
+                  IsVisible="{Binding IsGlucoseAlertBannerVisible}">
+            <Grid ColumnDefinitions="Auto,*,Auto"
+                  ColumnSpacing="18"
+                  VerticalAlignment="Center">
+              <Border Grid.Column="0"
+                      Classes="badge-accent"
+                      VerticalAlignment="Top">
+                <TextBlock Text="{Binding GlucoseAlertBadgeText}"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+              </Border>
+
+              <StackPanel Grid.Column="1"
+                          Spacing="5">
+                <TextBlock Text="{Binding GlucoseAlertTitle}"
+                           Classes="section-title" />
+
+                <TextBlock Text="{Binding GlucoseAlertMessage}"
+                           Classes="secondary"
+                           FontSize="13"
+                           TextWrapping="Wrap" />
+
+                <TextBlock Text="{Binding GlucoseAlertActionText}"
+                           Classes="muted"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+
+              <Button Grid.Column="2"
+                      Content="Dismiss"
+                      Command="{Binding DismissGlucoseAlertBannerCommand}"
+                      VerticalAlignment="Center" />
+            </Grid>
+          </Border>
+
           <Border Classes="chart-card">
             <StackPanel Spacing="18">
               <Grid ColumnDefinitions="*,Auto"

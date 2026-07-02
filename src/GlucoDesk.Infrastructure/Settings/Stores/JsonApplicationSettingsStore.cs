@@ -19,11 +19,6 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
     private readonly LocalSettingsStorageOptions _options;
 
     /// <summary>
-    /// Gets or initializes the maximum chart value expressed in mg/dL.
-    /// </summary>
-    public int ChartMaximumMgDl { get; init; } = 300;
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="JsonApplicationSettingsStore"/> class.
     /// </summary>
     /// <param name="options">The local settings storage options.</param>
@@ -181,16 +176,56 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
         /// </summary>
         public GlucoseUnit PreferredUnit { get; init; } = GlucoseUnit.MgDl;
 
-        public int TargetLowMgDl { get; init; } = 70;
-        
-        public int TargetHighMgDl { get; init; } = 180;
-        
         /// <summary>
-        /// Gets or initializes the maximum chart value expressed in mg/dL.
+        /// Gets the lower glucose target expressed in mg/dL.
+        /// </summary>
+        public int TargetLowMgDl { get; init; } = 70;
+
+        /// <summary>
+        /// Gets the upper glucose target expressed in mg/dL.
+        /// </summary>
+        public int TargetHighMgDl { get; init; } = 180;
+
+        /// <summary>
+        /// Gets the maximum chart value expressed in mg/dL.
         /// </summary>
         public int ChartMaximumMgDl { get; init; } = 300;
-        
+
+        /// <summary>
+        /// Gets the dashboard refresh interval.
+        /// </summary>
         public TimeSpan DashboardRefreshInterval { get; init; } = TimeSpan.FromSeconds(30);
+
+        /// <summary>
+        /// Gets a value indicating whether in-app glucose awareness alerts are enabled.
+        /// </summary>
+        public bool GlucoseAlertsEnabled { get; init; } = true;
+
+        /// <summary>
+        /// Gets a value indicating whether below-target glucose awareness alerts are enabled.
+        /// </summary>
+        public bool LowGlucoseAlertsEnabled { get; init; } = true;
+
+        /// <summary>
+        /// Gets a value indicating whether above-target glucose awareness alerts are enabled.
+        /// </summary>
+        public bool HighGlucoseAlertsEnabled { get; init; } = true;
+
+        /// <summary>
+        /// Gets a value indicating whether native OS glucose awareness notifications are enabled.
+        /// </summary>
+        public bool NativeGlucoseNotificationsEnabled { get; init; }
+
+        /// <summary>
+        /// Gets a value indicating whether glucose alert privacy mode is enabled.
+        /// </summary>
+        public bool GlucoseAlertPrivacyModeEnabled { get; init; } = true;
+
+        /// <summary>
+        /// Gets the glucose alert repeat interval.
+        /// </summary>
+        public TimeSpan GlucoseAlertRepeatInterval { get; init; } =
+            ApplicationSettings.DefaultGlucoseAlertRepeatInterval;
 
         /// <summary>
         /// Creates a settings document from application settings.
@@ -209,7 +244,13 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
                 TargetLowMgDl = settings.TargetLowMgDl,
                 TargetHighMgDl = settings.TargetHighMgDl,
                 DashboardRefreshInterval = settings.DashboardRefreshInterval,
-                ChartMaximumMgDl = settings.ChartMaximumMgDl
+                ChartMaximumMgDl = settings.ChartMaximumMgDl,
+                GlucoseAlertsEnabled = settings.GlucoseAlertsEnabled,
+                LowGlucoseAlertsEnabled = settings.LowGlucoseAlertsEnabled,
+                HighGlucoseAlertsEnabled = settings.HighGlucoseAlertsEnabled,
+                NativeGlucoseNotificationsEnabled = settings.NativeGlucoseNotificationsEnabled,
+                GlucoseAlertPrivacyModeEnabled = settings.GlucoseAlertPrivacyModeEnabled,
+                GlucoseAlertRepeatInterval = settings.GlucoseAlertRepeatInterval
             };
         }
 
@@ -219,7 +260,6 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
         /// <returns>The application settings.</returns>
         public ApplicationSettings ToApplicationSettings()
         {
-            
             return new ApplicationSettings(
                 ActiveLiveProvider,
                 HistoricalProvider,
@@ -227,7 +267,13 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
                 TargetLowMgDl,
                 TargetHighMgDl,
                 DashboardRefreshInterval,
-                NormalizeChartMaximumMgDl(ChartMaximumMgDl));
+                NormalizeChartMaximumMgDl(ChartMaximumMgDl),
+                GlucoseAlertsEnabled,
+                LowGlucoseAlertsEnabled,
+                HighGlucoseAlertsEnabled,
+                NativeGlucoseNotificationsEnabled,
+                GlucoseAlertPrivacyModeEnabled,
+                NormalizeGlucoseAlertRepeatInterval(GlucoseAlertRepeatInterval));
         }
 
         /// <summary>
@@ -240,6 +286,22 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
             return chartMaximumMgDl is 400
                 ? 400
                 : 300;
+        }
+
+        /// <summary>
+        /// Normalizes persisted glucose alert repeat intervals to supported options.
+        /// </summary>
+        /// <param name="repeatInterval">The persisted repeat interval.</param>
+        /// <returns>The normalized repeat interval.</returns>
+        private static TimeSpan NormalizeGlucoseAlertRepeatInterval(TimeSpan repeatInterval)
+        {
+            if (repeatInterval < ApplicationSettings.MinimumGlucoseAlertRepeatInterval ||
+                repeatInterval > ApplicationSettings.MaximumGlucoseAlertRepeatInterval)
+            {
+                return ApplicationSettings.DefaultGlucoseAlertRepeatInterval;
+            }
+
+            return repeatInterval;
         }
     }
 }

@@ -111,6 +111,24 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private int _selectedChartMaximumMgDl = 300;
 
+    [ObservableProperty]
+    private bool _glucoseAlertsEnabled = true;
+
+    [ObservableProperty]
+    private bool _lowGlucoseAlertsEnabled = true;
+
+    [ObservableProperty]
+    private bool _highGlucoseAlertsEnabled = true;
+
+    [ObservableProperty]
+    private bool _nativeGlucoseNotificationsEnabled;
+
+    [ObservableProperty]
+    private bool _glucoseAlertPrivacyModeEnabled = true;
+
+    [ObservableProperty]
+    private string _glucoseAlertRepeatIntervalMinutesText = "30";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
@@ -541,7 +559,46 @@ public sealed partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Sanitizes the alert repeat interval input when the user edits the text.
+    /// </summary>
+    /// <param name="value">The edited alert repeat interval text.</param>
+    partial void OnGlucoseAlertRepeatIntervalMinutesTextChanged(string value)
+    {
+        var sanitizedValue = SanitizePositiveIntegerText(value);
+
+        if (sanitizedValue != value)
+        {
+            GlucoseAlertRepeatIntervalMinutesText = sanitizedValue;
+        }
+    }
+
     #region Helpers
+
+    /// <summary>
+    /// Sanitizes a text value so it only contains digits.
+    /// </summary>
+    /// <param name="text">The raw input text.</param>
+    /// <returns>The sanitized integer input text.</returns>
+    private static string SanitizePositiveIntegerText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder(text.Length);
+
+        foreach (var character in text)
+        {
+            if (char.IsDigit(character))
+            {
+                builder.Append(character);
+            }
+        }
+
+        return builder.ToString();
+    }
 
     /// <summary>
     /// Updates the availability of the Nightscout activation action.
@@ -697,6 +754,13 @@ public sealed partial class SettingsViewModel : ViewModelBase
         TargetLowMgDlText = FormatTargetValueForUnit(settings.TargetLowMgDl, selectedUnit);
         TargetHighMgDlText = FormatTargetValueForUnit(settings.TargetHighMgDl, selectedUnit);
         DashboardRefreshIntervalSecondsText = ((int)settings.DashboardRefreshInterval.TotalSeconds)
+            .ToString(CultureInfo.InvariantCulture);
+        GlucoseAlertsEnabled = settings.GlucoseAlertsEnabled;
+        LowGlucoseAlertsEnabled = settings.LowGlucoseAlertsEnabled;
+        HighGlucoseAlertsEnabled = settings.HighGlucoseAlertsEnabled;
+        NativeGlucoseNotificationsEnabled = settings.NativeGlucoseNotificationsEnabled;
+        GlucoseAlertPrivacyModeEnabled = settings.GlucoseAlertPrivacyModeEnabled;
+        GlucoseAlertRepeatIntervalMinutesText = ((int)settings.GlucoseAlertRepeatInterval.TotalMinutes)
             .ToString(CultureInfo.InvariantCulture);
 
         return usedProviderFallback;
@@ -1018,6 +1082,12 @@ public sealed partial class SettingsViewModel : ViewModelBase
             return null;
         }
 
+        if (!TryParsePositiveInteger(GlucoseAlertRepeatIntervalMinutesText, out var alertRepeatIntervalMinutes))
+        {
+            validationMessage = "Notification repeat interval must be a positive integer.";
+            return null;
+        }
+
         try
         {
             return new ApplicationSettings(
@@ -1027,7 +1097,13 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 targetLowMgDl,
                 targetHighMgDl,
                 TimeSpan.FromSeconds(refreshIntervalSeconds),
-                NormalizeChartMaximumMgDl(SelectedChartMaximumMgDl));
+                NormalizeChartMaximumMgDl(SelectedChartMaximumMgDl),
+                GlucoseAlertsEnabled,
+                LowGlucoseAlertsEnabled,
+                HighGlucoseAlertsEnabled,
+                NativeGlucoseNotificationsEnabled,
+                GlucoseAlertPrivacyModeEnabled,
+                TimeSpan.FromMinutes(alertRepeatIntervalMinutes));
         }
         catch (ArgumentException exception)
         {
