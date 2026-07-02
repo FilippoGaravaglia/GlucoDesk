@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
@@ -16,6 +17,7 @@ public partial class App : Avalonia.Application
     private ServiceProvider? _serviceProvider;
     private IServiceScope? _applicationScope;
     private bool _isExplicitShutdownRequested;
+    private bool _isMainWindowHideInProgress;
 
     /// <inheritdoc />
     public override void Initialize()
@@ -31,7 +33,7 @@ public partial class App : Avalonia.Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnExplicitShutdown;
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
             desktop.MainWindow = _applicationScope
                 .ServiceProvider
@@ -46,13 +48,9 @@ public partial class App : Avalonia.Application
 
             desktop.MainWindow.Closing += (_, eventArgs) =>
             {
-                if (_isExplicitShutdownRequested)
-                {
-                    return;
-                }
-
-                eventArgs.Cancel = true;
-                desktop.MainWindow.Hide();
+                HandleMainWindowClosing(
+                    desktop,
+                    eventArgs);
             };
 
             desktop.MainWindow.Opened += (_, _) =>
@@ -82,6 +80,84 @@ public partial class App : Avalonia.Application
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Handles main window close requests without terminating the background desktop companion.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="eventArgs">The window closing event arguments.</param>
+    private void HandleMainWindowClosing(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        WindowClosingEventArgs eventArgs)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(eventArgs);
+
+        if (_isExplicitShutdownRequested)
+        {
+            return;
+        }
+
+        eventArgs.Cancel = true;
+
+        var mainWindow = desktop.MainWindow;
+
+        if (mainWindow is null)
+        {
+            return;
+        }
+
+        if (_isMainWindowHideInProgress)
+        {
+            return;
+        }
+
+        if (mainWindow.WindowState == WindowState.FullScreen)
+        {
+            _isMainWindowHideInProgress = true;
+            _ = HideMainWindowAfterLeavingFullscreenAsync(mainWindow);
+            return;
+        }
+
+        mainWindow.Hide();
+    }
+
+    /// <summary>
+    /// Leaves fullscreen first and then hides the main window after the macOS fullscreen transition.
+    /// </summary>
+    /// <param name="mainWindow">The main application window.</param>
+    /// <returns>A task representing the asynchronous hide operation.</returns>
+    private async Task HideMainWindowAfterLeavingFullscreenAsync(Window mainWindow)
+    {
+        ArgumentNullException.ThrowIfNull(mainWindow);
+
+        try
+        {
+            mainWindow.WindowState = WindowState.Normal;
+
+            await Task.Delay(TimeSpan.FromMilliseconds(650))
+                .ConfigureAwait(false);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!_isExplicitShutdownRequested)
+                {
+                    mainWindow.Hide();
+                }
+            });
+        }
+        catch
+        {
+            // Closing from fullscreen is best-effort on macOS/Avalonia and must not break the app lifecycle.
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                _isMainWindowHideInProgress = false;
+            });
+        }
+    }
 
     /// <summary>
     /// Registers desktop activation handling so the main window can be reopened from the macOS Dock.
@@ -149,9 +225,9 @@ public partial class App : Avalonia.Application
             return;
         }
 
-        if (mainWindow.WindowState == Avalonia.Controls.WindowState.Minimized)
+        if (mainWindow.WindowState == WindowState.Minimized)
         {
-            mainWindow.WindowState = Avalonia.Controls.WindowState.Normal;
+            mainWindow.WindowState = WindowState.Normal;
         }
 
         mainWindow.Show();
