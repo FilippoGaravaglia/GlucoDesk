@@ -167,10 +167,16 @@
                            TextWrapping="Wrap" />
               </StackPanel>
 
-              <Button Grid.Column="2"
-                      Content="Dismiss"
-                      Command="{Binding DismissGlucoseAlertBannerCommand}"
-                      VerticalAlignment="Center" />
+              <StackPanel Grid.Column="2"
+                          Orientation="Horizontal"
+                          Spacing="10"
+                          VerticalAlignment="Center">
+                <Button Content="Snooze"
+                        Command="{Binding SnoozeGlucoseAlertBannerCommand}" />
+
+                <Button Content="Dismiss"
+                        Command="{Binding DismissGlucoseAlertBannerCommand}" />
+              </StackPanel>
             </Grid>
           </Border>
 
