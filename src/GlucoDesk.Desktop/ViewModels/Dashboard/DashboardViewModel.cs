@@ -77,6 +77,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IGlucoseStatisticsService? _glucoseStatisticsService;
     private readonly IWidgetStatePublisher? _widgetStatePublisher;
     private readonly GlucoseAlertCoordinator _glucoseAlertCoordinator;
+    private readonly GlucoseAlertSnoozeState _glucoseAlertSnoozeState = new();
     private readonly DashboardRefreshOptions _refreshOptions;
 
     private GlucoseDashboardSnapshot? _lastDashboardSnapshot;
@@ -295,6 +296,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private string _glucoseAlertMessage = string.Empty;
 
+
+    [ObservableProperty]
+    private string _glucoseAlertSnoozeStatusText = string.Empty;
     [ObservableProperty]
     private string _glucoseAlertBadgeText = string.Empty;
 
@@ -547,6 +551,31 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     /// <summary>
     /// Dismisses the current glucose awareness banner until the condition changes.
+    /// </summary>
+    /// <summary>
+    /// Snoozes the current glucose alert banner for the configured repeat cooldown duration.
+    /// </summary>
+    [RelayCommand]
+    private void SnoozeGlucoseAlertBanner()
+    {
+        if (_currentGlucoseAlertKind == GlucoseAlertKind.None)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.Now;
+        var snoozedUntil = _glucoseAlertSnoozeState.Snooze(
+            _currentGlucoseAlertKind,
+            _currentSettings.GlucoseAlertRepeatInterval,
+            now);
+
+        _dismissedGlucoseAlertKind = _currentGlucoseAlertKind;
+        GlucoseAlertSnoozeStatusText = $"Snoozed until {snoozedUntil:HH:mm}.";
+        ClearGlucoseAlertBanner();
+    }
+
+    /// <summary>
+    /// Dismisses the current glucose alert banner.
     /// </summary>
     [RelayCommand]
     private void DismissGlucoseAlertBanner()
@@ -1399,9 +1428,24 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         if (presentation.Kind == GlucoseAlertKind.None)
         {
+            _glucoseAlertSnoozeState.Clear();
+            GlucoseAlertSnoozeStatusText = string.Empty;
             ClearGlucoseAlertBanner();
             return;
         }
+
+        var now = DateTimeOffset.Now;
+
+        if (_glucoseAlertSnoozeState.IsSnoozed(presentation.Kind, now))
+        {
+            GlucoseAlertSnoozeStatusText = BuildGlucoseAlertSnoozeStatusText(
+                _glucoseAlertSnoozeState.GetRemaining(presentation.Kind, now));
+
+            ClearGlucoseAlertBanner();
+            return;
+        }
+
+        GlucoseAlertSnoozeStatusText = string.Empty;
 
         GlucoseAlertTitle = presentation.Title;
         GlucoseAlertMessage = presentation.Message;
@@ -1420,7 +1464,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// </summary>
     private void ClearGlucoseAlertBanner()
     {
-        _currentGlucoseAlertKind = GlucoseAlertKind.None;
+        
+        GlucoseAlertSnoozeStatusText = string.Empty;
+_currentGlucoseAlertKind = GlucoseAlertKind.None;
         _dismissedGlucoseAlertKind = GlucoseAlertKind.None;
         IsGlucoseAlertBannerVisible = false;
         GlucoseAlertTitle = string.Empty;
@@ -1445,6 +1491,20 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         {
             // Native notifications are best-effort and must never break dashboard refresh.
         }
+    }
+
+    /// <summary>
+    /// Builds the user-facing snooze status text.
+    /// </summary>
+    /// <param name="remaining">The remaining snooze duration.</param>
+    /// <returns>The snooze status text.</returns>
+    private static string BuildGlucoseAlertSnoozeStatusText(TimeSpan remaining)
+    {
+        var totalMinutes = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
+
+        return totalMinutes == 1
+            ? "Alert snoozed for less than 1 minute."
+            : $"Alert snoozed for about {totalMinutes} minutes.";
     }
 
     /// <summary>
