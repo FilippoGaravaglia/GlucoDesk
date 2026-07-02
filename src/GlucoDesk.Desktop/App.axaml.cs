@@ -1,5 +1,6 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
@@ -35,6 +36,8 @@ public partial class App : Avalonia.Application
             desktop.MainWindow = _applicationScope
                 .ServiceProvider
                 .GetRequiredService<MainWindow>();
+
+            RegisterDesktopActivationHandler(desktop);
 
             desktop.ShutdownRequested += (_, _) =>
             {
@@ -79,6 +82,98 @@ public partial class App : Avalonia.Application
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Registers desktop activation handling so the main window can be reopened from the macOS Dock.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    private void RegisterDesktopActivationHandler(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var activatableLifetime = TryGetFeature(typeof(IActivatableLifetime)) as IActivatableLifetime;
+
+        if (activatableLifetime is null)
+        {
+            return;
+        }
+
+        activatableLifetime.Activated += (_, eventArgs) =>
+        {
+            if (eventArgs.Kind != ActivationKind.Reopen)
+            {
+                return;
+            }
+
+            ShowMainWindowSafely(
+                desktop,
+                _applicationScope?.ServiceProvider);
+        };
+    }
+
+    /// <summary>
+    /// Shows and activates the main application window without breaking application activation.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="serviceProvider">The service provider, when available.</param>
+    private static void ShowMainWindowSafely(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider? serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+
+        try
+        {
+            RunOnUiThread(() => ShowMainWindow(desktop));
+        }
+        catch (Exception exception)
+        {
+            if (serviceProvider is not null)
+            {
+                LogSafely(
+                    serviceProvider,
+                    exception,
+                    "Unexpected error while reopening the main window from desktop activation.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Shows and activates the main application window.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    private static void ShowMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var mainWindow = desktop.MainWindow;
+
+        if (mainWindow is null)
+        {
+            return;
+        }
+
+        if (mainWindow.WindowState == Avalonia.Controls.WindowState.Minimized)
+        {
+            mainWindow.WindowState = Avalonia.Controls.WindowState.Normal;
+        }
+
+        mainWindow.Show();
+        mainWindow.Activate();
+    }
+
+    /// <summary>
+    /// Runs the specified action on the Avalonia UI thread.
+    /// </summary>
+    /// <param name="action">The action to run.</param>
+    private static void RunOnUiThread(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(action);
+    }
 
     /// <summary>
     /// Starts the desktop presence indicator without breaking application startup.

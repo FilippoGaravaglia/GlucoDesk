@@ -1,11 +1,14 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using GlucoDesk.Desktop.DesktopPresence.Enums;
 using GlucoDesk.Desktop.DesktopPresence.Formatters;
+using GlucoDesk.Desktop.DesktopPresence.Layout;
 using GlucoDesk.Desktop.DesktopPresence.Models;
 using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.DesktopPresence.Windows;
@@ -13,7 +16,6 @@ using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Main;
 using Microsoft.Extensions.Logging;
 using AvaloniaApplication = Avalonia.Application;
-using GlucoDesk.Desktop.DesktopPresence.Layout;
 
 namespace GlucoDesk.Desktop.DesktopPresence.Services;
 
@@ -22,17 +24,19 @@ namespace GlucoDesk.Desktop.DesktopPresence.Services;
 /// </summary>
 public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLifecycleService
 {
-    private const int PopoverWidth = 340;
-    private const int PopoverMargin = 14;
-
     private static readonly Uri DefaultTrayIconUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-app-icon.png");
-    private static readonly Uri WindowsTrayIconUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-windows-tray-icon.png");
-    private static readonly Uri MacOsMenuBarIconUri = new("avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon.png");
+
+    private static readonly Uri WindowsTrayIconWhiteUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-windows-tray-icon-white.png");
+    private static readonly Uri WindowsTrayIconBlackUri = new("avares://GlucoDesk.Desktop/Assets/AppIcon/glucodesk-windows-tray-icon-black.png");
+
+    private static readonly Uri MacOsMenuBarIconWhiteUri = new("avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-white.png");
+    private static readonly Uri MacOsMenuBarIconBlackUri = new("avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-black.png");
 
     private readonly IDesktopPresenceTextFormatter _textFormatter;
     private readonly IDesktopPresenceDashboardTextFormatter _dashboardTextFormatter;
     private readonly ILogger<AvaloniaDesktopPresenceLifecycleService> _logger;
 
+    private AvaloniaApplication? _application;
     private TrayIcon? _trayIcon;
     private NativeMenuItem? _statusMenuItem;
     private NativeMenuItem? _presencePanelMenuItem;
@@ -80,19 +84,20 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 }
 
                 var initialText = _textFormatter.Format(CreateInitialSnapshot());
+
                 var trayIcon = CreateTrayIcon(
                     desktopLifetime,
                     initialText,
                     out var statusMenuItem,
                     out var presencePanelMenuItem);
 
-                var trayIcons = new TrayIcons
-                {
-                    trayIcon
-                };
+                var trayIcons = new TrayIcons { trayIcon };
 
                 TrayIcon.SetIcons(application, trayIcons);
 
+                application.PropertyChanged += OnApplicationPropertyChanged;
+
+                _application = application;
                 _trayIcon = trayIcon;
                 _statusMenuItem = statusMenuItem;
                 _presencePanelMenuItem = presencePanelMenuItem;
@@ -125,17 +130,17 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             try
             {
                 ClosePopover();
-
                 DetachDashboardState();
 
-                var application = AvaloniaApplication.Current;
-
-                if (application is not null)
+                if (_application is not null)
                 {
-                    TrayIcon.SetIcons(application, null);
+                    _application.PropertyChanged -= OnApplicationPropertyChanged;
+                    TrayIcon.SetIcons(_application, null);
                 }
 
                 _trayIcon?.Dispose();
+
+                _application = null;
                 _trayIcon = null;
                 _statusMenuItem = null;
                 _presencePanelMenuItem = null;
@@ -186,7 +191,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     {
         statusMenuItem = new NativeMenuItem(initialText.MenuHeader)
         {
-            IsEnabled = false
+            IsEnabled = false,
         };
 
         presencePanelMenuItem = new NativeMenuItem("Show presence panel");
@@ -200,8 +205,48 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 desktopLifetime,
                 statusMenuItem,
                 presencePanelMenuItem),
-            IsVisible = true
+            IsVisible = true,
         };
+    }
+
+    /// <summary>
+    /// Handles application property changes that may require refreshing the tray icon.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The property changed event arguments.</param>
+    private void OnApplicationPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property != AvaloniaApplication.ActualThemeVariantProperty)
+        {
+            return;
+        }
+
+        RefreshTrayIcon();
+    }
+
+    /// <summary>
+    /// Refreshes the tray icon after an application theme change.
+    /// </summary>
+    private void RefreshTrayIcon()
+    {
+        RunOnUiThread(() =>
+        {
+            if (_trayIcon is null)
+            {
+                return;
+            }
+
+            try
+            {
+                _trayIcon.Icon = LoadTrayIcon();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(
+                    exception,
+                    "Unable to refresh the desktop presence icon after a theme change.");
+            }
+        });
     }
 
     /// <summary>
@@ -210,17 +255,118 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <returns>The tray icon asset URI.</returns>
     private static Uri GetTrayIconUri()
     {
+        var shouldUseWhiteIcon = ShouldUseWhiteIcon();
+
         if (OperatingSystem.IsMacOS())
         {
-            return MacOsMenuBarIconUri;
+            return shouldUseWhiteIcon
+                ? MacOsMenuBarIconWhiteUri
+                : MacOsMenuBarIconBlackUri;
         }
 
         if (OperatingSystem.IsWindows())
         {
-            return WindowsTrayIconUri;
+            return shouldUseWhiteIcon
+                ? WindowsTrayIconWhiteUri
+                : WindowsTrayIconBlackUri;
         }
 
         return DefaultTrayIconUri;
+    }
+
+    /// <summary>
+    /// Determines whether the desktop presence icon should use the white variant.
+    /// </summary>
+    /// <returns>true when the white icon should be used; otherwise, false.</returns>
+    private static bool ShouldUseWhiteIcon()
+    {
+        if (OperatingSystem.IsMacOS())
+        {
+            return ShouldUseWhiteIconOnMacOs();
+        }
+
+        return IsApplicationAppearanceDark();
+    }
+
+    /// <summary>
+    /// Determines whether the macOS menu bar icon should use the white variant.
+    /// </summary>
+    /// <returns>true when the white macOS menu bar icon should be used; otherwise, false.</returns>
+    private static bool ShouldUseWhiteIconOnMacOs()
+    {
+        if (!OperatingSystem.IsMacOSVersionAtLeast(27))
+        {
+            return true;
+        }
+
+        return IsMacOsSystemAppearanceDark()
+            ?? IsApplicationAppearanceDark();
+    }
+
+    /// <summary>
+    /// Determines whether the current Avalonia application appearance is dark.
+    /// </summary>
+    /// <returns>true when the application appearance is dark; otherwise, false.</returns>
+    private static bool IsApplicationAppearanceDark()
+    {
+        var currentTheme = AvaloniaApplication.Current?.ActualThemeVariant;
+
+        return currentTheme is null || currentTheme == ThemeVariant.Dark;
+    }
+
+    /// <summary>
+    /// Reads the macOS system appearance from user defaults.
+    /// </summary>
+    /// <returns>true for dark mode, false for light mode, or null when the value cannot be read.</returns>
+    private static bool? IsMacOsSystemAppearanceDark()
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "defaults",
+                ArgumentList = { "read", "-g", "AppleInterfaceStyle" },
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+
+            if (process is null)
+            {
+                return null;
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+
+            if (!process.WaitForExit(1000))
+            {
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch
+                {
+                    // Best-effort cleanup only.
+                }
+
+                return null;
+            }
+
+            if (process.ExitCode != 0)
+            {
+                return false;
+            }
+
+            return string.Equals(
+                output.Trim(),
+                "Dark",
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -261,8 +407,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 presencePanelMenuItem,
                 openItem,
                 new NativeMenuItemSeparator(),
-                quitItem
-            }
+                quitItem,
+            },
         };
     }
 
@@ -315,17 +461,17 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// Determines whether the specified dashboard property should refresh desktop presence text.
     /// </summary>
     /// <param name="propertyName">The changed property name.</param>
-    /// <returns><c>true</c> when desktop presence text should refresh; otherwise, <c>false</c>.</returns>
+    /// <returns>true when desktop presence text should refresh; otherwise, false.</returns>
     private static bool ShouldRefreshFromDashboardProperty(string? propertyName)
     {
         return string.IsNullOrWhiteSpace(propertyName)
-               || string.Equals(propertyName, nameof(DashboardViewModel.ProviderDisplayName), StringComparison.Ordinal)
-               || string.Equals(propertyName, nameof(DashboardViewModel.LatestValueText), StringComparison.Ordinal)
-               || string.Equals(propertyName, nameof(DashboardViewModel.TrendText), StringComparison.Ordinal)
-               || string.Equals(propertyName, nameof(DashboardViewModel.FreshnessText), StringComparison.Ordinal)
-               || string.Equals(propertyName, nameof(DashboardViewModel.LastUpdatedText), StringComparison.Ordinal)
-               || string.Equals(propertyName, nameof(DashboardViewModel.StatusText), StringComparison.Ordinal)
-               || string.Equals(propertyName, nameof(DashboardViewModel.IsBusy), StringComparison.Ordinal);
+            || string.Equals(propertyName, nameof(DashboardViewModel.ProviderDisplayName), StringComparison.Ordinal)
+            || string.Equals(propertyName, nameof(DashboardViewModel.LatestValueText), StringComparison.Ordinal)
+            || string.Equals(propertyName, nameof(DashboardViewModel.TrendText), StringComparison.Ordinal)
+            || string.Equals(propertyName, nameof(DashboardViewModel.FreshnessText), StringComparison.Ordinal)
+            || string.Equals(propertyName, nameof(DashboardViewModel.LastUpdatedText), StringComparison.Ordinal)
+            || string.Equals(propertyName, nameof(DashboardViewModel.StatusText), StringComparison.Ordinal)
+            || string.Equals(propertyName, nameof(DashboardViewModel.IsBusy), StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -412,9 +558,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <returns>The popover size in physical pixels.</returns>
     private static PixelSize CalculatePopoverPixelSize(Window popoverWindow, double screenScaling)
     {
-        var scaling = screenScaling > 0
-            ? screenScaling
-            : 1;
+        var scaling = screenScaling > 0 ? screenScaling : 1;
 
         var width = ResolveWindowDimension(
             popoverWindow.Width,
@@ -470,6 +614,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
         _popoverWindow = null;
         popoverWindow.CloseFromCode();
+
         UpdatePresencePanelMenuState();
     }
 
@@ -481,7 +626,6 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         RunOnUiThread(() =>
         {
             _isPrivacyModeEnabled = !_isPrivacyModeEnabled;
-
             RefreshFromDashboardState();
         });
     }
