@@ -9,8 +9,9 @@
       <Grid RowDefinitions="Auto,*"
             Margin="30"
             RowSpacing="26"
-            MaxWidth="1360"
-            HorizontalAlignment="Center">
+            MinWidth="860"
+            MaxWidth="1680"
+            HorizontalAlignment="Stretch">
 
         <Grid Grid.Row="0"
               ColumnDefinitions="*,Auto"
@@ -40,8 +41,8 @@
 
           <Border Classes="surface-card"
                   Padding="24">
-            <Grid ColumnDefinitions="1.15*,0.85*"
-                  ColumnSpacing="34">
+            <Grid RowDefinitions="Auto,Auto"
+                  RowSpacing="24">
 
               <StackPanel Grid.Column="0"
                           Spacing="22">
@@ -123,10 +124,13 @@
 
               </StackPanel>
 
-              <Border Grid.Column="1"
-                      BorderThickness="1,0,0,0"
+              <Border Grid.Row="1"
+
+                      BorderThickness="0,1,0,0"
+
                       BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
-                      Padding="28,0,0,0">
+
+                      Padding="0,24,0,0">
                 <StackPanel Spacing="18">
 
                   <StackPanel Spacing="4">
@@ -195,8 +199,9 @@
                   Padding="24">
             <StackPanel Spacing="20">
 
-              <Grid ColumnDefinitions="1.15*,0.85*"
-                    ColumnSpacing="34">
+              <Grid RowDefinitions="Auto,Auto"
+
+                    RowSpacing="24">
 
                 <StackPanel Grid.Column="0"
                             Spacing="20">
@@ -258,10 +263,13 @@
 
                 </StackPanel>
 
-                <Border Grid.Column="1"
-                        BorderThickness="1,0,0,0"
+                <Border Grid.Row="1"
+
+                        BorderThickness="0,1,0,0"
+
                         BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
-                        Padding="28,0,0,0">
+
+                        Padding="0,24,0,0">
                   <StackPanel Spacing="20">
 
                     <StackPanel Spacing="4">
@@ -308,6 +316,100 @@
 
               <Border Height="1"
                       Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+
+              <Grid RowDefinitions="Auto,Auto"
+
+                    RowSpacing="24">
+
+                <StackPanel Grid.Column="0"
+                            Spacing="18">
+
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Glucose awareness notifications"
+                               Classes="section-title" />
+
+                    <TextBlock Text="Show calm, non-medical desktop awareness messages when glucose is outside your configured target range."
+                               Classes="secondary"
+                               FontSize="13"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+
+                  <Grid ColumnDefinitions="*,*"
+                        ColumnSpacing="20">
+                    <CheckBox Grid.Column="0"
+                              Content="Enable in-app banner"
+                              IsChecked="{Binding GlucoseAlertsEnabled}" />
+
+                    <CheckBox Grid.Column="1"
+                              Content="Use privacy wording"
+                              IsChecked="{Binding GlucoseAlertPrivacyModeEnabled}"
+                              IsEnabled="{Binding GlucoseAlertsEnabled}" />
+                  </Grid>
+
+                  <Grid ColumnDefinitions="*,*"
+                        ColumnSpacing="20">
+                    <CheckBox Grid.Column="0"
+                              Content="Notify below target"
+                              IsChecked="{Binding LowGlucoseAlertsEnabled}"
+                              IsEnabled="{Binding GlucoseAlertsEnabled}" />
+
+                    <CheckBox Grid.Column="1"
+                              Content="Notify above target"
+                              IsChecked="{Binding HighGlucoseAlertsEnabled}"
+                              IsEnabled="{Binding GlucoseAlertsEnabled}" />
+                  </Grid>
+
+                  <TextBlock Text="GlucoDesk notifications are awareness prompts only. Keep using official diabetes apps and devices for therapy decisions and urgent alerts."
+                             Classes="muted"
+                             FontSize="12"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border Grid.Row="1"
+
+                        BorderThickness="0,1,0,0"
+
+                        BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+
+                        Padding="0,24,0,0">
+                  <StackPanel Spacing="18">
+
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="Anti-spam and OS notifications"
+                                 Classes="section-title" />
+
+                      <TextBlock Text="Native notifications are optional and protected by a repeat cooldown."
+                                 Classes="secondary"
+                                 FontSize="13"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <CheckBox Content="Enable native OS notifications"
+                              IsChecked="{Binding NativeGlucoseNotificationsEnabled}"
+                              IsEnabled="{Binding GlucoseAlertsEnabled}" />
+
+                    <StackPanel Spacing="8">
+                      <TextBlock Text="Repeat cooldown"
+                                 Classes="metric-label" />
+
+                      <TextBox Text="{Binding GlucoseAlertRepeatIntervalMinutesText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               PlaceholderText="30"
+                               HorizontalAlignment="Stretch"
+                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
+
+                      <TextBlock Text="minutes between repeated notifications for the same condition"
+                                 Classes="muted"
+                                 FontSize="12"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <Border Height="1"
+                      Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+
 
               <Grid ColumnDefinitions="Auto,*"
                     ColumnSpacing="18"

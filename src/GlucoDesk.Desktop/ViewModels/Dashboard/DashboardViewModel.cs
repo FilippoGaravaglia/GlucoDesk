@@ -16,6 +16,8 @@ using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
+using GlucoDesk.Desktop.GlucoseAlerts.Models;
+using GlucoDesk.Desktop.GlucoseAlerts.Services;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
 using GlucoDesk.Desktop.ViewModels.Dashboard.DataHealth;
@@ -74,9 +76,13 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IGlucoseHistoryService? _glucoseHistoryService;
     private readonly IGlucoseStatisticsService? _glucoseStatisticsService;
     private readonly IWidgetStatePublisher? _widgetStatePublisher;
+    private readonly GlucoseAlertCoordinator _glucoseAlertCoordinator;
     private readonly DashboardRefreshOptions _refreshOptions;
 
     private GlucoseDashboardSnapshot? _lastDashboardSnapshot;
+    private ApplicationSettings _currentSettings = ApplicationSettings.Default;
+    private GlucoseAlertKind _currentGlucoseAlertKind = GlucoseAlertKind.None;
+    private GlucoseAlertKind _dismissedGlucoseAlertKind = GlucoseAlertKind.None;
 
     private bool _isInitialized;
     private TimeSpan _autoRefreshInterval;
@@ -280,6 +286,21 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private int _chartMaximumMgDl = 300;
 
+    [ObservableProperty]
+    private bool _isGlucoseAlertBannerVisible;
+
+    [ObservableProperty]
+    private string _glucoseAlertTitle = string.Empty;
+
+    [ObservableProperty]
+    private string _glucoseAlertMessage = string.Empty;
+
+    [ObservableProperty]
+    private string _glucoseAlertBadgeText = string.Empty;
+
+    [ObservableProperty]
+    private string _glucoseAlertActionText = "Open official app";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
     /// </summary>
@@ -290,6 +311,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// <param name="glucoseHistoryService">The optional glucose history service.</param>
     /// <param name="glucoseStatisticsService">The glucose statistics service.</param>
     /// <param name="widgetStatePublisher">The optional widget state publisher.</param>
+    /// <param name="glucoseAlertNotificationService">The optional native glucose alert notification service.</param>
+    /// <param name="glucoseAlertClock">The optional glucose alert clock.</param>
     public DashboardViewModel(
         IGlucoseDataService glucoseDataService,
         IApplicationSettingsService settingsService,
@@ -297,7 +320,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         IApplicationSettingsChangeNotifier? settingsChangeNotifier = null,
         IGlucoseHistoryService? glucoseHistoryService = null,
         IGlucoseStatisticsService? glucoseStatisticsService = null,
-        IWidgetStatePublisher? widgetStatePublisher = null)
+        IWidgetStatePublisher? widgetStatePublisher = null,
+        IGlucoseAlertNotificationService? glucoseAlertNotificationService = null,
+        IGlucoseAlertClock? glucoseAlertClock = null)
     {
         ArgumentNullException.ThrowIfNull(glucoseDataService);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -310,6 +335,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
         _glucoseStatisticsService = glucoseStatisticsService;
         _widgetStatePublisher = widgetStatePublisher;
+        _glucoseAlertCoordinator = new GlucoseAlertCoordinator(
+            glucoseAlertNotificationService ?? OperatingSystemGlucoseAlertNotificationService.Create(),
+            glucoseAlertClock ?? SystemGlucoseAlertClock.Instance);
         IsStatisticsEnabled = _glucoseStatisticsService is not null;
         ApplyStatisticsPresentation(DashboardStatisticsPresenter.Disabled());
 
@@ -515,6 +543,16 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private Task SelectNinetyDayStatisticsWindowAsync(CancellationToken cancellationToken)
     {
         return SelectStatisticsWindowAsync(NinetyDayStatisticsWindow, cancellationToken);
+    }
+
+    /// <summary>
+    /// Dismisses the current glucose awareness banner until the condition changes.
+    /// </summary>
+    [RelayCommand]
+    private void DismissGlucoseAlertBanner()
+    {
+        _dismissedGlucoseAlertKind = _currentGlucoseAlertKind;
+        IsGlucoseAlertBannerVisible = false;
     }
 
     /// <summary>
@@ -1239,6 +1277,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// <param name="settings">The application settings.</param>
     private void ApplySettings(ApplicationSettings settings)
     {
+        _currentSettings = settings;
         _autoRefreshInterval = settings.DashboardRefreshInterval;
         OnPropertyChanged(nameof(AutoRefreshInterval));
     
@@ -1246,6 +1285,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         TargetLowMgDl = settings.TargetLowMgDl;
         TargetHighMgDl = settings.TargetHighMgDl;
         ChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
+
+        if (!settings.GlucoseAlertsEnabled)
+        {
+            ClearGlucoseAlertBanner();
+        }
+
         TargetRangeText = FormatTargetRangeText(
             TargetLowMgDl,
             TargetHighMgDl,
@@ -1264,10 +1309,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
         OnPropertyChanged(nameof(AutoRefreshInterval));
 
+        _currentSettings = ApplicationSettings.Default;
         PreferredUnit = GlucoseUnit.MgDl;
         TargetLowMgDl = 70m;
         TargetHighMgDl = 180m;
         ChartMaximumMgDl = 300;
+        ClearGlucoseAlertBanner();
         TargetRangeText = FormatTargetRangeText(
             TargetLowMgDl,
             TargetHighMgDl,
@@ -1327,6 +1374,89 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             LastUpdatedText);
 
         UpdateChart(snapshot.RecentReadings, targetRange);
+        ApplyGlucoseAlert(snapshot);
+    }
+
+    /// <summary>
+    /// Applies the glucose awareness alert state for the latest dashboard reading.
+    /// </summary>
+    /// <param name="snapshot">The dashboard snapshot.</param>
+    private void ApplyGlucoseAlert(GlucoseDashboardSnapshot snapshot)
+    {
+        if (snapshot.LatestReading is null || snapshot.IsLatestReadingStale)
+        {
+            ClearGlucoseAlertBanner();
+            return;
+        }
+
+        var glucoseMgDl = ConvertGlucoseValueToMgDl(snapshot.LatestReading.Value);
+        var presentation = _glucoseAlertCoordinator.Evaluate(
+            glucoseMgDl,
+            _currentSettings,
+            PreferredUnit);
+
+        _currentGlucoseAlertKind = presentation.Kind;
+
+        if (presentation.Kind == GlucoseAlertKind.None)
+        {
+            ClearGlucoseAlertBanner();
+            return;
+        }
+
+        GlucoseAlertTitle = presentation.Title;
+        GlucoseAlertMessage = presentation.Message;
+        GlucoseAlertBadgeText = presentation.BadgeText;
+        GlucoseAlertActionText = presentation.ActionText;
+        IsGlucoseAlertBannerVisible = _dismissedGlucoseAlertKind != presentation.Kind;
+
+        if (presentation.ShouldSendNativeNotification)
+        {
+            _ = SendNativeGlucoseAlertNotificationAsync(presentation);
+        }
+    }
+
+    /// <summary>
+    /// Clears the glucose awareness alert banner.
+    /// </summary>
+    private void ClearGlucoseAlertBanner()
+    {
+        _currentGlucoseAlertKind = GlucoseAlertKind.None;
+        _dismissedGlucoseAlertKind = GlucoseAlertKind.None;
+        IsGlucoseAlertBannerVisible = false;
+        GlucoseAlertTitle = string.Empty;
+        GlucoseAlertMessage = string.Empty;
+        GlucoseAlertBadgeText = string.Empty;
+    }
+
+    /// <summary>
+    /// Sends a native glucose awareness notification without breaking dashboard refresh.
+    /// </summary>
+    /// <param name="presentation">The alert presentation to send.</param>
+    /// <returns>A task representing the asynchronous notification operation.</returns>
+    private async Task SendNativeGlucoseAlertNotificationAsync(GlucoseAlertPresentation presentation)
+    {
+        try
+        {
+            await _glucoseAlertCoordinator
+                .SendNativeNotificationAsync(presentation, CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            // Native notifications are best-effort and must never break dashboard refresh.
+        }
+    }
+
+    /// <summary>
+    /// Converts a glucose value to mg/dL.
+    /// </summary>
+    /// <param name="value">The glucose value.</param>
+    /// <returns>The glucose amount expressed in mg/dL.</returns>
+    private static decimal ConvertGlucoseValueToMgDl(GlucoseValue value)
+    {
+        return value.Unit == GlucoseUnit.MgDl
+            ? value.Amount
+            : value.ConvertTo(GlucoseUnit.MgDl).Amount;
     }
 
     /// <summary>

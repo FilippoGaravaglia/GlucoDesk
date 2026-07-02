@@ -10,8 +10,9 @@
       <Grid RowDefinitions="Auto,Auto"
             Margin="30"
             RowSpacing="26"
-            MaxWidth="1240"
-            HorizontalAlignment="Center">
+            MinWidth="860"
+            MaxWidth="1680"
+            HorizontalAlignment="Stretch">
 
         <Grid Grid.Row="0"
               ColumnDefinitions="*,Auto"

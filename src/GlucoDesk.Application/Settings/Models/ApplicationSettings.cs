@@ -8,6 +8,21 @@ namespace GlucoDesk.Application.Settings.Models;
 public sealed record ApplicationSettings
 {
     /// <summary>
+    /// Gets the minimum supported glucose alert repeat interval.
+    /// </summary>
+    public static readonly TimeSpan MinimumGlucoseAlertRepeatInterval = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Gets the maximum supported glucose alert repeat interval.
+    /// </summary>
+    public static readonly TimeSpan MaximumGlucoseAlertRepeatInterval = TimeSpan.FromMinutes(180);
+
+    /// <summary>
+    /// Gets the default glucose alert repeat interval.
+    /// </summary>
+    public static readonly TimeSpan DefaultGlucoseAlertRepeatInterval = TimeSpan.FromMinutes(30);
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ApplicationSettings"/> class.
     /// </summary>
     /// <param name="activeLiveProvider">The active live CGM provider.</param>
@@ -17,8 +32,14 @@ public sealed record ApplicationSettings
     /// <param name="targetHighMgDl">The upper glucose target expressed in mg/dL.</param>
     /// <param name="dashboardRefreshInterval">The dashboard refresh interval.</param>
     /// <param name="chartMaximumMgDl">The maximum chart value expressed in mg/dL.</param>
+    /// <param name="glucoseAlertsEnabled">A value indicating whether in-app glucose awareness alerts are enabled.</param>
+    /// <param name="lowGlucoseAlertsEnabled">A value indicating whether below-target glucose awareness alerts are enabled.</param>
+    /// <param name="highGlucoseAlertsEnabled">A value indicating whether above-target glucose awareness alerts are enabled.</param>
+    /// <param name="nativeGlucoseNotificationsEnabled">A value indicating whether native OS glucose awareness notifications are enabled.</param>
+    /// <param name="glucoseAlertPrivacyModeEnabled">A value indicating whether alert messages should hide glucose values.</param>
+    /// <param name="glucoseAlertRepeatInterval">The minimum repeat interval for repeated native notifications of the same condition.</param>
     /// <exception cref="ArgumentException">Thrown when provider or unit values are invalid.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when target range, refresh interval or chart maximum values are invalid.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when target range, refresh interval, chart maximum or notification interval values are invalid.</exception>
     public ApplicationSettings(
         CgmProviderKind activeLiveProvider = CgmProviderKind.Mock,
         CgmProviderKind historicalProvider = CgmProviderKind.Mock,
@@ -26,9 +47,16 @@ public sealed record ApplicationSettings
         int targetLowMgDl = 70,
         int targetHighMgDl = 180,
         TimeSpan? dashboardRefreshInterval = null,
-        int chartMaximumMgDl = 300)
+        int chartMaximumMgDl = 300,
+        bool glucoseAlertsEnabled = true,
+        bool lowGlucoseAlertsEnabled = true,
+        bool highGlucoseAlertsEnabled = true,
+        bool nativeGlucoseNotificationsEnabled = false,
+        bool glucoseAlertPrivacyModeEnabled = true,
+        TimeSpan? glucoseAlertRepeatInterval = null)
     {
         var effectiveDashboardRefreshInterval = dashboardRefreshInterval ?? TimeSpan.FromSeconds(30);
+        var effectiveGlucoseAlertRepeatInterval = glucoseAlertRepeatInterval ?? DefaultGlucoseAlertRepeatInterval;
 
         if (activeLiveProvider == CgmProviderKind.Unknown)
         {
@@ -77,6 +105,15 @@ public sealed record ApplicationSettings
                 "Chart maximum value must be either 300 or 400 mg/dL.");
         }
 
+        if (effectiveGlucoseAlertRepeatInterval < MinimumGlucoseAlertRepeatInterval ||
+            effectiveGlucoseAlertRepeatInterval > MaximumGlucoseAlertRepeatInterval)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(glucoseAlertRepeatInterval),
+                glucoseAlertRepeatInterval,
+                "Glucose alert repeat interval must be between 5 and 180 minutes.");
+        }
+
         ActiveLiveProvider = activeLiveProvider;
         HistoricalProvider = historicalProvider;
         PreferredUnit = preferredUnit;
@@ -84,6 +121,12 @@ public sealed record ApplicationSettings
         TargetHighMgDl = targetHighMgDl;
         DashboardRefreshInterval = effectiveDashboardRefreshInterval;
         ChartMaximumMgDl = chartMaximumMgDl;
+        GlucoseAlertsEnabled = glucoseAlertsEnabled;
+        LowGlucoseAlertsEnabled = lowGlucoseAlertsEnabled;
+        HighGlucoseAlertsEnabled = highGlucoseAlertsEnabled;
+        NativeGlucoseNotificationsEnabled = nativeGlucoseNotificationsEnabled;
+        GlucoseAlertPrivacyModeEnabled = glucoseAlertPrivacyModeEnabled;
+        GlucoseAlertRepeatInterval = effectiveGlucoseAlertRepeatInterval;
     }
 
     /// <summary>
@@ -125,4 +168,34 @@ public sealed record ApplicationSettings
     /// Gets the maximum chart value expressed in mg/dL.
     /// </summary>
     public int ChartMaximumMgDl { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether in-app glucose awareness alerts are enabled.
+    /// </summary>
+    public bool GlucoseAlertsEnabled { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether below-target glucose awareness alerts are enabled.
+    /// </summary>
+    public bool LowGlucoseAlertsEnabled { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether above-target glucose awareness alerts are enabled.
+    /// </summary>
+    public bool HighGlucoseAlertsEnabled { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether native OS glucose awareness notifications are enabled.
+    /// </summary>
+    public bool NativeGlucoseNotificationsEnabled { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether alert messages should hide glucose values.
+    /// </summary>
+    public bool GlucoseAlertPrivacyModeEnabled { get; }
+
+    /// <summary>
+    /// Gets the minimum repeat interval for repeated native notifications of the same condition.
+    /// </summary>
+    public TimeSpan GlucoseAlertRepeatInterval { get; }
 }
