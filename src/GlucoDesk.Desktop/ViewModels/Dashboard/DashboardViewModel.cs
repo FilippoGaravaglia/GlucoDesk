@@ -16,6 +16,7 @@ using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
+using GlucoDesk.Desktop.GlucoseAlerts.EventLog;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
 using GlucoDesk.Desktop.GlucoseAlerts.Services;
 using GlucoDesk.Desktop.ViewModels.Common;
@@ -77,6 +78,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IGlucoseStatisticsService? _glucoseStatisticsService;
     private readonly IWidgetStatePublisher? _widgetStatePublisher;
     private readonly GlucoseAlertCoordinator _glucoseAlertCoordinator;
+    private readonly IGlucoseAlertEventLog _glucoseAlertEventLog;
     private readonly GlucoseAlertSnoozeState _glucoseAlertSnoozeState = new();
     private readonly GlucoseAlertStabilityGate _glucoseAlertStabilityGate = new();
     private readonly DashboardRefreshOptions _refreshOptions;
@@ -318,6 +320,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// <param name="widgetStatePublisher">The optional widget state publisher.</param>
     /// <param name="glucoseAlertNotificationService">The optional native glucose alert notification service.</param>
     /// <param name="glucoseAlertClock">The optional glucose alert clock.</param>
+    /// <param name="glucoseAlertEventLog">The optional privacy-safe glucose alert event log.</param>
     public DashboardViewModel(
         IGlucoseDataService glucoseDataService,
         IApplicationSettingsService settingsService,
@@ -327,7 +330,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         IGlucoseStatisticsService? glucoseStatisticsService = null,
         IWidgetStatePublisher? widgetStatePublisher = null,
         IGlucoseAlertNotificationService? glucoseAlertNotificationService = null,
-        IGlucoseAlertClock? glucoseAlertClock = null)
+        IGlucoseAlertClock? glucoseAlertClock = null,
+        IGlucoseAlertEventLog? glucoseAlertEventLog = null)
     {
         ArgumentNullException.ThrowIfNull(glucoseDataService);
         ArgumentNullException.ThrowIfNull(settingsService);
@@ -340,6 +344,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         _autoRefreshInterval = _refreshOptions.AutoRefreshInterval;
         _glucoseStatisticsService = glucoseStatisticsService;
         _widgetStatePublisher = widgetStatePublisher;
+        _glucoseAlertEventLog = glucoseAlertEventLog
+            ?? JsonLinesGlucoseAlertEventLog.CreateDefault();
+
         _glucoseAlertCoordinator = new GlucoseAlertCoordinator(
             glucoseAlertNotificationService ?? OperatingSystemGlucoseAlertNotificationService.Create(),
             glucoseAlertClock ?? SystemGlucoseAlertClock.Instance);
@@ -572,6 +579,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         _dismissedGlucoseAlertKind = _currentGlucoseAlertKind;
         GlucoseAlertSnoozeStatusText = $"Snoozed until {snoozedUntil:HH:mm}.";
+        _ = LogGlucoseAlertEventAsync(
+            GlucoseAlertEventKind.Snoozed,
+            _currentGlucoseAlertKind,
+            "Glucose alert banner snoozed.");
         ClearGlucoseAlertBanner();
     }
 
@@ -1461,6 +1472,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         GlucoseAlertMessage = presentation.Message;
         GlucoseAlertBadgeText = presentation.BadgeText;
         GlucoseAlertActionText = presentation.ActionText;
+        _ = LogGlucoseAlertEventAsync(
+            GlucoseAlertEventKind.Presented,
+            presentation.Kind,
+            "Glucose alert banner presented.");
         IsGlucoseAlertBannerVisible = _dismissedGlucoseAlertKind != presentation.Kind;
 
         if (presentation.ShouldSendNativeNotification)
@@ -1500,6 +1515,36 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
         catch
         {
             // Native notifications are best-effort and must never break dashboard refresh.
+        }
+    }
+
+    /// <summary>
+    /// Writes a privacy-safe glucose alert event without interrupting dashboard updates.
+    /// </summary>
+    /// <param name="eventKind">The event kind.</param>
+    /// <param name="alertKind">The alert kind.</param>
+    /// <param name="message">The privacy-safe event message.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private async Task LogGlucoseAlertEventAsync(
+        GlucoseAlertEventKind eventKind,
+        GlucoseAlertKind alertKind,
+        string message)
+    {
+        try
+        {
+            await _glucoseAlertEventLog
+                .WriteAsync(
+                    new GlucoseAlertEvent(
+                        DateTimeOffset.Now,
+                        eventKind,
+                        alertKind,
+                        message),
+                    CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            // Alert event logging must never break dashboard updates.
         }
     }
 
