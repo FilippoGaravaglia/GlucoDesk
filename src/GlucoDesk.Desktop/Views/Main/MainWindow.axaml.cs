@@ -5,13 +5,30 @@ namespace GlucoDesk.Desktop.Views.Main;
 
 public partial class MainWindow : Window
 {
+    private const double MinimumReleaseWidth = 1180;
+    private const double MinimumReleaseHeight = 760;
+
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindow"/> class.
     /// </summary>
     public MainWindow()
     {
         InitializeComponent();
-    }
+
+        MinWidth = MinimumReleaseWidth;
+        MinHeight = MinimumReleaseHeight;
+
+        if (Width < MinimumReleaseWidth)
+        {
+            Width = MinimumReleaseWidth;
+        }
+
+        if (Height < MinimumReleaseHeight)
+        {
+            Height = MinimumReleaseHeight;
+        }
+}
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindow"/> class.

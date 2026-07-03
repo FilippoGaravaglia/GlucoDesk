@@ -11,10 +11,10 @@
     xmlns:settingsViews="clr-namespace:GlucoDesk.Desktop.Views.Settings"
     xmlns:settingsViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Settings"
     Title="GlucoDesk"
-    Width="1180"
-    Height="760"
-    MinWidth="920"
-    MinHeight="620"
+    Width="1280"
+    Height="820"
+    MinWidth="1180"
+    MinHeight="760"
     Background="{StaticResource GlucoDesk.Brush.AppBackground}">
 
   <Window.DataTemplates>

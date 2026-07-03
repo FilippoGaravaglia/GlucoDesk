@@ -26,7 +26,7 @@
                        TextWrapping="Wrap" />
           </StackPanel>
 
-          <Border Grid.Column="1"
+          <Border MinWidth="260" Grid.Column="1"
                   Classes="badge-accent"
                   VerticalAlignment="Top">
             <TextBlock Text="Local export"
@@ -126,7 +126,7 @@
                              TextWrapping="Wrap" />
                 </StackPanel>
 
-                <Border Grid.Column="1"
+                <Border MinWidth="260" Grid.Column="1"
                         Padding="20"
                         CornerRadius="18"
                         Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
@@ -170,7 +170,7 @@
               </StackPanel>
             </Border>
 
-            <Border Grid.Column="1"
+            <Border MinWidth="260" Grid.Column="1"
                     Padding="24"
                     CornerRadius="22"
                     BorderThickness="1"

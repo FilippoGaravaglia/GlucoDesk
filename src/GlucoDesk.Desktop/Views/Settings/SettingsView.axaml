@@ -26,7 +26,7 @@
                        TextWrapping="Wrap" />
           </StackPanel>
 
-          <Border Grid.Column="1"
+          <Border MinWidth="260" Grid.Column="1"
                   Classes="badge-accent"
                   VerticalAlignment="Top">
             <TextBlock Text="Local preferences"
@@ -127,7 +127,7 @@
 
               </StackPanel>
 
-              <Border x:Name="ProvidersRightPanel"
+              <Border MinWidth="260" x:Name="ProvidersRightPanel"
                       Grid.Column="1"
                       Grid.Row="0"
                       BorderThickness="1,0,0,0"
@@ -267,7 +267,7 @@
 
                 </StackPanel>
 
-                <Border x:Name="PreferencesRightPanel"
+                <Border MinWidth="260" x:Name="PreferencesRightPanel"
                         Grid.Column="1"
                         Grid.Row="0"
                         BorderThickness="1,0,0,0"
@@ -370,7 +370,7 @@
                              TextWrapping="Wrap" />
                 </StackPanel>
 
-                <Border x:Name="NotificationsRightPanel"
+                <Border MinWidth="260" x:Name="NotificationsRightPanel"
                         Grid.Column="1"
                         Grid.Row="0"
                         BorderThickness="1,0,0,0"

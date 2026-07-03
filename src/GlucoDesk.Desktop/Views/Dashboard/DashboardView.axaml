@@ -2,7 +2,8 @@
     x:Class="GlucoDesk.Desktop.Views.Dashboard.DashboardView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="clr-namespace:GlucoDesk.Desktop.Views.Dashboard.Controls">
+    xmlns:controls="clr-namespace:GlucoDesk.Desktop.Views.Dashboard.Controls"
+             xmlns:statsControls="clr-namespace:GlucoDesk.Desktop.Controls.Statistics">
 
   <Border Classes="page-shell">
     <ScrollViewer HorizontalScrollBarVisibility="Disabled"
@@ -25,7 +26,7 @@
                        FontSize="16" />
           </StackPanel>
 
-          <Border Grid.Column="1"
+          <Border MinWidth="260" Grid.Column="1"
                   Classes="badge-accent"
                   VerticalAlignment="Top">
             <TextBlock Text="Private · local-first · companion"
@@ -81,7 +82,7 @@
                 </WrapPanel>
               </StackPanel>
 
-              <Border Grid.Column="1"
+              <Border MinWidth="260" Grid.Column="1"
                       BorderThickness="1,0,0,0"
                       BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
                       Padding="28,0,0,0"
@@ -121,7 +122,7 @@
                                  Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
                     </StackPanel>
 
-                    <Border Grid.Column="1"
+                    <Border MinWidth="260" Grid.Column="1"
                             Classes="badge"
                             VerticalAlignment="Top">
                       <TextBlock Text="{Binding FreshnessText}"
@@ -346,7 +347,7 @@
               </Grid>
 
               <Grid ColumnDefinitions="1.1*,0.9*"
-                    ColumnSpacing="22"
+                    ColumnSpacing="28"
                     IsVisible="{Binding IsStatisticsCardsVisible}">
 
                 <Border Grid.Column="0"
@@ -366,7 +367,7 @@
                                    Classes="insight-value" />
                       </StackPanel>
 
-                      <Border Grid.Column="1"
+                      <Border MinWidth="260" Grid.Column="1"
                               Classes="badge-success"
                               VerticalAlignment="Top">
                         <TextBlock Text="Target"
@@ -412,47 +413,56 @@
                           Height="1"
                           Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
 
-                  <Grid Grid.Row="2"
-                        ColumnDefinitions="*,*"
-                        ColumnSpacing="22">
+                                    <Grid Grid.Row="2"
+                        RowDefinitions="Auto,Auto,Auto"
+                        RowSpacing="10"
+                        Margin="0,16,0,0">
+                    <Grid ColumnDefinitions="*,24,*">
+                      <Grid Grid.Column="0"
+                            RowDefinitions="Auto,Auto"
+                            RowSpacing="6">
+                        <TextBlock Text="Below range"
+                                   Classes="metric-label" />
 
-                    <StackPanel Grid.Column="0"
-                                Spacing="8">
-                      <TextBlock Text="Below range"
-                                 Classes="metric-label" />
+                        <TextBlock Grid.Row="1"
+                                   Text="{Binding StatisticsBelowRangeText}"
+                                   Classes="metric-value" />
+                      </Grid>
 
-                      <TextBlock Text="{Binding StatisticsBelowRangeText}"
-                                 Classes="metric-value" />
+                      <Grid Grid.Column="2"
+                            RowDefinitions="Auto,Auto"
+                            RowSpacing="6">
+                        <TextBlock Text="Above range"
+                                   Classes="metric-label" />
 
-                      <ProgressBar Classes="insight-progress-danger"
-                                   Minimum="0"
-                                   Maximum="100"
-                                   Value="{Binding StatisticsBelowRangePercentValue}" />
+                        <TextBlock Grid.Row="1"
+                                   Text="{Binding StatisticsAboveRangeText}"
+                                   Classes="metric-value" />
+                      </Grid>
+                    </Grid>
 
-                      <TextBlock Text="{Binding StatisticsBelowRangeInsightText}"
+                    <statsControls:GlucoseRangeBarsControl
+                        Grid.Row="1"
+                        HorizontalAlignment="Stretch"
+                        BelowPercent="{Binding StatisticsBelowRangePercentValue}"
+                        AbovePercent="{Binding StatisticsAboveRangePercentValue}" />
+
+                    <Grid Grid.Row="2"
+                          ColumnDefinitions="*,24,*">
+                      <TextBlock Grid.Column="0"
+                                 Text="{Binding StatisticsBelowRangeInsightText}"
                                  Classes="secondary"
                                  FontSize="13"
+                                 MaxWidth="170"
                                  TextWrapping="Wrap" />
-                    </StackPanel>
 
-                    <StackPanel Grid.Column="1"
-                                Spacing="8">
-                      <TextBlock Text="Above range"
-                                 Classes="metric-label" />
-
-                      <TextBlock Text="{Binding StatisticsAboveRangeText}"
-                                 Classes="metric-value" />
-
-                      <ProgressBar Classes="insight-progress-warning"
-                                   Minimum="0"
-                                   Maximum="100"
-                                   Value="{Binding StatisticsAboveRangePercentValue}" />
-
-                      <TextBlock Text="{Binding StatisticsAboveRangeInsightText}"
+                      <TextBlock Grid.Column="2"
+                                 Text="{Binding StatisticsAboveRangeInsightText}"
                                  Classes="secondary"
                                  FontSize="13"
+                                 MaxWidth="170"
                                  TextWrapping="Wrap" />
-                    </StackPanel>
+                    </Grid>
                   </Grid>
                 </Grid>
               </Grid>
