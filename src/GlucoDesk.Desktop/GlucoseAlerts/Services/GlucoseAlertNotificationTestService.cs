@@ -26,11 +26,11 @@ public sealed class GlucoseAlertNotificationTestService : IGlucoseAlertNotificat
     {
         try
         {
-            await _notificationService
+            var result = await _notificationService
                 .ShowAsync(CreatePrivacySafeTestNotification(), cancellationToken)
                 .ConfigureAwait(false);
 
-            return NativeNotificationRequestResult.UnknownDelivery();
+            return result;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

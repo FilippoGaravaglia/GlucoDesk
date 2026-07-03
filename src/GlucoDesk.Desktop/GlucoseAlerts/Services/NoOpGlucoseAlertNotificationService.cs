@@ -1,4 +1,5 @@
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 
 namespace GlucoDesk.Desktop.GlucoseAlerts.Services;
 
@@ -17,12 +18,13 @@ public sealed class NoOpGlucoseAlertNotificationService : IGlucoseAlertNotificat
     }
 
     /// <inheritdoc />
-    public Task ShowAsync(
+    public Task<NativeNotificationRequestResult> ShowAsync(
         GlucoseAlertNativeNotification notification,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(notification);
 
-        return Task.CompletedTask;
+        return Task.FromResult(
+            NativeNotificationRequestResult.NotSupported("Native notifications are disabled."));
     }
 }

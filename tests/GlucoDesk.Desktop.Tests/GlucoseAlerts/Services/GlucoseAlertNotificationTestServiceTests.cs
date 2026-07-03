@@ -67,19 +67,19 @@ public sealed class GlucoseAlertNotificationTestServiceTests
     {
         public GlucoseAlertNativeNotification? LastNotification { get; private set; }
 
-        public Task ShowAsync(
+        public Task<NativeNotificationRequestResult> ShowAsync(
             GlucoseAlertNativeNotification notification,
             CancellationToken cancellationToken)
         {
             LastNotification = notification;
 
-            return Task.CompletedTask;
+            return Task.FromResult(NativeNotificationRequestResult.UnknownDelivery());
         }
     }
 
     private sealed class ThrowingGlucoseAlertNotificationService : IGlucoseAlertNotificationService
     {
-        public Task ShowAsync(
+        public Task<NativeNotificationRequestResult> ShowAsync(
             GlucoseAlertNativeNotification notification,
             CancellationToken cancellationToken)
         {
@@ -89,13 +89,13 @@ public sealed class GlucoseAlertNotificationTestServiceTests
 
     private sealed class CancellableGlucoseAlertNotificationService : IGlucoseAlertNotificationService
     {
-        public Task ShowAsync(
+        public Task<NativeNotificationRequestResult> ShowAsync(
             GlucoseAlertNativeNotification notification,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            return Task.CompletedTask;
+            return Task.FromResult(NativeNotificationRequestResult.UnknownDelivery());
         }
     }
 }

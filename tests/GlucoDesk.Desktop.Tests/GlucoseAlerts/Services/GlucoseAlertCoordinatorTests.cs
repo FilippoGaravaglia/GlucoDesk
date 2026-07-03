@@ -2,6 +2,7 @@ using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
 using GlucoDesk.Desktop.GlucoseAlerts.Services;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 
 namespace GlucoDesk.Desktop.Tests.GlucoseAlerts.Services;
 
@@ -135,12 +136,12 @@ public sealed class GlucoseAlertCoordinatorTests
     {
         public List<GlucoseAlertNativeNotification> Notifications { get; } = [];
 
-        public Task ShowAsync(
+        public Task<NativeNotificationRequestResult> ShowAsync(
             GlucoseAlertNativeNotification notification,
             CancellationToken cancellationToken)
         {
             Notifications.Add(notification);
-            return Task.CompletedTask;
+            return Task.FromResult(NativeNotificationRequestResult.UnknownDelivery());
         }
     }
 }
