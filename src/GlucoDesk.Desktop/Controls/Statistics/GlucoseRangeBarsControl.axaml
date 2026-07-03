@@ -1,0 +1,63 @@
+<UserControl
+    x:Class="GlucoDesk.Desktop.Controls.Statistics.GlucoseRangeBarsControl"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border
+      Background="#FFFFFF"
+      BorderBrush="Transparent"
+      BorderThickness="0"
+      CornerRadius="999"
+      Padding="8,6"
+      HorizontalAlignment="Stretch">
+    <Grid
+        x:Name="BarsGrid"
+        Height="10"
+        ColumnDefinitions="Auto,Auto,Auto,Auto,Auto"
+        VerticalAlignment="Center"
+        ClipToBounds="True">
+      <Border
+          x:Name="BelowFillBar"
+          Grid.Column="0"
+          Height="10"
+          Background="#FF1744"
+          CornerRadius="999"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center" />
+
+      <Border
+          x:Name="BelowRemainingBar"
+          Grid.Column="1"
+          Height="10"
+          Background="#FDECEF"
+          CornerRadius="999"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center" />
+
+      <Border
+          x:Name="GapBar"
+          Grid.Column="2"
+          Height="1"
+          Background="Transparent"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center" />
+
+      <Border
+          x:Name="AboveFillBar"
+          Grid.Column="3"
+          Height="10"
+          Background="#E87500"
+          CornerRadius="999"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center" />
+
+      <Border
+          x:Name="AboveRemainingBar"
+          Grid.Column="4"
+          Height="10"
+          Background="#F3E3A4"
+          CornerRadius="999"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Center" />
+    </Grid>
+  </Border>
+</UserControl>

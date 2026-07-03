@@ -28,7 +28,7 @@
                        TextWrapping="Wrap" />
           </StackPanel>
 
-          <Border Grid.Column="1"
+          <Border MinWidth="260" Grid.Column="1"
                   Classes="badge-accent"
                   VerticalAlignment="Top">
 
@@ -87,7 +87,7 @@
                   </StackPanel>
                 </Border>
 
-                <Border Grid.Column="1"
+                <Border MinWidth="260" Grid.Column="1"
                         Padding="16"
                         CornerRadius="18"
                         BorderThickness="1"
@@ -206,7 +206,7 @@
 
             </StackPanel>
 
-            <Border Grid.Column="1"
+            <Border MinWidth="260" Grid.Column="1"
                     BorderThickness="1,0,0,0"
                     BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
                     Padding="28,0,0,0">
