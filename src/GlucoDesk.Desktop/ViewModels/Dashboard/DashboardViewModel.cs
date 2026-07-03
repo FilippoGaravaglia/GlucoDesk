@@ -79,6 +79,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IWidgetStatePublisher? _widgetStatePublisher;
     private readonly GlucoseAlertCoordinator _glucoseAlertCoordinator;
     private readonly IGlucoseAlertEventLog _glucoseAlertEventLog;
+    private readonly GlucoseAlertPresentedEventState _glucoseAlertPresentedEventState = new();
     private readonly GlucoseAlertSnoozeState _glucoseAlertSnoozeState = new();
     private readonly GlucoseAlertStabilityGate _glucoseAlertStabilityGate = new();
     private readonly DashboardRefreshOptions _refreshOptions;
@@ -1472,10 +1473,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         GlucoseAlertMessage = presentation.Message;
         GlucoseAlertBadgeText = presentation.BadgeText;
         GlucoseAlertActionText = presentation.ActionText;
-        _ = LogGlucoseAlertEventAsync(
-            GlucoseAlertEventKind.Presented,
-            presentation.Kind,
-            "Glucose alert banner presented.");
+        LogGlucoseAlertPresentedEvent(presentation.Kind);
         IsGlucoseAlertBannerVisible = _dismissedGlucoseAlertKind != presentation.Kind;
 
         if (presentation.ShouldSendNativeNotification)
@@ -1490,7 +1488,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private void ClearGlucoseAlertBanner()
     {
         
-        GlucoseAlertSnoozeStatusText = string.Empty;
+        
+        _glucoseAlertPresentedEventState.Reset();
+GlucoseAlertSnoozeStatusText = string.Empty;
 _currentGlucoseAlertKind = GlucoseAlertKind.None;
         _dismissedGlucoseAlertKind = GlucoseAlertKind.None;
         IsGlucoseAlertBannerVisible = false;
@@ -1516,6 +1516,23 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
         {
             // Native notifications are best-effort and must never break dashboard refresh.
         }
+    }
+
+    /// <summary>
+    /// Writes a presented alert event only once for the current visible alert condition.
+    /// </summary>
+    /// <param name="alertKind">The alert kind.</param>
+    private void LogGlucoseAlertPresentedEvent(GlucoseAlertKind alertKind)
+    {
+        if (!_glucoseAlertPresentedEventState.ShouldLogPresented(alertKind))
+        {
+            return;
+        }
+
+        _ = LogGlucoseAlertEventAsync(
+            GlucoseAlertEventKind.Presented,
+            alertKind,
+            "Glucose alert banner presented.");
     }
 
     /// <summary>
