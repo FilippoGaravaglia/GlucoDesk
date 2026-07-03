@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 
 namespace GlucoDesk.Desktop.GlucoseAlerts.Services;
 
@@ -29,50 +30,49 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
     }
 
     /// <inheritdoc />
-    public abstract Task ShowAsync(
+    public abstract Task<NativeNotificationRequestResult> ShowAsync(
         GlucoseAlertNativeNotification notification,
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Starts a native process and waits for completion without surfacing notification errors to the caller.
+    /// Requests a best-effort native notification by running the specified process.
     /// </summary>
-    /// <param name="startInfo">The process start info.</param>
+    /// <param name="startInfo">The process start information.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task representing the process execution.</returns>
-    protected static async Task RunBestEffortProcessAsync(
+    /// <returns>The native notification request result.</returns>
+    private static async Task<NativeNotificationRequestResult> RequestBestEffortProcessAsync(
         ProcessStartInfo startInfo,
         CancellationToken cancellationToken)
     {
         try
         {
-            startInfo.CreateNoWindow = true;
-            startInfo.UseShellExecute = false;
-            startInfo.RedirectStandardError = true;
-            startInfo.RedirectStandardOutput = true;
-
             using var process = Process.Start(startInfo);
 
             if (process is null)
             {
-                return;
+                return NativeNotificationRequestResult.Failed(
+                    "Unable to start the native notification process.");
             }
 
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+            return NativeNotificationRequestResult.UnknownDelivery();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
         }
-        catch
+        catch (Exception exception)
         {
-            // Native notifications are best-effort and must not break the dashboard.
+            return NativeNotificationRequestResult.Failed(
+                $"Unable to request native notification. {exception.GetType().Name}: {exception.Message}");
         }
     }
 
     private sealed class MacOsGlucoseAlertNotificationService : OperatingSystemGlucoseAlertNotificationService
     {
         /// <inheritdoc />
-        public override Task ShowAsync(
+        public override Task<NativeNotificationRequestResult> ShowAsync(
             GlucoseAlertNativeNotification notification,
             CancellationToken cancellationToken)
         {
@@ -88,7 +88,7 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
                 }
             };
 
-            return RunBestEffortProcessAsync(startInfo, cancellationToken);
+            return RequestBestEffortProcessAsync(startInfo, cancellationToken);
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
     private sealed class WindowsGlucoseAlertNotificationService : OperatingSystemGlucoseAlertNotificationService
     {
         /// <inheritdoc />
-        public override Task ShowAsync(
+        public override Task<NativeNotificationRequestResult> ShowAsync(
             GlucoseAlertNativeNotification notification,
             CancellationToken cancellationToken)
         {
@@ -128,7 +128,7 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
                 }
             };
 
-            return RunBestEffortProcessAsync(startInfo, cancellationToken);
+            return RequestBestEffortProcessAsync(startInfo, cancellationToken);
         }
 
         /// <summary>
