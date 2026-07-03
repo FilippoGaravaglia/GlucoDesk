@@ -972,3 +972,5 @@ GlucoDesk includes calm, non-medical glucose awareness notifications through an 
 Learn more in [`docs/features/glucose-awareness-notifications.md`](docs/features/glucose-awareness-notifications.md).
 
 For manual validation before releases, see [`docs/qa/glucose-notifications-checklist.md`](docs/qa/glucose-notifications-checklist.md).
+
+For packaged-app validation of native notifications, see [`docs/qa/native-notification-packaged-app-checklist.md`](docs/qa/native-notification-packaged-app-checklist.md).
