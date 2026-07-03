@@ -350,18 +350,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 .SendTestNotificationAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (result.Status is NativeNotificationRequestStatus.Failed
-                or NativeNotificationRequestStatus.NotSupported)
+            var presentation = NativeNotificationRequestResultPresentation.FromResult(result);
+
+            ApplyNativeNotificationRequestResultPresentation(presentation);
+
+            if (presentation.IsFailure)
             {
-                ApplyFailure(result, "Unable to send native test notification");
-                NativeGlucoseTestNotificationStatusText =
-                    "Unable to send the test notification. Check OS notification permissions.";
                 return;
             }
-
-            StatusMessage = "Native test notification requested.";
-            NativeGlucoseTestNotificationStatusText =
-                "Test notification requested. Check your OS notification center.";
         }
         catch (OperationCanceledException)
         {
@@ -1399,6 +1395,21 @@ public sealed partial class SettingsViewModel : ViewModelBase
         ErrorMessage = result.UserMessage;
         StatusMessage = statusMessage;
 
+    }
+
+    /// <summary>
+    /// Applies a native notification request result presentation to the settings UI.
+    /// </summary>
+    /// <param name="presentation">The native notification request result presentation.</param>
+    private void ApplyNativeNotificationRequestResultPresentation(
+        NativeNotificationRequestResultPresentation presentation)
+    {
+        ArgumentNullException.ThrowIfNull(presentation);
+
+        HasError = presentation.IsFailure;
+        ErrorMessage = presentation.ErrorMessage;
+        StatusMessage = presentation.StatusMessage;
+        NativeGlucoseTestNotificationStatusText = presentation.NotificationStatusText;
     }
 
     private void ApplyFailure(
