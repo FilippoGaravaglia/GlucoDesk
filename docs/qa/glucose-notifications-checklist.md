@@ -272,3 +272,9 @@ The notification feature can be considered production-ready when:
 - [ ] README documents notification limitations and safety boundaries.
 - [ ] All automated tests pass.
 - [ ] Manual QA issues are either fixed or explicitly documented.
+
+## Packaged native notification QA
+
+Before releasing packaged builds, also run the dedicated packaged-app checklist:
+
+- [`native-notification-packaged-app-checklist.md`](native-notification-packaged-app-checklist.md)

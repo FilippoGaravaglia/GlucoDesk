@@ -224,3 +224,11 @@ The notification feature can be considered production-ready only when:
 - notification limitations are documented
 - safety boundaries are documented
 - known OS-specific limitations are either fixed or documented
+
+## Packaged-app validation
+
+Native OS notification delivery depends on operating-system permissions, Focus / Do Not Disturb modes, notification center behavior, and packaging identity.
+
+Before publishing a release, validate packaged builds with:
+
+- [`../qa/native-notification-packaged-app-checklist.md`](../qa/native-notification-packaged-app-checklist.md)
