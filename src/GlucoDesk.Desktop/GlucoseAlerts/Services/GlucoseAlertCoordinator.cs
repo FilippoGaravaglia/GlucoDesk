@@ -2,6 +2,7 @@ using System.Globalization;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 
 namespace GlucoDesk.Desktop.GlucoseAlerts.Services;
 
@@ -98,8 +99,8 @@ public sealed class GlucoseAlertCoordinator
     /// </summary>
     /// <param name="presentation">The alert presentation.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task representing the asynchronous notification operation.</returns>
-    public Task SendNativeNotificationAsync(
+    /// <returns>The native notification request result.</returns>
+    public Task<NativeNotificationRequestResult> SendNativeNotificationAsync(
         GlucoseAlertPresentation presentation,
         CancellationToken cancellationToken)
     {
@@ -107,7 +108,9 @@ public sealed class GlucoseAlertCoordinator
 
         if (presentation.Kind == GlucoseAlertKind.None)
         {
-            return Task.CompletedTask;
+            return Task.FromResult(
+                NativeNotificationRequestResult.NotSupported(
+                    "Native notifications were not requested for this alert."));
         }
 
         return _notificationService.ShowAsync(
