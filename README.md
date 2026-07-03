@@ -980,3 +980,7 @@ For release preparation, see [`docs/qa/release-readiness-checklist.md`](docs/qa/
 For automated release verification, run:
 
     scripts/verify-release-readiness.sh
+
+For release artifact generation, run:
+
+    scripts/build-release-artifacts.sh

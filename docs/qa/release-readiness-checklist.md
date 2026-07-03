@@ -94,3 +94,15 @@ Then create the tag according to the chosen version:
 
     git tag v0.x.x-preview
     git push origin v0.x.x-preview
+
+## Release artifact build
+
+After automated verification passes, generate release archives with:
+
+    scripts/build-release-artifacts.sh
+
+Then smoke-test the generated archives with:
+
+- [`release-artifacts-smoke-test.md`](release-artifacts-smoke-test.md)
+
+Generated release archives are build outputs and must not be committed.
