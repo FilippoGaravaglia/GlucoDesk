@@ -78,6 +78,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IWidgetStatePublisher? _widgetStatePublisher;
     private readonly GlucoseAlertCoordinator _glucoseAlertCoordinator;
     private readonly GlucoseAlertSnoozeState _glucoseAlertSnoozeState = new();
+    private readonly GlucoseAlertStabilityGate _glucoseAlertStabilityGate = new();
     private readonly DashboardRefreshOptions _refreshOptions;
 
     private GlucoseDashboardSnapshot? _lastDashboardSnapshot;
@@ -1429,7 +1430,14 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         if (presentation.Kind == GlucoseAlertKind.None)
         {
             _glucoseAlertSnoozeState.Clear();
+            _glucoseAlertStabilityGate.Reset();
             GlucoseAlertSnoozeStatusText = string.Empty;
+            ClearGlucoseAlertBanner();
+            return;
+        }
+
+        if (!_glucoseAlertStabilityGate.ShouldPresent(presentation.Kind))
+        {
             ClearGlucoseAlertBanner();
             return;
         }
