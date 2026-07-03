@@ -965,8 +965,10 @@ This project is licensed under the MIT License.
 
 See [LICENSE](LICENSE) for details.
 
-## Glucose awareness notifications QA
+## Glucose awareness notifications
 
 GlucoDesk includes calm, non-medical glucose awareness notifications through an in-app banner and optional native OS notifications. Native notifications can be delayed, blocked, or hidden by macOS and Windows notification permissions, Focus / Do Not Disturb modes, or development-mode host processes.
+
+Learn more in [`docs/features/glucose-awareness-notifications.md`](docs/features/glucose-awareness-notifications.md).
 
 For manual validation before releases, see [`docs/qa/glucose-notifications-checklist.md`](docs/qa/glucose-notifications-checklist.md).
