@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
@@ -5,27 +6,55 @@ using GlucoDesk.Desktop.GlucoseAlerts.Models;
 namespace GlucoDesk.Desktop.GlucoseAlerts.EventLog;
 
 /// <summary>
-/// Writes privacy-safe glucose alert events to a local JSON Lines file.
+/// Writes privacy-safe glucose alert events to a local JSON Lines file with bounded retention.
 /// </summary>
 public sealed class JsonLinesGlucoseAlertEventLog : IGlucoseAlertEventLog
 {
+    private const long DefaultMaxLogFileSizeBytes = 1_048_576;
+    private const int DefaultRetainedFileCount = 3;
+
     private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
 
     private readonly string _filePath;
+    private readonly long _maxLogFileSizeBytes;
+    private readonly int _retainedFileCount;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonLinesGlucoseAlertEventLog"/> class.
     /// </summary>
     /// <param name="filePath">The JSON Lines file path.</param>
-    public JsonLinesGlucoseAlertEventLog(string filePath)
+    /// <param name="maxLogFileSizeBytes">The maximum active log file size in bytes before rotation.</param>
+    /// <param name="retainedFileCount">The number of rotated log files to retain.</param>
+    public JsonLinesGlucoseAlertEventLog(
+        string filePath,
+        long maxLogFileSizeBytes = DefaultMaxLogFileSizeBytes,
+        int retainedFileCount = DefaultRetainedFileCount)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException("Event log file path is required.", nameof(filePath));
         }
 
+        if (maxLogFileSizeBytes <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maxLogFileSizeBytes),
+                maxLogFileSizeBytes,
+                "Maximum log file size must be greater than zero.");
+        }
+
+        if (retainedFileCount < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(retainedFileCount),
+                retainedFileCount,
+                "At least one rotated log file must be retained.");
+        }
+
         _filePath = filePath;
+        _maxLogFileSizeBytes = maxLogFileSizeBytes;
+        _retainedFileCount = retainedFileCount;
     }
 
     /// <summary>
@@ -70,6 +99,8 @@ public sealed class JsonLinesGlucoseAlertEventLog : IGlucoseAlertEventLog
 
         try
         {
+            RotateIfNeeded(line);
+
             await File.AppendAllTextAsync(
                     _filePath,
                     line + Environment.NewLine,
@@ -127,6 +158,74 @@ public sealed class JsonLinesGlucoseAlertEventLog : IGlucoseAlertEventLog
         return message.Length <= 240
             ? message
             : message[..240];
+    }
+
+    /// <summary>
+    /// Rotates the active log file when appending the next line would exceed the configured size limit.
+    /// </summary>
+    /// <param name="nextLine">The next line to append.</param>
+    private void RotateIfNeeded(string nextLine)
+    {
+        if (!File.Exists(_filePath))
+        {
+            return;
+        }
+
+        var currentSize = new FileInfo(_filePath).Length;
+        var nextLineSize = Encoding.UTF8.GetByteCount(nextLine + Environment.NewLine);
+
+        if (currentSize + nextLineSize <= _maxLogFileSizeBytes)
+        {
+            return;
+        }
+
+        RotateFiles();
+    }
+
+    /// <summary>
+    /// Rotates local log files while keeping only the configured number of retained files.
+    /// </summary>
+    private void RotateFiles()
+    {
+        var oldestFilePath = BuildRotatedFilePath(_retainedFileCount);
+
+        if (File.Exists(oldestFilePath))
+        {
+            File.Delete(oldestFilePath);
+        }
+
+        for (var index = _retainedFileCount - 1; index >= 1; index--)
+        {
+            var sourcePath = BuildRotatedFilePath(index);
+            var destinationPath = BuildRotatedFilePath(index + 1);
+
+            if (File.Exists(sourcePath))
+            {
+                File.Move(sourcePath, destinationPath, overwrite: true);
+            }
+        }
+
+        if (File.Exists(_filePath))
+        {
+            File.Move(_filePath, BuildRotatedFilePath(1), overwrite: true);
+        }
+    }
+
+    /// <summary>
+    /// Builds a rotated log file path.
+    /// </summary>
+    /// <param name="index">The rotated log index.</param>
+    /// <returns>The rotated log file path.</returns>
+    private string BuildRotatedFilePath(int index)
+    {
+        var directoryPath = Path.GetDirectoryName(_filePath);
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_filePath);
+        var extension = Path.GetExtension(_filePath);
+        var rotatedFileName = $"{fileNameWithoutExtension}.{index}{extension}";
+
+        return string.IsNullOrWhiteSpace(directoryPath)
+            ? rotatedFileName
+            : Path.Combine(directoryPath, rotatedFileName);
     }
 
     #endregion
