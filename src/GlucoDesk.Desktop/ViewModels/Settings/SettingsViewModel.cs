@@ -20,6 +20,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Diagnostics;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -349,7 +350,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 .SendTestNotificationAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (result.IsFailure)
+            if (result.Status is NativeNotificationRequestStatus.Failed
+                or NativeNotificationRequestStatus.NotSupported)
             {
                 ApplyFailure(result, "Unable to send native test notification");
                 NativeGlucoseTestNotificationStatusText =
@@ -1019,12 +1021,12 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         var selectedChartMaximumMgDl = NormalizeChartMaximumMgDl(
             chartMaximumMgDl ?? SelectedChartMaximumMgDl);
-    
+
         ChartMaximumUnitLabel = FormatGlucoseUnitLabel(unit);
         ChartMaximumOptions = BuildChartMaximumOptions(unit);
-    
+
         SelectedChartMaximumMgDl = selectedChartMaximumMgDl;
-    
+
         // The selected logical value can remain the same while the ItemsSource changes.
         // Raising the notification explicitly forces the ComboBox to re-match the new display option.
         OnPropertyChanged(nameof(SelectedChartMaximumMgDl));
@@ -1386,12 +1388,19 @@ public sealed partial class SettingsViewModel : ViewModelBase
         ErrorMessage = $"{result.Error.Code}: {result.Error.Message}";
         StatusMessage = statusMessage;
     }
-
     /// <summary>
-    /// Applies a failed application result to the settings view model.
+    /// Applies a native notification request failure to the settings UI.
     /// </summary>
-    /// <param name="result">The failed result.</param>
-    /// <param name="statusMessage">The status message.</param>
+    /// <param name="result">The native notification request result.</param>
+    /// <param name="statusMessage">The status message to display.</param>
+    private void ApplyFailure(NativeNotificationRequestResult result, string statusMessage)
+    {
+        HasError = true;
+        ErrorMessage = result.UserMessage;
+        StatusMessage = statusMessage;
+
+    }
+
     private void ApplyFailure(
         Result result,
         string statusMessage)
@@ -1572,7 +1581,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private Result SelectAvailableDexcomProvider()
     {
         var dexcomProvider = FindAvailableDexcomProviderOption();
-    
+
         if (dexcomProvider is null)
         {
             return Result.Failure(
@@ -1580,10 +1589,10 @@ public sealed partial class SettingsViewModel : ViewModelBase
                     "Dexcom.ProviderUnavailable",
                     "Dexcom is connected but no Dexcom provider is available in the current desktop runtime."));
         }
-    
+
         SelectedLiveProvider = dexcomProvider;
         SelectedHistoricalProvider = dexcomProvider;
-    
+
         return Result.Success();
     }
 

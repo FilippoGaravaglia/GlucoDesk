@@ -1,6 +1,5 @@
-using GlucoDesk.Application.Common.Errors;
-using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 
 namespace GlucoDesk.Desktop.GlucoseAlerts.Services;
 
@@ -23,7 +22,7 @@ public sealed class GlucoseAlertNotificationTestService : IGlucoseAlertNotificat
     }
 
     /// <inheritdoc />
-    public async Task<Result> SendTestNotificationAsync(CancellationToken cancellationToken)
+    public async Task<NativeNotificationRequestResult> SendTestNotificationAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -31,18 +30,16 @@ public sealed class GlucoseAlertNotificationTestService : IGlucoseAlertNotificat
                 .ShowAsync(CreatePrivacySafeTestNotification(), cancellationToken)
                 .ConfigureAwait(false);
 
-            return Result.Success();
+            return NativeNotificationRequestResult.UnknownDelivery();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
         }
-        catch
+        catch (Exception exception)
         {
-            return Result.Failure(
-                new Error(
-                    "GlucoseAlerts.TestNotificationFailed",
-                    "Unable to send the native test notification."));
+            return NativeNotificationRequestResult.Failed(
+                $"Unable to send the native test notification. {exception.GetType().Name}: {exception.Message}");
         }
     }
 

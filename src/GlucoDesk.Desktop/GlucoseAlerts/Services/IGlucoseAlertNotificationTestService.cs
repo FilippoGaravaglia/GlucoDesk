@@ -1,4 +1,4 @@
-using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 
 namespace GlucoDesk.Desktop.GlucoseAlerts.Services;
 
@@ -11,6 +11,6 @@ public interface IGlucoseAlertNotificationTestService
     /// Sends a privacy-safe native test notification.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The test notification result.</returns>
-    Task<Result> SendTestNotificationAsync(CancellationToken cancellationToken);
+    /// <returns>The native notification request result.</returns>
+    Task<NativeNotificationRequestResult> SendTestNotificationAsync(CancellationToken cancellationToken);
 }
