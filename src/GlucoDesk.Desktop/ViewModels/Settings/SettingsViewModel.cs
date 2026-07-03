@@ -19,6 +19,7 @@ using GlucoDesk.Desktop.ViewModels.Settings.Selections;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Diagnostics;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -27,6 +28,15 @@ namespace GlucoDesk.Desktop.ViewModels.Settings;
 /// </summary>
 public sealed partial class SettingsViewModel : ViewModelBase
 {
+    /// <summary>
+    /// Gets native notification diagnostics for the current runtime environment.
+    /// </summary>
+    public string NativeNotificationDiagnosticsText { get; } =
+        NativeNotificationDiagnosticsProvider
+            .CreateDefault()
+            .GetSettingsText();
+
+
     private static readonly IReadOnlyList<CgmProviderKind> SupportedProviderKinds =
     [
         CgmProviderKind.Mock,
