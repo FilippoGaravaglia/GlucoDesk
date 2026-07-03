@@ -228,6 +228,12 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
             ApplicationSettings.DefaultGlucoseAlertRepeatInterval;
 
         /// <summary>
+        /// Gets the number of consecutive out-of-range readings required before showing a glucose alert.
+        /// </summary>
+        public int GlucoseAlertRequiredConsecutiveReadings { get; init; } =
+            ApplicationSettings.DefaultGlucoseAlertRequiredConsecutiveReadings;
+
+        /// <summary>
         /// Creates a settings document from application settings.
         /// </summary>
         /// <param name="settings">The application settings.</param>
@@ -250,7 +256,8 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
                 HighGlucoseAlertsEnabled = settings.HighGlucoseAlertsEnabled,
                 NativeGlucoseNotificationsEnabled = settings.NativeGlucoseNotificationsEnabled,
                 GlucoseAlertPrivacyModeEnabled = settings.GlucoseAlertPrivacyModeEnabled,
-                GlucoseAlertRepeatInterval = settings.GlucoseAlertRepeatInterval
+                GlucoseAlertRepeatInterval = settings.GlucoseAlertRepeatInterval,
+                GlucoseAlertRequiredConsecutiveReadings = settings.GlucoseAlertRequiredConsecutiveReadings
             };
         }
 
@@ -261,19 +268,21 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
         public ApplicationSettings ToApplicationSettings()
         {
             return new ApplicationSettings(
-                ActiveLiveProvider,
-                HistoricalProvider,
-                PreferredUnit,
-                TargetLowMgDl,
-                TargetHighMgDl,
-                DashboardRefreshInterval,
-                NormalizeChartMaximumMgDl(ChartMaximumMgDl),
-                GlucoseAlertsEnabled,
-                LowGlucoseAlertsEnabled,
-                HighGlucoseAlertsEnabled,
-                NativeGlucoseNotificationsEnabled,
-                GlucoseAlertPrivacyModeEnabled,
-                NormalizeGlucoseAlertRepeatInterval(GlucoseAlertRepeatInterval));
+                activeLiveProvider: ActiveLiveProvider,
+                historicalProvider: HistoricalProvider,
+                preferredUnit: PreferredUnit,
+                targetLowMgDl: TargetLowMgDl,
+                targetHighMgDl: TargetHighMgDl,
+                dashboardRefreshInterval: DashboardRefreshInterval,
+                chartMaximumMgDl: NormalizeChartMaximumMgDl(ChartMaximumMgDl),
+                glucoseAlertsEnabled: GlucoseAlertsEnabled,
+                lowGlucoseAlertsEnabled: LowGlucoseAlertsEnabled,
+                highGlucoseAlertsEnabled: HighGlucoseAlertsEnabled,
+                nativeGlucoseNotificationsEnabled: NativeGlucoseNotificationsEnabled,
+                glucoseAlertPrivacyModeEnabled: GlucoseAlertPrivacyModeEnabled,
+                glucoseAlertRepeatInterval: NormalizeGlucoseAlertRepeatInterval(GlucoseAlertRepeatInterval),
+                glucoseAlertRequiredConsecutiveReadings: NormalizeGlucoseAlertRequiredConsecutiveReadings(
+                    GlucoseAlertRequiredConsecutiveReadings));
         }
 
         /// <summary>
@@ -302,6 +311,21 @@ public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
             }
 
             return repeatInterval;
+        }
+
+        /// <summary>
+        /// Normalizes the persisted glucose alert stability value.
+        /// </summary>
+        /// <param name="requiredConsecutiveReadings">The persisted required consecutive readings.</param>
+        /// <returns>The normalized required consecutive readings.</returns>
+        private static int NormalizeGlucoseAlertRequiredConsecutiveReadings(int requiredConsecutiveReadings)
+        {
+            if (requiredConsecutiveReadings is < ApplicationSettings.MinimumGlucoseAlertRequiredConsecutiveReadings or > ApplicationSettings.MaximumGlucoseAlertRequiredConsecutiveReadings)
+            {
+                return ApplicationSettings.DefaultGlucoseAlertRequiredConsecutiveReadings;
+            }
+
+            return requiredConsecutiveReadings;
         }
     }
 }

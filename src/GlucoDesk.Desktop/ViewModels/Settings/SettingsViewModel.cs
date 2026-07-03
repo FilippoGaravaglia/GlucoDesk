@@ -132,6 +132,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private string _glucoseAlertRepeatIntervalMinutesText = "30";
 
     [ObservableProperty]
+    private string _glucoseAlertRequiredConsecutiveReadingsText = "2";
+
+    [ObservableProperty]
     private bool _canSendNativeGlucoseTestNotification;
 
     [ObservableProperty]
@@ -651,6 +654,27 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Handles glucose alert stability input changes.
+    /// </summary>
+    /// <param name="value">The updated text value.</param>
+    partial void OnGlucoseAlertRequiredConsecutiveReadingsTextChanged(string value)
+    {
+        var sanitizedValue = SanitizePositiveIntegerText(value);
+
+        if (int.TryParse(sanitizedValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedValue) &&
+            parsedValue > ApplicationSettings.MaximumGlucoseAlertRequiredConsecutiveReadings)
+        {
+            sanitizedValue = ApplicationSettings.MaximumGlucoseAlertRequiredConsecutiveReadings
+                .ToString(CultureInfo.InvariantCulture);
+        }
+
+        if (sanitizedValue != value)
+        {
+            GlucoseAlertRequiredConsecutiveReadingsText = sanitizedValue;
+        }
+    }
+
+    /// <summary>
     /// Handles glucose alert toggle changes.
     /// </summary>
     /// <param name="value">The updated toggle value.</param>
@@ -714,6 +738,27 @@ public sealed partial class SettingsViewModel : ViewModelBase
             NativeGlucoseTestNotificationStatusText =
                 "Send a safe test notification to verify OS permissions.";
         }
+    }
+
+    /// <summary>
+    /// Parses the glucose alert stability input.
+    /// </summary>
+    /// <returns>The parsed and bounded required consecutive readings value.</returns>
+    private int ParseGlucoseAlertRequiredConsecutiveReadings()
+    {
+        if (!int.TryParse(
+                GlucoseAlertRequiredConsecutiveReadingsText,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var requiredConsecutiveReadings))
+        {
+            return ApplicationSettings.DefaultGlucoseAlertRequiredConsecutiveReadings;
+        }
+
+        return Math.Clamp(
+            requiredConsecutiveReadings,
+            ApplicationSettings.MinimumGlucoseAlertRequiredConsecutiveReadings,
+            ApplicationSettings.MaximumGlucoseAlertRequiredConsecutiveReadings);
     }
 
     /// <summary>
@@ -902,6 +947,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
         NativeGlucoseNotificationsEnabled = settings.NativeGlucoseNotificationsEnabled;
         GlucoseAlertPrivacyModeEnabled = settings.GlucoseAlertPrivacyModeEnabled;
         GlucoseAlertRepeatIntervalMinutesText = ((int)settings.GlucoseAlertRepeatInterval.TotalMinutes)
+            .ToString(CultureInfo.InvariantCulture);
+        GlucoseAlertRequiredConsecutiveReadingsText = settings.GlucoseAlertRequiredConsecutiveReadings
             .ToString(CultureInfo.InvariantCulture);
         UpdateNativeGlucoseTestNotificationAvailability();
 
@@ -1232,7 +1279,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         try
         {
-            return new ApplicationSettings(
+            var glucoseAlertRequiredConsecutiveReadings = ParseGlucoseAlertRequiredConsecutiveReadings();
+
+        return new ApplicationSettings(
                 SelectedLiveProvider.Kind,
                 SelectedHistoricalProvider.Kind,
                 SelectedPreferredUnit.Unit,
