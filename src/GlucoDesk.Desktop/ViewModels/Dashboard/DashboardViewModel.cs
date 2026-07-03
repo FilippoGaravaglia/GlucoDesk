@@ -34,7 +34,6 @@ namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 /// </summary>
 public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 {
-    private const int DefaultGlucoseAlertRequiredConsecutiveReadings = 2;
     private const int ThreeHourChartWindow = 3;
     private const int SixHourChartWindow = 6;
     private const int TwelveHourChartWindow = 12;
@@ -1437,7 +1436,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        _glucoseAlertStabilityGate.Configure(DefaultGlucoseAlertRequiredConsecutiveReadings);
+        _glucoseAlertStabilityGate.Configure(_currentSettings.GlucoseAlertRequiredConsecutiveReadings);
 
         if (!_glucoseAlertStabilityGate.ShouldPresent(presentation.Kind))
         {

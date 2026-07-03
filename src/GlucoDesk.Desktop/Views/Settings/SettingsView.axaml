@@ -384,6 +384,19 @@
                                  TextWrapping="Wrap" />
                     </StackPanel>
 
+                    <StackPanel Spacing="8">
+                      <TextBlock Text="Consecutive readings required"
+                                 Classes="label" />
+
+                      <TextBox Text="{Binding GlucoseAlertRequiredConsecutiveReadingsText}"
+                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
+
+                      <TextBlock Text="Number of consecutive out-of-range readings required before showing an alert. Use 1 for faster alerts, 2 as balanced default, or 3-5 to reduce noise."
+                                 Classes="muted"
+                                 FontSize="12"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+
                     <CheckBox Content="Enable native OS notifications"
                               IsChecked="{Binding NativeGlucoseNotificationsEnabled}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />

@@ -23,6 +23,21 @@ public sealed record ApplicationSettings
     public static readonly TimeSpan DefaultGlucoseAlertRepeatInterval = TimeSpan.FromMinutes(30);
 
     /// <summary>
+    /// The minimum number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    public const int MinimumGlucoseAlertRequiredConsecutiveReadings = 1;
+
+    /// <summary>
+    /// The maximum number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    public const int MaximumGlucoseAlertRequiredConsecutiveReadings = 5;
+
+    /// <summary>
+    /// The default number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    public const int DefaultGlucoseAlertRequiredConsecutiveReadings = 2;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ApplicationSettings"/> class.
     /// </summary>
     /// <param name="activeLiveProvider">The active live CGM provider.</param>
@@ -38,6 +53,7 @@ public sealed record ApplicationSettings
     /// <param name="nativeGlucoseNotificationsEnabled">A value indicating whether native OS glucose awareness notifications are enabled.</param>
     /// <param name="glucoseAlertPrivacyModeEnabled">A value indicating whether alert messages should hide glucose values.</param>
     /// <param name="glucoseAlertRepeatInterval">The minimum repeat interval for repeated native notifications of the same condition.</param>
+    /// <param name="glucoseAlertRequiredConsecutiveReadings">The number of consecutive out-of-range readings required before showing a glucose alert.</param>
     /// <exception cref="ArgumentException">Thrown when provider or unit values are invalid.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when target range, refresh interval, chart maximum or notification interval values are invalid.</exception>
     public ApplicationSettings(
@@ -53,7 +69,8 @@ public sealed record ApplicationSettings
         bool highGlucoseAlertsEnabled = true,
         bool nativeGlucoseNotificationsEnabled = false,
         bool glucoseAlertPrivacyModeEnabled = true,
-        TimeSpan? glucoseAlertRepeatInterval = null)
+        TimeSpan? glucoseAlertRepeatInterval = null,
+        int glucoseAlertRequiredConsecutiveReadings = DefaultGlucoseAlertRequiredConsecutiveReadings)
     {
         var effectiveDashboardRefreshInterval = dashboardRefreshInterval ?? TimeSpan.FromSeconds(30);
         var effectiveGlucoseAlertRepeatInterval = glucoseAlertRepeatInterval ?? DefaultGlucoseAlertRepeatInterval;
@@ -127,7 +144,10 @@ public sealed record ApplicationSettings
         NativeGlucoseNotificationsEnabled = nativeGlucoseNotificationsEnabled;
         GlucoseAlertPrivacyModeEnabled = glucoseAlertPrivacyModeEnabled;
         GlucoseAlertRepeatInterval = effectiveGlucoseAlertRepeatInterval;
-    }
+    
+        GlucoseAlertRequiredConsecutiveReadings = NormalizeGlucoseAlertRequiredConsecutiveReadings(
+            glucoseAlertRequiredConsecutiveReadings);
+}
 
     /// <summary>
     /// Gets the default application settings.
@@ -198,4 +218,27 @@ public sealed record ApplicationSettings
     /// Gets the minimum repeat interval for repeated native notifications of the same condition.
     /// </summary>
     public TimeSpan GlucoseAlertRepeatInterval { get; }
+
+    /// <summary>
+    /// Gets the number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    public int GlucoseAlertRequiredConsecutiveReadings { get; }
+    /// <summary>
+    /// Normalizes and validates the number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    /// <param name="requiredConsecutiveReadings">The required consecutive readings.</param>
+    /// <returns>The validated required consecutive readings.</returns>
+    private static int NormalizeGlucoseAlertRequiredConsecutiveReadings(int requiredConsecutiveReadings)
+    {
+        if (requiredConsecutiveReadings is < MinimumGlucoseAlertRequiredConsecutiveReadings or > MaximumGlucoseAlertRequiredConsecutiveReadings)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(requiredConsecutiveReadings),
+                requiredConsecutiveReadings,
+                $"Glucose alert stability must be between {MinimumGlucoseAlertRequiredConsecutiveReadings} and {MaximumGlucoseAlertRequiredConsecutiveReadings} consecutive readings.");
+        }
+
+        return requiredConsecutiveReadings;
+    }
+
 }
