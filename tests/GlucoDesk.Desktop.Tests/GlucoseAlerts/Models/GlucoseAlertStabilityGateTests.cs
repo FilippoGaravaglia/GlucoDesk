@@ -72,4 +72,38 @@ public sealed class GlucoseAlertStabilityGateTests
         Assert.Equal(GlucoseAlertKind.None, gate.CurrentKind);
         Assert.Equal(0, gate.ConsecutiveObservations);
     }
+    [Fact]
+    public void Configure_ShouldUpdateRequiredObservationCount()
+    {
+        var gate = new GlucoseAlertStabilityGate();
+
+        gate.Configure(3);
+
+        Assert.Equal(3, gate.RequiredConsecutiveObservations);
+    }
+
+    [Fact]
+    public void Configure_ShouldResetTrackedState_WhenRequiredObservationCountChanges()
+    {
+        var gate = new GlucoseAlertStabilityGate();
+
+        _ = gate.ShouldPresent(GlucoseAlertKind.High);
+
+        gate.Configure(3);
+
+        Assert.Equal(3, gate.RequiredConsecutiveObservations);
+        Assert.Equal(GlucoseAlertKind.None, gate.CurrentKind);
+        Assert.Equal(0, gate.ConsecutiveObservations);
+    }
+
+    [Fact]
+    public void ShouldPresent_ShouldRespectConfiguredObservationCount()
+    {
+        var gate = new GlucoseAlertStabilityGate(3);
+
+        Assert.False(gate.ShouldPresent(GlucoseAlertKind.High));
+        Assert.False(gate.ShouldPresent(GlucoseAlertKind.High));
+        Assert.True(gate.ShouldPresent(GlucoseAlertKind.High));
+    }
+
 }
