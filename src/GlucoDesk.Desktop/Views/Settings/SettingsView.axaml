@@ -41,10 +41,13 @@
 
           <Border Classes="surface-card"
                   Padding="24">
-            <Grid RowDefinitions="Auto,Auto"
-                  RowSpacing="24">
+            <Grid x:Name="ProvidersSectionGrid"
+                  ColumnDefinitions="1.15*,0.85*"
+                  RowDefinitions="Auto"
+                  ColumnSpacing="34">
 
               <StackPanel Grid.Column="0"
+                          Grid.Row="0"
                           Spacing="22">
 
                 <StackPanel Spacing="4">
@@ -124,13 +127,12 @@
 
               </StackPanel>
 
-              <Border Grid.Row="1"
-
-                      BorderThickness="0,1,0,0"
-
+              <Border x:Name="ProvidersRightPanel"
+                      Grid.Column="1"
+                      Grid.Row="0"
+                      BorderThickness="1,0,0,0"
                       BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
-
-                      Padding="0,24,0,0">
+                      Padding="28,0,0,0">
                 <StackPanel Spacing="18">
 
                   <StackPanel Spacing="4">
@@ -199,11 +201,13 @@
                   Padding="24">
             <StackPanel Spacing="20">
 
-              <Grid RowDefinitions="Auto,Auto"
-
-                    RowSpacing="24">
+              <Grid x:Name="PreferencesSectionGrid"
+                    ColumnDefinitions="1.15*,0.85*"
+                    RowDefinitions="Auto"
+                    ColumnSpacing="34">
 
                 <StackPanel Grid.Column="0"
+                            Grid.Row="0"
                             Spacing="20">
 
                   <StackPanel Spacing="4">
@@ -263,13 +267,12 @@
 
                 </StackPanel>
 
-                <Border Grid.Row="1"
-
-                        BorderThickness="0,1,0,0"
-
+                <Border x:Name="PreferencesRightPanel"
+                        Grid.Column="1"
+                        Grid.Row="0"
+                        BorderThickness="1,0,0,0"
                         BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
-
-                        Padding="0,24,0,0">
+                        Padding="28,0,0,0">
                   <StackPanel Spacing="20">
 
                     <StackPanel Spacing="4">
@@ -317,11 +320,13 @@
               <Border Height="1"
                       Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
 
-              <Grid RowDefinitions="Auto,Auto"
-
-                    RowSpacing="24">
+              <Grid x:Name="NotificationsSectionGrid"
+                    ColumnDefinitions="1.15*,0.85*"
+                    RowDefinitions="Auto"
+                    ColumnSpacing="34">
 
                 <StackPanel Grid.Column="0"
+                            Grid.Row="0"
                             Spacing="18">
 
                   <StackPanel Spacing="4">
@@ -365,13 +370,12 @@
                              TextWrapping="Wrap" />
                 </StackPanel>
 
-                <Border Grid.Row="1"
-
-                        BorderThickness="0,1,0,0"
-
+                <Border x:Name="NotificationsRightPanel"
+                        Grid.Column="1"
+                        Grid.Row="0"
+                        BorderThickness="1,0,0,0"
                         BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
-
-                        Padding="0,24,0,0">
+                        Padding="28,0,0,0">
                   <StackPanel Spacing="18">
 
                     <StackPanel Spacing="4">
@@ -400,6 +404,11 @@
                     <CheckBox Content="Enable native OS notifications"
                               IsChecked="{Binding NativeGlucoseNotificationsEnabled}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
+
+                    <TextBlock Text="{Binding NativeNotificationDiagnosticsText}"
+                               TextWrapping="Wrap"
+                               Opacity="0.72"
+                               Margin="0,4,0,0" />
 
                     <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="14">
@@ -437,7 +446,6 @@
 
               <Border Height="1"
                       Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
-
 
               <Grid ColumnDefinitions="Auto,*"
                     ColumnSpacing="18"
