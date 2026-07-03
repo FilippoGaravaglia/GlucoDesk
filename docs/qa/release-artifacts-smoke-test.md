@@ -17,6 +17,37 @@ GlucoDesk notifications are non-medical awareness prompts. They must never repla
 | macOS Intel artifact exists | `GlucoDesk-osx-x64*.zip` exists | Pass / Fail |
 | macOS Apple Silicon artifact exists | `GlucoDesk-osx-arm64*.zip` exists | Pass / Fail |
 | Windows x64 artifact exists | `GlucoDesk-win-x64*.zip` exists | Pass / Fail |
+| Checksum file exists | `SHA256SUMS.txt` exists | Pass / Fail |
+| Manifest file exists | `artifacts-manifest.json` exists | Pass / Fail |
+| Checksums are populated | Each zip has one SHA256 entry | Pass / Fail |
+| Manifest is populated | Each zip appears with name, path, size, and SHA256 | Pass / Fail |
+
+## Checksum validation
+
+After artifact generation, inspect:
+
+    artifacts/release/SHA256SUMS.txt
+
+Each release zip should have a SHA256 entry.
+
+The GitHub release should include:
+
+- the platform zip archives;
+- `SHA256SUMS.txt`;
+- `artifacts-manifest.json`.
+
+## Manifest validation
+
+After artifact generation, inspect:
+
+    artifacts/release/artifacts-manifest.json
+
+Each artifact entry should include:
+
+- `name`;
+- `path`;
+- `sizeBytes`;
+- `sha256`.
 
 ## macOS artifact smoke test
 
@@ -60,7 +91,8 @@ A release artifact is acceptable only if:
 - in-app glucose alert banner works;
 - native notification request failures do not crash the dashboard;
 - privacy-sensitive data does not appear in notifications or logs;
-- known OS limitations are documented in release notes.
+- known OS limitations are documented in release notes;
+- checksums and artifact manifest are generated.
 
 ## Notes
 
@@ -70,4 +102,4 @@ The release artifact script writes archives under:
 
     artifacts/release/
 
-Release archives should be attached to the GitHub release after final QA.
+Release archives, `SHA256SUMS.txt`, and `artifacts-manifest.json` should be attached to the GitHub release after final QA.

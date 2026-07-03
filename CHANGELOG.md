@@ -10,3 +10,4 @@
 - Added native notification request result handling and privacy-safe event logging.
 - Added packaged-app QA and release readiness documentation for notification validation.
 - Added release readiness and release artifact build scripts.
+- Added SHA256 checksum and artifact manifest generation for release archives.

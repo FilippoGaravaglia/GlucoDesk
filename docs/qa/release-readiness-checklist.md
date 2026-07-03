@@ -106,3 +106,10 @@ Then smoke-test the generated archives with:
 - [`release-artifacts-smoke-test.md`](release-artifacts-smoke-test.md)
 
 Generated release archives are build outputs and must not be committed.
+
+The artifact build also generates:
+
+- `artifacts/release/SHA256SUMS.txt`;
+- `artifacts/release/artifacts-manifest.json`.
+
+Attach both files to the GitHub release together with the platform archives.
