@@ -846,7 +846,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             TimeSpan.FromMinutes(15),
             maxReadings: CalculateDashboardMaxReadings(TwentyFourHourChartWindow));
     }
-    
+
     /// <summary>
     /// Calculates the expected number of CGM readings for a chart window.
     /// </summary>
@@ -855,7 +855,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private static int CalculateDashboardMaxReadings(int windowHours)
     {
         const int readingsPerHour = 12;
-    
+
         return windowHours * readingsPerHour;
     }
 
@@ -1322,7 +1322,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         _currentSettings = settings;
         _autoRefreshInterval = settings.DashboardRefreshInterval;
         OnPropertyChanged(nameof(AutoRefreshInterval));
-    
+
         PreferredUnit = NormalizeDisplayUnit(settings.PreferredUnit);
         TargetLowMgDl = settings.TargetLowMgDl;
         TargetHighMgDl = settings.TargetHighMgDl;
@@ -1337,7 +1337,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             TargetLowMgDl,
             TargetHighMgDl,
             PreferredUnit);
-    
+
         AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
         SettingsStatusText = "Settings loaded";
     }
@@ -1487,8 +1487,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     /// </summary>
     private void ClearGlucoseAlertBanner()
     {
-        
-        
+
+
         _glucoseAlertPresentedEventState.Reset();
 GlucoseAlertSnoozeStatusText = string.Empty;
 _currentGlucoseAlertKind = GlucoseAlertKind.None;
@@ -1508,12 +1508,22 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
     {
         try
         {
-            await _glucoseAlertCoordinator
+            var result = await _glucoseAlertCoordinator
                 .SendNativeNotificationAsync(presentation, CancellationToken.None)
                 .ConfigureAwait(false);
+
+            _ = LogGlucoseAlertEventAsync(
+                GlucoseAlertEventKind.NativeNotificationRequested,
+                presentation.Kind,
+                GlucoseAlertNativeNotificationEventMessageFactory.Create(result));
         }
         catch
         {
+            _ = LogGlucoseAlertEventAsync(
+                GlucoseAlertEventKind.NativeNotificationRequested,
+                presentation.Kind,
+                "Native notification request failed.");
+
             // Native notifications are best-effort and must never break dashboard refresh.
         }
     }
@@ -1763,7 +1773,7 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
     {
         var filteredChartPoints = FilterChartPointsByWindow(
             _allChartPoints,
-            SelectedChartWindowHours);  
+            SelectedChartWindowHours);
 
         ChartPoints = filteredChartPoints;
         ChartSummaryText = BuildChartSummary(
