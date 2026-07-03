@@ -9,3 +9,4 @@
 - Added notification settings, cooldown behavior, snooze/dismiss support, stability gate, and consecutive-reading threshold support.
 - Added native notification request result handling and privacy-safe event logging.
 - Added packaged-app QA and release readiness documentation for notification validation.
+- Added release readiness and release artifact build scripts.

@@ -125,3 +125,9 @@ A release can proceed only if:
 After completing packaged-app validation, continue with:
 
 - [`release-readiness-checklist.md`](release-readiness-checklist.md)
+
+## Release artifact smoke test
+
+After packaged-app notification QA, validate the generated archives with:
+
+- [`release-artifacts-smoke-test.md`](release-artifacts-smoke-test.md)
