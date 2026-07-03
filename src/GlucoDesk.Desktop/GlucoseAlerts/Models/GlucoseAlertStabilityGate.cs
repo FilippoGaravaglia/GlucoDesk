@@ -5,7 +5,7 @@ namespace GlucoDesk.Desktop.GlucoseAlerts.Models;
 /// </summary>
 public sealed class GlucoseAlertStabilityGate
 {
-    private readonly int _requiredConsecutiveObservations;
+    private int _requiredConsecutiveObservations;
     private GlucoseAlertKind _currentKind = GlucoseAlertKind.None;
     private int _consecutiveObservations;
 
@@ -15,16 +15,15 @@ public sealed class GlucoseAlertStabilityGate
     /// <param name="requiredConsecutiveObservations">The number of consecutive observations required before presenting the alert.</param>
     public GlucoseAlertStabilityGate(int requiredConsecutiveObservations = 2)
     {
-        if (requiredConsecutiveObservations < 1)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(requiredConsecutiveObservations),
-                requiredConsecutiveObservations,
-                "At least one observation is required.");
-        }
+        ValidateRequiredConsecutiveObservations(requiredConsecutiveObservations);
 
         _requiredConsecutiveObservations = requiredConsecutiveObservations;
     }
+
+    /// <summary>
+    /// Gets the required number of consecutive observations.
+    /// </summary>
+    public int RequiredConsecutiveObservations => _requiredConsecutiveObservations;
 
     /// <summary>
     /// Gets the currently tracked alert kind.
@@ -35,6 +34,23 @@ public sealed class GlucoseAlertStabilityGate
     /// Gets the number of consecutive observations for the current alert kind.
     /// </summary>
     public int ConsecutiveObservations => _consecutiveObservations;
+
+    /// <summary>
+    /// Updates the required number of consecutive observations.
+    /// </summary>
+    /// <param name="requiredConsecutiveObservations">The required number of consecutive observations.</param>
+    public void Configure(int requiredConsecutiveObservations)
+    {
+        ValidateRequiredConsecutiveObservations(requiredConsecutiveObservations);
+
+        if (_requiredConsecutiveObservations == requiredConsecutiveObservations)
+        {
+            return;
+        }
+
+        _requiredConsecutiveObservations = requiredConsecutiveObservations;
+        Reset();
+    }
 
     /// <summary>
     /// Records an alert kind observation and returns whether it is stable enough to present.
@@ -70,4 +86,23 @@ public sealed class GlucoseAlertStabilityGate
         _currentKind = GlucoseAlertKind.None;
         _consecutiveObservations = 0;
     }
+
+    #region Helpers
+
+    /// <summary>
+    /// Validates the required number of consecutive observations.
+    /// </summary>
+    /// <param name="requiredConsecutiveObservations">The required number of consecutive observations.</param>
+    private static void ValidateRequiredConsecutiveObservations(int requiredConsecutiveObservations)
+    {
+        if (requiredConsecutiveObservations < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(requiredConsecutiveObservations),
+                requiredConsecutiveObservations,
+                "At least one observation is required.");
+        }
+    }
+
+    #endregion
 }
