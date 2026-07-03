@@ -66,6 +66,18 @@ Do not tag the release unless:
 - no safety or privacy regressions are found;
 - Git working tree is clean.
 
+## Automated verification script
+
+Before tagging, run the release verification script from the repository root:
+
+    scripts/verify-release-readiness.sh
+
+When developing the checklist/script itself on a feature branch, use:
+
+    scripts/verify-release-readiness.sh --allow-dirty
+
+The default mode requires a clean working tree and is intended for the final release gate.
+
 ## Final release commands
 
 Use these only after all checks pass.
