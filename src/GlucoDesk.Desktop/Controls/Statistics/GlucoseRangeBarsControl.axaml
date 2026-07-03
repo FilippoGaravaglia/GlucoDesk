@@ -4,8 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Border
       Background="#FFFFFF"
-      BorderBrush="#D8E6F4"
-      BorderThickness="1"
+      BorderBrush="Transparent"
+      BorderThickness="0"
       CornerRadius="999"
       Padding="8,6"
       HorizontalAlignment="Stretch">
