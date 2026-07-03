@@ -974,3 +974,5 @@ Learn more in [`docs/features/glucose-awareness-notifications.md`](docs/features
 For manual validation before releases, see [`docs/qa/glucose-notifications-checklist.md`](docs/qa/glucose-notifications-checklist.md).
 
 For packaged-app validation of native notifications, see [`docs/qa/native-notification-packaged-app-checklist.md`](docs/qa/native-notification-packaged-app-checklist.md).
+
+For release preparation, see [`docs/qa/release-readiness-checklist.md`](docs/qa/release-readiness-checklist.md) and [`docs/release-notes/glucose-awareness-notifications-preview.md`](docs/release-notes/glucose-awareness-notifications-preview.md).

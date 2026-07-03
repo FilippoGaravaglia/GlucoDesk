@@ -232,3 +232,10 @@ Native OS notification delivery depends on operating-system permissions, Focus /
 Before publishing a release, validate packaged builds with:
 
 - [`../qa/native-notification-packaged-app-checklist.md`](../qa/native-notification-packaged-app-checklist.md)
+
+## Release preparation
+
+Before tagging a release that includes glucose awareness notifications, use:
+
+- [`../qa/release-readiness-checklist.md`](../qa/release-readiness-checklist.md)
+- [`../release-notes/glucose-awareness-notifications-preview.md`](../release-notes/glucose-awareness-notifications-preview.md)

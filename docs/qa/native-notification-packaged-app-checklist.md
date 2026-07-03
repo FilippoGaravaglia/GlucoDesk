@@ -119,3 +119,9 @@ A release can proceed only if:
 - event log records `NativeNotificationRequested`;
 - known OS limitations are documented in release notes;
 - no privacy-sensitive data appears in notifications or logs.
+
+## Related release checklist
+
+After completing packaged-app validation, continue with:
+
+- [`release-readiness-checklist.md`](release-readiness-checklist.md)
