@@ -14,7 +14,7 @@ permissions:
 jobs:
   macos-preview-artifacts:
     name: macOS preview artifacts
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
       - name: Checkout
