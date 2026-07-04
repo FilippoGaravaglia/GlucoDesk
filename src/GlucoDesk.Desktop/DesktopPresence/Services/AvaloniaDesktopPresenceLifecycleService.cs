@@ -255,18 +255,16 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <returns>The tray icon asset URI.</returns>
     private static Uri GetTrayIconUri()
     {
-        var shouldUseWhiteIcon = ShouldUseWhiteIcon();
-
         if (OperatingSystem.IsMacOS())
         {
-            return shouldUseWhiteIcon
+            return ShouldUseWhiteIconOnMacOs()
                 ? MacOsMenuBarIconWhiteUri
                 : MacOsMenuBarIconBlackUri;
         }
 
         if (OperatingSystem.IsWindows())
         {
-            return shouldUseWhiteIcon
+            return WindowsTrayIconThemeDetector.ShouldUseLightIconForCurrentSystemTheme()
                 ? WindowsTrayIconWhiteUri
                 : WindowsTrayIconBlackUri;
         }
