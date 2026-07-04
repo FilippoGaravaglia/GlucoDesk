@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Threading;
 
 namespace GlucoDesk.Desktop.Views.Settings;
 
@@ -130,4 +131,85 @@ public partial class SettingsView : UserControl
     }
 
     #endregion
+    private void OnPositiveIntegerSettingsTextChanged(
+        object? sender,
+        Avalonia.Controls.TextChangedEventArgs e)
+    {
+        _ = e;
+
+        if (sender is not Avalonia.Controls.TextBox textBox ||
+            DataContext is not GlucoDesk.Desktop.ViewModels.Settings.SettingsViewModel viewModel)
+        {
+            return;
+        }
+
+        var sanitizedText = SanitizePositiveIntegerText(textBox.Text);
+
+        if (!string.Equals(textBox.Text, sanitizedText, System.StringComparison.Ordinal))
+        {
+            var caretIndex = textBox.CaretIndex;
+            textBox.Text = sanitizedText;
+            textBox.CaretIndex = System.Math.Min(caretIndex, sanitizedText.Length);
+            return;
+        }
+
+        switch (textBox.Name)
+        {
+            case "DashboardRefreshIntervalSecondsTextBox":
+                viewModel.DashboardRefreshIntervalSecondsText = sanitizedText;
+                break;
+
+            case "GlucoseAlertRepeatIntervalMinutesTextBox":
+                viewModel.GlucoseAlertRepeatIntervalMinutesText = sanitizedText;
+                break;
+
+            case "GlucoseAlertRequiredConsecutiveReadingsTextBox":
+                viewModel.GlucoseAlertRequiredConsecutiveReadingsText = sanitizedText;
+                break;
+        }
+    }
+
+    private static string SanitizePositiveIntegerText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        var builder = new System.Text.StringBuilder();
+
+        foreach (var character in text)
+        {
+            if (char.IsDigit(character))
+            {
+                builder.Append(character);
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    protected override void OnAttachedToVisualTree(
+        Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        Dispatcher.UIThread.Post(LoadPersistedSettingsWhenAttached);
+    }
+
+    private async void LoadPersistedSettingsWhenAttached()
+    {
+        if (DataContext is not GlucoDesk.Desktop.ViewModels.Settings.SettingsViewModel viewModel)
+        {
+            return;
+        }
+
+        if (!viewModel.LoadCommand.CanExecute(null))
+        {
+            return;
+        }
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+    }
+
 }

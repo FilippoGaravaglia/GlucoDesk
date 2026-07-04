@@ -291,8 +291,13 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         try
         {
+            var settingsToSave = await MergeSettingsForSaveAsync(
+                    settings,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
             var result = await _settingsService
-                .SaveSettingsAsync(settings, cancellationToken)
+                .SaveSettingsAsync(settingsToSave, cancellationToken)
                 .ConfigureAwait(false);
 
             if (result.IsFailure)
@@ -922,6 +927,77 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Merges form settings with the currently persisted settings to avoid overwriting configured providers with a visual Mock fallback.
+    /// </summary>
+    /// <param name="formSettings">The settings created from the editable Settings form.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The settings that should be persisted.</returns>
+    private async Task<ApplicationSettings> MergeSettingsForSaveAsync(
+        ApplicationSettings formSettings,
+        CancellationToken cancellationToken)
+    {
+        var persistedSettingsResult = await _settingsService
+            .GetSettingsAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (persistedSettingsResult.IsFailure)
+        {
+            return formSettings;
+        }
+
+        var persistedSettings = persistedSettingsResult.Value;
+
+        var activeLiveProvider = ResolveProviderKindForSave(
+            selectedProvider: formSettings.ActiveLiveProvider,
+            persistedProvider: persistedSettings.ActiveLiveProvider);
+
+        var historicalProvider = ResolveProviderKindForSave(
+            selectedProvider: formSettings.HistoricalProvider,
+            persistedProvider: persistedSettings.HistoricalProvider);
+
+        if (activeLiveProvider == formSettings.ActiveLiveProvider &&
+            historicalProvider == formSettings.HistoricalProvider)
+        {
+            return formSettings;
+        }
+
+        return new ApplicationSettings(
+            activeLiveProvider: activeLiveProvider,
+            historicalProvider: historicalProvider,
+            preferredUnit: formSettings.PreferredUnit,
+            targetLowMgDl: formSettings.TargetLowMgDl,
+            targetHighMgDl: formSettings.TargetHighMgDl,
+            dashboardRefreshInterval: formSettings.DashboardRefreshInterval,
+            chartMaximumMgDl: formSettings.ChartMaximumMgDl,
+            glucoseAlertsEnabled: formSettings.GlucoseAlertsEnabled,
+            lowGlucoseAlertsEnabled: formSettings.LowGlucoseAlertsEnabled,
+            highGlucoseAlertsEnabled: formSettings.HighGlucoseAlertsEnabled,
+            nativeGlucoseNotificationsEnabled: formSettings.NativeGlucoseNotificationsEnabled,
+            glucoseAlertPrivacyModeEnabled: formSettings.GlucoseAlertPrivacyModeEnabled,
+            glucoseAlertRepeatInterval: formSettings.GlucoseAlertRepeatInterval,
+            glucoseAlertRequiredConsecutiveReadings: formSettings.GlucoseAlertRequiredConsecutiveReadings);
+    }
+
+    /// <summary>
+    /// Resolves the provider kind to save when the Settings form selected Mock but a real provider is already persisted.
+    /// </summary>
+    /// <param name="selectedProvider">The provider selected by the Settings form.</param>
+    /// <param name="persistedProvider">The provider currently persisted in settings.</param>
+    /// <returns>The provider kind to persist.</returns>
+    private static CgmProviderKind ResolveProviderKindForSave(
+        CgmProviderKind selectedProvider,
+        CgmProviderKind persistedProvider)
+    {
+        if (selectedProvider == CgmProviderKind.Mock &&
+            persistedProvider is not CgmProviderKind.Mock and not CgmProviderKind.Unknown)
+        {
+            return persistedProvider;
+        }
+
+        return selectedProvider;
+    }
+
+    /// <summary>
     /// Applies loaded application settings to the editable form.
     /// </summary>
     /// <param name="settings">The loaded application settings.</param>
@@ -1290,19 +1366,20 @@ public sealed partial class SettingsViewModel : ViewModelBase
             var glucoseAlertRequiredConsecutiveReadings = ParseGlucoseAlertRequiredConsecutiveReadings();
 
         return new ApplicationSettings(
-                SelectedLiveProvider.Kind,
-                SelectedHistoricalProvider.Kind,
-                SelectedPreferredUnit.Unit,
-                targetLowMgDl,
-                targetHighMgDl,
-                TimeSpan.FromSeconds(refreshIntervalSeconds),
-                NormalizeChartMaximumMgDl(SelectedChartMaximumMgDl),
-                GlucoseAlertsEnabled,
-                LowGlucoseAlertsEnabled,
-                HighGlucoseAlertsEnabled,
-                NativeGlucoseNotificationsEnabled,
-                GlucoseAlertPrivacyModeEnabled,
-                TimeSpan.FromMinutes(alertRepeatIntervalMinutes));
+                activeLiveProvider: SelectedLiveProvider.Kind,
+                historicalProvider: SelectedHistoricalProvider.Kind,
+                preferredUnit: SelectedPreferredUnit.Unit,
+                targetLowMgDl: targetLowMgDl,
+                targetHighMgDl: targetHighMgDl,
+                dashboardRefreshInterval: TimeSpan.FromSeconds(refreshIntervalSeconds),
+                chartMaximumMgDl: NormalizeChartMaximumMgDl(SelectedChartMaximumMgDl),
+                glucoseAlertsEnabled: GlucoseAlertsEnabled,
+                lowGlucoseAlertsEnabled: LowGlucoseAlertsEnabled,
+                highGlucoseAlertsEnabled: HighGlucoseAlertsEnabled,
+                nativeGlucoseNotificationsEnabled: NativeGlucoseNotificationsEnabled,
+                glucoseAlertPrivacyModeEnabled: GlucoseAlertPrivacyModeEnabled,
+                glucoseAlertRepeatInterval: TimeSpan.FromMinutes(alertRepeatIntervalMinutes),
+                glucoseAlertRequiredConsecutiveReadings: glucoseAlertRequiredConsecutiveReadings);
         }
         catch (ArgumentException exception)
         {
