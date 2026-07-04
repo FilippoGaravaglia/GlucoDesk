@@ -110,7 +110,7 @@
                                Classes="metric-label" />
 
                     <ComboBox ItemsSource="{Binding ProviderOptions}"
-                              SelectedItem="{Binding SelectedLiveProvider}"
+                              SelectedItem="{Binding SelectedLiveProvider, Mode=TwoWay}"
                               HorizontalAlignment="Stretch" />
                   </StackPanel>
 
@@ -120,7 +120,7 @@
                                Classes="metric-label" />
 
                     <ComboBox ItemsSource="{Binding ProviderOptions}"
-                              SelectedItem="{Binding SelectedHistoricalProvider}"
+                              SelectedItem="{Binding SelectedHistoricalProvider, Mode=TwoWay}"
                               HorizontalAlignment="Stretch" />
                   </StackPanel>
                 </Grid>
@@ -229,7 +229,7 @@
                                  Classes="metric-label" />
 
                       <ComboBox ItemsSource="{Binding PreferredUnitOptions}"
-                                SelectedItem="{Binding SelectedPreferredUnit}"
+                                SelectedItem="{Binding SelectedPreferredUnit, Mode=TwoWay}"
                                 HorizontalAlignment="Stretch" />
                     </StackPanel>
 
@@ -289,7 +289,9 @@
                       <TextBlock Text="Refresh interval"
                                  Classes="metric-label" />
 
-                      <TextBox Text="{Binding DashboardRefreshIntervalSecondsText}"
+                      <TextBox x:Name="DashboardRefreshIntervalSecondsTextBox"
+                               Text="{Binding DashboardRefreshIntervalSecondsText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               TextChanged="OnPositiveIntegerSettingsTextChanged"
                                PlaceholderText="30"
                                HorizontalAlignment="Stretch" />
 
@@ -343,11 +345,11 @@
                         ColumnSpacing="20">
                     <CheckBox Grid.Column="0"
                               Content="Enable in-app banner"
-                              IsChecked="{Binding GlucoseAlertsEnabled}" />
+                              IsChecked="{Binding GlucoseAlertsEnabled, Mode=TwoWay}" />
 
                     <CheckBox Grid.Column="1"
                               Content="Use privacy wording"
-                              IsChecked="{Binding GlucoseAlertPrivacyModeEnabled}"
+                              IsChecked="{Binding GlucoseAlertPrivacyModeEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
                   </Grid>
 
@@ -355,12 +357,12 @@
                         ColumnSpacing="20">
                     <CheckBox Grid.Column="0"
                               Content="Notify below target"
-                              IsChecked="{Binding LowGlucoseAlertsEnabled}"
+                              IsChecked="{Binding LowGlucoseAlertsEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
 
                     <CheckBox Grid.Column="1"
                               Content="Notify above target"
-                              IsChecked="{Binding HighGlucoseAlertsEnabled}"
+                              IsChecked="{Binding HighGlucoseAlertsEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
                   </Grid>
 
@@ -392,7 +394,9 @@
                       <TextBlock Text="Consecutive readings required"
                                  Classes="label" />
 
-                      <TextBox Text="{Binding GlucoseAlertRequiredConsecutiveReadingsText}"
+                      <TextBox x:Name="GlucoseAlertRequiredConsecutiveReadingsTextBox"
+                               Text="{Binding GlucoseAlertRequiredConsecutiveReadingsText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               TextChanged="OnPositiveIntegerSettingsTextChanged"
                                IsEnabled="{Binding GlucoseAlertsEnabled}" />
 
                       <TextBlock Text="Number of consecutive out-of-range readings required before showing an alert. Use 1 for faster alerts, 2 as balanced default, or 3-5 to reduce noise."
@@ -402,7 +406,7 @@
                     </StackPanel>
 
                     <CheckBox Content="Enable native OS notifications"
-                              IsChecked="{Binding NativeGlucoseNotificationsEnabled}"
+                              IsChecked="{Binding NativeGlucoseNotificationsEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
 
                     <TextBlock Text="{Binding NativeNotificationDiagnosticsText}"
@@ -429,7 +433,9 @@
                       <TextBlock Text="Repeat cooldown"
                                  Classes="metric-label" />
 
-                      <TextBox Text="{Binding GlucoseAlertRepeatIntervalMinutesText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      <TextBox x:Name="GlucoseAlertRepeatIntervalMinutesTextBox"
+                               Text="{Binding GlucoseAlertRepeatIntervalMinutesText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               TextChanged="OnPositiveIntegerSettingsTextChanged"
                                PlaceholderText="30"
                                HorizontalAlignment="Stretch"
                                IsEnabled="{Binding GlucoseAlertsEnabled}" />
