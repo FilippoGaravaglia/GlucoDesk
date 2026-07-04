@@ -292,6 +292,9 @@ chmod +x "$MACOS_DIR/$EXECUTABLE_NAME"
 
 create_icon_if_possible "$RESOURCES_DIR"
 write_info_plist "$CONTENTS_DIR/Info.plist" "$SHORT_VERSION" "$BUNDLE_VERSION"
+
+info "building macOS native notification helper"
+"$ROOT_DIR/scripts/build-macos-notification-helper.sh" "$CONTENTS_DIR/Helpers"
 write_release_readme "$STAGING_DIR/README.txt" "$RID"
 write_safety_notice "$STAGING_DIR/SAFETY-NOTICE.txt"
 
