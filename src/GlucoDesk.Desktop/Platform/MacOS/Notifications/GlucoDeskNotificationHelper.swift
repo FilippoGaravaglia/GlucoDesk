@@ -21,13 +21,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private let title: String
     private let body: String
     private let subtitle: String
+    private let shouldSendNotification: Bool
 
     override init() {
         let arguments = CommandLine.arguments
 
-        self.title = arguments.count > 1 ? arguments[1] : "GlucoDesk"
-        self.body = arguments.count > 2 ? arguments[2] : "Native glucose awareness notification."
-        self.subtitle = arguments.count > 3 ? arguments[3] : "Glucose awareness"
+        if arguments.count > 2 {
+            self.title = arguments[1]
+            self.body = arguments[2]
+            self.subtitle = arguments.count > 3 ? arguments[3] : "Glucose awareness"
+            self.shouldSendNotification = true
+        } else {
+            self.title = ""
+            self.body = ""
+            self.subtitle = ""
+            self.shouldSendNotification = false
+        }
 
         super.init()
     }
@@ -37,6 +46,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         log("START")
         log("BUNDLE_ID: \(Bundle.main.bundleIdentifier ?? "nil")")
+
+        guard shouldSendNotification else {
+            log("NO_NOTIFICATION_ARGUMENTS")
+            terminateSoon()
+            return
+        }
+
         log("TITLE: \(title)")
         log("SUBTITLE: \(subtitle)")
 
