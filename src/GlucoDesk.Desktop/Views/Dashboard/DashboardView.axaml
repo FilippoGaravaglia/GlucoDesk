@@ -3,7 +3,13 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:GlucoDesk.Desktop.Views.Dashboard.Controls"
-             xmlns:statsControls="clr-namespace:GlucoDesk.Desktop.Controls.Statistics">
+             xmlns:statsControls="clr-namespace:GlucoDesk.Desktop.Controls.Statistics"
+             xmlns:converters="clr-namespace:GlucoDesk.Desktop.Converters">
+  <UserControl.Resources>
+    <converters:WidthBelowThresholdConverter x:Key="WidthBelowThresholdConverter" />
+    <converters:WidthAtLeastThresholdConverter x:Key="WidthAtLeastThresholdConverter" />
+  </UserControl.Resources>
+
 
   <Border Classes="page-shell">
     <ScrollViewer HorizontalScrollBarVisibility="Disabled"
@@ -39,25 +45,120 @@
         <StackPanel Grid.Row="1"
                     Spacing="22">
 
-          <Border Classes="hero-card">
-            <Grid ColumnDefinitions="1.15*,0.85*"
-                  ColumnSpacing="34">
+          <Border x:Name="CurrentGlucoseHeroCard"
+                  Classes="hero-card">
+            <Grid>
+              <Grid ColumnDefinitions="1.15*,0.85*"
+                    ColumnSpacing="34"
+                    IsVisible="{Binding #CurrentGlucoseHeroCard.Bounds.Width, Converter={StaticResource WidthAtLeastThresholdConverter}, ConverterParameter=1020}">
+                <StackPanel Grid.Column="0"
+                            Spacing="20">
+                  <StackPanel Spacing="10">
+                    <TextBlock Text="CURRENT GLUCOSE"
+                               Classes="eyebrow" />
 
-              <StackPanel Grid.Column="0"
-                          Spacing="20">
-                <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="18"
+                          VerticalAlignment="Center">
+                      <TextBlock Text="{Binding LatestValueText}"
+                                 Classes="hero-value" />
+
+                      <StackPanel Grid.Column="1"
+                                  Spacing="8"
+                                  VerticalAlignment="Center">
+                        <Border Classes="status-pill-success"
+                                HorizontalAlignment="Left">
+                          <TextBlock Text="{Binding StatusText}"
+                                     FontSize="13"
+                                     FontWeight="SemiBold"
+                                     Foreground="{StaticResource GlucoDesk.Brush.Success}" />
+                        </Border>
+
+                        <TextBlock Text="{Binding TargetRangeText}"
+                                   Classes="secondary"
+                                   FontSize="13" />
+                      </StackPanel>
+                    </Grid>
+                  </StackPanel>
+
+                  <WrapPanel Orientation="Horizontal"
+                             VerticalAlignment="Center">
+                    <TextBlock Text="{Binding TrendText}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+                  </WrapPanel>
+                </StackPanel>
+
+                <Border MinWidth="260"
+                        Grid.Column="1"
+                        BorderThickness="1,0,0,0"
+                        BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                        Padding="28,0,0,0"
+                        VerticalAlignment="Center">
+                  <StackPanel Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="16">
+                      <StackPanel Spacing="5">
+                        <TextBlock Text="Provider connected"
+                                   Classes="section-title" />
+
+                        <TextBlock Text="{Binding DataSourceStatusText}"
+                                   Classes="secondary"
+                                   FontSize="13"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+
+                      <Button Grid.Column="1"
+                              Content="Refresh"
+                              Command="{Binding RefreshCommand}"
+                              VerticalAlignment="Top" />
+                    </Grid>
+
+                    <Border Height="1"
+                            Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="18">
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="Updated"
+                                   Classes="metric-label" />
+
+                        <TextBlock Text="{Binding LastUpdatedText}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+                      </StackPanel>
+
+                      <Border MinWidth="260"
+                              Grid.Column="1"
+                              Classes="badge"
+                              VerticalAlignment="Top">
+                        <TextBlock Text="{Binding FreshnessText}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+                      </Border>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <StackPanel Spacing="22"
+                          IsVisible="{Binding #CurrentGlucoseHeroCard.Bounds.Width, Converter={StaticResource WidthBelowThresholdConverter}, ConverterParameter=1020}">
+                <StackPanel Spacing="12">
                   <TextBlock Text="CURRENT GLUCOSE"
                              Classes="eyebrow" />
 
-                  <Grid ColumnDefinitions="Auto,*"
-                        ColumnSpacing="18"
-                        VerticalAlignment="Center">
+                  <WrapPanel Orientation="Horizontal"
+                             VerticalAlignment="Center">
                     <TextBlock Text="{Binding LatestValueText}"
-                               Classes="hero-value" />
+                               Classes="hero-value"
+                               Margin="0,0,22,0" />
 
-                    <StackPanel Grid.Column="1"
-                                Spacing="8"
-                                VerticalAlignment="Center">
+                    <StackPanel Spacing="8"
+                                VerticalAlignment="Center"
+                                MinWidth="160">
                       <Border Classes="status-pill-success"
                               HorizontalAlignment="Left">
                         <TextBlock Text="{Binding StatusText}"
@@ -66,29 +167,18 @@
                                    Foreground="{StaticResource GlucoDesk.Brush.Success}" />
                       </Border>
 
-                      <TextBlock Text="{Binding TargetRangeText}"
-                                 Classes="secondary"
-                                 FontSize="13" />
+                      <TextBlock Text="{Binding TrendText}"
+                                 FontSize="13"
+                                 FontWeight="SemiBold"
+                                 Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
                     </StackPanel>
-                  </Grid>
+                  </WrapPanel>
                 </StackPanel>
 
-                <WrapPanel Orientation="Horizontal"
-                           VerticalAlignment="Center">
-                  <TextBlock Text="{Binding TrendText}"
-                             FontSize="13"
-                             FontWeight="SemiBold"
-                             Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
-                </WrapPanel>
-              </StackPanel>
+                <Border Height="1"
+                        Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
 
-              <Border MinWidth="260" Grid.Column="1"
-                      BorderThickness="1,0,0,0"
-                      BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
-                      Padding="28,0,0,0"
-                      VerticalAlignment="Center">
                 <StackPanel Spacing="14">
-
                   <Grid ColumnDefinitions="*,Auto"
                         ColumnSpacing="16">
                     <StackPanel Spacing="5">
@@ -107,12 +197,9 @@
                             VerticalAlignment="Top" />
                   </Grid>
 
-                  <Border Height="1"
-                          Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
-
-                  <Grid ColumnDefinitions="*,Auto"
-                        ColumnSpacing="18">
-                    <StackPanel Spacing="4">
+                  <WrapPanel Orientation="Horizontal">
+                    <StackPanel Spacing="4"
+                                Margin="0,0,18,0">
                       <TextBlock Text="Updated"
                                  Classes="metric-label" />
 
@@ -122,18 +209,16 @@
                                  Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
                     </StackPanel>
 
-                    <Border MinWidth="260" Grid.Column="1"
-                            Classes="badge"
+                    <Border Classes="badge"
                             VerticalAlignment="Top">
                       <TextBlock Text="{Binding FreshnessText}"
                                  FontSize="12"
                                  FontWeight="SemiBold"
                                  Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
                     </Border>
-                  </Grid>
-
+                  </WrapPanel>
                 </StackPanel>
-              </Border>
+              </StackPanel>
             </Grid>
           </Border>
 
