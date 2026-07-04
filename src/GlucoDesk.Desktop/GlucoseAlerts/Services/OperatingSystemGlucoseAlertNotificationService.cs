@@ -71,6 +71,8 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
 
     private sealed class MacOsGlucoseAlertNotificationService : OperatingSystemGlucoseAlertNotificationService
     {
+        private const string HelperAppName = "GlucoDeskNotificationHelper.app";
+
         /// <inheritdoc />
         public override Task<NativeNotificationRequestResult> ShowAsync(
             GlucoseAlertNativeNotification notification,
@@ -78,6 +80,59 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
         {
             ArgumentNullException.ThrowIfNull(notification);
 
+            var helperAppPath = FindNotificationHelperAppPath();
+
+            if (!string.IsNullOrWhiteSpace(helperAppPath))
+            {
+                return RequestUserNotificationsHelperAsync(
+                    helperAppPath,
+                    notification,
+                    cancellationToken);
+            }
+
+            return RequestAppleScriptFallbackAsync(notification, cancellationToken);
+        }
+
+        /// <summary>
+        /// Requests a macOS notification through the bundled UserNotifications helper app.
+        /// </summary>
+        /// <param name="helperAppPath">The helper app bundle path.</param>
+        /// <param name="notification">The notification to show.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The native notification request result.</returns>
+        private static Task<NativeNotificationRequestResult> RequestUserNotificationsHelperAsync(
+            string helperAppPath,
+            GlucoseAlertNativeNotification notification,
+            CancellationToken cancellationToken)
+        {
+            var startInfo = new ProcessStartInfo("/usr/bin/open")
+            {
+                ArgumentList =
+                {
+                    "-g",
+                    "-n",
+                    "-W",
+                    helperAppPath,
+                    "--args",
+                    notification.Title,
+                    notification.Message,
+                    "Glucose awareness"
+                }
+            };
+
+            return RequestBestEffortProcessAsync(startInfo, cancellationToken);
+        }
+
+        /// <summary>
+        /// Requests a legacy AppleScript notification when the native helper is not available.
+        /// </summary>
+        /// <param name="notification">The notification to show.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The native notification request result.</returns>
+        private static Task<NativeNotificationRequestResult> RequestAppleScriptFallbackAsync(
+            GlucoseAlertNativeNotification notification,
+            CancellationToken cancellationToken)
+        {
             var script = $"display notification \"{EscapeAppleScript(notification.Message)}\" with title \"{EscapeAppleScript(notification.Title)}\"";
             var startInfo = new ProcessStartInfo("/usr/bin/osascript")
             {
@@ -89,6 +144,41 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
             };
 
             return RequestBestEffortProcessAsync(startInfo, cancellationToken);
+        }
+
+        /// <summary>
+        /// Finds the bundled macOS notification helper app.
+        /// </summary>
+        /// <returns>The helper app path when available; otherwise null.</returns>
+        private static string? FindNotificationHelperAppPath()
+        {
+            foreach (var candidate in BuildNotificationHelperAppPathCandidates())
+            {
+                if (Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Builds candidate paths for development and packaged macOS app layouts.
+        /// </summary>
+        /// <returns>The candidate helper app paths.</returns>
+        private static string[] BuildNotificationHelperAppPathCandidates()
+        {
+            var baseDirectory = AppContext.BaseDirectory;
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            return
+            [
+                Path.GetFullPath(Path.Combine(baseDirectory, HelperAppName)),
+                Path.GetFullPath(Path.Combine(baseDirectory, "..", "Helpers", HelperAppName)),
+                Path.Combine(userProfile, "Applications", "GlucoDeskNotificationHelper", HelperAppName),
+                "/Applications/GlucoDesk.app/Contents/Helpers/GlucoDeskNotificationHelper.app"
+            ];
         }
 
         /// <summary>
