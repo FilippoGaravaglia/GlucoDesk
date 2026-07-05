@@ -87,6 +87,16 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private GlucoseDashboardSnapshot? _lastDashboardSnapshot;
     private ApplicationSettings _currentSettings = ApplicationSettings.Default;
     private GlucoseAlertKind _currentGlucoseAlertKind = GlucoseAlertKind.None;
+
+    /// <summary>
+    /// Gets the current glucose alert kind used by desktop presence surfaces.
+    /// </summary>
+    public GlucoseAlertKind CurrentGlucoseAlertKind
+    {
+        get => _currentGlucoseAlertKind;
+        private set => SetProperty(ref _currentGlucoseAlertKind, value);
+    }
+
     private GlucoseAlertKind _dismissedGlucoseAlertKind = GlucoseAlertKind.None;
 
     private bool _isInitialized;
@@ -1427,6 +1437,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         if (snapshot.LatestReading is null || snapshot.IsLatestReadingStale)
         {
+            CurrentGlucoseAlertKind = GlucoseAlertKind.None;
             ClearGlucoseAlertBanner();
             return;
         }
@@ -1437,7 +1448,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             _currentSettings,
             PreferredUnit);
 
-        _currentGlucoseAlertKind = presentation.Kind;
+        CurrentGlucoseAlertKind = presentation.Kind;
 
         if (presentation.Kind == GlucoseAlertKind.None)
         {

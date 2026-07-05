@@ -44,6 +44,12 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     private DashboardViewModel? _dashboardViewModel;
     private bool _isStarted;
     private bool _isPrivacyModeEnabled;
+    private const string MenuBarIconInRangeAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-in-range.png";
+    private const string MenuBarIconHighAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-high.png";
+    private const string MenuBarIconLowAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-low.png";
+
+    private string? _lastAppliedMenuBarIconAssetUri;
+
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AvaloniaDesktopPresenceLifecycleService"/> class.
@@ -105,6 +111,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
                 AttachDashboardState(desktopLifetime);
                 RefreshFromDashboardState();
+                RefreshMenuBarIconFromDashboardState();
+                RefreshMenuBarIconFromDashboardState();
 
                 _logger.LogInformation("Desktop presence indicator started.");
             }
@@ -143,6 +151,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 _application = null;
                 _trayIcon = null;
                 _statusMenuItem = null;
+                _lastAppliedMenuBarIconAssetUri = null;
+                _lastAppliedMenuBarIconAssetUri = null;
                 _presencePanelMenuItem = null;
                 _isStarted = false;
 
@@ -158,6 +168,63 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Refreshes the menu bar icon using only the current glycemic alert state.
+    /// </summary>
+    private void RefreshMenuBarIconFromDashboardState()
+    {
+        var alertKindName = _dashboardViewModel?.CurrentGlucoseAlertKind.ToString();
+        var assetUri = SelectMenuBarIconAssetUri(alertKindName);
+
+        ApplyMenuBarIcon(assetUri);
+    }
+
+    /// <summary>
+    /// Selects the menu bar icon asset from the current glycemic alert state.
+    /// </summary>
+    /// <param name="alertKindName">The glucose alert kind name.</param>
+    /// <returns>The menu bar icon asset URI.</returns>
+    private static string SelectMenuBarIconAssetUri(string? alertKindName)
+    {
+        return alertKindName switch
+        {
+            "AboveTarget" or "High" => MenuBarIconHighAssetUri,
+            "BelowTarget" or "Low" => MenuBarIconLowAssetUri,
+            _ => MenuBarIconInRangeAssetUri,
+        };
+    }
+
+    /// <summary>
+    /// Applies the specified menu bar icon if it is different from the currently applied icon.
+    /// </summary>
+    /// <param name="assetUri">The Avalonia asset URI.</param>
+    private void ApplyMenuBarIcon(string assetUri)
+    {
+        if (_trayIcon is null)
+        {
+            return;
+        }
+
+        if (string.Equals(_lastAppliedMenuBarIconAssetUri, assetUri, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        try
+        {
+            using var stream = AssetLoader.Open(new Uri(assetUri, UriKind.Absolute));
+            _trayIcon.Icon = new WindowIcon(stream);
+            _lastAppliedMenuBarIconAssetUri = assetUri;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Unable to apply glycemic menu bar icon asset {AssetUri}. Keeping the previous tray icon.",
+                assetUri);
+        }
+    }
 
     /// <summary>
     /// Creates the initial desktop presence snapshot.
@@ -469,6 +536,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             || string.Equals(propertyName, nameof(DashboardViewModel.FreshnessText), StringComparison.Ordinal)
             || string.Equals(propertyName, nameof(DashboardViewModel.LastUpdatedText), StringComparison.Ordinal)
             || string.Equals(propertyName, nameof(DashboardViewModel.StatusText), StringComparison.Ordinal)
+            || string.Equals(propertyName, nameof(DashboardViewModel.CurrentGlucoseAlertKind), StringComparison.Ordinal)
             || string.Equals(propertyName, nameof(DashboardViewModel.IsBusy), StringComparison.Ordinal);
     }
 
@@ -673,7 +741,9 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// </summary>
     private void RefreshFromDashboardState()
     {
-        RunOnUiThread(() =>
+        
+        RefreshMenuBarIconFromDashboardState();
+RunOnUiThread(() =>
         {
             if (_dashboardViewModel is null)
             {
