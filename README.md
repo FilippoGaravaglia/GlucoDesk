@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Avalonia-UI-0B8CE9" alt="Avalonia UI" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license" />
-  <img src="https://img.shields.io/badge/status-v0.2.2--preview-blue" alt="v0.2.2 preview" />
+  <img src="https://img.shields.io/badge/status-v0.3.0--preview-blue" alt="v0.3.0 preview" />
   <img src="https://img.shields.io/badge/macOS-DMG--preview-00AEEF" alt="macOS DMG preview" />
   <img src="https://img.shields.io/badge/Windows-installer--preview-0078D4" alt="Windows installer preview" />
   <img src="https://img.shields.io/badge/local--first-yes-00AEEF" alt="Local-first" />
@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  It brings glucose trend, recent history, local background sync, data completeness awareness, settings, account configuration and glycemic diary export into a clean desktop experience.
+  It brings glucose trends, recent history, local background sync, data completeness awareness, settings, account configuration, glucose awareness notifications and glycemic diary export into a clean desktop experience.
 </p>
 
 ---
@@ -31,7 +31,7 @@
 > [!IMPORTANT]
 > **Safety notice**
 >
-> GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, alarms, diagnosis, or as a replacement for approved diabetes applications.
+> GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, alarms, diagnosis, or as a replacement for approved diabetes applications or medical devices.
 >
 > Always use approved CGM apps, insulin pump systems, glucose meters, medical devices and healthcare professionals for therapy decisions.
 
@@ -85,6 +85,7 @@ GlucoDesk focuses on:
 * glucose insights over selectable time windows;
 * readable glycemic diary export;
 * configurable display preferences;
+* glucose awareness notifications;
 * secure local credential storage where supported by the operating system;
 * privacy-conscious local storage;
 * a quiet desktop presence through macOS menu bar and Windows tray companion flows.
@@ -99,7 +100,7 @@ GlucoDesk uses a provider-based architecture so the project can evolve beyond a 
 
 ## Preview
 
-GlucoDesk is currently in **v0.2.2-preview**.
+GlucoDesk is currently in **v0.3.0-preview**.
 
 This preview focuses on turning the app into a more complete desktop product loop:
 
@@ -108,6 +109,7 @@ Connect an optional CGM data source
 → show glucose awareness on desktop
 → keep local history updated
 → reduce local history gaps
+→ notify calmly when glucose is outside the configured range
 → analyze recent glucose windows
 → export a readable glycemic diary
 → keep preferences consistent across app and exports
@@ -130,6 +132,7 @@ The current preview includes:
 * average glucose;
 * below-range and above-range exposure;
 * local history status;
+* in-app glucose awareness banner;
 * clear safety messaging;
 * a calm desktop-first UI intended to stay readable during work.
 
@@ -172,7 +175,7 @@ The current preview supports:
 
 ![GlucoDesk settings](docs/assets/screenshots/settings.png)
 
-The Settings page controls provider routing, glucose preferences and dashboard behavior.
+The Settings page controls provider routing, glucose preferences, dashboard behavior and glucose awareness notifications.
 
 The current preview includes improved settings handling for:
 
@@ -182,6 +185,11 @@ The current preview includes improved settings handling for:
 * target range;
 * dashboard refresh interval;
 * chart maximum;
+* in-app glucose awareness alerts;
+* native notification opt-in;
+* notification cooldown;
+* required consecutive out-of-range readings;
+* privacy-conscious notification wording;
 * consistent unit conversion across the app and exported files.
 
 ---
@@ -199,6 +207,7 @@ GlucoDesk was created to make that experience calmer:
 * understand whether data is fresh, stale or unavailable;
 * keep a local glucose history;
 * reduce missing local history where possible;
+* receive calm, non-medical awareness prompts when glucose is outside the configured range;
 * export a readable diary for personal review;
 * avoid unnecessary backend services;
 * keep the app focused, quiet and desktop-friendly;
@@ -215,13 +224,13 @@ It is a companion experience for awareness, personal review and desktop convenie
 Current version:
 
 ```text
-0.2.2-preview
+0.3.0-preview
 ```
 
 Latest preview release:
 
 ```text
-https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.2.2-preview
+https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.3.0-preview
 ```
 
 The current preview includes:
@@ -234,13 +243,20 @@ The current preview includes:
 * local data completeness awareness;
 * glucose insights;
 * preferred glucose unit support;
+* in-app glucose awareness banner;
+* native macOS glucose awareness notifications;
+* bundled macOS notification helper inside the app package;
+* notification cooldown and anti-spam behavior;
+* privacy-conscious notification wording;
+* snooze and dismiss behavior;
+* native notification test flow from Settings;
+* notification diagnostics and event logging;
 * Excel diary export;
 * PDF diary export;
 * updated app branding and screenshots;
 * macOS Apple Silicon DMG package;
 * macOS Intel DMG package;
 * Windows x64 installer with setup wizard;
-* Windows x64 portable ZIP;
 * macOS menu bar companion;
 * Windows tray companion;
 * Windows Credential Manager support for Dexcom Share credentials;
@@ -250,12 +266,12 @@ The current preview includes:
 
 Current runtime support:
 
-| Platform            | Status            | Package type                                                  | Notes                                           |
-| ------------------- | ----------------- | ------------------------------------------------------------- | ----------------------------------------------- |
-| macOS Apple Silicon | Preview supported | `macos-arm64-installable.zip` containing DMG                  | Tested on Apple Silicon                         |
-| macOS Intel         | Preview supported | `macos-x64-installable.zip` containing DMG                    | Built by CI, physical Intel validation may vary |
-| Windows x64         | Preview supported | `windows-x64-installable.zip` with installer and portable ZIP | Tested with installer and tray flow             |
-| Linux               | Not supported yet | Not available                                                 | Planned for a future step                       |
+| Platform            | Status            | Package type                                      | Notes                                           |
+| ------------------- | ----------------- | ------------------------------------------------- | ----------------------------------------------- |
+| macOS Apple Silicon | Preview supported | `macos-arm64-installable.zip` containing DMG      | Tested on Apple Silicon                         |
+| macOS Intel         | Preview supported | `macos-x64-installable.zip` containing DMG        | Built by CI, physical Intel validation may vary |
+| Windows x64         | Preview supported | `windows-x64-installable.zip` with setup installer | Windows package available for testing           |
+| Linux               | Not supported yet | Not available                                     | Planned for a future step                       |
 
 Linux remains part of the cross-platform roadmap but is not a supported runtime target in this preview.
 
@@ -277,6 +293,38 @@ GlucoDesk shows:
 * safety notice.
 
 The UI is designed to stay calm, readable and useful during desktop work.
+
+### Glucose awareness notifications
+
+GlucoDesk includes calm, non-medical glucose awareness notifications.
+
+The current preview includes:
+
+* in-app glucose awareness banner;
+* automatic above-target and below-target awareness states;
+* optional native macOS notifications;
+* notification cooldown;
+* anti-spam behavior;
+* configurable required consecutive out-of-range readings;
+* privacy-conscious notification wording;
+* snooze and dismiss behavior;
+* manual native notification test flow from Settings;
+* notification request result model;
+* event logging for native notification request outcomes.
+
+On macOS, native notifications are delivered through a bundled helper app inside the main app package:
+
+```text
+GlucoDesk.app/Contents/Helpers/GlucoDeskNotificationHelper.app
+```
+
+On first use, macOS may ask permission for **GlucoDesk Notifications**.
+
+Native notifications can be delayed, blocked, or hidden by operating-system notification permissions, Focus / Do Not Disturb modes, or other platform settings.
+
+This feature is intended for desktop awareness only.
+
+It is not an alarm system and must not be used for emergency or safety-critical notifications.
 
 ### macOS menu bar and Windows tray companion
 
@@ -394,9 +442,24 @@ The current diary direction focuses on:
 * incomplete-data awareness;
 * structured data suitable for personal review.
 
-### Windows installer and portable mode
+### macOS package
 
-GlucoDesk now includes a Windows x64 installer preview.
+GlucoDesk includes installable macOS preview packages for Apple Silicon and Intel.
+
+The macOS package contains:
+
+* a DMG installer flow;
+* `GlucoDesk.app`;
+* a bundled native notification helper;
+* optimized app icon;
+* macOS menu bar presence;
+* local app data and credential storage outside the app bundle.
+
+The macOS application menu name is configured as `GlucoDesk`.
+
+### Windows installer
+
+GlucoDesk includes a Windows x64 installer preview.
 
 The Windows installable package contains:
 
@@ -406,10 +469,7 @@ The Windows installable package contains:
 * optional desktop shortcut support;
 * license page;
 * safety notice page;
-* uninstall support;
-* a portable ZIP alternative.
-
-The portable ZIP remains useful for manual testing or users who do not want to install the app.
+* uninstall support.
 
 ---
 
@@ -450,30 +510,30 @@ Download the latest ready-to-run preview package from the [GitHub Releases page]
 Latest recommended preview:
 
 ```text
-v0.2.2-preview
+v0.3.0-preview
 ```
 
 Release page:
 
 ```text
-https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.2.2-preview
+https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.3.0-preview
 ```
 
 Available package targets for this preview:
 
 ```text
-GlucoDesk-0.2.2-preview-macos-arm64-installable.zip
-GlucoDesk-0.2.2-preview-macos-x64-installable.zip
-GlucoDesk-0.2.2-preview-windows-x64-installable.zip
+GlucoDesk-0.3.0-preview-macos-arm64-installable.zip
+GlucoDesk-0.3.0-preview-macos-x64-installable.zip
+GlucoDesk-0.3.0-preview-windows-x64-installable.zip
 ```
 
 Choose the package for your operating system:
 
 | System              | Download                                              |
 | ------------------- | ----------------------------------------------------- |
-| macOS Apple Silicon | `GlucoDesk-0.2.2-preview-macos-arm64-installable.zip` |
-| macOS Intel         | `GlucoDesk-0.2.2-preview-macos-x64-installable.zip`   |
-| Windows 64-bit      | `GlucoDesk-0.2.2-preview-windows-x64-installable.zip` |
+| macOS Apple Silicon | `GlucoDesk-0.3.0-preview-macos-arm64-installable.zip` |
+| macOS Intel         | `GlucoDesk-0.3.0-preview-macos-x64-installable.zip`   |
+| Windows 64-bit      | `GlucoDesk-0.3.0-preview-windows-x64-installable.zip` |
 
 Not sure which macOS package to use?
 
@@ -482,23 +542,21 @@ Not sure which macOS package to use?
 
 ### Package contents
 
-The macOS packages contain:
+The macOS installable ZIP packages contain:
 
 * a platform-specific DMG;
-* a platform-specific app ZIP;
 * SHA256 checksum file;
-* platform README.
+* installation instructions.
 
-The Windows package contains:
+The Windows installable ZIP package contains:
 
 * Windows setup installer;
-* Windows portable ZIP;
 * SHA256 checksum file;
-* platform README.
+* installation instructions.
 
 ### Updating an existing installation
 
-Replacing the application bundle, installer version or portable folder does not normally delete local data.
+Replacing the application bundle or installer version does not normally delete local data.
 
 GlucoDesk stores app data and credentials outside the application files:
 
@@ -510,7 +568,7 @@ To update:
 
 * close GlucoDesk;
 * download the new package from the latest GitHub Release;
-* replace the old app bundle, reinstall with the new setup, or replace the previous portable folder;
+* replace the old macOS app bundle or reinstall with the new Windows setup;
 * open GlucoDesk again.
 
 ### macOS Apple Silicon and Intel
@@ -520,13 +578,13 @@ Download the correct macOS package from the release assets.
 For Apple Silicon Macs such as M1, M2, M3, M4 or newer, use:
 
 ```text
-GlucoDesk-0.2.2-preview-macos-arm64-installable.zip
+GlucoDesk-0.3.0-preview-macos-arm64-installable.zip
 ```
 
 For Intel Macs, use:
 
 ```text
-GlucoDesk-0.2.2-preview-macos-x64-installable.zip
+GlucoDesk-0.3.0-preview-macos-x64-installable.zip
 ```
 
 After downloading:
@@ -554,6 +612,14 @@ If that happens:
 
 This approval is normally required only once.
 
+On first use of native notifications, macOS may ask permission for:
+
+```text
+GlucoDesk Notifications
+```
+
+Allow notifications if you want desktop glucose awareness prompts.
+
 > [!NOTE]
 > The recommended preview flow is:
 >
@@ -568,13 +634,13 @@ This approval is normally required only once.
 Download the Windows package from the release assets:
 
 ```text
-GlucoDesk-0.2.2-preview-windows-x64-installable.zip
+GlucoDesk-0.3.0-preview-windows-x64-installable.zip
 ```
 
 After downloading:
 
 1. extract the installable ZIP;
-2. run `GlucoDesk-0.2.2-preview-win-x64-setup.exe`;
+2. run `GlucoDesk-0.3.0-preview-win-x64-setup.exe`;
 3. follow the setup wizard;
 4. read the safety notice page;
 5. optionally create a desktop shortcut;
@@ -613,31 +679,6 @@ Esegui comunque
 
 Only continue if you downloaded GlucoDesk from the official GitHub Releases page.
 
-### Windows portable mode
-
-The Windows package also includes a portable ZIP:
-
-```text
-GlucoDesk-0.2.2-preview-win-x64-portable.zip
-```
-
-Portable usage:
-
-1. extract the portable ZIP to a normal local folder;
-2. open the extracted folder;
-3. run `GlucoDesk.Desktop.exe`.
-
-Do not run the app directly from inside the compressed ZIP. Extract it first.
-
-The portable ZIP does not:
-
-* install the app into the Start Menu;
-* create a desktop shortcut;
-* create a system installer entry;
-* register an uninstaller.
-
-Dexcom Share credentials are stored locally using Windows Credential Manager.
-
 > [!NOTE]
 > The Windows package is self-contained and is intended to include the required .NET runtime files.
 
@@ -651,22 +692,22 @@ The project is built with cross-platform technologies, but Linux runtime packagi
 
 Each preview release includes SHA256 checksum files.
 
-The top-level release also includes:
+The current installable release bundle checksum file is:
 
 ```text
-GlucoDesk-0.2.2-preview-release-candidate-bundles.sha256
+SHA256SUMS-installable.txt
 ```
 
 To verify the top-level installable bundles on macOS or Linux:
 
 ```bash
-shasum -a 256 -c GlucoDesk-0.2.2-preview-release-candidate-bundles.sha256
+shasum -a 256 -c SHA256SUMS-installable.txt
 ```
 
 On Windows PowerShell, you can calculate hashes manually:
 
 ```powershell
-Get-FileHash .\GlucoDesk-0.2.2-preview-windows-x64-installable.zip -Algorithm SHA256
+Get-FileHash .\GlucoDesk-0.3.0-preview-windows-x64-installable.zip -Algorithm SHA256
 ```
 
 Then compare the value with the checksum file.
@@ -724,7 +765,7 @@ Regular users should download ready-to-run packages from the GitHub Releases pag
 On macOS:
 
 ```bash
-./scripts/create-macos-preview-release-assets.sh 0.2.2-preview all
+./scripts/create-macos-preview-release-assets.sh 0.3.0-preview all
 ```
 
 This generates macOS preview assets for:
@@ -743,13 +784,12 @@ artifacts/macos/
 On Windows PowerShell:
 
 ```powershell
-.\scripts\create-windows-preview-release-assets.ps1 -Version "0.2.2-preview"
+.\scripts\create-windows-preview-release-assets.ps1 -Version "0.3.0-preview"
 ```
 
 This generates:
 
 * Windows setup installer;
-* Windows portable ZIP;
 * Windows checksum file;
 * Windows release manifest.
 
@@ -769,11 +809,7 @@ Preview release artifacts
 
 The workflow builds, tests, packages and uploads macOS and Windows preview artifacts.
 
-After downloading workflow artifacts, the installable release bundles can be generated with:
-
-```bash
-./scripts/create-preview-installable-bundles.sh 0.2.2-preview <RUN_ID> v0.2.2-preview
-```
+After downloading workflow artifacts, maintainers can create final installable ZIP bundles containing the macOS DMGs and Windows installer.
 
 Generated release bundles are written under:
 
@@ -852,6 +888,7 @@ This layer handles:
 * dashboard rendering;
 * account configuration;
 * settings screens;
+* glucose awareness notifications;
 * diary export user flow;
 * macOS menu bar integration;
 * Windows tray integration;
@@ -881,7 +918,6 @@ Current quality practices include:
 * manual GitHub Actions workflow for preview release artifacts;
 * macOS Apple Silicon and Intel packaging;
 * Windows setup installer packaging;
-* Windows portable packaging;
 * release artifact verification scripts;
 * checksum generation;
 * release smoke-test checklist;
@@ -899,6 +935,12 @@ dotnet test -c Release
 
 The current test suite covers core, application, infrastructure and desktop behavior.
 
+The v0.3.0-preview release was validated with:
+
+```text
+906 tests, 0 failures
+```
+
 ---
 
 ## Known limitations
@@ -909,6 +951,8 @@ Current limitations:
 
 * the app is not a medical device;
 * the app must not be used for treatment decisions;
+* glucose awareness notifications are not alarms;
+* native notifications can be delayed, blocked or hidden by the operating system;
 * macOS packages are not signed with Apple Developer ID and are not notarized yet;
 * macOS may require approval from Privacy & Security on first launch;
 * Windows packages are not code-signed yet;
@@ -965,22 +1009,26 @@ This project is licensed under the MIT License.
 
 See [LICENSE](LICENSE) for details.
 
-## Glucose awareness notifications
+---
 
-GlucoDesk includes calm, non-medical glucose awareness notifications through an in-app banner and optional native OS notifications. Native notifications can be delayed, blocked, or hidden by macOS and Windows notification permissions, Focus / Do Not Disturb modes, or development-mode host processes.
+## Additional documentation
 
-Learn more in [`docs/features/glucose-awareness-notifications.md`](docs/features/glucose-awareness-notifications.md).
+Learn more about glucose awareness notifications in:
 
-For manual validation before releases, see [`docs/qa/glucose-notifications-checklist.md`](docs/qa/glucose-notifications-checklist.md).
+```text
+docs/features/glucose-awareness-notifications.md
+```
 
-For packaged-app validation of native notifications, see [`docs/qa/native-notification-packaged-app-checklist.md`](docs/qa/native-notification-packaged-app-checklist.md).
+For manual validation before releases, see:
 
-For release preparation, see [`docs/qa/release-readiness-checklist.md`](docs/qa/release-readiness-checklist.md) and [`docs/release-notes/glucose-awareness-notifications-preview.md`](docs/release-notes/glucose-awareness-notifications-preview.md).
+```text
+docs/qa/glucose-notifications-checklist.md
+docs/qa/native-notification-packaged-app-checklist.md
+docs/qa/release-readiness-checklist.md
+```
 
-For automated release verification, run:
+For release notes, see:
 
-    scripts/verify-release-readiness.sh
-
-For release artifact generation, run:
-
-    scripts/build-release-artifacts.sh
+```text
+docs/release-notes/glucose-awareness-notifications-preview.md
+```
