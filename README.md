@@ -266,12 +266,12 @@ The current preview includes:
 
 Current runtime support:
 
-| Platform            | Status            | Package type                                      | Notes                                           |
-| ------------------- | ----------------- | ------------------------------------------------- | ----------------------------------------------- |
-| macOS Apple Silicon | Preview supported | `macos-arm64-installable.zip` containing DMG      | Tested on Apple Silicon                         |
-| macOS Intel         | Preview supported | `macos-x64-installable.zip` containing DMG        | Built by CI, physical Intel validation may vary |
+| Platform            | Status            | Package type                                       | Notes                                           |
+| ------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------- |
+| macOS Apple Silicon | Preview supported | `macos-arm64-installable.zip` containing DMG       | Tested on Apple Silicon                         |
+| macOS Intel         | Preview supported | `macos-x64-installable.zip` containing DMG         | Built by CI, physical Intel validation may vary |
 | Windows x64         | Preview supported | `windows-x64-installable.zip` with setup installer | Windows package available for testing           |
-| Linux               | Not supported yet | Not available                                     | Planned for a future step                       |
+| Linux               | Not supported yet | Not available                                      | Planned for a future step                       |
 
 Linux remains part of the cross-platform roadmap but is not a supported runtime target in this preview.
 
@@ -678,6 +678,23 @@ Esegui comunque
 ```
 
 Only continue if you downloaded GlucoDesk from the official GitHub Releases page.
+
+### Windows notification settings
+
+If you do not see desktop notifications on Windows, check that notifications are allowed for GlucoDesk.
+
+On Windows 11:
+
+1. open **Settings**;
+2. go to **System**;
+3. open **Notifications**;
+4. make sure notifications are enabled globally;
+5. find GlucoDesk in the app list, if available;
+6. enable notifications for GlucoDesk.
+
+Windows notifications can also be hidden or delayed by Focus Assist, Do Not Disturb, notification rules, or system-level privacy settings.
+
+GlucoDesk notifications are intended for calm glucose awareness only. They are not medical alarms and must not be used for emergency or treatment decisions.
 
 > [!NOTE]
 > The Windows package is self-contained and is intended to include the required .NET runtime files.
