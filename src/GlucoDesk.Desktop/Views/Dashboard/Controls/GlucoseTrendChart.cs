@@ -1004,8 +1004,7 @@ public sealed class GlucoseTrendChart : Control
 
             if (isCurrentPoint)
             {
-                context.DrawEllipse(CurrentPointBrush, pointBorderPen, center, 7, 7);
-                context.DrawEllipse(null, new Pen(pointBorderPen.Brush, 5), center, 10, 10);
+                context.DrawEllipse(pointBorderPen.Brush, new Pen(CurrentPointBrush, 1.25), center, 5.6, 5.6);
                 continue;
             }
 
