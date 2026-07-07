@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
 using GlucoDesk.Core.Glucose.Enums;
@@ -125,6 +126,18 @@ public sealed class GlucoseTrendChart : Control
     private static readonly IBrush PointBrush = new SolidColorBrush(Color.FromRgb(255, 255, 255));
 
     private static readonly IBrush CurrentPointBrush = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+
+    private static readonly IBrush TooltipBackgroundBrush = new SolidColorBrush(Color.FromArgb(248, 255, 255, 255));
+
+    private static readonly IBrush TooltipTextBrush = new SolidColorBrush(Color.FromRgb(15, 23, 42));
+
+    private static readonly Pen TooltipBorderPen = new(new SolidColorBrush(Color.FromRgb(125, 211, 252)), 1);
+
+    private const double TooltipPaddingX = 10d;
+
+    private const double TooltipPaddingY = 8d;
+
+    private Point? hoverPosition;
 
     private static readonly IBrush AxisTextBrush = new SolidColorBrush(Color.FromRgb(100, 116, 139));
 
@@ -279,7 +292,28 @@ public sealed class GlucoseTrendChart : Control
         DrawTrendArea(context, plotArea, mappedPoints, targetRange);
         DrawTrendLine(context, mappedPoints, targetRange);
         DrawPoints(context, mappedPoints, targetRange);
+        DrawPointTooltip(context, plotArea, mappedPoints, targetRange);
     }
+
+
+    /// <inheritdoc />
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+
+        hoverPosition = e.GetPosition(this);
+        InvalidateVisual();
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+
+        hoverPosition = null;
+        InvalidateVisual();
+    }
+
 
     #region Helpers
 
@@ -982,6 +1016,157 @@ public sealed class GlucoseTrendChart : Control
         }
 
         return (TrendShadowPen, TrendLinePen);
+    }
+
+    /// <summary>
+    /// Draws a compact tooltip for the glucose chart point nearest to the pointer.
+    /// </summary>
+    /// <param name="context">The drawing context.</param>
+    /// <param name="plotArea">The chart plot area.</param>
+    /// <param name="points">The mapped chart points.</param>
+    /// <param name="targetRange">The chart target range.</param>
+    private void DrawPointTooltip(
+        DrawingContext context,
+        Rect plotArea,
+        IReadOnlyList<MappedChartPoint> points,
+        ChartTargetRange targetRange)
+    {
+        if (hoverPosition is not { } pointerPosition)
+        {
+            return;
+        }
+
+        if (!plotArea.Contains(pointerPosition) || points.Count == 0)
+        {
+            return;
+        }
+
+        var nearestPoint = FindNearestPoint(points, pointerPosition);
+
+        if (nearestPoint is null)
+        {
+            return;
+        }
+
+        var valueText = FormatTooltipGlucoseValue(nearestPoint.Source.ValueMgDl, DisplayUnit);
+        var timeText = nearestPoint.Source.Timestamp.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
+        var statusText = GetTooltipStatusText(nearestPoint.Source.ValueMgDl, targetRange);
+        var tooltipText = string.Join(Environment.NewLine, valueText, timeText, statusText);
+
+        var formattedText = new FormattedText(
+            tooltipText,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface(FontFamily.Default),
+            12,
+            TooltipTextBrush);
+
+        var tooltipWidth = formattedText.Width + (TooltipPaddingX * 2);
+        var tooltipHeight = formattedText.Height + (TooltipPaddingY * 2);
+
+        var x = nearestPoint.X + 12;
+        var y = nearestPoint.Y - tooltipHeight - 12;
+
+        if (x + tooltipWidth > plotArea.Right)
+        {
+            x = nearestPoint.X - tooltipWidth - 12;
+        }
+
+        if (x < plotArea.Left)
+        {
+            x = plotArea.Left;
+        }
+
+        if (y < plotArea.Top)
+        {
+            y = nearestPoint.Y + 12;
+        }
+
+        if (y + tooltipHeight > plotArea.Bottom)
+        {
+            y = plotArea.Bottom - tooltipHeight;
+        }
+
+        var tooltipRect = new Rect(x, y, tooltipWidth, tooltipHeight);
+
+        context.DrawRectangle(TooltipBackgroundBrush, TooltipBorderPen, tooltipRect, 8, 8);
+        context.DrawText(formattedText, new Point(x + TooltipPaddingX, y + TooltipPaddingY));
+    }
+
+    /// <summary>
+    /// Finds the chart point nearest to the pointer position.
+    /// </summary>
+    /// <param name="points">The mapped chart points.</param>
+    /// <param name="pointerPosition">The pointer position.</param>
+    /// <returns>The nearest mapped chart point.</returns>
+    private static MappedChartPoint? FindNearestPoint(
+        IReadOnlyList<MappedChartPoint> points,
+        Point pointerPosition)
+    {
+        MappedChartPoint? nearestPoint = null;
+        var nearestDistance = double.MaxValue;
+
+        foreach (var point in points)
+        {
+            var deltaX = point.X - pointerPosition.X;
+            var deltaY = point.Y - pointerPosition.Y;
+            var distance = Math.Sqrt((deltaX * deltaX) + (deltaY * deltaY));
+
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearestPoint = point;
+            }
+        }
+
+        return nearestPoint;
+    }
+
+    /// <summary>
+    /// Formats a glucose value for the chart tooltip.
+    /// </summary>
+    /// <param name="valueMgDl">The glucose value expressed in mg/dL.</param>
+    /// <param name="displayUnit">The selected display unit.</param>
+    /// <returns>The formatted tooltip glucose value.</returns>
+    private static string FormatTooltipGlucoseValue(
+        decimal valueMgDl,
+        GlucoseUnit displayUnit)
+    {
+        if (displayUnit.ToString().Contains("Mmol", StringComparison.OrdinalIgnoreCase))
+        {
+            var valueMmolL = valueMgDl / 18m;
+
+            return string.Create(
+                CultureInfo.CurrentCulture,
+                $"{valueMmolL:0.0} mmol/L");
+        }
+
+        return string.Create(
+            CultureInfo.CurrentCulture,
+            $"{valueMgDl:0} mg/dL");
+    }
+
+    /// <summary>
+    /// Gets the tooltip status text for the supplied glucose value.
+    /// </summary>
+    /// <param name="valueMgDl">The glucose value expressed in mg/dL.</param>
+    /// <param name="targetRange">The chart target range.</param>
+    /// <returns>The tooltip status text.</returns>
+    private static string GetTooltipStatusText(
+        decimal valueMgDl,
+        ChartTargetRange targetRange)
+    {
+        if (valueMgDl < targetRange.LowMgDl)
+        {
+            return "Below target";
+        }
+
+        if (valueMgDl > targetRange.HighMgDl)
+        {
+            return "Above target";
+        }
+
+        return "In range";
     }
 
     /// <summary>
