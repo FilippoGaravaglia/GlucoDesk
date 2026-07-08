@@ -122,6 +122,7 @@ public sealed class DashboardViewModelTests
         Assert.Equal("2 readings", viewModel.RecentReadingsCountText);
         Assert.Equal(2, viewModel.ChartPoints.Count);
         Assert.Equal("Last 3H · 2 readings · 123-123 mg/dL", viewModel.ChartSummaryText);
+        Assert.Equal("Stable and in range.", viewModel.AmbientGlucoseSummaryText);
         Assert.StartsWith("Last refresh:", viewModel.AutoRefreshStatusText, StringComparison.Ordinal);
     }
 

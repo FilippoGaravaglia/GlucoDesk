@@ -277,6 +277,12 @@
                   <TextBlock Text="{Binding ChartSummaryText}"
                              Classes="secondary"
                              FontSize="13" />
+
+                  <TextBlock Text="{Binding AmbientGlucoseSummaryText}"
+                             Classes="secondary"
+                             FontSize="13"
+                             FontWeight="SemiBold"
+                             TextWrapping="Wrap" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1"
