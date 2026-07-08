@@ -46,6 +46,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     private bool _isStarted;
     private bool _isPrivacyModeEnabled;
     private const string MenuBarIconInRangeAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-in-range.png";
+    private const string MenuBarIconPrivacyAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-privacy.png";
     private const string MenuBarIconHighAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-high.png";
     private const string MenuBarIconLowAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-low.png";
 
@@ -124,7 +125,6 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 AttachDashboardState(desktopLifetime);
                 RefreshFromDashboardState();
                 RefreshMenuBarIconFromDashboardState();
-                RefreshMenuBarIconFromDashboardState();
 
                 _logger.LogInformation("Desktop presence indicator started.");
             }
@@ -187,7 +187,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     private void RefreshMenuBarIconFromDashboardState()
     {
         var alertKindName = _dashboardViewModel?.CurrentGlucoseAlertKind.ToString();
-        var assetUri = SelectMenuBarIconAssetUri(alertKindName);
+        var assetUri = SelectMenuBarIconAssetUri(alertKindName, _isPrivacyModeEnabled);
 
         ApplyMenuBarIcon(assetUri);
     }
@@ -196,9 +196,17 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// Selects the menu bar icon asset from the current glycemic alert state.
     /// </summary>
     /// <param name="alertKindName">The glucose alert kind name.</param>
+    /// <param name="isPrivacyModeEnabled">Whether privacy mode is enabled.</param>
     /// <returns>The menu bar icon asset URI.</returns>
-    private static string SelectMenuBarIconAssetUri(string? alertKindName)
+    private static string SelectMenuBarIconAssetUri(
+        string? alertKindName,
+        bool isPrivacyModeEnabled)
     {
+        if (isPrivacyModeEnabled)
+        {
+            return MenuBarIconPrivacyAssetUri;
+        }
+
         return alertKindName switch
         {
             "AboveTarget" or "High" => MenuBarIconHighAssetUri,
@@ -578,6 +586,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     {
         _privacyModeService.Reload();
         _isPrivacyModeEnabled = _privacyModeService.IsEnabled;
+        RefreshMenuBarIconFromDashboardState();
 
         var popoverWindow = new DesktopPresencePopoverWindow(
             RefreshDashboardFromTraySafelyAsync,
@@ -709,6 +718,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             _isPrivacyModeEnabled = !_isPrivacyModeEnabled;
             _privacyModeService.SetEnabled(_isPrivacyModeEnabled);
             RefreshFromDashboardState();
+            RefreshMenuBarIconFromDashboardState();
         });
     }
 
