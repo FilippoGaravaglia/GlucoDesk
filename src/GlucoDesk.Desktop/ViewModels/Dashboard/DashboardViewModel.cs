@@ -26,6 +26,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Errors;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Summaries;
 using GlucoDesk.Application.Cgm.WidgetState.Services.Abstractions;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
@@ -129,6 +130,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty]
     private string _chartSummaryText = "No chart data";
+
+    [ObservableProperty]
+    private string _ambientGlucoseSummaryText = "No recent glucose data.";
 
     [ObservableProperty]
     private int _selectedChartWindowHours = ThreeHourChartWindow;
@@ -1791,6 +1795,11 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
             filteredChartPoints,
             SelectedChartWindowHours,
             PreferredUnit);
+
+        AmbientGlucoseSummaryText = AmbientGlucoseSummaryService.CreateSummary(
+            filteredChartPoints,
+            TargetLowMgDl,
+            TargetHighMgDl);
     }
 
     /// <summary>
