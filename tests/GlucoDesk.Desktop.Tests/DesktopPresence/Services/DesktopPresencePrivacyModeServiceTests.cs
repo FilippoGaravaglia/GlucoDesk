@@ -85,6 +85,39 @@ public sealed class DesktopPresencePrivacyModeServiceTests
         Assert.Equal(0, eventCount);
     }
 
+    [Fact]
+    public void Reload_ShouldRaiseStateChanged_WhenPersistedStateChanges()
+    {
+        var store = new InMemoryPrivacyModeStore(initialValue: false);
+        var service = new DesktopPresencePrivacyModeService(store);
+
+        _ = service.IsEnabled;
+
+        var eventCount = 0;
+        service.StateChanged += (_, _) => eventCount++;
+
+        store.CurrentValue = true;
+        service.Reload();
+
+        Assert.True(service.IsEnabled);
+        Assert.Equal(1, eventCount);
+    }
+
+    [Fact]
+    public void Toggle_ShouldRaiseStateChangedOnce()
+    {
+        var store = new InMemoryPrivacyModeStore(initialValue: false);
+        var service = new DesktopPresencePrivacyModeService(store);
+
+        var eventCount = 0;
+        service.StateChanged += (_, _) => eventCount++;
+
+        service.Toggle();
+
+        Assert.True(service.IsEnabled);
+        Assert.Equal(1, eventCount);
+    }
+
     private sealed class InMemoryPrivacyModeStore : IDesktopPresencePrivacyModeStore
     {
         public InMemoryPrivacyModeStore(bool initialValue)

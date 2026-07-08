@@ -74,6 +74,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         _textFormatter = textFormatter;
         _dashboardTextFormatter = dashboardTextFormatter;
         _privacyModeService = privacyModeService;
+        _privacyModeService.StateChanged += OnPrivacyModeStateChanged;
         _logger = logger;
     }
 
@@ -709,16 +710,28 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
+    /// Handles desktop presence privacy mode state changes.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The event arguments.</param>
+    private void OnPrivacyModeStateChanged(object? sender, EventArgs e)
+    {
+        RunOnUiThread(() =>
+        {
+            _isPrivacyModeEnabled = _privacyModeService.IsEnabled;
+            RefreshFromDashboardState();
+            RefreshMenuBarIconFromDashboardState();
+        });
+    }
+
+    /// <summary>
     /// Toggles desktop presence privacy mode.
     /// </summary>
     private void TogglePrivacyMode()
     {
         RunOnUiThread(() =>
         {
-            _isPrivacyModeEnabled = !_isPrivacyModeEnabled;
-            _privacyModeService.SetEnabled(_isPrivacyModeEnabled);
-            RefreshFromDashboardState();
-            RefreshMenuBarIconFromDashboardState();
+            _privacyModeService.Toggle();
         });
     }
 
