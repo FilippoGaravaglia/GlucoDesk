@@ -819,7 +819,9 @@ RunOnUiThread(() =>
             dashboardViewModel.TrendText,
             dashboardViewModel.FreshnessText,
             dashboardViewModel.LastUpdatedText,
-            dashboardViewModel.StatusText,
+            _isPrivacyModeEnabled
+                ? dashboardViewModel.StatusText
+                : dashboardViewModel.AmbientGlucoseSummaryText,
             _isPrivacyModeEnabled);
     }
 
