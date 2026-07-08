@@ -34,6 +34,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
     private readonly IDesktopPresenceTextFormatter _textFormatter;
     private readonly IDesktopPresenceDashboardTextFormatter _dashboardTextFormatter;
+    private readonly IDesktopPresencePrivacyModeStore _privacyModeStore;
     private readonly ILogger<AvaloniaDesktopPresenceLifecycleService> _logger;
 
     private AvaloniaApplication? _application;
@@ -56,14 +57,22 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// </summary>
     /// <param name="textFormatter">The desktop presence text formatter.</param>
     /// <param name="dashboardTextFormatter">The dashboard desktop presence text formatter.</param>
+    /// <param name="privacyModeStore">The desktop presence privacy mode store.</param>
     /// <param name="logger">The logger.</param>
     public AvaloniaDesktopPresenceLifecycleService(
         IDesktopPresenceTextFormatter textFormatter,
         IDesktopPresenceDashboardTextFormatter dashboardTextFormatter,
+        IDesktopPresencePrivacyModeStore privacyModeStore,
         ILogger<AvaloniaDesktopPresenceLifecycleService> logger)
     {
+        ArgumentNullException.ThrowIfNull(textFormatter);
+        ArgumentNullException.ThrowIfNull(dashboardTextFormatter);
+        ArgumentNullException.ThrowIfNull(privacyModeStore);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _textFormatter = textFormatter;
         _dashboardTextFormatter = dashboardTextFormatter;
+        _privacyModeStore = privacyModeStore;
         _logger = logger;
     }
 
@@ -88,6 +97,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                     _logger.LogWarning("Desktop presence indicator cannot start because the Avalonia application is not available.");
                     return;
                 }
+
+                _isPrivacyModeEnabled = _privacyModeStore.Load();
 
                 var initialText = _textFormatter.Format(CreateInitialSnapshot());
 
@@ -564,6 +575,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <param name="desktopLifetime">The desktop application lifetime.</param>
     private void ShowPopover(IClassicDesktopStyleApplicationLifetime desktopLifetime)
     {
+        _isPrivacyModeEnabled = _privacyModeStore.Load();
+
         var popoverWindow = new DesktopPresencePopoverWindow(
             RefreshDashboardFromTraySafelyAsync,
             TogglePrivacyMode,
@@ -692,6 +705,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         RunOnUiThread(() =>
         {
             _isPrivacyModeEnabled = !_isPrivacyModeEnabled;
+            _privacyModeStore.Save(_isPrivacyModeEnabled);
             RefreshFromDashboardState();
         });
     }
