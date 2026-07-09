@@ -144,3 +144,15 @@ The VERSION file stores the version without the leading v:
 The readiness check validates VERSION against the release version:
 
     scripts/quality/release-readiness-check.sh --release-version v0.4.0-preview
+
+## README public release polish
+
+Before publishing a preview release, verify that README.md clearly explains:
+
+- preview release status
+- supported preview platform
+- installation from GitHub Release assets
+- privacy mode
+- safety disclaimer
+
+The readiness check validates these README sections automatically.
