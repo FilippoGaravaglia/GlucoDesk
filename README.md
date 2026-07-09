@@ -1,47 +1,3 @@
-
-## Preview release status
-
-GlucoDesk is currently distributed as a preview build.
-
-The current release focus is macOS desktop usage, with a local-first glucose awareness workflow, menu bar presence, privacy mode, release readiness checks, and preview packaging support.
-
-GlucoDesk is not a medical device and must not be used for treatment or insulin dosing decisions.
-
-### Supported preview platform
-
-- macOS preview builds are the primary supported release target.
-- Apple Silicon and Intel macOS packages may be published when available in the GitHub Release assets.
-- Windows builds may be experimental unless explicitly listed as supported in the release notes.
-
-### Installation
-
-Download the ready-to-run package from the GitHub Release assets.
-
-Do not use the green GitHub Code button to install GlucoDesk. That downloads the source code, not the app package.
-
-For macOS preview builds:
-
-1. Download the package matching your Mac architecture.
-2. Extract or open the package.
-3. Move GlucoDesk to Applications when applicable.
-4. If macOS blocks the app because it is an unsigned preview build, allow it from System Settings > Privacy & Security.
-
-### Privacy mode
-
-GlucoDesk includes a desktop privacy mode for screen sharing and public environments.
-
-When privacy mode is enabled:
-
-- the glucose value is hidden from the menu bar presence panel
-- the menu bar icon uses a neutral blue privacy icon
-- the privacy mode state persists after restart
-
-### Safety disclaimer
-
-GlucoDesk is an awareness companion.
-
-It is not a medical device. It must not be used for diagnosis, treatment, insulin dosing, emergency decisions, or replacing official CGM apps, medical devices, or clinician guidance.
-
 <p align="center">
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Avalonia-UI-0B8CE9" alt="Avalonia UI" />
@@ -63,40 +19,27 @@ It is not a medical device. It must not be used for diagnosis, treatment, insuli
 </p>
 
 <p align="center">
-  It brings glucose trends, recent history, local background sync, data completeness awareness, settings, account configuration, glucose awareness notifications and glycemic diary export into a clean desktop experience.
+  It brings current glucose awareness, recent trends, local history, data completeness, privacy mode, glucose awareness notifications and glycemic diary export into a clean desktop experience.
 </p>
 
 ---
 
-## GlucoDesk in action
-
 <p align="center">
-  <img src="./docs/assets/demo/glucodesk-menu-bar-states.gif" alt="GlucoDesk menu bar glucose states with in-range, high, low and privacy mode" width="100%" />
+  <img src="./docs/assets/glucodesk-social-preview.png" alt="GlucoDesk - A calm desktop companion for glucose awareness" width="100%" />
 </p>
 
 <p align="center">
-  <em>Mock glucose data showing the macOS menu bar companion across in-range, high, low and privacy mode states.</em>
+  <a href="#installation-preview"><strong>Install preview</strong></a>
+  ·
+  <a href="#glucodesk-in-action"><strong>See it in action</strong></a>
+  ·
+  <a href="#safety-disclaimer"><strong>Safety disclaimer</strong></a>
 </p>
-
-GlucoDesk is designed to stay useful while you work.
-
-The macOS menu bar companion gives a quick glucose-awareness view without keeping the full dashboard in focus. The colored `G` icon reflects the current state at a glance:
-
-* green `G` for in-range glucose;
-* orange `G` for above-target glucose;
-* red `G` for below-target glucose;
-* blue `G` for privacy mode.
-
-When privacy mode is enabled, the glucose value is hidden from the desktop popup while the app still keeps a calm presence in the menu bar.
-
-The demo above uses mock data and is for product preview purposes only.
-
-
 
 > [!IMPORTANT]
 > **Safety notice**
 >
-> GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, alarms, diagnosis, or as a replacement for approved diabetes applications or medical devices.
+> GlucoDesk is an awareness companion. It is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, diagnosis, or as a replacement for approved diabetes applications, medical devices or clinical guidance.
 >
 > Always use approved CGM apps, insulin pump systems, glucose meters, medical devices and healthcare professionals for therapy decisions.
 
@@ -104,8 +47,6 @@ The demo above uses mock data and is for product preview purposes only.
 > **Preview status**
 >
 > GlucoDesk is currently a preview project.
->
-> The app is intended for awareness, personal review and desktop convenience only.
 >
 > The current preview supports macOS Apple Silicon, macOS Intel and Windows x64 packages. macOS builds are not notarized yet and Windows builds are not code-signed yet, so first-launch approval may be required on both platforms.
 >
@@ -116,21 +57,20 @@ The demo above uses mock data and is for product preview purposes only.
 ## Table of contents
 
 * [What is GlucoDesk?](#what-is-glucodesk)
-* [Preview](#preview)
 * [GlucoDesk in action](#glucodesk-in-action)
-* [Why GlucoDesk?](#why-glucodesk)
-* [Current release status](#current-release-status)
+* [Preview release status](#preview-release-status)
+* [Installation preview](#installation-preview)
 * [Key features](#key-features)
 * [Privacy model](#privacy-model)
-* [Installation preview](#installation-preview)
 * [Build from source](#build-from-source)
 * [Create local preview packages](#create-local-preview-packages)
 * [Architecture overview](#architecture-overview)
 * [Quality and release engineering](#quality-and-release-engineering)
 * [Known limitations](#known-limitations)
 * [Roadmap](#roadmap)
-* [Disclaimer](#disclaimer)
+* [Safety disclaimer](#safety-disclaimer)
 * [License](#license)
+* [Additional documentation](#additional-documentation)
 
 ---
 
@@ -164,11 +104,36 @@ GlucoDesk uses a provider-based architecture so the project can evolve beyond a 
 
 ---
 
-## Preview
+## GlucoDesk in action
 
-GlucoDesk is currently in **v0.3.0-preview**.
+<p align="center">
+  <img src="./docs/assets/demo/glucodesk-menu-bar-states.gif" alt="GlucoDesk menu bar glucose states with in-range, high, low and privacy mode" width="100%" />
+</p>
 
-This preview focuses on turning the app into a more complete desktop product loop:
+<p align="center">
+  <em>Mock glucose data showing the macOS menu bar companion across in-range, high, low and privacy mode states.</em>
+</p>
+
+GlucoDesk is designed to stay useful while you work.
+
+The macOS menu bar companion gives a quick glucose-awareness view without keeping the full dashboard in focus. The colored `G` icon reflects the current state at a glance:
+
+* green `G` for in-range glucose;
+* orange `G` for above-target glucose;
+* red `G` for below-target glucose;
+* blue `G` for privacy mode.
+
+When privacy mode is enabled, the glucose value is hidden from the desktop popup while the app still keeps a calm presence in the menu bar.
+
+The demo above uses mock data and is for product preview purposes only.
+
+---
+
+## Preview release status
+
+GlucoDesk is currently distributed as **v0.3.0-preview**.
+
+This preview focuses on turning GlucoDesk into a complete desktop product loop:
 
 ```text
 Connect an optional CGM data source
@@ -179,399 +144,47 @@ Connect an optional CGM data source
 → analyze recent glucose windows
 → export a readable glycemic diary
 → keep preferences consistent across app and exports
-→ package the app for real macOS and Windows installation flows
+→ package the app for macOS and Windows installation flows
 ```
 
-### Dashboard
-
-![GlucoDesk dashboard](docs/assets/screenshots/dashboard.png)
-
-The dashboard shows the current glucose value, trend, data freshness, provider status, recent glucose chart and glucose insights in a desktop-friendly layout.
-
-The current preview includes:
-
-* a redesigned dashboard hierarchy;
-* recent glucose trend visualization;
-* target range indicators;
-* selectable insight windows;
-* time-in-range summary;
-* average glucose;
-* below-range and above-range exposure;
-* local history status;
-* in-app glucose awareness banner;
-* clear safety messaging;
-* a calm desktop-first UI intended to stay readable during work.
-
-### Account
-
-![GlucoDesk account](docs/assets/screenshots/account.png)
-
-The Account page provides a cleaner place to configure provider-related account information and connection checks.
-
-It is designed around a local-first workflow and keeps account configuration separate from the main dashboard experience.
-
-The current preview supports secure local credential storage on:
-
-* macOS, through macOS Keychain;
-* Windows, through Windows Credential Manager.
-
-Credentials are used locally by the desktop app to connect to the configured provider.
-
-GlucoDesk does not provide a custom backend for handling user credentials.
-
-### Glycemic diary export
-
-![GlucoDesk diary](docs/assets/screenshots/diary.png)
-
-The diary export is designed to generate readable Excel and PDF summaries from local glucose history.
-
-The export flow focuses on useful daily summaries instead of overwhelming the user with every single CGM data point.
-
-The current preview supports:
-
-* Excel diary export;
-* PDF diary export;
-* daily summaries;
-* time-block summaries;
-* data completeness reporting;
-* clear incomplete-data awareness;
-* selected display unit support.
-
-### Settings
-
-![GlucoDesk settings](docs/assets/screenshots/settings.png)
-
-The Settings page controls provider routing, glucose preferences, dashboard behavior and glucose awareness notifications.
-
-The current preview includes improved settings handling for:
-
-* active live provider;
-* historical provider;
-* preferred glucose unit;
-* target range;
-* dashboard refresh interval;
-* chart maximum;
-* in-app glucose awareness alerts;
-* native notification opt-in;
-* notification cooldown;
-* required consecutive out-of-range readings;
-* privacy-conscious notification wording;
-* consistent unit conversion across the app and exported files.
-
----
-
-## Why GlucoDesk?
-
-Many people spend hours at their desk every day.
-
-When glucose information is only available through a phone, checking it repeatedly can become distracting.
-
-GlucoDesk was created to make that experience calmer:
-
-* keep glucose awareness visible while working;
-* avoid constantly switching context to the phone;
-* understand whether data is fresh, stale or unavailable;
-* keep a local glucose history;
-* reduce missing local history where possible;
-* receive calm, non-medical awareness prompts when glucose is outside the configured range;
-* export a readable diary for personal review;
-* avoid unnecessary backend services;
-* keep the app focused, quiet and desktop-friendly;
-* provide a small desktop companion through the macOS menu bar or Windows tray.
-
-GlucoDesk is not intended to replace official apps.
-
-It is a companion experience for awareness, personal review and desktop convenience.
-
----
-
-## Current release status
-
-Current version:
-
-```text
-0.3.0-preview
-```
-
-Latest preview release:
-
-```text
-https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.3.0-preview
-```
-
-The current preview includes:
-
-* redesigned desktop glucose dashboard;
-* optional CGM provider integration;
-* local glucose history;
-* background synchronization;
-* startup and resume history continuity;
-* local data completeness awareness;
-* glucose insights;
-* preferred glucose unit support;
-* in-app glucose awareness banner;
-* native macOS glucose awareness notifications;
-* bundled macOS notification helper inside the app package;
-* notification cooldown and anti-spam behavior;
-* privacy-conscious notification wording;
-* snooze and dismiss behavior;
-* native notification test flow from Settings;
-* notification diagnostics and event logging;
-* Excel diary export;
-* PDF diary export;
-* updated app branding and screenshots;
-* macOS Apple Silicon DMG package;
-* macOS Intel DMG package;
-* Windows x64 installer with setup wizard;
-* macOS menu bar companion;
-* Windows tray companion;
-* Windows Credential Manager support for Dexcom Share credentials;
-* improved account connection flow on Windows;
-* documented macOS Gatekeeper first-launch flow;
-* documented Windows SmartScreen first-launch flow.
-
-Current runtime support:
+### Supported preview platform
 
 | Platform            | Status            | Package type                                       | Notes                                           |
 | ------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------- |
-| macOS Apple Silicon | Preview supported | `macos-arm64-installable.zip` containing DMG       | Tested on Apple Silicon                         |
-| macOS Intel         | Preview supported | `macos-x64-installable.zip` containing DMG         | Built by CI, physical Intel validation may vary |
-| Windows x64         | Preview supported | `windows-x64-installable.zip` with setup installer | Windows package available for testing           |
+| macOS Apple Silicon | Preview supported | `macos-arm64-installable.zip` containing DMG       | Primary tested macOS target                     |
+| macOS Intel         | Preview supported | `macos-x64-installable.zip` containing DMG         | Built by CI; physical Intel validation may vary |
+| Windows x64         | Preview supported | `windows-x64-installable.zip` with setup installer | Available for preview testing                   |
 | Linux               | Not supported yet | Not available                                      | Planned for a future step                       |
 
-Linux remains part of the cross-platform roadmap but is not a supported runtime target in this preview.
+### Installation
 
----
+Download the ready-to-run package from the GitHub Release assets.
 
-## Key features
+Do not use the green GitHub **Code → Download ZIP** button to install GlucoDesk. That downloads the source code, not the app package.
 
-### Desktop glucose dashboard
-
-GlucoDesk shows:
-
-* current glucose value;
-* trend direction;
-* data freshness;
-* provider status;
-* recent glucose chart;
-* target range indicators;
-* glucose insights;
-* safety notice.
-
-The UI is designed to stay calm, readable and useful during desktop work.
-
-### Glucose awareness notifications
-
-GlucoDesk includes calm, non-medical glucose awareness notifications.
-
-The current preview includes:
-
-* in-app glucose awareness banner;
-* automatic above-target and below-target awareness states;
-* optional native macOS notifications;
-* notification cooldown;
-* anti-spam behavior;
-* configurable required consecutive out-of-range readings;
-* privacy-conscious notification wording;
-* snooze and dismiss behavior;
-* manual native notification test flow from Settings;
-* notification request result model;
-* event logging for native notification request outcomes.
-
-On macOS, native notifications are delivered through a bundled helper app inside the main app package:
+The recommended installation flow is:
 
 ```text
-GlucoDesk.app/Contents/Helpers/GlucoDeskNotificationHelper.app
+GitHub Releases → Assets → download package → extract ZIP → install app
 ```
 
-On first use, macOS may ask permission for **GlucoDesk Notifications**.
+Detailed platform-specific steps are available in [Installation preview](#installation-preview).
 
-Native notifications can be delayed, blocked, or hidden by operating-system notification permissions, Focus / Do Not Disturb modes, or other platform settings.
+### Privacy mode
 
-This feature is intended for desktop awareness only.
+GlucoDesk includes a desktop privacy mode for screen sharing and public environments.
 
-It is not an alarm system and must not be used for emergency or safety-critical notifications.
+When privacy mode is enabled:
 
-### macOS menu bar and Windows tray companion
+* the glucose value is hidden from the menu bar presence panel;
+* the menu bar icon uses the blue privacy state;
+* the privacy mode state persists after restart.
 
-GlucoDesk includes a small desktop presence outside the main window:
+### Safety disclaimer
 
-* on macOS, GlucoDesk appears in the menu bar;
-* on Windows, GlucoDesk appears in the system tray / hidden icons area.
+GlucoDesk is an awareness companion.
 
-The companion icon provides quick access to the desktop popup and keeps the app close without requiring the main window to stay in focus.
-
-On macOS, the menu bar `G` can reflect the current glucose-awareness state:
-
-* green for in-range glucose;
-* orange for above-target glucose;
-* red for below-target glucose;
-* blue for privacy mode.
-
-This makes GlucoDesk glanceable during desktop work while still keeping the full dashboard available when more context is needed.
-
-When privacy mode is enabled, GlucoDesk hides the glucose value from the desktop popup and uses the neutral blue privacy state.
-
-This feature is intended for desktop convenience only.
-
-It is not an alarm system and must not be used for emergency or safety-critical notifications.
-
-### Glucose insights
-
-The dashboard includes glucose insight windows based on local history.
-
-Current insight areas include:
-
-* time in range;
-* average glucose;
-* below-range exposure;
-* above-range exposure;
-* analyzed reading count;
-* selected time window.
-
-These insights are intended for awareness and personal review only.
-
-### Preferred glucose unit
-
-GlucoDesk supports display preferences for:
-
-* `mg/dL`;
-* `mmol/L`.
-
-The selected unit is applied consistently across:
-
-* dashboard value presentation;
-* chart labels;
-* target range display;
-* settings fields;
-* chart maximum selection;
-* Excel diary export;
-* PDF diary export.
-
-Internally, glucose data remains normalized so the app can keep storage and calculations consistent while presenting values in the preferred unit.
-
-### CGM provider routing
-
-GlucoDesk follows a provider-based architecture.
-
-The desktop app can route live and historical glucose data through configured CGM providers.
-
-The current preview focuses on practical desktop usage while keeping the architecture open to future provider extensions.
-
-### Account configuration and connection diagnostics
-
-The Account page clearly separates provider account configuration from the dashboard.
-
-The connection flow is designed to show whether the configured connection is:
-
-* not tested;
-* not verified;
-* verified;
-* failed;
-* stale after configuration changes.
-
-Credential persistence is platform-aware:
-
-* on macOS, credentials are stored through macOS Keychain;
-* on Windows, credentials are stored through Windows Credential Manager.
-
-### Local history
-
-GlucoDesk stores glucose history locally on the user’s computer.
-
-Local history powers:
-
-* recent glucose chart;
-* dashboard insights;
-* background sync status;
-* diary export;
-* data completeness reporting.
-
-### Background sync status
-
-The sidebar shows whether local history is up to date and when the last successful update happened.
-
-This makes it easier to understand whether the local view is fresh or outdated.
-
-### History continuity
-
-GlucoDesk includes a history continuity workflow to reduce missing local glucose history where possible.
-
-The app can run startup or resume synchronization and store fetched readings locally.
-
-This is especially important for diary export and completeness reporting.
-
-### Glycemic diary export
-
-GlucoDesk can export a glycemic diary in:
-
-* Excel workbook format;
-* PDF format.
-
-The diary is designed to be readable and focused on useful summaries instead of overwhelming the user with every single CGM data point.
-
-The current diary direction focuses on:
-
-* daily summaries;
-* key time blocks;
-* time-in-range information;
-* data coverage indicators;
-* incomplete-data awareness;
-* structured data suitable for personal review.
-
-### macOS package
-
-GlucoDesk includes installable macOS preview packages for Apple Silicon and Intel.
-
-The macOS package contains:
-
-* a DMG installer flow;
-* `GlucoDesk.app`;
-* a bundled native notification helper;
-* optimized app icon;
-* macOS menu bar presence;
-* local app data and credential storage outside the app bundle.
-
-The macOS application menu name is configured as `GlucoDesk`.
-
-### Windows installer
-
-GlucoDesk includes a Windows x64 installer preview.
-
-The Windows installable package contains:
-
-* a setup wizard;
-* per-user installation;
-* Start Menu shortcut support;
-* optional desktop shortcut support;
-* license page;
-* safety notice page;
-* uninstall support.
-
----
-
-## Privacy model
-
-GlucoDesk is built with a local-first mindset.
-
-By design:
-
-* glucose history is stored locally on the user’s computer;
-* app settings are stored locally;
-* dashboard and tray/menu-bar state are stored locally;
-* credentials are handled through the configured operating-system credential store where supported;
-* credentials must not be committed to Git;
-* GlucoDesk does not require a custom backend to handle user credentials or glucose history.
-
-Local-first does not mean that no sensitive data exists.
-
-Glucose readings are personal health-related data and are stored locally when history features are enabled.
-
-The privacy goal is:
-
-> Keep user data on the user’s machine and avoid unnecessary external services.
-
-Users should still protect their computer account, disk, backups and operating-system credential store.
+It is not a medical device. It must not be used for diagnosis, treatment, insulin dosing, emergency decisions, or replacing official CGM apps, medical devices, or clinician guidance.
 
 ---
 
@@ -643,10 +256,10 @@ GlucoDesk stores app data and credentials outside the application files:
 
 To update:
 
-* close GlucoDesk;
-* download the new package from the latest GitHub Release;
-* replace the old macOS app bundle or reinstall with the new Windows setup;
-* open GlucoDesk again.
+1. close GlucoDesk;
+2. download the new package from the latest GitHub Release;
+3. replace the old macOS app bundle or reinstall with the new Windows setup;
+4. open GlucoDesk again.
 
 ### macOS Apple Silicon and Intel
 
@@ -805,6 +418,225 @@ Get-FileHash .\GlucoDesk-0.3.0-preview-windows-x64-installable.zip -Algorithm SH
 ```
 
 Then compare the value with the checksum file.
+
+---
+
+## Key features
+
+### Desktop glucose dashboard
+
+The dashboard shows:
+
+* current glucose value and trend direction;
+* data freshness and provider status;
+* recent glucose chart;
+* target range indicators;
+* selectable insight windows;
+* local history status;
+* safety notice.
+
+The UI is designed to stay calm, readable and useful during desktop work.
+
+### macOS menu bar and Windows tray companion
+
+GlucoDesk includes a small desktop presence outside the main window:
+
+* on macOS, GlucoDesk appears in the menu bar;
+* on Windows, GlucoDesk appears in the system tray / hidden icons area.
+
+The companion icon provides quick access to the desktop popup and keeps the app close without requiring the main window to stay in focus.
+
+On macOS, the menu bar `G` can reflect the current glucose-awareness state:
+
+* green for in-range glucose;
+* orange for above-target glucose;
+* red for below-target glucose;
+* blue for privacy mode.
+
+This makes GlucoDesk glanceable during desktop work while still keeping the full dashboard available when more context is needed.
+
+This feature is intended for desktop convenience only.
+
+It is not an alarm system and must not be used for emergency or safety-critical notifications.
+
+### Glucose awareness notifications
+
+GlucoDesk includes calm, non-medical glucose awareness notifications.
+
+The current preview includes:
+
+* in-app glucose awareness banner;
+* automatic above-target and below-target awareness states;
+* optional native macOS notifications;
+* notification cooldown;
+* anti-spam behavior;
+* configurable required consecutive out-of-range readings;
+* privacy-conscious notification wording;
+* snooze and dismiss behavior;
+* manual native notification test flow from Settings;
+* notification request result model;
+* event logging for native notification request outcomes.
+
+On macOS, native notifications are delivered through a bundled helper app inside the main app package:
+
+```text
+GlucoDesk.app/Contents/Helpers/GlucoDeskNotificationHelper.app
+```
+
+On first use, macOS may ask permission for **GlucoDesk Notifications**.
+
+Native notifications can be delayed, blocked, or hidden by operating-system notification permissions, Focus / Do Not Disturb modes, or other platform settings.
+
+This feature is intended for desktop awareness only.
+
+It is not an alarm system and must not be used for emergency or safety-critical notifications.
+
+### Glucose insights
+
+The dashboard includes glucose insight windows based on local history.
+
+Current insight areas include:
+
+* time in range;
+* average glucose;
+* below-range exposure;
+* above-range exposure;
+* analyzed reading count;
+* selected time window.
+
+These insights are intended for awareness and personal review only.
+
+### Preferred glucose unit
+
+GlucoDesk supports display preferences for:
+
+* `mg/dL`;
+* `mmol/L`.
+
+The selected unit is applied consistently across:
+
+* dashboard value presentation;
+* chart labels;
+* target range display;
+* settings fields;
+* chart maximum selection;
+* Excel diary export;
+* PDF diary export.
+
+Internally, glucose data remains normalized so the app can keep storage and calculations consistent while presenting values in the preferred unit.
+
+### CGM provider routing
+
+GlucoDesk follows a provider-based architecture.
+
+The desktop app can route live and historical glucose data through configured CGM providers.
+
+The current preview focuses on practical desktop usage while keeping the architecture open to future provider extensions.
+
+### Account configuration and connection diagnostics
+
+The Account page clearly separates provider account configuration from the dashboard.
+
+The connection flow is designed to show whether the configured connection is:
+
+* not tested;
+* not verified;
+* verified;
+* failed;
+* stale after configuration changes.
+
+Credential persistence is platform-aware:
+
+* on macOS, credentials are stored through macOS Keychain;
+* on Windows, credentials are stored through Windows Credential Manager.
+
+Credentials are used locally by the desktop app to connect to the configured provider.
+
+GlucoDesk does not provide a custom backend for handling user credentials.
+
+### Local history and background sync
+
+GlucoDesk stores glucose history locally on the user’s computer.
+
+Local history powers:
+
+* recent glucose chart;
+* dashboard insights;
+* background sync status;
+* diary export;
+* data completeness reporting.
+
+The sidebar shows whether local history is up to date and when the last successful update happened.
+
+### History continuity
+
+GlucoDesk includes a history continuity workflow to reduce missing local glucose history where possible.
+
+The app can run startup or resume synchronization and store fetched readings locally.
+
+This is especially important for diary export and completeness reporting.
+
+### Glycemic diary export
+
+GlucoDesk can export a glycemic diary in:
+
+* Excel workbook format;
+* PDF format.
+
+The diary is designed to be readable and focused on useful summaries instead of overwhelming the user with every single CGM data point.
+
+The current diary direction focuses on:
+
+* daily summaries;
+* key time blocks;
+* time-in-range information;
+* data coverage indicators;
+* incomplete-data awareness;
+* structured data suitable for personal review.
+
+### Settings
+
+The Settings page controls provider routing, glucose preferences, dashboard behavior and glucose awareness notifications.
+
+The current preview includes improved settings handling for:
+
+* active live provider;
+* historical provider;
+* preferred glucose unit;
+* target range;
+* dashboard refresh interval;
+* chart maximum;
+* in-app glucose awareness alerts;
+* native notification opt-in;
+* notification cooldown;
+* required consecutive out-of-range readings;
+* privacy-conscious notification wording;
+* consistent unit conversion across the app and exported files.
+
+---
+
+## Privacy model
+
+GlucoDesk is built with a local-first mindset.
+
+By design:
+
+* glucose history is stored locally on the user’s computer;
+* app settings are stored locally;
+* dashboard and tray/menu-bar state are stored locally;
+* credentials are handled through the configured operating-system credential store where supported;
+* credentials must not be committed to Git;
+* GlucoDesk does not require a custom backend to handle user credentials or glucose history.
+
+Local-first does not mean that no sensitive data exists.
+
+Glucose readings are personal health-related data and are stored locally when history features are enabled.
+
+The privacy goal is:
+
+> Keep user data on the user’s machine and avoid unnecessary external services.
+
+Users should still protect their computer account, disk, backups and operating-system credential store.
 
 ---
 
@@ -994,7 +826,7 @@ The desktop layer should remain focused on presentation and composition, while a
 
 ## Quality and release engineering
 
-GlucoDesk is developed as a production-oriented portfolio project.
+GlucoDesk is developed as a production-oriented desktop application.
 
 Current quality practices include:
 
@@ -1029,12 +861,6 @@ dotnet test -c Release
 
 The current test suite covers core, application, infrastructure and desktop behavior.
 
-The v0.3.0-preview release was validated with:
-
-```text
-906 tests, 0 failures
-```
-
 ---
 
 ## Known limitations
@@ -1056,8 +882,7 @@ Current limitations:
 * provider runtime behavior may depend on platform, region and account configuration;
 * local history completeness depends on sync availability and app runtime;
 * data completeness reporting can only describe the available local history;
-* diary exports depend on locally available readings;
-* app icon and brand assets may still evolve.
+* diary exports depend on locally available readings.
 
 ---
 
@@ -1078,12 +903,11 @@ Planned improvements include:
 * platform-specific secure credential storage hardening;
 * additional provider abstraction hardening;
 * improved local history continuity and backfill behavior;
-* auto-update exploration;
-* README and release asset polish.
+* auto-update exploration.
 
 ---
 
-## Disclaimer
+## Safety disclaimer
 
 GlucoDesk is an independent software project.
 
@@ -1093,7 +917,7 @@ GlucoDesk is not a medical device.
 
 Do not use GlucoDesk for treatment decisions, insulin dosing, emergency alerts, alarms, diagnosis, or as a replacement for approved diabetes applications.
 
-For therapy decisions, always use approved medical devices and official medical apps.
+For therapy decisions, always use approved medical devices, official medical apps and healthcare professionals.
 
 ---
 
