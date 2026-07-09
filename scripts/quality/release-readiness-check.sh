@@ -243,6 +243,20 @@ check_required_file "docs/release-notes/preview-template.md" "Preview release no
 check_required_file "docs/smoke-tests/preview-template.md" "Preview smoke test template"
 check_required_file "scripts/quality/create-smoke-test-report.sh" "Smoke test report creation script"
 check_required_file "scripts/quality/release-artifacts-manifest.sh" "Release artifacts manifest script"
+check_required_file "scripts/publish-windows.ps1" "Windows publish script"
+check_required_file "scripts/verify-macos-preview-artifacts.sh" "macOS preview artifact verification script"
+check_required_file "scripts/verify-windows-preview-artifacts.ps1" "Windows preview artifact verification script"
+
+
+if find scripts -maxdepth 2 -type f \
+  \( -iname "*mac*publish*.sh" -o -iname "*publish*mac*.sh" -o -iname "*mac*package*.sh" -o -iname "*package*mac*.sh" -o -iname "*dmg*.sh" \) \
+  ! -iname "*verify*" \
+  ! -iname "*resize*" \
+  | grep -q .; then
+  pass "macOS publish/package script candidate found"
+else
+  warn "No macOS publish/package script candidate found. Existing verification scripts are present, but packaging may be manual or differently named."
+fi
 
 if [ -n "$release_version" ]; then
   release_notes_path="docs/release-notes/${release_version}.md"
