@@ -1,3 +1,47 @@
+
+## Preview release status
+
+GlucoDesk is currently distributed as a preview build.
+
+The current release focus is macOS desktop usage, with a local-first glucose awareness workflow, menu bar presence, privacy mode, release readiness checks, and preview packaging support.
+
+GlucoDesk is not a medical device and must not be used for treatment or insulin dosing decisions.
+
+### Supported preview platform
+
+- macOS preview builds are the primary supported release target.
+- Apple Silicon and Intel macOS packages may be published when available in the GitHub Release assets.
+- Windows builds may be experimental unless explicitly listed as supported in the release notes.
+
+### Installation
+
+Download the ready-to-run package from the GitHub Release assets.
+
+Do not use the green GitHub Code button to install GlucoDesk. That downloads the source code, not the app package.
+
+For macOS preview builds:
+
+1. Download the package matching your Mac architecture.
+2. Extract or open the package.
+3. Move GlucoDesk to Applications when applicable.
+4. If macOS blocks the app because it is an unsigned preview build, allow it from System Settings > Privacy & Security.
+
+### Privacy mode
+
+GlucoDesk includes a desktop privacy mode for screen sharing and public environments.
+
+When privacy mode is enabled:
+
+- the glucose value is hidden from the menu bar presence panel
+- the menu bar icon uses a neutral blue privacy icon
+- the privacy mode state persists after restart
+
+### Safety disclaimer
+
+GlucoDesk is an awareness companion.
+
+It is not a medical device. It must not be used for diagnosis, treatment, insulin dosing, emergency decisions, or replacing official CGM apps, medical devices, or clinician guidance.
+
 <p align="center">
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Avalonia-UI-0B8CE9" alt="Avalonia UI" />
@@ -24,9 +68,30 @@
 
 ---
 
+## GlucoDesk in action
+
 <p align="center">
-  <img src="./docs/assets/glucodesk-social-preview.png" alt="GlucoDesk - A calm desktop companion for glucose awareness" width="100%" />
+  <img src="./docs/assets/demo/glucodesk-menu-bar-states.gif" alt="GlucoDesk menu bar glucose states with in-range, high, low and privacy mode" width="100%" />
 </p>
+
+<p align="center">
+  <em>Mock glucose data showing the macOS menu bar companion across in-range, high, low and privacy mode states.</em>
+</p>
+
+GlucoDesk is designed to stay useful while you work.
+
+The macOS menu bar companion gives a quick glucose-awareness view without keeping the full dashboard in focus. The colored `G` icon reflects the current state at a glance:
+
+* green `G` for in-range glucose;
+* orange `G` for above-target glucose;
+* red `G` for below-target glucose;
+* blue `G` for privacy mode.
+
+When privacy mode is enabled, the glucose value is hidden from the desktop popup while the app still keeps a calm presence in the menu bar.
+
+The demo above uses mock data and is for product preview purposes only.
+
+
 
 > [!IMPORTANT]
 > **Safety notice**
@@ -52,6 +117,7 @@
 
 * [What is GlucoDesk?](#what-is-glucodesk)
 * [Preview](#preview)
+* [GlucoDesk in action](#glucodesk-in-action)
 * [Why GlucoDesk?](#why-glucodesk)
 * [Current release status](#current-release-status)
 * [Key features](#key-features)
@@ -334,6 +400,17 @@ GlucoDesk includes a small desktop presence outside the main window:
 * on Windows, GlucoDesk appears in the system tray / hidden icons area.
 
 The companion icon provides quick access to the desktop popup and keeps the app close without requiring the main window to stay in focus.
+
+On macOS, the menu bar `G` can reflect the current glucose-awareness state:
+
+* green for in-range glucose;
+* orange for above-target glucose;
+* red for below-target glucose;
+* blue for privacy mode.
+
+This makes GlucoDesk glanceable during desktop work while still keeping the full dashboard available when more context is needed.
+
+When privacy mode is enabled, GlucoDesk hides the glucose value from the desktop popup and uses the neutral blue privacy state.
 
 This feature is intended for desktop convenience only.
 
