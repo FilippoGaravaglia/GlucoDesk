@@ -69,3 +69,16 @@ This requires a matching file:
     docs/release-notes/v0.4.0-preview.md
 
 The file must contain the required release note sections.
+
+
+## Release artifacts manifest
+
+Before publishing a GitHub Release, generate artifact checksums:
+
+    scripts/quality/release-artifacts-manifest.sh --artifacts-dir artifacts/release --release-version v0.4.0-preview
+
+For final readiness with artifacts:
+
+    scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview --artifacts-dir artifacts/release
+
+This validates the attached packages and writes SHA256 checksums.

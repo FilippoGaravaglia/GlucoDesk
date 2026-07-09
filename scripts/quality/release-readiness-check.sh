@@ -7,6 +7,7 @@ configuration="Release"
 strict=false
 skip_dotnet=false
 release_version=""
+artifacts_dir=""
 
 failures=0
 warnings=0
@@ -20,6 +21,7 @@ Options:
   --strict                   Require main branch and clean working tree.
   --configuration NAME       Build/test configuration. Default: Release.
   --release-version VERSION  Require release notes for the given version.
+  --artifacts-dir DIR        Validate release artifacts and generate checksums.
   --skip-dotnet              Skip restore/build/test. Useful while editing the script.
   -h, --help                 Show this help.
 
@@ -27,6 +29,7 @@ Examples:
   scripts/quality/release-readiness-check.sh
   scripts/quality/release-readiness-check.sh --strict
   scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview
+  scripts/quality/release-readiness-check.sh --strict --artifacts-dir artifacts/release
 USAGE
 }
 
@@ -124,6 +127,15 @@ while [ "$#" -gt 0 ]; do
       release_version="$2"
       shift 2
       ;;
+    --artifacts-dir)
+      if [ "$#" -lt 2 ]; then
+        fail "--artifacts-dir requires a value"
+        break
+      fi
+
+      artifacts_dir="$2"
+      shift 2
+      ;;
     --skip-dotnet)
       skip_dotnet=true
       shift
@@ -144,6 +156,7 @@ printf "\nGlucoDesk release readiness check\n"
 printf "Configuration: %s\n" "$configuration"
 printf "Strict mode: %s\n" "$strict"
 printf "Release version: %s\n" "${release_version:-none}"
+printf "Artifacts dir: %s\n" "${artifacts_dir:-none}"
 printf "Skip .NET: %s\n\n" "$skip_dotnet"
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -220,6 +233,7 @@ else
 fi
 
 check_required_file "docs/release-notes/preview-template.md" "Preview release notes template"
+check_required_file "scripts/quality/release-artifacts-manifest.sh" "Release artifacts manifest script"
 
 if [ -n "$release_version" ]; then
   release_notes_path="docs/release-notes/${release_version}.md"
@@ -231,6 +245,25 @@ if [ -n "$release_version" ]; then
   check_file_contains "$release_notes_path" "## Known limitations" "Release notes known limitations section"
   check_file_contains "$release_notes_path" "## Safety disclaimer" "Release notes safety disclaimer section"
   check_file_contains "$release_notes_path" "## Manual smoke test" "Release notes manual smoke test section"
+fi
+
+if [ -n "$artifacts_dir" ]; then
+  check_required_directory "$artifacts_dir" "Release artifacts directory"
+
+  if [ -d "$artifacts_dir" ]; then
+    if [ -n "$release_version" ]; then
+      run_step "release artifacts manifest" \
+        scripts/quality/release-artifacts-manifest.sh \
+          --artifacts-dir "$artifacts_dir" \
+          --release-version "$release_version" \
+          --output "$artifacts_dir/release-artifacts-manifest.md"
+    else
+      run_step "release artifacts manifest" \
+        scripts/quality/release-artifacts-manifest.sh \
+          --artifacts-dir "$artifacts_dir" \
+          --output "$artifacts_dir/release-artifacts-manifest.md"
+    fi
+  fi
 fi
 
 if [ "$skip_dotnet" = false ]; then
