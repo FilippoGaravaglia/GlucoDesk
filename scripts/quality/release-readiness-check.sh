@@ -221,6 +221,13 @@ check_required_directory "src/GlucoDesk.Desktop" "Desktop project directory"
 check_required_directory "tests/GlucoDesk.Desktop.Tests" "Desktop tests directory"
 
 check_required_file "README.md" "README"
+check_file_contains "README.md" "## Preview release status" "README preview release status section"
+check_file_contains "README.md" "### Supported preview platform" "README supported preview platform section"
+check_file_contains "README.md" "### Installation" "README installation section"
+check_file_contains "README.md" "### Privacy mode" "README privacy mode section"
+check_file_contains "README.md" "### Safety disclaimer" "README safety disclaimer section"
+check_file_contains "README.md" "not a medical device" "README medical safety disclaimer"
+
 check_required_file "LICENSE" "License"
 
 check_required_file "VERSION" "Version file"
