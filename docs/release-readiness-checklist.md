@@ -82,3 +82,17 @@ For final readiness with artifacts:
     scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview --artifacts-dir artifacts/release
 
 This validates the attached packages and writes SHA256 checksums.
+
+## Release notes creation
+
+Create versioned release notes from the preview template:
+
+    scripts/quality/create-release-notes.sh --version v0.4.0-preview
+
+Then edit the generated file:
+
+    docs/release-notes/v0.4.0-preview.md
+
+Finally validate it:
+
+    scripts/quality/release-readiness-check.sh --release-version v0.4.0-preview
