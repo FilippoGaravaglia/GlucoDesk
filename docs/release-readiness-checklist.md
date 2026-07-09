@@ -110,3 +110,13 @@ Then complete:
 For final readiness with a required smoke test report:
 
     scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview --require-smoke-test
+
+## Preview release closure
+
+Prepare release notes and smoke test report together:
+
+    scripts/quality/prepare-preview-release.sh --version v0.4.0-preview
+
+Then complete the generated files and run:
+
+    scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview --require-smoke-test
