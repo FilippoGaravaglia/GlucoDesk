@@ -9,6 +9,7 @@ skip_dotnet=false
 release_version=""
 artifacts_dir=""
 require_smoke_test=false
+version_file_value=""
 
 failures=0
 warnings=0
@@ -222,6 +223,18 @@ check_required_directory "tests/GlucoDesk.Desktop.Tests" "Desktop tests director
 check_required_file "README.md" "README"
 check_required_file "LICENSE" "License"
 
+check_required_file "VERSION" "Version file"
+
+if [ -f "VERSION" ]; then
+  version_file_value="$(tr -d '[:space:]' < VERSION)"
+
+  if [ -z "$version_file_value" ]; then
+    fail "VERSION file is empty"
+  else
+    pass "Version file value: $version_file_value"
+  fi
+fi
+
 check_required_file "src/GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-high.png" "High menu bar icon"
 check_required_file "src/GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-low.png" "Low menu bar icon"
 check_required_file "src/GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-in-range.png" "In-range menu bar icon"
@@ -243,6 +256,7 @@ check_required_file "docs/release-notes/preview-template.md" "Preview release no
 check_required_file "docs/smoke-tests/preview-template.md" "Preview smoke test template"
 check_required_file "scripts/quality/create-smoke-test-report.sh" "Smoke test report creation script"
 check_required_file "scripts/quality/release-artifacts-manifest.sh" "Release artifacts manifest script"
+check_required_file "scripts/quality/set-preview-version.sh" "Preview version setter script"
 check_required_file "scripts/publish-windows.ps1" "Windows publish script"
 check_required_file "scripts/verify-macos-preview-artifacts.sh" "macOS preview artifact verification script"
 check_required_file "scripts/verify-windows-preview-artifacts.ps1" "Windows preview artifact verification script"
@@ -259,6 +273,16 @@ else
 fi
 
 if [ -n "$release_version" ]; then
+  normalized_release_version="${release_version#v}"
+
+  if [ -n "$version_file_value" ]; then
+    if [ "$version_file_value" = "$normalized_release_version" ]; then
+      pass "VERSION matches release version"
+    else
+      fail "VERSION mismatch. VERSION contains '$version_file_value' but release version is '$release_version' and expected VERSION '$normalized_release_version'"
+    fi
+  fi
+
   release_notes_path="docs/release-notes/${release_version}.md"
 
   check_required_file "$release_notes_path" "Release notes for $release_version"

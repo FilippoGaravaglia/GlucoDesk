@@ -130,3 +130,17 @@ Official release packaging documentation:
     docs/official-release-packaging.md
 
 The readiness check verifies the presence of key packaging and artifact verification scripts.
+
+## Release version consistency
+
+Set the preview version before creating release notes or packages:
+
+    scripts/quality/set-preview-version.sh --version v0.4.0-preview
+
+The VERSION file stores the version without the leading v:
+
+    0.4.0-preview
+
+The readiness check validates VERSION against the release version:
+
+    scripts/quality/release-readiness-check.sh --release-version v0.4.0-preview
