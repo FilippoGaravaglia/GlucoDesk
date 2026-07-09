@@ -120,3 +120,13 @@ Prepare release notes and smoke test report together:
 Then complete the generated files and run:
 
     scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview --require-smoke-test
+
+## Official packaging workflow
+
+Use the existing platform-specific packaging scripts instead of creating parallel package scripts.
+
+Official release packaging documentation:
+
+    docs/official-release-packaging.md
+
+The readiness check verifies the presence of key packaging and artifact verification scripts.
