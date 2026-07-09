@@ -8,6 +8,7 @@ strict=false
 skip_dotnet=false
 release_version=""
 artifacts_dir=""
+require_smoke_test=false
 
 failures=0
 warnings=0
@@ -22,6 +23,7 @@ Options:
   --configuration NAME       Build/test configuration. Default: Release.
   --release-version VERSION  Require release notes for the given version.
   --artifacts-dir DIR        Validate release artifacts and generate checksums.
+  --require-smoke-test       Require a manual smoke test report for the release version.
   --skip-dotnet              Skip restore/build/test. Useful while editing the script.
   -h, --help                 Show this help.
 
@@ -127,6 +129,10 @@ while [ "$#" -gt 0 ]; do
       release_version="$2"
       shift 2
       ;;
+    --require-smoke-test)
+      require_smoke_test=true
+      shift
+      ;;
     --artifacts-dir)
       if [ "$#" -lt 2 ]; then
         fail "--artifacts-dir requires a value"
@@ -157,6 +163,7 @@ printf "Configuration: %s\n" "$configuration"
 printf "Strict mode: %s\n" "$strict"
 printf "Release version: %s\n" "${release_version:-none}"
 printf "Artifacts dir: %s\n" "${artifacts_dir:-none}"
+printf "Require smoke test: %s\n" "$require_smoke_test"
 printf "Skip .NET: %s\n\n" "$skip_dotnet"
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -233,6 +240,8 @@ else
 fi
 
 check_required_file "docs/release-notes/preview-template.md" "Preview release notes template"
+check_required_file "docs/smoke-tests/preview-template.md" "Preview smoke test template"
+check_required_file "scripts/quality/create-smoke-test-report.sh" "Smoke test report creation script"
 check_required_file "scripts/quality/release-artifacts-manifest.sh" "Release artifacts manifest script"
 
 if [ -n "$release_version" ]; then
@@ -245,6 +254,21 @@ if [ -n "$release_version" ]; then
   check_file_contains "$release_notes_path" "## Known limitations" "Release notes known limitations section"
   check_file_contains "$release_notes_path" "## Safety disclaimer" "Release notes safety disclaimer section"
   check_file_contains "$release_notes_path" "## Manual smoke test" "Release notes manual smoke test section"
+fi
+
+
+if [ "$require_smoke_test" = true ]; then
+  if [ -z "$release_version" ]; then
+    fail "--require-smoke-test requires --release-version"
+  else
+    smoke_test_path="docs/smoke-tests/${release_version}.md"
+
+    check_required_file "$smoke_test_path" "Smoke test report for $release_version"
+    check_file_contains "$smoke_test_path" "Overall result:" "Smoke test overall result"
+    check_file_contains "$smoke_test_path" "Release decision:" "Smoke test release decision"
+    check_file_contains "$smoke_test_path" "## Manual checks" "Smoke test manual checks section"
+    check_file_contains "$smoke_test_path" "## Safety checks" "Smoke test safety checks section"
+  fi
 fi
 
 if [ -n "$artifacts_dir" ]; then

@@ -96,3 +96,17 @@ Then edit the generated file:
 Finally validate it:
 
     scripts/quality/release-readiness-check.sh --release-version v0.4.0-preview
+
+## Manual smoke test report
+
+Create a versioned smoke test report:
+
+    scripts/quality/create-smoke-test-report.sh --version v0.4.0-preview
+
+Then complete:
+
+    docs/smoke-tests/v0.4.0-preview.md
+
+For final readiness with a required smoke test report:
+
+    scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview --require-smoke-test
