@@ -56,3 +56,16 @@ Release notes should include:
 ## Safety disclaimer
 
 GlucoDesk is an awareness companion. It is not a medical device and must not be used for treatment or insulin dosing decisions.
+
+
+## Versioned release notes check
+
+For a final release candidate, provide the release notes version explicitly:
+
+    scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview
+
+This requires a matching file:
+
+    docs/release-notes/v0.4.0-preview.md
+
+The file must contain the required release note sections.

@@ -6,6 +6,7 @@ set -o pipefail
 configuration="Release"
 strict=false
 skip_dotnet=false
+release_version=""
 
 failures=0
 warnings=0
@@ -16,15 +17,16 @@ Usage:
   scripts/quality/release-readiness-check.sh [options]
 
 Options:
-  --strict              Require main branch and clean working tree.
-  --configuration NAME  Build/test configuration. Default: Release.
-  --skip-dotnet         Skip restore/build/test. Useful while editing the script.
-  -h, --help            Show this help.
+  --strict                   Require main branch and clean working tree.
+  --configuration NAME       Build/test configuration. Default: Release.
+  --release-version VERSION  Require release notes for the given version.
+  --skip-dotnet              Skip restore/build/test. Useful while editing the script.
+  -h, --help                 Show this help.
 
 Examples:
   scripts/quality/release-readiness-check.sh
   scripts/quality/release-readiness-check.sh --strict
-  scripts/quality/release-readiness-check.sh --configuration Release
+  scripts/quality/release-readiness-check.sh --strict --release-version v0.4.0-preview
 USAGE
 }
 
@@ -81,6 +83,23 @@ check_required_directory() {
   fi
 }
 
+check_file_contains() {
+  local path="$1"
+  local pattern="$2"
+  local label="$3"
+
+  if [ ! -f "$path" ]; then
+    fail "$label missing file: $path"
+    return
+  fi
+
+  if grep -Fq "$pattern" "$path"; then
+    pass "$label"
+  else
+    fail "$label missing pattern: $pattern"
+  fi
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --strict)
@@ -94,6 +113,15 @@ while [ "$#" -gt 0 ]; do
       fi
 
       configuration="$2"
+      shift 2
+      ;;
+    --release-version)
+      if [ "$#" -lt 2 ]; then
+        fail "--release-version requires a value"
+        break
+      fi
+
+      release_version="$2"
       shift 2
       ;;
     --skip-dotnet)
@@ -115,6 +143,7 @@ done
 printf "\nGlucoDesk release readiness check\n"
 printf "Configuration: %s\n" "$configuration"
 printf "Strict mode: %s\n" "$strict"
+printf "Release version: %s\n" "${release_version:-none}"
 printf "Skip .NET: %s\n\n" "$skip_dotnet"
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -188,6 +217,20 @@ if [ -f "CHANGELOG.md" ]; then
   pass "CHANGELOG found"
 else
   warn "CHANGELOG.md not found. Release notes can still be written on GitHub, but a changelog is recommended."
+fi
+
+check_required_file "docs/release-notes/preview-template.md" "Preview release notes template"
+
+if [ -n "$release_version" ]; then
+  release_notes_path="docs/release-notes/${release_version}.md"
+
+  check_required_file "$release_notes_path" "Release notes for $release_version"
+  check_file_contains "$release_notes_path" "## Supported platform" "Release notes supported platform section"
+  check_file_contains "$release_notes_path" "## Installation" "Release notes installation section"
+  check_file_contains "$release_notes_path" "## What's new" "Release notes what's new section"
+  check_file_contains "$release_notes_path" "## Known limitations" "Release notes known limitations section"
+  check_file_contains "$release_notes_path" "## Safety disclaimer" "Release notes safety disclaimer section"
+  check_file_contains "$release_notes_path" "## Manual smoke test" "Release notes manual smoke test section"
 fi
 
 if [ "$skip_dotnet" = false ]; then
