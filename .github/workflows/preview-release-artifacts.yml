@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Preview version to package, for example 0.2.1-preview"
+        description: "Preview version to package, for example 0.3.0-preview"
         required: true
-        default: "0.2.1-preview"
+        default: "0.3.0-preview"
 
 permissions:
   contents: read
