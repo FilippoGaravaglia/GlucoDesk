@@ -1247,38 +1247,41 @@ public sealed partial class SettingsViewModel : ViewModelBase
         string text,
         GlucoseUnit unit)
     {
-        if (string.IsNullOrEmpty(text))
+        if (string.IsNullOrWhiteSpace(text))
         {
             return string.Empty;
         }
 
-        var builder = new StringBuilder();
-        var hasDecimalSeparator = false;
-        var allowDecimalSeparator = unit == GlucoseUnit.MmolL;
+        if (unit != GlucoseUnit.MmolL)
+        {
+            return SanitizePositiveIntegerText(text);
+        }
 
-        foreach (var character in text)
+        var normalizedText = text.Replace(',', '.');
+        var sanitizedText = string.Empty;
+        var hasDecimalSeparator = false;
+
+        foreach (var character in normalizedText)
         {
             if (char.IsDigit(character))
             {
-                builder.Append(character);
+                sanitizedText += character;
                 continue;
             }
 
-            if (!allowDecimalSeparator || character is not ('.' or ',') || hasDecimalSeparator)
+            if (character == '.' && !hasDecimalSeparator)
             {
-                continue;
-            }
+                if (sanitizedText.Length == 0)
+                {
+                    sanitizedText = "0";
+                }
 
-            if (builder.Length == 0)
-            {
-                builder.Append('0');
+                sanitizedText += ".";
+                hasDecimalSeparator = true;
             }
-
-            builder.Append('.');
-            hasDecimalSeparator = true;
         }
 
-        return builder.ToString();
+        return sanitizedText;
     }
 
     /// <summary>
