@@ -98,23 +98,21 @@ public partial class SettingsView : UserControl
     }
 
     /// <summary>
-    /// Keeps target glucose inputs numeric while preserving the existing view-model binding.
+    /// Keeps target glucose inputs valid for the currently selected glucose unit while preserving the existing view-model binding.
     /// </summary>
     /// <param name="sender">The text box sender.</param>
     /// <param name="e">The text changed event args.</param>
     private void OnTargetValueTextChanged(object? sender, TextChangedEventArgs e)
     {
-        if (sender is not TextBox textBox || string.IsNullOrEmpty(textBox.Text))
+        if (sender is not TextBox textBox ||
+            string.IsNullOrEmpty(textBox.Text) ||
+            DataContext is not GlucoDesk.Desktop.ViewModels.Settings.SettingsViewModel viewModel)
         {
             return;
         }
 
         var originalText = textBox.Text;
-        var sanitizedText = new string(
-            originalText
-                .Where(char.IsDigit)
-                .Take(MaximumTargetValueLength)
-                .ToArray());
+        var sanitizedText = viewModel.SanitizeTargetValueInput(originalText);
 
         if (string.Equals(originalText, sanitizedText, StringComparison.Ordinal))
         {
@@ -122,10 +120,11 @@ public partial class SettingsView : UserControl
         }
 
         var caretIndex = textBox.CaretIndex;
+        var removedCharacters = originalText.Length - sanitizedText.Length;
 
         textBox.Text = sanitizedText;
         textBox.CaretIndex = Math.Clamp(
-            caretIndex - 1,
+            caretIndex - Math.Max(removedCharacters, 0),
             0,
             sanitizedText.Length);
     }
