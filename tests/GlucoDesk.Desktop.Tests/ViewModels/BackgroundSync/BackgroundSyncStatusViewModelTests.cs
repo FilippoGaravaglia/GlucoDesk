@@ -3,10 +3,11 @@ using GlucoDesk.Application.Cgm.BackgroundSync.State.Services;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.BackgroundSync;
 
-public sealed class BackgroundSyncStatusViewModelTests
+public sealed class BackgroundSyncStatusViewModelTests : EnglishLocalizationTestBase
 {
     [Fact]
     public void Constructor_ShouldExposeUserFriendlyInitialState()

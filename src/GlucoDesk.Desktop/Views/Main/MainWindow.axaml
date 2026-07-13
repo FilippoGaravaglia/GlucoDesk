@@ -55,34 +55,34 @@
                    HorizontalAlignment="Left"
                    Margin="0,2,0,0" />
 
-            <TextBlock Text="Glucose companion"
+            <TextBlock Text="{DynamicResource SidebarSubtitle}"
                        Classes="sidebar-subtitle"
                        Margin="4,0,0,0" />
           </StackPanel>
 
           <StackPanel Spacing="10">
-            <Button Content="Dashboard"
+            <Button Content="{DynamicResource NavDashboard}"
                     Classes="nav-button"
                     Classes.accent="{Binding IsDashboardSelected}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
                     Command="{Binding ShowDashboardCommand}" />
 
-            <Button Content="Diary"
+            <Button Content="{DynamicResource NavDiary}"
                     Classes="nav-button"
                     Classes.accent="{Binding IsDiarySelected}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
                     Command="{Binding ShowDiaryCommand}" />
 
-            <Button Content="Account"
+            <Button Content="{DynamicResource NavAccount}"
                     Classes="nav-button"
                     Classes.accent="{Binding IsAccountSelected}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
                     Command="{Binding ShowAccountCommand}" />
 
-            <Button Content="Settings"
+            <Button Content="{DynamicResource NavSettings}"
                     Classes="nav-button"
                     Classes.accent="{Binding IsSettingsSelected}"
                     HorizontalAlignment="Stretch"
@@ -105,7 +105,7 @@
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="12">
                 <StackPanel Spacing="3">
-                  <TextBlock Text="Local history"
+                  <TextBlock Text="{DynamicResource SidebarLocalHistoryTitle}"
                              FontWeight="SemiBold"
                              Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
 
@@ -154,11 +154,11 @@
 
               <StackPanel Grid.Column="1"
                           Spacing="6">
-                <TextBlock Text="Private by design"
+                <TextBlock Text="{DynamicResource SidebarPrivateByDesignTitle}"
                            FontWeight="SemiBold"
                            Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
 
-                <TextBlock Text="Your glucose history stays local on this desktop companion."
+                <TextBlock Text="{DynamicResource SidebarPrivateByDesignDescription}"
                            TextWrapping="Wrap"
                            Classes="sidebar-note" />
               </StackPanel>
@@ -181,11 +181,11 @@
 
               <StackPanel Grid.Column="1"
                           Spacing="6">
-                <TextBlock Text="Safety notice"
+                <TextBlock Text="{DynamicResource SidebarSafetyNoticeTitle}"
                            FontWeight="SemiBold"
                            Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
 
-                <TextBlock Text="Not a medical device. Do not use for treatment decisions."
+                <TextBlock Text="{DynamicResource SidebarSafetyNoticeDescription}"
                            TextWrapping="Wrap"
                            Classes="sidebar-note" />
               </StackPanel>

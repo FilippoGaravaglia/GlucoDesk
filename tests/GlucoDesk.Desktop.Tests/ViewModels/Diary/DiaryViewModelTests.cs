@@ -13,10 +13,11 @@ using GlucoDesk.Desktop.Diary.Results;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Diary.Enums;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Diary;
 
-public sealed class DiaryViewModelTests
+public sealed class DiaryViewModelTests : EnglishLocalizationTestBase
 {
     [Fact]
     public async Task ExportCommand_ShouldExportExcelAndSaveFile_WhenExcelIsSelected()
@@ -262,7 +263,10 @@ public sealed class DiaryViewModelTests
         // Assert
         Assert.True(viewModel.HasError);
         Assert.False(viewModel.HasSuccess);
-        Assert.Contains("Unexpected export error", viewModel.StatusText, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(
+            GlucoDesk.Desktop.Localization.LocalizationManager.GetString(
+                "DiaryUnexpectedExportError"),
+            viewModel.StatusText);
     }
 
     [Fact]

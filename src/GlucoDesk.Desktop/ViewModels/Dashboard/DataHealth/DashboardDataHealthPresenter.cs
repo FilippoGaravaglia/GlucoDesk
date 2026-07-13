@@ -1,4 +1,5 @@
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard.DataHealth;
 
@@ -39,9 +40,9 @@ public static class DashboardDataHealthPresenter
         {
             return new DashboardDataHealthPresentation(
                 DashboardDataHealthState.ProviderError,
-                "Provider refresh failed",
+                T("DashboardProviderRefreshFailed"),
                 string.IsNullOrWhiteSpace(providerErrorMessage)
-                    ? "The active provider could not refresh glucose data."
+                    ? T("DashboardProviderCouldNotRefresh")
                     : providerErrorMessage,
                 "Error",
                 false,
@@ -53,8 +54,8 @@ public static class DashboardDataHealthPresenter
         {
             return new DashboardDataHealthPresentation(
                 DashboardDataHealthState.NoReadings,
-                "No recent readings",
-                "The active provider is selected, but no recent glucose readings are currently available.",
+                T("DashboardNoRecentReadings"),
+                T("DashboardNoRecentReadingsMessage"),
                 "No data",
                 false,
                 true,
@@ -93,9 +94,9 @@ public static class DashboardDataHealthPresenter
     {
         return new DashboardDataHealthPresentation(
             DashboardDataHealthState.ProviderError,
-            "Provider refresh failed",
+            T("DashboardProviderRefreshFailed"),
             string.IsNullOrWhiteSpace(providerErrorMessage)
-                ? "The active provider could not refresh glucose data."
+                ? T("DashboardProviderCouldNotRefresh")
                 : providerErrorMessage,
             "Error",
             false,
@@ -127,13 +128,13 @@ public static class DashboardDataHealthPresenter
         return freshness switch
         {
             GlucoseDataFreshness.Delayed =>
-                "The active provider returned delayed glucose data. GlucoDesk can display it, but it should not be treated as real-time monitoring.",
+                T("DashboardDelayedDataMessage"),
 
             GlucoseDataFreshness.Historical =>
-                "The active provider returned historical glucose data. Check the provider connection before relying on the displayed trend.",
+                T("DashboardHistoricalDataMessage"),
 
             _ =>
-                "The active provider returned glucose data with unknown freshness. Check the provider connection before relying on the displayed trend."
+                T("DashboardUnknownFreshnessMessage")
         };
     }
 
@@ -147,15 +148,20 @@ public static class DashboardDataHealthPresenter
         return freshness switch
         {
             GlucoseDataFreshness.Live =>
-                "The dashboard is showing live provider data. GlucoDesk remains a companion app and must not be used for treatment decisions.",
+                T("DashboardLiveProviderSafetyMessage"),
 
             GlucoseDataFreshness.NearRealTime =>
-                "The dashboard is showing near real-time provider data. GlucoDesk remains a companion app and must not be used for treatment decisions.",
+                T("DashboardNearRealTimeProviderSafetyMessage"),
 
             _ =>
-                "The dashboard is showing real provider data. GlucoDesk remains a companion app and must not be used for treatment decisions."
+                T("DashboardRealProviderSafetyMessage")
         };
     }
 
     #endregion
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
 }

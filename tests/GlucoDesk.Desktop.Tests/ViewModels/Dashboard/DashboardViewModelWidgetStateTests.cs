@@ -14,10 +14,11 @@ using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Application.Cgm.Readings.Requests;
 using GlucoDesk.Application.Cgm.Readings.Results;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Dashboard;
 
-public sealed class DashboardViewModelWidgetStateTests
+public sealed class DashboardViewModelWidgetStateTests : EnglishLocalizationTestBase
 {
     [Fact]
     public async Task RefreshCommand_ShouldPublishLatestReadingToWidgetState_WhenSnapshotHasLatestReading()

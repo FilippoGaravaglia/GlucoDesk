@@ -1,4 +1,6 @@
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Desktop.Localization;
+using System.Globalization;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 
@@ -22,7 +24,7 @@ public static class DashboardProviderStatusPresenter
             CgmProviderKind.Mock =>
                 new DashboardProviderStatusPresentation(
                     "Using Mock data",
-                    "Mock is the active live provider. Configure and select Dexcom or Nightscout in Settings to use real glucose data.",
+                    T("DashboardMockProviderMessage"),
                     "Mock",
                     false,
                     true),
@@ -46,7 +48,7 @@ public static class DashboardProviderStatusPresenter
             CgmProviderKind.DexcomSandbox =>
                 new DashboardProviderStatusPresentation(
                     "Using Dexcom Sandbox",
-                    "Dexcom Sandbox is active. This provider returns simulated data for integration testing and does not represent your real glucose data.",
+                    T("DashboardDexcomSandboxMessage"),
                     "Dexcom Sandbox",
                     true,
                     false),
@@ -61,8 +63,8 @@ public static class DashboardProviderStatusPresenter
 
             _ =>
                 new DashboardProviderStatusPresentation(
-                    "Provider status unknown",
-                    "The active glucose data provider could not be identified.",
+                    T("DashboardProviderStatusUnknown"),
+                    T("DashboardProviderStatusUnknownMessage"),
                     "Unknown",
                     false,
                     false)
@@ -84,21 +86,26 @@ public static class DashboardProviderStatusPresenter
         return freshness switch
         {
             GlucoseDataFreshness.Live =>
-                $"{providerDisplayName} is the active glucose provider and is returning live data.",
+                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedLive"), providerDisplayName),
 
             GlucoseDataFreshness.NearRealTime =>
-                $"{providerDisplayName} is the active glucose provider and is returning near real-time data.",
+                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedNearRealTime"), providerDisplayName),
 
             GlucoseDataFreshness.Delayed =>
-                $"{providerDisplayName} is the active glucose provider and is returning delayed data.",
+                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedDelayed"), providerDisplayName),
 
             GlucoseDataFreshness.Historical =>
-                $"{providerDisplayName} is the active glucose provider and is returning historical data.",
+                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedHistorical"), providerDisplayName),
 
             _ =>
-                $"{providerDisplayName} is the active glucose provider."
+                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedGeneric"), providerDisplayName)
         };
     }
 
     #endregion
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
 }

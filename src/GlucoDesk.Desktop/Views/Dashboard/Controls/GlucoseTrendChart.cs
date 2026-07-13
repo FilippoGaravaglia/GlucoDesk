@@ -6,6 +6,7 @@ using Avalonia.Media;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.ValueObjects;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.Views.Dashboard.Controls;
 
@@ -679,12 +680,12 @@ public sealed class GlucoseTrendChart : Control
         GlucoseUnit displayUnit)
     {
         var highLabel = CreateText(
-            $"High {FormatGlucoseValueLabel(targetRange.HighMgDl, displayUnit)}",
+            $"{LocalizationManager.GetString("DashboardChartHigh")} {FormatGlucoseValueLabel(targetRange.HighMgDl, displayUnit)}",
             TargetTextBrush,
             TargetLabelFontSize);
 
         var lowLabel = CreateText(
-            $"Low {FormatGlucoseValueLabel(targetRange.LowMgDl, displayUnit)}",
+            $"{LocalizationManager.GetString("DashboardChartLow")} {FormatGlucoseValueLabel(targetRange.LowMgDl, displayUnit)}",
             TargetTextBrush,
             TargetLabelFontSize);
 
@@ -702,7 +703,10 @@ public sealed class GlucoseTrendChart : Control
     /// <param name="plotArea">The chart plot area.</param>
     private static void DrawEmptyState(DrawingContext context, Rect plotArea)
     {
-        var text = CreateText("No glucose readings available", EmptyTextBrush, 13);
+        var text = CreateText(
+            LocalizationManager.GetString("DashboardChartNoReadings"),
+            EmptyTextBrush,
+            13);
         var origin = new Point(
             plotArea.Left + ((plotArea.Width - text.Width) / 2),
             plotArea.Top + ((plotArea.Height - text.Height) / 2));
@@ -1166,7 +1170,7 @@ public sealed class GlucoseTrendChart : Control
             return "Above target";
         }
 
-        return "In range";
+        return LocalizationManager.GetString("DashboardChartInRange");
     }
 
     /// <summary>

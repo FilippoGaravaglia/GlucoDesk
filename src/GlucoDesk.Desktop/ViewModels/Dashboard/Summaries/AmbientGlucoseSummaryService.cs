@@ -1,4 +1,5 @@
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard.Summaries;
 
@@ -26,7 +27,7 @@ public static class AmbientGlucoseSummaryService
 
         if (chartPoints.Count == 0)
         {
-            return "No recent glucose data.";
+            return T("DashboardNoRecentGlucoseData");
         }
 
         var orderedPoints = chartPoints
@@ -37,22 +38,22 @@ public static class AmbientGlucoseSummaryService
 
         if (latestPoint.ValueMgDl < targetLowMgDl)
         {
-            return "Below target.";
+            return T("DashboardBelowTargetSentence");
         }
 
         if (latestPoint.ValueMgDl > targetHighMgDl)
         {
-            return "Above target.";
+            return T("DashboardAboveTargetSentence");
         }
 
         if (HasRecentlyReturnedInRange(orderedPoints, targetLowMgDl, targetHighMgDl))
         {
-            return "Recently back in range.";
+            return T("DashboardRecentlyBackInRange");
         }
 
         if (orderedPoints.Length < 2)
         {
-            return "In range.";
+            return T("DashboardInRangeSentence");
         }
 
         var previousPoint = orderedPoints[^2];
@@ -60,22 +61,22 @@ public static class AmbientGlucoseSummaryService
 
         if (Math.Abs(deltaMgDl) <= StableDeltaMgDl)
         {
-            return "Stable and in range.";
+            return T("DashboardStableAndInRange");
         }
 
         if (deltaMgDl >= MeaningfulDeltaMgDl)
         {
-            return "Rising, still in range.";
+            return T("DashboardRisingStillInRange");
         }
 
         if (deltaMgDl <= -MeaningfulDeltaMgDl)
         {
-            return "Falling, still in range.";
+            return T("DashboardFallingStillInRange");
         }
 
         return deltaMgDl > 0
-            ? "Rising slowly, still in range."
-            : "Falling slowly, still in range.";
+            ? T("DashboardRisingSlowlyStillInRange")
+            : T("DashboardFallingSlowlyStillInRange");
     }
 
     /// <summary>
@@ -102,4 +103,9 @@ public static class AmbientGlucoseSummaryService
         return recentPreviousPoints.Any(
             point => point.ValueMgDl < targetLowMgDl || point.ValueMgDl > targetHighMgDl);
     }
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
 }

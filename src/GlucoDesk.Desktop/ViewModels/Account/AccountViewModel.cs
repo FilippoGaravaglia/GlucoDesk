@@ -9,6 +9,7 @@ using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
 using Avalonia.Threading;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Account;
 
@@ -17,8 +18,9 @@ namespace GlucoDesk.Desktop.ViewModels.Account;
 /// </summary>
 public sealed partial class AccountViewModel : ViewModelBase
 {
-    private const string UnsupportedAccountConnectionMessage =
-        "Dexcom Share account connection is currently supported only on macOS and Windows in this preview. The current platform does not provide a supported secure credential store yet.";
+    private static string UnsupportedAccountConnectionMessage =>
+
+        T("AccountUnsupportedPlatformMessage");
 
     private readonly IDexcomShareCredentialStore _credentialStore;
     private readonly IDexcomShareClient _dexcomShareClient;
@@ -36,7 +38,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     private DexcomShareRegionSelectionItem? _selectedRegion;
 
     [ObservableProperty]
-    private string _statusMessage = "Account not loaded.";
+    private string _statusMessage = T("AccountNotLoaded");
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -51,10 +53,10 @@ public sealed partial class AccountViewModel : ViewModelBase
     private bool _hasStoredCredentials;
 
     [ObservableProperty]
-    private string _connectionDiagnosticStatusText = "Connection not tested";
+    private string _connectionDiagnosticStatusText = T("AccountConnectionNotTested");
 
     [ObservableProperty]
-    private string _connectionDiagnosticDescriptionText = "Use Test connection to verify the current Dexcom Share credentials before relying on automatic reconnect.";
+    private string _connectionDiagnosticDescriptionText = T("AccountInitialDiagnosticsDescription");
 
     [ObservableProperty]
     private bool _hasSuccessfulConnectionTest;
@@ -111,12 +113,12 @@ public sealed partial class AccountViewModel : ViewModelBase
         {
             if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
             {
-                return "Account connection unavailable";
+                return T("AccountConnectionUnavailable");
             }
 
             return HasStoredCredentials
-                ? "Saved account available"
-                : "No saved account";
+                ? T("AccountSavedAvailable")
+                : T("AccountNoSavedAccount");
         }
     }
 
@@ -129,12 +131,12 @@ public sealed partial class AccountViewModel : ViewModelBase
         {
             if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
             {
-                return "Secure credential storage for Dexcom Share is currently available only on macOS and Windows in this preview.";
+                return T("AccountSecureStorageUnavailable");
             }
 
             return HasStoredCredentials
-                ? "Dexcom Share credentials are available from secure local storage. The password is not shown in the form."
-                : "Save your Dexcom Share account to enable automatic reconnect when GlucoDesk starts.";
+                ? T("AccountStoredCredentialsAvailable")
+                : T("AccountSaveToEnableReconnect");
         }
     }
 
@@ -147,12 +149,12 @@ public sealed partial class AccountViewModel : ViewModelBase
         {
             if (!IsDexcomShareAccountConnectionSupportedOnCurrentPlatform())
             {
-                return "Dexcom Share account connection is not available on this platform yet.";
+                return T("AccountPlatformUnavailable");
             }
 
             return HasStoredCredentials
-                ? "Leave empty to keep the saved password. Enter a new password only if you want to replace it."
-                : "Required to connect to Dexcom Share. It will be saved using the configured secure credential store.";
+                ? T("AccountPasswordKeepExisting")
+                : T("AccountPasswordRequiredHelp");
         }
     }
 
@@ -170,7 +172,7 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         IsBusy = true;
         ClearError();
-        StatusMessage = "Loading account...";
+        StatusMessage = T("AccountLoading");
 
         try
         {
@@ -193,9 +195,9 @@ public sealed partial class AccountViewModel : ViewModelBase
                     region: RegionOptions[0]);
 
                 ResetConnectionDiagnostics(
-                    "No saved Dexcom Share account is available. Enter credentials and run Test connection before saving.");
+                    T("AccountNoSavedCredentialsDescription"));
 
-                StatusMessage = "No Dexcom Share account saved yet.";
+                StatusMessage = T("AccountNoAccountSavedStatus");
                 return;
             }
 
@@ -206,13 +208,13 @@ public sealed partial class AccountViewModel : ViewModelBase
                 FindRegion(credentials.Region));
 
             SetConnectionDiagnosticsPending(
-                "Saved credentials were loaded from secure storage. Run Test connection to verify they are still valid.");
+                T("AccountLoadedDiagnostics"));
 
-            StatusMessage = "Dexcom Share account loaded. Password is kept hidden and remains in secure storage.";
+            StatusMessage = T("AccountLoadedStatus");
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Account load cancelled.";
+            StatusMessage = T("AccountLoadCancelled");
         }
         catch (PlatformNotSupportedException exception)
         {
@@ -220,7 +222,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
-            ApplyUnexpectedFailure(exception, "Unexpected error while loading account.");
+            ApplyUnexpectedFailure(exception, T("AccountUnexpectedLoadError"));
         }
         finally
         {
@@ -242,7 +244,7 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         IsBusy = true;
         ClearError();
-        StatusMessage = "Saving account...";
+        StatusMessage = T("AccountSaving");
 
         try
         {
@@ -277,18 +279,18 @@ public sealed partial class AccountViewModel : ViewModelBase
             if (!providersConfigured)
             {
                 SetConnectionDiagnosticsPending(
-                    "Credentials were saved, but provider settings could not be updated. Check the error message before restarting.");
+                    T("AccountSavedSettingsFailedDiagnostics"));
                 return;
             }
 
             SetConnectionDiagnosticsPending(
-                "Account saved and Dexcom Share selected as provider. Run Test connection to verify credentials before relying on reconnect.");
+                T("AccountSavedPendingTestDiagnostics"));
 
-            StatusMessage = "Dexcom Share account saved securely. Dexcom Share is now selected as the live and historical provider, so GlucoDesk can reconnect after restart.";
+            StatusMessage = T("AccountSavedSuccessfullyStatus");
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Account save cancelled.";
+            StatusMessage = T("AccountSaveCancelled");
         }
         catch (PlatformNotSupportedException exception)
         {
@@ -296,7 +298,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
-            ApplyUnexpectedFailure(exception, "Unexpected error while saving account.");
+            ApplyUnexpectedFailure(exception, T("AccountUnexpectedSaveError"));
         }
         finally
         {
@@ -318,8 +320,8 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         IsBusy = true;
         ClearError();
-        StatusMessage = "Testing Dexcom Share connection...";
-        SetConnectionDiagnosticsPending("Testing the current Dexcom Share credentials...");
+        StatusMessage = T("AccountTestingConnection");
+        SetConnectionDiagnosticsPending(T("AccountTestingCredentials"));
 
         try
         {
@@ -334,7 +336,7 @@ public sealed partial class AccountViewModel : ViewModelBase
 
             if (credentials is null)
             {
-                SetConnectionDiagnosticsFailed("The current form is incomplete. Fix the validation error and try again.");
+                SetConnectionDiagnosticsFailed(T("AccountIncompleteForm"));
                 return;
             }
 
@@ -347,25 +349,25 @@ public sealed partial class AccountViewModel : ViewModelBase
             if (result.IsFailure)
             {
                 var message = string.IsNullOrWhiteSpace(result.Error.Message)
-                    ? "Dexcom Share rejected the current credentials."
+                    ? T("AccountCredentialsRejected")
                     : result.Error.Message;
 
                 SetConnectionDiagnosticsFailed(message);
-                ApplyFailure(result, "Dexcom Share connection failed.");
+                ApplyFailure(result, T("AccountConnectionFailedFallback"));
                 return;
             }
 
             SetConnectionDiagnosticsSucceeded(
-                "Dexcom Share accepted the current credentials. The account can be used for automatic reconnect.");
+                T("AccountCredentialsAccepted"));
 
             StatusMessage = HasStoredCredentials
-                ? "Dexcom Share connection successful. Save the account if you changed any field."
-                : "Dexcom Share connection successful. Save the account to persist these credentials.";
+                ? T("AccountConnectionSuccessfulSaved")
+                : T("AccountConnectionSuccessfulUnsaved");
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Connection test cancelled.";
-            SetConnectionDiagnosticsPending("Connection test was cancelled. Run Test connection again when ready.");
+            StatusMessage = T("AccountConnectionTestCancelled");
+            SetConnectionDiagnosticsPending(T("AccountConnectionTestCancelledDiagnostics"));
         }
         catch (PlatformNotSupportedException exception)
         {
@@ -374,7 +376,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         catch (Exception exception)
         {
             SetConnectionDiagnosticsFailed(exception.Message);
-            ApplyUnexpectedFailure(exception, "Unexpected error while testing Dexcom Share connection.");
+            ApplyUnexpectedFailure(exception, T("AccountUnexpectedConnectionTestError"));
         }
         finally
         {
@@ -418,13 +420,13 @@ public sealed partial class AccountViewModel : ViewModelBase
                 region: RegionOptions[0]);
 
             ResetConnectionDiagnostics(
-                "Saved credentials were removed. Enter credentials and run Test connection before saving a new account.");
+                T("AccountCredentialsRemovedDiagnostics"));
 
-            StatusMessage = "Dexcom Share account removed from secure storage.";
+            StatusMessage = T("AccountCredentialsRemovedStatus");
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Clear account cancelled.";
+            StatusMessage = T("AccountClearCancelled");
         }
         catch (PlatformNotSupportedException exception)
         {
@@ -432,7 +434,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
-            ApplyUnexpectedFailure(exception, "Unexpected error while clearing account.");
+            ApplyUnexpectedFailure(exception, T("AccountUnexpectedClearError"));
         }
         finally
         {
@@ -506,7 +508,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         HasStoredCredentials = false;
         HasError = true;
         ErrorMessage = UnsupportedAccountConnectionMessage;
-        StatusMessage = "Dexcom Share account connection is not available on this platform yet.";
+        StatusMessage = T("AccountPlatformUnavailable");
 
         SetConnectionDiagnosticsFailed(UnsupportedAccountConnectionMessage);
 
@@ -529,7 +531,7 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         HasError = true;
         ErrorMessage = message;
-        StatusMessage = "Dexcom Share account connection is not available on this platform yet.";
+        StatusMessage = T("AccountPlatformUnavailable");
 
         SetConnectionDiagnosticsFailed(message);
 
@@ -642,7 +644,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         }
 
         SetConnectionDiagnosticsPending(
-            "The account form has changed. Run Test connection again to verify the current values.");
+            T("AccountFormChangedDiagnostics"));
     }
 
     /// <summary>
@@ -653,7 +655,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     {
         HasSuccessfulConnectionTest = false;
         HasFailedConnectionTest = false;
-        ConnectionDiagnosticStatusText = "Connection not tested";
+        ConnectionDiagnosticStatusText = T("AccountConnectionNotTested");
         ConnectionDiagnosticDescriptionText = description;
     }
 
@@ -665,7 +667,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     {
         HasSuccessfulConnectionTest = false;
         HasFailedConnectionTest = false;
-        ConnectionDiagnosticStatusText = "Connection not verified";
+        ConnectionDiagnosticStatusText = T("AccountConnectionNotVerified");
         ConnectionDiagnosticDescriptionText = description;
     }
 
@@ -677,7 +679,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     {
         HasSuccessfulConnectionTest = true;
         HasFailedConnectionTest = false;
-        ConnectionDiagnosticStatusText = "Connection verified";
+        ConnectionDiagnosticStatusText = T("AccountConnectionVerified");
         ConnectionDiagnosticDescriptionText = description;
     }
 
@@ -689,7 +691,7 @@ public sealed partial class AccountViewModel : ViewModelBase
     {
         HasSuccessfulConnectionTest = false;
         HasFailedConnectionTest = true;
-        ConnectionDiagnosticStatusText = "Connection failed";
+        ConnectionDiagnosticStatusText = T("AccountConnectionFailed");
         ConnectionDiagnosticDescriptionText = description;
     }
 
@@ -702,13 +704,13 @@ public sealed partial class AccountViewModel : ViewModelBase
     {
         if (SelectedRegion is null)
         {
-            ApplyValidationFailure("Select a Dexcom Share region.");
+            ApplyValidationFailure(T("AccountSelectRegionValidation"));
             return null;
         }
 
         if (string.IsNullOrWhiteSpace(EmailText))
         {
-            ApplyValidationFailure("Enter your Dexcom account email.");
+            ApplyValidationFailure(T("AccountEnterEmailValidation"));
             return null;
         }
 
@@ -728,7 +730,7 @@ public sealed partial class AccountViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(passwordToUse))
         {
-            ApplyValidationFailure("Enter your Dexcom password.");
+            ApplyValidationFailure(T("AccountEnterPasswordValidation"));
             return null;
         }
 
@@ -753,7 +755,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         {
             ApplyFailure(
                 settingsResult,
-                "Dexcom Share account was saved, but GlucoDesk could not read application settings.");
+                T("AccountSettingsReadFailed"));
 
             return false;
         }
@@ -776,7 +778,7 @@ public sealed partial class AccountViewModel : ViewModelBase
         {
             ApplyFailure(
                 saveSettingsResult,
-                "Dexcom Share account was saved, but GlucoDesk could not update provider settings.");
+                T("AccountSettingsUpdateFailed"));
 
             return false;
         }
@@ -898,4 +900,10 @@ public sealed partial class AccountViewModel : ViewModelBase
     }
 
     #endregion
+
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
 }

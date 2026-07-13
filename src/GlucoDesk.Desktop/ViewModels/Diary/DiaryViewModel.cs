@@ -12,13 +12,14 @@ using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Diary.Enums;
 using GlucoDesk.Desktop.ViewModels.Diary.Options;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Diary;
 
 /// <summary>
 /// View model for glycemic diary export.
 /// </summary>
-public sealed class DiaryViewModel : ViewModelBase
+public sealed class DiaryViewModel : ViewModelBase, IDisposable
 {
     private readonly IGlycemicDiaryService _diaryService;
     private readonly IGlycemicDiaryExcelExportService _excelExportService;
@@ -26,6 +27,10 @@ public sealed class DiaryViewModel : ViewModelBase
     private readonly IDiaryExportFileSaveService _fileSaveService;
     private readonly IApplicationSettingsService _settingsService;
     private readonly TimeProvider _timeProvider;
+
+    private IReadOnlyList<DiaryExportPeriodPresetOption> _periodPresets = [];
+    private IReadOnlyList<DiaryExportFormatOption> _formats = [];
+    private bool _isDisposed;
 
     private DiaryExportPeriodPresetOption _selectedPeriodPreset;
     private DiaryExportFormatOption _selectedFormat;
@@ -75,48 +80,24 @@ public sealed class DiaryViewModel : ViewModelBase
         _settingsService = settingsService;
         _timeProvider = timeProvider;
 
-        PeriodPresets =
-        [
-            new DiaryExportPeriodPresetOption(
-                DiaryExportPeriodPresetKind.LastFourteenDays,
-                "Last 14 days",
-                "A compact recent diary for short-term review."),
-            new DiaryExportPeriodPresetOption(
-                DiaryExportPeriodPresetKind.LastThirtyDays,
-                "Last 30 days",
-                "A complete recent diary for monthly review."),
-            new DiaryExportPeriodPresetOption(
-                DiaryExportPeriodPresetKind.CurrentMonth,
-                "Current month",
-                "From the first day of this month to now."),
-            new DiaryExportPeriodPresetOption(
-                DiaryExportPeriodPresetKind.PreviousMonth,
-                "Previous month",
-                "The full previous calendar month.")
-        ];
+        PeriodPresets = BuildPeriodPresets();
+        Formats = BuildFormats();
 
-        Formats =
-        [
-            new DiaryExportFormatOption(
-                DiaryExportFormatKind.Excel,
-                "Excel workbook",
-                "Best for analysis, filtering and sharing structured data."),
-            new DiaryExportFormatOption(
-                DiaryExportFormatKind.Pdf,
-                "PDF document",
-                "Best for a clean printable diary summary.")
-        ];
+        _selectedPeriodPreset = PeriodPresets.Single(
+            option => option.Kind == DiaryExportPeriodPresetKind.LastThirtyDays);
 
-        _selectedPeriodPreset = PeriodPresets[1];
-        _selectedFormat = Formats[0];
+        _selectedFormat = Formats.Single(
+            option => option.Kind == DiaryExportFormatKind.Excel);
 
-        _statusTitle = "Ready to export";
-        _statusText = "Choose a period and format, then export your diary.";
+        _statusTitle = T("DiaryReadyToExportTitle");
+        _statusText = T("DiaryReadyToExportDescription");
 
-        _previewStatusTitle = "Data preview";
-        _previewStatusText = "Refresh the preview to check local data completeness before exporting.";
-        _previewCoverageText = "Coverage not checked yet";
-        _previewDetailsText = "The exported diary will always include data-completeness indicators.";
+        _previewStatusTitle = T("DiaryDataPreviewTitle");
+        _previewStatusText = T("DiaryDataPreviewDescription");
+        _previewCoverageText = T("DiaryCoverageNotCheckedYet");
+        _previewDetailsText = T("DiaryCompletenessIndicatorsDescription");
+
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
 
         ExportCommand = new AsyncRelayCommand(
             ExportAsync,
@@ -130,12 +111,20 @@ public sealed class DiaryViewModel : ViewModelBase
     /// <summary>
     /// Gets the available period presets.
     /// </summary>
-    public IReadOnlyList<DiaryExportPeriodPresetOption> PeriodPresets { get; }
+    public IReadOnlyList<DiaryExportPeriodPresetOption> PeriodPresets
+    {
+        get => _periodPresets;
+        private set => SetProperty(ref _periodPresets, value);
+    }
 
     /// <summary>
     /// Gets the available export formats.
     /// </summary>
-    public IReadOnlyList<DiaryExportFormatOption> Formats { get; }
+    public IReadOnlyList<DiaryExportFormatOption> Formats
+    {
+        get => _formats;
+        private set => SetProperty(ref _formats, value);
+    }
 
     /// <summary>
     /// Gets the export command.
@@ -229,12 +218,12 @@ public sealed class DiaryViewModel : ViewModelBase
     /// <summary>
     /// Gets the export button text.
     /// </summary>
-    public string ExportButtonText => IsExporting ? "Exporting..." : "Export diary";
+    public string ExportButtonText => IsExporting ? T("DiaryExporting") : T("DiaryExportDiary");
 
     /// <summary>
     /// Gets the refresh preview button text.
     /// </summary>
-    public string RefreshPreviewButtonText => IsPreviewLoading ? "Checking..." : "Refresh preview";
+    public string RefreshPreviewButtonText => IsPreviewLoading ? T("DiaryChecking") : T("DiaryRefreshPreview");
 
     /// <summary>
     /// Gets a value indicating whether the last export failed.
@@ -344,6 +333,99 @@ public sealed class DiaryViewModel : ViewModelBase
         private set => SetProperty(ref _previewDetailsText, value);
     }
 
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        LocalizationManager.LanguageChanged -= OnLanguageChanged;
+        _isDisposed = true;
+    }
+
+    private static IReadOnlyList<DiaryExportPeriodPresetOption> BuildPeriodPresets()
+    {
+        return
+        [
+            new DiaryExportPeriodPresetOption(
+                DiaryExportPeriodPresetKind.LastFourteenDays,
+                T("DiaryPeriodLast14Days"),
+                T("DiaryPeriodLast14DaysDescription")),
+
+            new DiaryExportPeriodPresetOption(
+                DiaryExportPeriodPresetKind.LastThirtyDays,
+                T("DiaryPeriodLast30Days"),
+                T("DiaryPeriodLast30DaysDescription")),
+
+            new DiaryExportPeriodPresetOption(
+                DiaryExportPeriodPresetKind.CurrentMonth,
+                T("DiaryPeriodCurrentMonth"),
+                T("DiaryPeriodCurrentMonthDescription")),
+
+            new DiaryExportPeriodPresetOption(
+                DiaryExportPeriodPresetKind.PreviousMonth,
+                T("DiaryPeriodPreviousMonth"),
+                T("DiaryPeriodPreviousMonthDescription"))
+        ];
+    }
+
+    private static IReadOnlyList<DiaryExportFormatOption> BuildFormats()
+    {
+        return
+        [
+            new DiaryExportFormatOption(
+                DiaryExportFormatKind.Excel,
+                T("DiaryFormatExcelWorkbook"),
+                T("DiaryFormatExcelWorkbookDescription")),
+
+            new DiaryExportFormatOption(
+                DiaryExportFormatKind.Pdf,
+                T("DiaryFormatPdfDocument"),
+                T("DiaryFormatPdfDocumentDescription"))
+        ];
+    }
+
+    private void OnLanguageChanged(object? sender, EventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        var selectedPeriodKind = SelectedPeriodPreset.Kind;
+        var selectedFormatKind = SelectedFormat.Kind;
+
+        PeriodPresets = BuildPeriodPresets();
+        Formats = BuildFormats();
+
+        _selectedPeriodPreset = PeriodPresets.Single(
+            option => option.Kind == selectedPeriodKind);
+
+        _selectedFormat = Formats.Single(
+            option => option.Kind == selectedFormatKind);
+
+        OnPropertyChanged(nameof(SelectedPeriodPreset));
+        OnPropertyChanged(nameof(SelectedFormat));
+        OnPropertyChanged(nameof(ExportButtonText));
+        OnPropertyChanged(nameof(RefreshPreviewButtonText));
+
+        ResetReadyStatus();
+        ResetPreviewStatus();
+    }
+
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
+    private static string TF(string key, params object?[] arguments)
+    {
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            T(key),
+            arguments);
+    }
+
     #region Helpers
 
     /// <summary>
@@ -383,10 +465,10 @@ public sealed class DiaryViewModel : ViewModelBase
         HasPreview = false;
         HasPreviewWarning = false;
         HasPreviewError = false;
-        PreviewStatusTitle = "Checking local history";
-        PreviewStatusText = "GlucoDesk is analyzing the selected period.";
-        PreviewCoverageText = "Checking coverage...";
-        PreviewDetailsText = "Please wait while the local history is scanned.";
+        PreviewStatusTitle = T("DiaryCheckingLocalHistoryTitle");
+        PreviewStatusText = T("DiaryAnalyzingSelectedPeriod");
+        PreviewCoverageText = T("DiaryCheckingCoverage");
+        PreviewDetailsText = T("DiaryScanningLocalHistory");
 
         try
         {
@@ -408,9 +490,10 @@ public sealed class DiaryViewModel : ViewModelBase
                 "Preview cancelled",
                 "The data completeness preview was cancelled.");
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            SetPreviewError($"Unexpected preview error: {exception.Message}");
+            SetPreviewError(string.Empty);
+            PreviewStatusText = T("DiaryUnexpectedPreviewError");
         }
         finally
         {
@@ -442,7 +525,7 @@ public sealed class DiaryViewModel : ViewModelBase
             }
 
             StatusTitle = "Choose save location";
-            StatusText = "Select where to save the generated diary file.";
+            StatusText = T("DiarySelectSaveLocation");
 
             var saveResult = await _fileSaveService.SaveAsync(
                 exportResult.Value,
@@ -457,8 +540,8 @@ public sealed class DiaryViewModel : ViewModelBase
             if (saveResult.Value.WasCanceled)
             {
                 SetWarningStatus(
-                    "Export cancelled",
-                    "No file was saved.");
+                    T("DiaryExportCancelledTitle"),
+                    T("DiaryNoFileSaved"));
                 return;
             }
 
@@ -467,12 +550,13 @@ public sealed class DiaryViewModel : ViewModelBase
         catch (OperationCanceledException)
         {
             SetWarningStatus(
-                "Export cancelled",
+                T("DiaryExportCancelledTitle"),
                 "The export operation was cancelled.");
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            SetErrorStatus($"Unexpected export error: {exception.Message}");
+            SetErrorStatus(string.Empty);
+            StatusText = T("DiaryUnexpectedExportError");
         }
         finally
         {
@@ -601,24 +685,25 @@ public sealed class DiaryViewModel : ViewModelBase
         if (!hasReadings)
         {
             PreviewStatusTitle = "No local data found";
-            PreviewStatusText = "The selected period does not contain local glucose readings yet.";
+            PreviewStatusText = T("DiaryNoLocalReadingsDescription");
         }
         else if (hasGoodCoverage)
         {
-            PreviewStatusTitle = "History coverage looks good";
-            PreviewStatusText = "The selected period has strong local history coverage.";
+            PreviewStatusTitle = T("DiaryHistoryCoverageGoodTitle");
+            PreviewStatusText = T("DiaryHistoryCoverageGoodDescription");
         }
         else
         {
-            PreviewStatusTitle = "Partial local history";
-            PreviewStatusText = "The selected period contains incomplete local history. The export will include completeness indicators.";
+            PreviewStatusTitle = T("DiaryPartialHistoryTitle");
+            PreviewStatusText = T("DiaryPartialHistoryDescription");
         }
 
-        PreviewDetailsText =
-            $"{report.ReadingsCount} readings · " +
-            $"{report.IncompleteDaysCount} incomplete days · " +
-            $"{report.EmptyDaysCount} empty days · " +
-            $"{report.OverallContinuity.Gaps.Count} detected gaps";
+        PreviewDetailsText = TF(
+            "DiaryPreviewDetailsFormat",
+            report.ReadingsCount,
+            report.IncompleteDaysCount,
+            report.EmptyDaysCount,
+            report.OverallContinuity.Gaps.Count);
     }
 
     /// <summary>
@@ -634,8 +719,8 @@ public sealed class DiaryViewModel : ViewModelBase
         HasError = false;
         HasSuccess = false;
         HasWarning = false;
-        StatusTitle = "Ready to export";
-        StatusText = "Choose a period and format, then export your diary.";
+        StatusTitle = T("DiaryReadyToExportTitle");
+        StatusText = T("DiaryReadyToExportDescription");
     }
 
     /// <summary>
@@ -651,10 +736,10 @@ public sealed class DiaryViewModel : ViewModelBase
         HasPreview = false;
         HasPreviewWarning = false;
         HasPreviewError = false;
-        PreviewStatusTitle = "Data preview";
-        PreviewStatusText = "Refresh the preview to check local data completeness before exporting.";
-        PreviewCoverageText = "Coverage not checked yet";
-        PreviewDetailsText = "The exported diary will always include data-completeness indicators.";
+        PreviewStatusTitle = T("DiaryDataPreviewTitle");
+        PreviewStatusText = T("DiaryDataPreviewDescription");
+        PreviewCoverageText = T("DiaryCoverageNotCheckedYet");
+        PreviewDetailsText = T("DiaryCompletenessIndicatorsDescription");
     }
 
     /// <summary>
@@ -665,8 +750,8 @@ public sealed class DiaryViewModel : ViewModelBase
         HasError = false;
         HasSuccess = false;
         HasWarning = false;
-        StatusTitle = "Generating diary";
-        StatusText = "GlucoDesk is preparing your export file.";
+        StatusTitle = T("DiaryGeneratingTitle");
+        StatusText = T("DiaryGeneratingDescription");
     }
 
     /// <summary>
@@ -678,10 +763,10 @@ public sealed class DiaryViewModel : ViewModelBase
         HasError = false;
         HasWarning = false;
         HasSuccess = true;
-        StatusTitle = "Diary exported";
+        StatusTitle = T("DiaryExportedTitle");
         StatusText = string.IsNullOrWhiteSpace(savedFileName)
-            ? "The diary file was saved successfully."
-            : $"The diary was saved as {savedFileName}.";
+            ? T("DiarySavedSuccessfully")
+            : TF("DiarySavedAsFormat", savedFileName);
     }
 
     /// <summary>
@@ -706,13 +791,13 @@ public sealed class DiaryViewModel : ViewModelBase
     /// <param name="message">The error message.</param>
     private void SetErrorStatus(string message)
     {
+        _ = message;
+
         HasSuccess = false;
         HasWarning = false;
         HasError = true;
-        StatusTitle = "Export failed";
-        StatusText = string.IsNullOrWhiteSpace(message)
-            ? "Unable to export the diary."
-            : message;
+        StatusTitle = T("DiaryExportFailedTitle");
+        StatusText = T("DiaryUnableToExport");
     }
 
     /// <summary>
@@ -724,13 +809,16 @@ public sealed class DiaryViewModel : ViewModelBase
         string title,
         string message)
     {
+        _ = title;
+        _ = message;
+
         HasPreview = false;
         HasPreviewError = false;
         HasPreviewWarning = true;
-        PreviewStatusTitle = title;
-        PreviewStatusText = message;
-        PreviewCoverageText = "Coverage unavailable";
-        PreviewDetailsText = "Try refreshing the preview again.";
+        PreviewStatusTitle = T("DiaryPreviewUnavailableTitle");
+        PreviewStatusText = T("DiaryPreviewUnavailableDescription");
+        PreviewCoverageText = T("DiaryCoverageUnavailable");
+        PreviewDetailsText = T("DiaryTryRefreshAgain");
     }
 
     /// <summary>
@@ -739,15 +827,15 @@ public sealed class DiaryViewModel : ViewModelBase
     /// <param name="message">The error message.</param>
     private void SetPreviewError(string message)
     {
+        _ = message;
+
         HasPreview = false;
         HasPreviewWarning = false;
         HasPreviewError = true;
-        PreviewStatusTitle = "Preview failed";
-        PreviewStatusText = string.IsNullOrWhiteSpace(message)
-            ? "Unable to analyze local history for the selected period."
-            : message;
-        PreviewCoverageText = "Coverage unavailable";
-        PreviewDetailsText = "The export can still be generated, but completeness should be checked in the file.";
+        PreviewStatusTitle = T("DiaryPreviewFailedTitle");
+        PreviewStatusText = T("DiaryUnableAnalyzePeriod");
+        PreviewCoverageText = T("DiaryCoverageUnavailable");
+        PreviewDetailsText = T("DiaryPreviewErrorDetails");
     }
 
     /// <summary>

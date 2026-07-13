@@ -1,4 +1,5 @@
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Account;
 
@@ -17,7 +18,7 @@ public sealed record DexcomShareRegionSelectionItem
         string displayName)
     {
         Region = region;
-        DisplayName = displayName;
+        _ = displayName;
     }
 
     /// <summary>
@@ -28,7 +29,21 @@ public sealed record DexcomShareRegionSelectionItem
     /// <summary>
     /// Gets the display name.
     /// </summary>
-    public string DisplayName { get; }
+    public string DisplayName =>
+        Region switch
+        {
+            DexcomShareRegion.OutsideUs =>
+                LocalizationManager.GetString(
+                    "AccountRegionOutsideUsEurope"),
+
+            DexcomShareRegion.Us =>
+                LocalizationManager.GetString(
+                    "AccountRegionUnitedStates"),
+
+            _ =>
+                LocalizationManager.GetString(
+                    "AccountRegionUnknown")
+        };
 
     /// <inheritdoc />
     public override string ToString()

@@ -2,6 +2,7 @@ using System.Globalization;
 using GlucoDesk.Application.Cgm.Statistics.Requests;
 using GlucoDesk.Application.Cgm.Statistics.Results;
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
 
@@ -28,7 +29,7 @@ public static class DashboardStatisticsPresenter
         if (!result.HasData)
         {
             return new DashboardStatisticsPresentation(
-                "No statistics available for the selected dashboard period.",
+                T("DashboardNoStatisticsAvailableForPeriod"),
                 "—",
                 "—",
                 "—",
@@ -39,7 +40,7 @@ public static class DashboardStatisticsPresenter
         }
 
         return new DashboardStatisticsPresentation(
-            $"Statistics calculated from {result.AnalyzedReadingsCount} reading(s).",
+            string.Format(CultureInfo.InvariantCulture, T("DashboardStatisticsCalculatedFromReadings"), result.AnalyzedReadingsCount),
             $"{FormatDecimal(result.AverageGlucose)} {FormatUnit(result.Unit)}",
             $"{FormatDecimal(result.InRangePercentage)}%",
             $"{FormatDecimal(result.BelowRangePercentage)}%",
@@ -56,13 +57,13 @@ public static class DashboardStatisticsPresenter
     public static DashboardStatisticsPresentation Disabled()
     {
         return new DashboardStatisticsPresentation(
-            "Statistics are not available in the current desktop runtime.",
+            T("DashboardStatisticsNotAvailable"),
             "—",
             "—",
             "—",
             "—",
             "—",
-            "Target range: —",
+            T("DashboardTargetRangeUnavailable"),
             false);
     }
 
@@ -74,13 +75,13 @@ public static class DashboardStatisticsPresenter
     public static DashboardStatisticsPresentation Failed(string errorCode)
     {
         return new DashboardStatisticsPresentation(
-            $"Statistics update failed · {errorCode}",
+            string.Format(CultureInfo.InvariantCulture, T("DashboardStatisticsUpdateFailed"), errorCode),
             "—",
             "—",
             "—",
             "—",
             "—",
-            "Target range: —",
+            T("DashboardTargetRangeUnavailable"),
             false);
     }
 
@@ -95,10 +96,10 @@ public static class DashboardStatisticsPresenter
     {
         if (result.LoadedReadingsCount == result.AnalyzedReadingsCount)
         {
-            return $"{result.AnalyzedReadingsCount} analyzed";
+            return string.Format(CultureInfo.InvariantCulture, T("DashboardAnalyzedReadings"), result.AnalyzedReadingsCount);
         }
 
-        return $"{result.AnalyzedReadingsCount} analyzed / {result.LoadedReadingsCount} loaded";
+        return string.Format(CultureInfo.InvariantCulture, T("DashboardAnalyzedLoadedReadings"), result.AnalyzedReadingsCount, result.LoadedReadingsCount);
     }
 
     /// <summary>
@@ -108,7 +109,7 @@ public static class DashboardStatisticsPresenter
     /// <returns>The target range text.</returns>
     private static string BuildTargetRangeText(GlucoseStatisticsTargetRange targetRange)
     {
-        return $"Target range: {FormatDecimal(targetRange.Low)}–{FormatDecimal(targetRange.High)} {FormatUnit(targetRange.Unit)}";
+        return string.Format(CultureInfo.InvariantCulture, T("DashboardStatisticsTargetRangeFormat"), FormatDecimal(targetRange.Low), FormatDecimal(targetRange.High), FormatUnit(targetRange.Unit));
     }
 
     /// <summary>
@@ -151,4 +152,9 @@ public static class DashboardStatisticsPresenter
     }
 
     #endregion
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
 }

@@ -1,4 +1,5 @@
 using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings.Selections;
 
@@ -63,7 +64,7 @@ public sealed record ProviderSelectionItem
     /// </summary>
     public string DisplayLabel => IsAvailable
         ? DisplayName
-        : $"{DisplayName} (not configured)";
+        : $"{DisplayName} ({LocalizationManager.GetString("SettingsProviderNotConfiguredShort")})";
 
     /// <inheritdoc />
     public override string ToString()
@@ -81,8 +82,8 @@ public sealed record ProviderSelectionItem
     private static string BuildDefaultAvailabilityMessage(bool isAvailable)
     {
         return isAvailable
-            ? "Provider is available."
-            : "Provider is not configured in the current desktop runtime.";
+            ? LocalizationManager.GetString("SettingsProviderAvailableDescription")
+            : LocalizationManager.GetString("SettingsProviderNotConfiguredDescription");
     }
 
     #endregion

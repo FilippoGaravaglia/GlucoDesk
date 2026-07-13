@@ -8,14 +8,17 @@ using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Main;
 
 /// <summary>
 /// Represents the main window view model.
 /// </summary>
-public sealed partial class MainWindowViewModel : ViewModelBase
+public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
 {
+    private bool _isDisposed;
+
     [ObservableProperty]
     private ViewModelBase _currentContent = null!;
 
@@ -63,6 +66,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         HistoryContinuitySyncStatus = historyContinuitySyncStatus;
 
         BackgroundSyncStatus.PropertyChanged += OnBackgroundSyncStatusPropertyChanged;
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
 
         SelectSection(Dashboard);
     }
@@ -102,7 +106,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public string LocalHistoryStatusText =>
         BackgroundSyncStatus.HasSuccessfulSync
-            ? "Up to date"
+            ? T("SidebarLocalHistoryUpToDate")
             : BackgroundSyncStatus.StatusText;
 
     /// <summary>
@@ -110,14 +114,30 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public string LocalHistoryBadgeText =>
         BackgroundSyncStatus.HasSuccessfulSync
-            ? "Synced"
-            : "Updating";
+            ? T("SidebarLocalHistorySynced")
+            : T("SidebarLocalHistoryUpdating");
 
     /// <summary>
     /// Gets the consumer-facing local history description text.
     /// </summary>
     public string LocalHistoryDescriptionText =>
-        "Your recent glucose history is saved locally on this device.";
+        T("SidebarLocalHistoryDescription");
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        BackgroundSyncStatus.PropertyChanged -=
+            OnBackgroundSyncStatusPropertyChanged;
+
+        LocalizationManager.LanguageChanged -= OnLanguageChanged;
+
+        _isDisposed = true;
+    }
 
     /// <summary>
     /// Selects the dashboard section.
@@ -180,6 +200,19 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Refreshes localized sidebar values when the application language changes.
+    /// </summary>
+    private void OnLanguageChanged(object? sender, EventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        OnPropertyChanged(nameof(LocalHistoryStatusText));
+        OnPropertyChanged(nameof(LocalHistoryBadgeText));
+        OnPropertyChanged(nameof(LocalHistoryDescriptionText));
+    }
+
+    /// <summary>
     /// Selects the active main window section and updates navigation state.
     /// </summary>
     /// <param name="selectedContent">The selected content view model.</param>
@@ -192,6 +225,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         IsDiarySelected = ReferenceEquals(selectedContent, Diary);
         IsAccountSelected = ReferenceEquals(selectedContent, Account);
         IsSettingsSelected = ReferenceEquals(selectedContent, Settings);
+    }
+
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
     }
 
     #endregion
