@@ -9,7 +9,6 @@ using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.Views.Main;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
 namespace GlucoDesk.Desktop;
 
 public partial class App : Avalonia.Application
@@ -23,6 +22,7 @@ public partial class App : Avalonia.Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        global::GlucoDesk.Desktop.Localization.LocalizationManager.InitializeIfNeeded();
     }
 
     /// <inheritdoc />

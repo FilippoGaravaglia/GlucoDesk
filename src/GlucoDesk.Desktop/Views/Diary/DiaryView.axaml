@@ -17,10 +17,10 @@
               ColumnDefinitions="*,Auto"
               ColumnSpacing="24">
           <StackPanel Spacing="8">
-            <TextBlock Text="Glycemic diary"
+            <TextBlock Text="{DynamicResource DiaryPageTitle}"
                        Classes="page-title" />
 
-            <TextBlock Text="Export a clean daily diary from your local glucose history."
+            <TextBlock Text="{DynamicResource DiaryPageSubtitle}"
                        Classes="secondary"
                        FontSize="16"
                        TextWrapping="Wrap" />
@@ -29,7 +29,7 @@
           <Border MinWidth="260" Grid.Column="1"
                   Classes="badge-accent"
                   VerticalAlignment="Top">
-            <TextBlock Text="Local export"
+            <TextBlock Text="{DynamicResource DiaryLocalExportBadge}"
                        FontSize="12"
                        FontWeight="SemiBold"
                        Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
@@ -46,10 +46,10 @@
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="24">
                 <StackPanel Spacing="4">
-                  <TextBlock Text="Export setup"
+                  <TextBlock Text="{DynamicResource DiaryExportSetupTitle}"
                              Classes="section-title" />
 
-                  <TextBlock Text="Choose the diary period and file format before refreshing the data preview."
+                  <TextBlock Text="{DynamicResource DiaryExportSetupDescription}"
                              Classes="secondary"
                              FontSize="13"
                              TextWrapping="Wrap" />
@@ -67,7 +67,7 @@
 
                 <StackPanel Grid.Column="0"
                             Spacing="8">
-                  <TextBlock Text="Period"
+                  <TextBlock Text="{DynamicResource DiaryPeriod}"
                              Classes="metric-label" />
 
                   <ComboBox ItemsSource="{Binding PeriodPresets}"
@@ -83,7 +83,7 @@
 
                 <StackPanel Grid.Column="1"
                             Spacing="8">
-                  <TextBlock Text="Format"
+                  <TextBlock Text="{DynamicResource DiaryFormat}"
                              Classes="metric-label" />
 
                   <ComboBox ItemsSource="{Binding Formats}"
@@ -106,7 +106,7 @@
 
                 <StackPanel Grid.Column="0"
                             Spacing="8">
-                  <TextBlock Text="Data preview"
+                  <TextBlock Text="{DynamicResource DiaryDataPreviewTitle}"
                              Classes="section-title" />
 
                   <TextBlock Text="{Binding PreviewStatusText}"
@@ -161,10 +161,10 @@
                     Classes="surface-card"
                     Padding="24">
               <StackPanel Spacing="10">
-                <TextBlock Text="What is included"
+                <TextBlock Text="{DynamicResource DiaryWhatIsIncludedTitle}"
                            Classes="section-title" />
 
-                <TextBlock Text="Daily summaries, breakfast/lunch/dinner/pre-night values, time-in-range, data coverage and incomplete-data indicators."
+                <TextBlock Text="{DynamicResource DiaryWhatIsIncludedDescription}"
                            Classes="secondary"
                            TextWrapping="Wrap" />
               </StackPanel>
@@ -186,7 +186,7 @@
                         Margin="0,5,0,0" />
 
                 <TextBlock Grid.Column="1"
-                           Text="GlucoDesk is not a medical device. The exported diary is for personal awareness and must not be used for treatment decisions."
+                           Text="{DynamicResource DiarySafetyDisclaimer}"
                            Classes="secondary"
                            FontSize="13"
                            TextWrapping="Wrap" />

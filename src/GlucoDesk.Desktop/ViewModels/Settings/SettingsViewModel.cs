@@ -21,6 +21,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Diagnostics;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -67,7 +68,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private GlucoseUnitSelectionItem? _selectedPreferredUnit;
 
     [ObservableProperty]
-    private string _providerAvailabilityStatusText = "Provider availability not checked";
+    private string _providerAvailabilityStatusText = T("SettingsProviderAvailabilityNotChecked");
 
     [ObservableProperty]
     private string _targetLowMgDlText = "70";
@@ -150,7 +151,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _nativeGlucoseTestNotificationStatusText =
-        "Enable native OS notifications to send a safe test notification.";
+        T("SettingsEnableNativeForTest");
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
@@ -247,8 +248,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
             var usedProviderFallback = ApplySettings(result.Value);
 
             StatusMessage = usedProviderFallback
-                ? "Settings loaded. Unavailable providers were replaced with Mock."
-                : "Settings loaded";
+                ? T("SettingsLoadedWithFallbackStatus")
+                : T("SettingsLoadedStatus");
         }
         catch (OperationCanceledException)
         {
@@ -306,7 +307,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 return;
             }
 
-            StatusMessage = "Settings saved. Dashboard will use the selected provider on next refresh.";
+            StatusMessage = T("SettingsSavedStatus");
             UpdateNativeGlucoseTestNotificationAvailability();
         }
         catch (OperationCanceledException)
@@ -338,7 +339,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         if (!GlucoseAlertsEnabled || !NativeGlucoseNotificationsEnabled)
         {
             NativeGlucoseTestNotificationStatusText =
-                "Enable glucose awareness and native OS notifications before sending a test notification.";
+                T("SettingsEnableAwarenessAndNativeForTest");
             UpdateNativeGlucoseTestNotificationAvailability();
             return;
         }
@@ -347,7 +348,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         HasError = false;
         ErrorMessage = null;
         StatusMessage = "Sending native test notification...";
-        NativeGlucoseTestNotificationStatusText = "Sending test notification...";
+        NativeGlucoseTestNotificationStatusText = T("SettingsSendingTestNotification");
 
         try
         {
@@ -367,7 +368,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         catch (OperationCanceledException)
         {
             StatusMessage = "Native test notification cancelled";
-            NativeGlucoseTestNotificationStatusText = "Test notification cancelled.";
+            NativeGlucoseTestNotificationStatusText = T("SettingsTestNotificationCancelled");
         }
         catch (Exception exception)
         {
@@ -714,6 +715,28 @@ public sealed partial class SettingsViewModel : ViewModelBase
         UpdateNativeGlucoseTestNotificationAvailability();
     }
 
+    /// <summary>
+    /// Refreshes user-facing dynamic text after the application language changes.
+    /// </summary>
+    public void RefreshLocalizedText()
+    {
+        ProviderAvailabilityStatusText =
+            BuildProviderAvailabilityStatusText(ProviderOptions);
+
+        DexcomConnectionStatusText =
+            LocalizeKnownSettingsText(DexcomConnectionStatusText);
+
+        NightscoutConnectionStatusText =
+            LocalizeKnownSettingsText(NightscoutConnectionStatusText);
+
+        StatusMessage =
+            LocalizeKnownSettingsText(StatusMessage);
+
+        UpdateNativeGlucoseTestNotificationAvailability();
+
+        OnPropertyChanged(nameof(ProviderOptions));
+    }
+
     #region Helpers
 
     /// <summary>
@@ -729,14 +752,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
         if (!GlucoseAlertsEnabled)
         {
             NativeGlucoseTestNotificationStatusText =
-                "Enable glucose awareness notifications to send a safe test notification.";
+                T("SettingsEnableAwarenessForTest");
             return;
         }
 
         if (!NativeGlucoseNotificationsEnabled)
         {
             NativeGlucoseTestNotificationStatusText =
-                "Enable native OS notifications to send a safe test notification.";
+                T("SettingsEnableNativeForTest");
             return;
         }
 
@@ -840,7 +863,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
 
         NightscoutConnectionStatusText = connectionService is null
-            ? "Nightscout: not configured in this desktop runtime."
+            ? T("SettingsNightscoutNotConfigured")
             : connectionService.GetConfigurationStatus().Message;
     }
 
@@ -853,7 +876,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         var connectionService = _nightscoutDesktopConnectionServices.FirstOrDefault();
 
         return connectionService is null
-            ? "Nightscout: not configured in this desktop runtime."
+            ? T("SettingsNightscoutNotConfigured")
             : connectionService.GetConfigurationStatus().Message;
     }
 
@@ -881,7 +904,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         if (connectionStatusService is null)
         {
-            DexcomConnectionStatusText = "Dexcom: not configured in this desktop runtime.";
+            DexcomConnectionStatusText = T("SettingsDexcomNotConfigured");
             return;
         }
 
@@ -904,22 +927,22 @@ public sealed partial class SettingsViewModel : ViewModelBase
         return status.State switch
         {
             DexcomConnectionState.ProviderNotRegistered =>
-                "Dexcom: not configured in this desktop runtime.",
+                T("SettingsDexcomNotConfigured"),
 
             DexcomConnectionState.TokenMissing =>
-                "Dexcom: configured, not connected.",
+                T("SettingsDexcomConfiguredNotConnected"),
 
             DexcomConnectionState.Connected =>
-                "Dexcom: connected.",
+                T("SettingsDexcomConnected"),
 
             DexcomConnectionState.AccessTokenRefreshRequired =>
-                "Dexcom: token refresh required before reading data.",
+                T("SettingsDexcomRefreshRequired"),
 
             DexcomConnectionState.RefreshTokenExpired =>
-                "Dexcom: authorization expired. Reconnect Dexcom.",
+                T("SettingsDexcomAuthorizationExpired"),
 
             DexcomConnectionState.TokenStoreUnavailable =>
-                "Dexcom: token store unavailable.",
+                T("SettingsDexcomTokenStoreUnavailable"),
 
             _ =>
                 "Dexcom: status unknown."
@@ -1509,7 +1532,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         HasError = true;
         ErrorMessage = message;
-        StatusMessage = "Settings validation failed";
+        StatusMessage = T("SettingsValidationFailedStatus");
     }
 
     /// <summary>
@@ -1602,8 +1625,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
             FormatEnumName(kind.ToString()),
             isAvailable,
             isAvailable
-                ? "Provider is available."
-                : "Provider is not configured in the current desktop runtime.");
+                ? T("SettingsProviderAvailableDescription")
+                : T("SettingsProviderNotConfiguredDescription"));
     }
 
     /// <summary>
@@ -1620,8 +1643,10 @@ public sealed partial class SettingsViewModel : ViewModelBase
             .ToArray();
 
         return availableProviders.Length == 0
-            ? "No CGM provider is currently available."
-            : $"Available providers: {string.Join(", ", availableProviders)}.";
+            ? T("SettingsNoProvidersAvailable")
+            : TF(
+                "SettingsAvailableProvidersFormat",
+                string.Join(", ", availableProviders));
     }
 
     /// <summary>
@@ -1705,6 +1730,71 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private static bool IsOfficialDexcomProviderKind(CgmProviderKind kind)
     {
         return kind is CgmProviderKind.DexcomSandbox or CgmProviderKind.DexcomOfficial;
+    }
+
+    private static string LocalizeKnownSettingsText(string value)
+    {
+        return value switch
+        {
+            "Settings loaded" or
+            "Impostazioni caricate" =>
+                T("SettingsLoadedStatus"),
+
+            "Settings loaded. Unavailable providers were replaced with Mock." or
+            "Impostazioni caricate. I provider non disponibili sono stati sostituiti con Mock." =>
+                T("SettingsLoadedWithFallbackStatus"),
+
+            "Settings saved. Dashboard will use the selected provider on next refresh." or
+            "Impostazioni salvate. La dashboard userà il provider selezionato al prossimo aggiornamento." =>
+                T("SettingsSavedStatus"),
+
+            "Settings validation failed" or
+            "Validazione delle impostazioni non riuscita" =>
+                T("SettingsValidationFailedStatus"),
+
+            "Dexcom: not configured in this desktop runtime." or
+            "Dexcom: non configurato nel runtime desktop corrente." =>
+                T("SettingsDexcomNotConfigured"),
+
+            "Dexcom: configured, not connected." or
+            "Dexcom: configurato, non connesso." =>
+                T("SettingsDexcomConfiguredNotConnected"),
+
+            "Dexcom: connected." or
+            "Dexcom: connesso." =>
+                T("SettingsDexcomConnected"),
+
+            "Dexcom: token refresh required before reading data." or
+            "Dexcom: aggiornamento del token richiesto prima di leggere i dati." =>
+                T("SettingsDexcomRefreshRequired"),
+
+            "Dexcom: authorization expired. Reconnect Dexcom." or
+            "Dexcom: autorizzazione scaduta. Riconnetti Dexcom." =>
+                T("SettingsDexcomAuthorizationExpired"),
+
+            "Dexcom: token store unavailable." or
+            "Dexcom: archivio token non disponibile." =>
+                T("SettingsDexcomTokenStoreUnavailable"),
+
+            "Nightscout: not configured in this desktop runtime." or
+            "Nightscout: non configurato nel runtime desktop corrente." =>
+                T("SettingsNightscoutNotConfigured"),
+
+            _ => value
+        };
+    }
+
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
+    private static string TF(string key, params object?[] arguments)
+    {
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            T(key),
+            arguments);
     }
 
     #endregion

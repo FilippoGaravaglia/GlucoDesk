@@ -27,7 +27,7 @@
             <TextBlock Text="GlucoDesk"
                        Classes="page-title" />
 
-            <TextBlock Text="A calm desktop companion for glucose awareness"
+            <TextBlock Text="{DynamicResource DashboardSubtitle}"
                        Classes="secondary"
                        FontSize="16" />
           </StackPanel>
@@ -35,7 +35,7 @@
           <Border MinWidth="260" Grid.Column="1"
                   Classes="badge-accent"
                   VerticalAlignment="Top">
-            <TextBlock Text="Private · local-first · companion"
+            <TextBlock Text="{DynamicResource DashboardPrivateLocalFirstCompanion}"
                        FontSize="12"
                        FontWeight="SemiBold"
                        Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
@@ -54,7 +54,7 @@
                 <StackPanel Grid.Column="0"
                             Spacing="20">
                   <StackPanel Spacing="10">
-                    <TextBlock Text="CURRENT GLUCOSE"
+                    <TextBlock Text="{DynamicResource DashboardCurrentGlucose}"
                                Classes="eyebrow" />
 
                     <Grid ColumnDefinitions="Auto,*"
@@ -100,7 +100,7 @@
                     <Grid ColumnDefinitions="*,Auto"
                           ColumnSpacing="16">
                       <StackPanel Spacing="5">
-                        <TextBlock Text="Provider connected"
+                        <TextBlock Text="{DynamicResource DashboardProviderConnected}"
                                    Classes="section-title" />
 
                         <TextBlock Text="{Binding DataSourceStatusText}"
@@ -110,7 +110,7 @@
                       </StackPanel>
 
                       <Button Grid.Column="1"
-                              Content="Refresh"
+                              Content="{DynamicResource DashboardRefresh}"
                               Command="{Binding RefreshCommand}"
                               VerticalAlignment="Top" />
                     </Grid>
@@ -121,7 +121,7 @@
                     <Grid ColumnDefinitions="*,Auto"
                           ColumnSpacing="18">
                       <StackPanel Spacing="4">
-                        <TextBlock Text="Updated"
+                        <TextBlock Text="{DynamicResource DashboardUpdated}"
                                    Classes="metric-label" />
 
                         <TextBlock Text="{Binding LastUpdatedText}"
@@ -147,7 +147,7 @@
               <StackPanel Spacing="22"
                           IsVisible="{Binding #CurrentGlucoseHeroCard.Bounds.Width, Converter={StaticResource WidthBelowThresholdConverter}, ConverterParameter=1020}">
                 <StackPanel Spacing="12">
-                  <TextBlock Text="CURRENT GLUCOSE"
+                  <TextBlock Text="{DynamicResource DashboardCurrentGlucose}"
                              Classes="eyebrow" />
 
                   <WrapPanel Orientation="Horizontal"
@@ -182,7 +182,7 @@
                   <Grid ColumnDefinitions="*,Auto"
                         ColumnSpacing="16">
                     <StackPanel Spacing="5">
-                      <TextBlock Text="Provider connected"
+                      <TextBlock Text="{DynamicResource DashboardProviderConnected}"
                                  Classes="section-title" />
 
                       <TextBlock Text="{Binding DataSourceStatusText}"
@@ -192,7 +192,7 @@
                     </StackPanel>
 
                     <Button Grid.Column="1"
-                            Content="Refresh"
+                            Content="{DynamicResource DashboardRefresh}"
                             Command="{Binding RefreshCommand}"
                             VerticalAlignment="Top" />
                   </Grid>
@@ -200,7 +200,7 @@
                   <WrapPanel Orientation="Horizontal">
                     <StackPanel Spacing="4"
                                 Margin="0,0,18,0">
-                      <TextBlock Text="Updated"
+                      <TextBlock Text="{DynamicResource DashboardUpdated}"
                                  Classes="metric-label" />
 
                       <TextBlock Text="{Binding LastUpdatedText}"
@@ -257,10 +257,10 @@
                           Orientation="Horizontal"
                           Spacing="10"
                           VerticalAlignment="Center">
-                <Button Content="Snooze"
+                <Button Content="{DynamicResource DashboardSnooze}"
                         Command="{Binding SnoozeGlucoseAlertBannerCommand}" />
 
-                <Button Content="Dismiss"
+                <Button Content="{DynamicResource DashboardDismiss}"
                         Command="{Binding DismissGlucoseAlertBannerCommand}" />
               </StackPanel>
             </Grid>
@@ -271,7 +271,7 @@
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="18">
                 <StackPanel Spacing="6">
-                  <TextBlock Text="Recent glucose trend"
+                  <TextBlock Text="{DynamicResource DashboardRecentTrend}"
                              Classes="section-title" />
 
                   <TextBlock Text="{Binding ChartSummaryText}"
@@ -356,7 +356,7 @@
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="18">
                 <StackPanel Spacing="4">
-                  <TextBlock Text="Glucose insights"
+                  <TextBlock Text="{DynamicResource DashboardGlucoseInsights}"
                              Classes="section-title" />
 
                   <TextBlock Text="{Binding StatisticsStatusText}"
@@ -451,7 +451,7 @@
                   <StackPanel Spacing="14">
                     <Grid ColumnDefinitions="*,Auto">
                       <StackPanel Spacing="4">
-                        <TextBlock Text="Time in range"
+                        <TextBlock Text="{DynamicResource DashboardTimeInRange}"
                                    Classes="metric-label" />
 
                         <TextBlock Text="{Binding StatisticsTimeInRangeText}"
@@ -487,7 +487,7 @@
                         ColumnDefinitions="*,Auto"
                         ColumnSpacing="14">
                     <StackPanel Spacing="4">
-                      <TextBlock Text="Average glucose"
+                      <TextBlock Text="{DynamicResource DashboardAverageGlucose}"
                                  Classes="metric-label" />
 
                       <TextBlock Text="{Binding StatisticsAverageGlucoseText}"
@@ -512,7 +512,7 @@
                       <Grid Grid.Column="0"
                             RowDefinitions="Auto,Auto"
                             RowSpacing="6">
-                        <TextBlock Text="Below range"
+                        <TextBlock Text="{DynamicResource DashboardBelowRange}"
                                    Classes="metric-label" />
 
                         <TextBlock Grid.Row="1"
@@ -523,7 +523,7 @@
                       <Grid Grid.Column="2"
                             RowDefinitions="Auto,Auto"
                             RowSpacing="6">
-                        <TextBlock Text="Above range"
+                        <TextBlock Text="{DynamicResource DashboardAboveRange}"
                                    Classes="metric-label" />
 
                         <TextBlock Grid.Row="1"
@@ -584,7 +584,7 @@
                                Classes="secondary"
                                FontSize="14" />
 
-                    <TextBlock Text="This is expected after a fresh setup. GlucoDesk will unlock longer insight windows as local history grows."
+                    <TextBlock Text="{DynamicResource DashboardFreshSetupHistoryHint}"
                                TextWrapping="Wrap"
                                Classes="muted"
                                FontSize="12" />
@@ -643,7 +643,7 @@
                       Margin="0,5,0,0" />
 
               <TextBlock Grid.Column="1"
-                         Text="GlucoDesk is not a medical device and must not be used for treatment decisions, insulin dosing, emergency alerts, or as a replacement for approved diabetes applications."
+                         Text="{DynamicResource DashboardSafetyDisclaimerFull}"
                          TextWrapping="Wrap"
                          Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
             </Grid>

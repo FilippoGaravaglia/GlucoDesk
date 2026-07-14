@@ -8,10 +8,11 @@ using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Readings;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Account;
 
-public sealed class AccountViewModelTests
+public sealed class AccountViewModelTests : EnglishLocalizationTestBase
 {
     private const string PersonEmail = "person" + "@example.com";
     private const string OldEmail = "old" + "@example.com";

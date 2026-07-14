@@ -37,10 +37,11 @@ using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Readings;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Main;
 
-public sealed class MainWindowViewModelTests
+public sealed class MainWindowViewModelTests : EnglishLocalizationTestBase
 {
     [Fact]
     public void Constructor_ShouldSelectDashboardByDefault()

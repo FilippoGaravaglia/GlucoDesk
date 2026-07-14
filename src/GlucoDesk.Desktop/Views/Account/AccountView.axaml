@@ -19,10 +19,10 @@
               ColumnSpacing="24">
 
           <StackPanel Spacing="8">
-            <TextBlock Text="Account"
+            <TextBlock Text="{DynamicResource NavAccount}"
                        Classes="page-title" />
 
-            <TextBlock Text="Connect GlucoDesk to your Dexcom Share account using secure local credential storage."
+            <TextBlock Text="{DynamicResource AccountPageSubtitle}"
                        Classes="secondary"
                        FontSize="16"
                        TextWrapping="Wrap" />
@@ -51,10 +51,10 @@
                         Spacing="22">
 
               <StackPanel Spacing="4">
-                <TextBlock Text="Dexcom Share account"
+                <TextBlock Text="{DynamicResource AccountDexcomShareTitle}"
                            Classes="section-title" />
 
-                <TextBlock Text="Save your Dexcom Share account locally so GlucoDesk can reconnect automatically when the app starts."
+                <TextBlock Text="{DynamicResource AccountDexcomShareDescription}"
                            Classes="secondary"
                            FontSize="13"
                            TextWrapping="Wrap" />
@@ -71,7 +71,7 @@
                         Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
 
                   <StackPanel Spacing="7">
-                    <TextBlock Text="Credential storage"
+                    <TextBlock Text="{DynamicResource AccountCredentialStorageTitle}"
                                Classes="metric-label" />
 
                     <TextBlock Text="{Binding CredentialStorageStatusText}"
@@ -95,7 +95,7 @@
                         Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
 
                   <StackPanel Spacing="7">
-                    <TextBlock Text="Connection diagnostics"
+                    <TextBlock Text="{DynamicResource AccountConnectionDiagnosticsTitle}"
                                Classes="metric-label" />
 
                     <TextBlock Text="{Binding ConnectionDiagnosticStatusText}"
@@ -120,7 +120,7 @@
 
                 <StackPanel Grid.Row="0"
                             Spacing="8">
-                  <TextBlock Text="Region"
+                  <TextBlock Text="{DynamicResource AccountRegionLabel}"
                              Classes="metric-label" />
 
                   <ComboBox ItemsSource="{Binding RegionOptions}"
@@ -130,7 +130,7 @@
 
                 <StackPanel Grid.Row="1"
                             Spacing="8">
-                  <TextBlock Text="Dexcom email"
+                  <TextBlock Text="{DynamicResource AccountDexcomEmailLabel}"
                              Classes="metric-label" />
 
                   <TextBox Text="{Binding EmailText}"
@@ -140,12 +140,12 @@
 
                 <StackPanel Grid.Row="2"
                             Spacing="8">
-                  <TextBlock Text="Dexcom password"
+                  <TextBlock Text="{DynamicResource AccountDexcomPasswordLabel}"
                              Classes="metric-label" />
 
                   <TextBox Text="{Binding PasswordText}"
                            PasswordChar="•"
-                           PlaceholderText="Leave empty to keep the saved password"
+                           PlaceholderText="{DynamicResource AccountPasswordPlaceholder}"
                            HorizontalAlignment="Stretch" />
 
                   <TextBlock Text="{Binding PasswordHelpText}"
@@ -163,20 +163,20 @@
 
                 <WrapPanel Grid.Row="0"
                            Orientation="Horizontal">
-                  <Button Content="Save account"
+                  <Button Content="{DynamicResource AccountSaveButton}"
                           Command="{Binding SaveCommand}"
                           Margin="0,0,10,10" />
 
-                  <Button Content="Test connection"
+                  <Button Content="{DynamicResource AccountTestConnectionButton}"
                           Command="{Binding TestConnectionCommand}"
                           Margin="0,0,10,10" />
 
-                  <Button Content="Load saved account"
+                  <Button Content="{DynamicResource AccountLoadSavedButton}"
                           Command="{Binding LoadCommand}"
                           Classes="segment-button"
                           Margin="0,0,10,10" />
 
-                  <Button Content="Clear account"
+                  <Button Content="{DynamicResource AccountClearButton}"
                           Command="{Binding ClearCredentialsCommand}"
                           Background="{StaticResource GlucoDesk.Brush.DangerPale}"
                           Foreground="{StaticResource GlucoDesk.Brush.Danger}"
@@ -214,10 +214,10 @@
               <StackPanel Spacing="20">
 
                 <StackPanel Spacing="4">
-                  <TextBlock Text="How it works"
+                  <TextBlock Text="{DynamicResource AccountHowItWorksTitle}"
                              Classes="section-title" />
 
-                  <TextBlock Text="GlucoDesk uses Dexcom Share to read near real-time glucose data from your Dexcom account."
+                  <TextBlock Text="{DynamicResource AccountHowItWorksDescription}"
                              Classes="secondary"
                              FontSize="13"
                              TextWrapping="Wrap" />
@@ -236,11 +236,11 @@
 
                     <StackPanel Grid.Column="1"
                                 Spacing="4">
-                      <TextBlock Text="Automatic reconnect"
+                      <TextBlock Text="{DynamicResource AccountAutomaticReconnectTitle}"
                                  FontWeight="SemiBold"
                                  Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
 
-                      <TextBlock Text="After saving your account, GlucoDesk selects Dexcom Share as the active provider and can reconnect after app restart."
+                      <TextBlock Text="{DynamicResource AccountAutomaticReconnectDescription}"
                                  TextWrapping="Wrap"
                                  Classes="secondary"
                                  FontSize="13" />
@@ -258,11 +258,11 @@
 
                     <StackPanel Grid.Column="1"
                                 Spacing="4">
-                      <TextBlock Text="Connection test"
+                      <TextBlock Text="{DynamicResource AccountConnectionTestTitle}"
                                  FontWeight="SemiBold"
                                  Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
 
-                      <TextBlock Text="Use Test connection after changing email, password or region. A successful test means Dexcom Share accepted the current credentials."
+                      <TextBlock Text="{DynamicResource AccountConnectionTestDescription}"
                                  TextWrapping="Wrap"
                                  Classes="secondary"
                                  FontSize="13" />
@@ -280,11 +280,11 @@
 
                     <StackPanel Grid.Column="1"
                                 Spacing="4">
-                      <TextBlock Text="Privacy"
+                      <TextBlock Text="{DynamicResource AccountPrivacyTitle}"
                                  FontWeight="SemiBold"
                                  Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
 
-                      <TextBlock Text="Credentials stay on your computer. They are not committed to Git and are not stored in local JSON settings."
+                      <TextBlock Text="{DynamicResource AccountPrivacyDescription}"
                                  TextWrapping="Wrap"
                                  Classes="secondary"
                                  FontSize="13" />
@@ -302,11 +302,11 @@
 
                     <StackPanel Grid.Column="1"
                                 Spacing="4">
-                      <TextBlock Text="Safety notice"
+                      <TextBlock Text="{DynamicResource SidebarSafetyNoticeTitle}"
                                  FontWeight="SemiBold"
                                  Foreground="{StaticResource GlucoDesk.Brush.Warning}" />
 
-                      <TextBlock Text="GlucoDesk is not a medical device. Always use official Dexcom and Omnipod apps for treatment decisions."
+                      <TextBlock Text="{DynamicResource AccountSafetyDescription}"
                                  TextWrapping="Wrap"
                                  Classes="secondary"
                                  FontSize="13" />

@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.ViewModels.Settings;
 
 namespace GlucoDesk.Desktop.Views.Settings;
 
@@ -8,6 +10,7 @@ public partial class SettingsView : UserControl
 {
     private const double CompactLayoutBreakpoint = 1240;
     private const int MaximumTargetValueLength = 3;
+    private bool isUpdatingLanguageComboBox;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsView"/> class.
@@ -17,10 +20,49 @@ public partial class SettingsView : UserControl
         InitializeComponent();
 
         AttachedToVisualTree += OnAttachedToVisualTree;
+        AttachedToVisualTree += OnLocalizationAttachedToVisualTree;
+        DetachedFromVisualTree += OnLocalizationDetachedFromVisualTree;
         SizeChanged += OnSizeChanged;
     }
 
     #region Helpers
+    private void OnLocalizationAttachedToVisualTree(
+        object? sender,
+        VisualTreeAttachmentEventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        LocalizationManager.LanguageChanged -= OnLanguageChanged;
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLocalizationDetachedFromVisualTree(
+        object? sender,
+        VisualTreeAttachmentEventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        LocalizationManager.LanguageChanged -= OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (DataContext is SettingsViewModel viewModel)
+            {
+                viewModel.RefreshLocalizedText();
+            }
+        });
+    }
+
 
     /// <summary>
     /// Applies the initial responsive state when the view is attached.
@@ -193,6 +235,9 @@ public partial class SettingsView : UserControl
     {
         base.OnAttachedToVisualTree(e);
 
+        LocalizationManager.InitializeIfNeeded();
+        InitializeLanguagePreferenceComboBox();
+
         Dispatcher.UIThread.Post(LoadPersistedSettingsWhenAttached);
     }
 
@@ -210,5 +255,48 @@ public partial class SettingsView : UserControl
 
         await viewModel.LoadCommand.ExecuteAsync(null);
     }
+
+    /// <summary>
+    /// Initializes the application language selector using the persisted local preference.
+    /// </summary>
+    private void InitializeLanguagePreferenceComboBox()
+    {
+        var comboBox = this.FindControl<ComboBox>("AppLanguageComboBox");
+
+        if (comboBox is null)
+        {
+            return;
+        }
+
+        isUpdatingLanguageComboBox = true;
+
+        comboBox.ItemsSource = LocalizationManager.AvailableLanguages;
+        comboBox.SelectedItem = LocalizationManager.GetLanguageOption(
+            LocalizationManager.CurrentLanguageCode);
+
+        isUpdatingLanguageComboBox = false;
+    }
+
+    /// <summary>
+    /// Applies and persists the selected application language.
+    /// </summary>
+    /// <param name="sender">The combo box sender.</param>
+    /// <param name="e">The selection changed event args.</param>
+    private void OnAppLanguageSelectionChanged(
+        object? sender,
+        SelectionChangedEventArgs e)
+    {
+        _ = e;
+
+        if (isUpdatingLanguageComboBox ||
+            sender is not ComboBox comboBox ||
+            comboBox.SelectedItem is not AppLanguageOption selectedLanguage)
+        {
+            return;
+        }
+
+        LocalizationManager.SetLanguage(selectedLanguage.Code);
+    }
+
 
 }

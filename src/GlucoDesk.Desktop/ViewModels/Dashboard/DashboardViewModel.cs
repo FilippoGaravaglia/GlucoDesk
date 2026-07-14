@@ -28,6 +28,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Summaries;
 using GlucoDesk.Application.Cgm.WidgetState.Services.Abstractions;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.Dashboard;
 
@@ -123,7 +124,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private string _statusText = "Waiting for data";
 
     [ObservableProperty]
-    private string _recentReadingsCountText = "0 readings";
+    private string _recentReadingsCountText = string.Format(CultureInfo.InvariantCulture, T("DashboardReadingsCount"), 0);
 
     [ObservableProperty]
     private IReadOnlyList<GlucoseChartPoint> _chartPoints = [];
@@ -132,7 +133,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private string _chartSummaryText = "No chart data";
 
     [ObservableProperty]
-    private string _ambientGlucoseSummaryText = "No recent glucose data.";
+    private string _ambientGlucoseSummaryText = T("DashboardNoRecentGlucoseData");
 
     [ObservableProperty]
     private int _selectedChartWindowHours = ThreeHourChartWindow;
@@ -156,7 +157,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private decimal _targetHighMgDl = 180m;
 
     [ObservableProperty]
-    private string _targetRangeText = "Target range: 70-180 mg/dL";
+    private string _targetRangeText = string.Format(CultureInfo.InvariantCulture, T("DashboardTargetRangeFormat"), "70", "180", "mg/dL");
 
     [ObservableProperty]
     private string _autoRefreshStatusText = "Auto-refresh not started";
@@ -168,7 +169,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private string _historyStatusText = "History not updated";
 
     [ObservableProperty]
-    private string _statisticsStatusText = "Statistics are not available in the current desktop runtime.";
+    private string _statisticsStatusText = T("DashboardStatisticsNotAvailable");
 
     [ObservableProperty]
     private string _statisticsAverageGlucoseText = "—";
@@ -186,7 +187,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private string _statisticsReadingsAnalyzedText = "—";
 
     [ObservableProperty]
-    private string _statisticsTargetRangeText = "Target range: —";
+    private string _statisticsTargetRangeText = T("DashboardTargetRangeUnavailable");
 
     [ObservableProperty]
     private bool _isStatisticsEnabled;
@@ -210,7 +211,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private string _providerStatusTitle = "Using Mock data";
 
     [ObservableProperty]
-    private string _providerStatusMessage = "Mock is the active live provider. Configure and select Dexcom or Nightscout in Settings to use real glucose data.";
+    private string _providerStatusMessage = T("DashboardMockProviderMessage");
 
     [ObservableProperty]
     private string _providerStatusBadgeText = "Mock";
@@ -252,28 +253,28 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private double _statisticsAboveRangePercentValue;
 
     [ObservableProperty]
-    private string _statisticsAverageInsightText = "Waiting for enough readings.";
+    private string _statisticsAverageInsightText = T("DashboardWaitingForEnoughReadings");
 
     [ObservableProperty]
-    private string _statisticsTimeInRangeInsightText = "Waiting for enough readings.";
+    private string _statisticsTimeInRangeInsightText = T("DashboardWaitingForEnoughReadings");
 
     [ObservableProperty]
-    private string _statisticsBelowRangeInsightText = "Waiting for enough readings.";
+    private string _statisticsBelowRangeInsightText = T("DashboardWaitingForEnoughReadings");
 
     [ObservableProperty]
-    private string _statisticsAboveRangeInsightText = "Waiting for enough readings.";
+    private string _statisticsAboveRangeInsightText = T("DashboardWaitingForEnoughReadings");
 
     [ObservableProperty]
-    private string _statisticsWindowStatusText = "Local insights · 24H";
+    private string _statisticsWindowStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardLocalInsightsWindow"), "24H");
 
     [ObservableProperty]
-    private string _statisticsHistoryAvailabilityText = "Calculated from available local GlucoDesk history.";
+    private string _statisticsHistoryAvailabilityText = T("DashboardLocalInsightsCalculatedAvailableHistory");
 
     [ObservableProperty]
     private string _statisticsInsufficientHistoryTitle = "Not enough local history yet";
 
     [ObservableProperty]
-    private string _statisticsInsufficientHistoryMessage = "Keep GlucoDesk running to build reliable local insights for this time window.";
+    private string _statisticsInsufficientHistoryMessage = T("DashboardInsufficientHistoryDefault");
 
     [ObservableProperty]
     private bool _isStatisticsCardsVisible;
@@ -373,7 +374,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             _settingsChangeNotifier.SettingsChanged += OnSettingsChanged;
         }
 
-        AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
+        AutoRefreshStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardAutoRefreshEvery"), FormatInterval(_autoRefreshInterval));
     }
 
     /// <summary>
@@ -422,7 +423,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         IsBusy = true;
         HasError = false;
         ErrorMessage = null;
-        StatusText = "Refreshing...";
+        StatusText = T("DashboardRefreshing");
 
         try
         {
@@ -458,7 +459,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         }
         catch (OperationCanceledException)
         {
-            StatusText = "Refresh cancelled";
+            StatusText = T("DashboardRefreshCancelled");
         }
         catch (Exception exception)
         {
@@ -593,7 +594,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             now);
 
         _dismissedGlucoseAlertKind = _currentGlucoseAlertKind;
-        GlucoseAlertSnoozeStatusText = $"Snoozed until {snoozedUntil:HH:mm}.";
+        GlucoseAlertSnoozeStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardSnoozedUntil"), snoozedUntil.ToString("HH:mm", CultureInfo.InvariantCulture));
         _ = LogGlucoseAlertEventAsync(
             GlucoseAlertEventKind.Snoozed,
             _currentGlucoseAlertKind,
@@ -652,7 +653,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         await PublishUnavailableWidgetStateAsync(
                 snapshot.Metadata.ProviderKind,
-                "No current glucose reading available",
+                T("DashboardNoCurrentGlucoseReadingAvailable"),
                 cancellationToken)
             .ConfigureAwait(false);
     }
@@ -727,7 +728,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         string readingsCountText,
         string lastUpdatedText)
     {
-        return $"{providerDisplayName} · {freshnessText} · {readingsCountText} · Updated {lastUpdatedText}";
+        return string.Format(CultureInfo.InvariantCulture, T("DashboardProviderSummary"), providerDisplayName, freshnessText, readingsCountText, lastUpdatedText);
     }
 
     /// <summary>
@@ -775,8 +776,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     private static string BuildAverageInsight(bool hasStatisticsData)
     {
         return hasStatisticsData
-            ? "Average glucose for the selected local history window."
-            : "Average glucose will appear after enough readings are available.";
+            ? T("DashboardAverageGlucoseInsightReady")
+            : T("DashboardAverageGlucoseInsightWaiting");
     }
 
     /// <summary>
@@ -791,15 +792,15 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         if (!hasStatisticsData)
         {
-            return "Time in range will appear after enough readings are available.";
+            return T("DashboardTimeInRangeWaiting");
         }
 
         return percentage switch
         {
-            >= 90d => "Excellent stability across the selected window.",
-            >= 75d => "Good time in target range.",
-            >= 60d => "Partially in range. Worth monitoring patterns.",
-            _ => "Low time in range. Review the trend with your official diabetes tools."
+            >= 90d => T("DashboardTimeInRangeExcellent"),
+            >= 75d => T("DashboardTimeInRangeGood"),
+            >= 60d => T("DashboardTimeInRangePartial"),
+            _ => T("DashboardTimeInRangeLow")
         };
     }
 
@@ -815,14 +816,14 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         if (!hasStatisticsData)
         {
-            return "Low exposure will appear after enough readings are available.";
+            return T("DashboardLowExposureWaiting");
         }
 
         return percentage switch
         {
-            <= 1d => "Minimal low exposure.",
-            <= 4d => "Some low exposure detected.",
-            _ => "Frequent low exposure. Check official diabetes apps and alerts."
+            <= 1d => T("DashboardLowExposureMinimal"),
+            <= 4d => T("DashboardLowExposureSome"),
+            _ => T("DashboardLowExposureFrequent")
         };
     }
 
@@ -838,14 +839,14 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
     {
         if (!hasStatisticsData)
         {
-            return "High exposure will appear after enough readings are available.";
+            return T("DashboardHighExposureWaiting");
         }
 
         return percentage switch
         {
-            <= 5d => "Mostly controlled above-range exposure.",
-            <= 20d => "Some above-range time detected.",
-            _ => "High exposure is elevated. Review the day pattern carefully."
+            <= 5d => T("DashboardHighExposureControlled"),
+            <= 20d => T("DashboardHighExposureSome"),
+            _ => T("DashboardHighExposureElevated")
         };
     }
 
@@ -1009,15 +1010,15 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             availability);
 
         StatisticsHistoryAvailabilityText = availability.HasEnoughData
-            ? $"Calculated from local GlucoDesk history for the selected {selectedWindow.Label} window."
-            : "Local insights are calculated only from readings saved by GlucoDesk.";
+            ? string.Format(CultureInfo.InvariantCulture, T("DashboardLocalInsightsCalculatedForWindow"), selectedWindow.Label)
+            : T("DashboardLocalInsightsOnlyLocal");
 
         IsStatisticsHistoryInsufficient = !availability.HasEnoughData;
         IsStatisticsCardsVisible = presentation.HasStatisticsData && availability.HasEnoughData;
 
         if (!availability.HasEnoughData)
         {
-            StatisticsInsufficientHistoryTitle = $"Not enough history for {selectedWindow.Label}";
+            StatisticsInsufficientHistoryTitle = string.Format(CultureInfo.InvariantCulture, T("DashboardNotEnoughHistoryTitle"), selectedWindow.Label);
             StatisticsInsufficientHistoryMessage = BuildInsufficientStatisticsHistoryMessage(
                 selectedWindow,
                 availability);
@@ -1039,8 +1040,8 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         if (_lastDashboardSnapshot is null)
         {
-            StatisticsWindowStatusText = $"Local insights · {selectedWindow.Label}";
-            StatisticsHistoryAvailabilityText = "Refresh the dashboard to calculate local insights for this window.";
+            StatisticsWindowStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardLocalInsightsWindow"), selectedWindow.Label);
+            StatisticsHistoryAvailabilityText = T("DashboardRefreshToCalculateLocalInsights");
             return;
         }
 
@@ -1051,7 +1052,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
         }
         catch (OperationCanceledException)
         {
-            StatisticsStatusText = "Statistics refresh cancelled";
+            StatisticsStatusText = T("DashboardStatisticsRefreshCancelled");
         }
         catch (Exception exception)
         {
@@ -1172,12 +1173,12 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         if (!result.HasData)
         {
-            return $"{selectedWindow.Label} selected · no local readings yet";
+            return string.Format(CultureInfo.InvariantCulture, T("DashboardSelectedWindowNoReadings"), selectedWindow.Label);
         }
 
         return availability.HasEnoughData
-            ? $"{selectedWindow.Label} selected · {result.AnalyzedReadingsCount} readings analyzed"
-            : $"{selectedWindow.Label} selected · {availability.AvailablePeriodText} available locally";
+            ? string.Format(CultureInfo.InvariantCulture, T("DashboardSelectedWindowAnalyzedReadings"), selectedWindow.Label, result.AnalyzedReadingsCount)
+            : string.Format(CultureInfo.InvariantCulture, T("DashboardSelectedWindowAvailableLocally"), selectedWindow.Label, availability.AvailablePeriodText);
     }
 
     /// <summary>
@@ -1195,10 +1196,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
 
         if (availability.AnalyzedReadingsCount == 0)
         {
-            return $"GlucoDesk has not saved local readings for the selected {selectedWindow.Label} window yet. Keep the app running and refresh the dashboard to build local insights.";
+            return string.Format(CultureInfo.InvariantCulture, T("DashboardNoLocalReadingsForWindow"), selectedWindow.Label);
         }
 
-        return $"The selected {selectedWindow.Label} window needs about {selectedWindow.Description} of local history. GlucoDesk currently has {availability.AvailablePeriodText} saved locally. Keep the app running to unlock this insight automatically.";
+        return string.Format(CultureInfo.InvariantCulture, T("DashboardSelectedWindowNeedsHistory"), selectedWindow.Label, selectedWindow.Description, availability.AvailablePeriodText);
     }
 
     /// <summary>
@@ -1352,7 +1353,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             TargetHighMgDl,
             PreferredUnit);
 
-        AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
+        AutoRefreshStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardAutoRefreshEvery"), FormatInterval(_autoRefreshInterval));
         SettingsStatusText = "Settings loaded";
     }
 
@@ -1376,7 +1377,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             TargetHighMgDl,
             PreferredUnit);
 
-        AutoRefreshStatusText = $"Auto-refresh every {FormatInterval(_autoRefreshInterval)}";
+        AutoRefreshStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardAutoRefreshEvery"), FormatInterval(_autoRefreshInterval));
         SettingsStatusText = $"Using default settings · {result.Error.Code}";
     }
 
@@ -1406,7 +1407,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             snapshot.RecentReadings.Count);
 
         TrendText = snapshot.LatestReading is null
-            ? "No trend"
+            ? T("DashboardNoTrend")
             : FormatTrend(snapshot.LatestReading.Trend);
 
         FreshnessText = snapshot.LatestReading is null
@@ -1418,10 +1419,10 @@ public sealed partial class DashboardViewModel : ViewModelBase, IDisposable
             : FormatTimestamp(snapshot.LatestReading.Timestamp);
 
         StatusText = snapshot.LatestReading is null
-            ? "No glucose reading available"
+            ? T("DashboardNoGlucoseReadingAvailable")
             : FormatStatus(snapshot.LatestReading.GetStatus(targetRange), snapshot.IsLatestReadingStale);
 
-        RecentReadingsCountText = $"{snapshot.RecentReadings.Count} readings";
+        RecentReadingsCountText = string.Format(CultureInfo.InvariantCulture, T("DashboardReadingsCount"), snapshot.RecentReadings.Count);
 
         DashboardContextText = BuildDashboardContextText(
             snapshot.Metadata.DisplayName,
@@ -1647,12 +1648,12 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
 
         if (snapshot.LatestReading is null)
         {
-            return $"{snapshot.Metadata.DisplayName} returned no current glucose reading.";
+            return string.Format(CultureInfo.InvariantCulture, T("DashboardProviderNoCurrentReading"), snapshot.Metadata.DisplayName);
         }
 
         return snapshot.IsLatestReadingStale
-            ? $"{snapshot.Metadata.DisplayName} returned {freshnessText.ToLowerInvariant()} stale data."
-            : $"{snapshot.Metadata.DisplayName} returned {freshnessText.ToLowerInvariant()} data.";
+            ? string.Format(CultureInfo.InvariantCulture, T("DashboardProviderReturnedStaleData"), snapshot.Metadata.DisplayName, freshnessText.ToLowerInvariant())
+            : string.Format(CultureInfo.InvariantCulture, T("DashboardProviderReturnedData"), snapshot.Metadata.DisplayName, freshnessText.ToLowerInvariant());
     }
 
     /// <summary>
@@ -1910,7 +1911,7 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
         var minimumValue = chartPoints.Min(point => point.ValueMgDl);
         var maximumValue = chartPoints.Max(point => point.ValueMgDl);
 
-        return $"Last {normalizedWindowHours}H · {chartPoints.Count} readings · {FormatGlucoseValueLabel(minimumValue, normalizedDisplayUnit)}-{FormatGlucoseValueLabel(maximumValue, normalizedDisplayUnit)} {FormatGlucoseUnitLabel(normalizedDisplayUnit)}";
+        return string.Format(CultureInfo.InvariantCulture, T("DashboardLastWindowReadingsRange"), normalizedWindowHours, chartPoints.Count, FormatGlucoseValueLabel(minimumValue, normalizedDisplayUnit), FormatGlucoseValueLabel(maximumValue, normalizedDisplayUnit), FormatGlucoseUnitLabel(normalizedDisplayUnit));
     }
 
     /// <summary>
@@ -1951,7 +1952,7 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
     {
         var normalizedDisplayUnit = NormalizeDisplayUnit(displayUnit);
 
-        return $"Target range: {FormatGlucoseValueLabel(targetLowMgDl, normalizedDisplayUnit)}-{FormatGlucoseValueLabel(targetHighMgDl, normalizedDisplayUnit)} {FormatGlucoseUnitLabel(normalizedDisplayUnit)}";
+        return string.Format(CultureInfo.InvariantCulture, T("DashboardTargetRangeFormat"), FormatGlucoseValueLabel(targetLowMgDl, normalizedDisplayUnit), FormatGlucoseValueLabel(targetHighMgDl, normalizedDisplayUnit), FormatGlucoseUnitLabel(normalizedDisplayUnit));
     }
 
     /// <summary>
@@ -2031,15 +2032,15 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
     {
         return trend switch
         {
-            TrendDirection.DoubleUp => "↑↑ Rising very fast",
-            TrendDirection.SingleUp => "↑ Rising fast",
-            TrendDirection.FortyFiveUp => "↗ Rising",
-            TrendDirection.Flat => "→ Stable",
-            TrendDirection.FortyFiveDown => "↘ Falling",
-            TrendDirection.SingleDown => "↓ Falling fast",
-            TrendDirection.DoubleDown => "↓↓ Falling very fast",
+            TrendDirection.DoubleUp => T("DashboardTrendRisingVeryFast"),
+            TrendDirection.SingleUp => T("DashboardTrendRisingFast"),
+            TrendDirection.FortyFiveUp => T("DashboardTrendRising"),
+            TrendDirection.Flat => T("DashboardTrendStable"),
+            TrendDirection.FortyFiveDown => T("DashboardTrendFalling"),
+            TrendDirection.SingleDown => T("DashboardTrendFallingFast"),
+            TrendDirection.DoubleDown => T("DashboardTrendFallingVeryFast"),
             TrendDirection.NotComputable => "Not computable",
-            TrendDirection.RateOutOfRange => "Rate out of range",
+            TrendDirection.RateOutOfRange => T("DashboardTrendRateOutOfRange"),
             _ => "Unknown"
         };
     }
@@ -2054,7 +2055,7 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
         return freshness switch
         {
             GlucoseDataFreshness.Live => "Live",
-            GlucoseDataFreshness.NearRealTime => "Near real-time",
+            GlucoseDataFreshness.NearRealTime => T("DashboardFreshnessNearRealTime"),
             GlucoseDataFreshness.Delayed => "Delayed",
             GlucoseDataFreshness.Historical => "Historical",
             _ => "Unknown"
@@ -2083,9 +2084,9 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
     {
         var statusText = status switch
         {
-            GlucoseStatus.Low => "Low",
-            GlucoseStatus.InRange => "In range",
-            GlucoseStatus.High => "High",
+            GlucoseStatus.Low => T("DashboardStatusLow"),
+            GlucoseStatus.InRange => T("DashboardStatusInRange"),
+            GlucoseStatus.High => T("DashboardStatusHigh"),
             _ => "Unknown"
         };
 
@@ -2110,4 +2111,9 @@ _currentGlucoseAlertKind = GlucoseAlertKind.None;
     }
 
     #endregion
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
 }

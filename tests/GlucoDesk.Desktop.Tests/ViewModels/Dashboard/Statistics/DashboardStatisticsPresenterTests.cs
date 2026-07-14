@@ -2,10 +2,11 @@ using GlucoDesk.Application.Cgm.Statistics.Requests;
 using GlucoDesk.Application.Cgm.Statistics.Results;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Statistics;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Dashboard.Statistics;
 
-public sealed class DashboardStatisticsPresenterTests
+public sealed class DashboardStatisticsPresenterTests : EnglishLocalizationTestBase
 {
     [Fact]
     public void Present_ShouldCreatePresentation_WhenStatisticsHaveData()
