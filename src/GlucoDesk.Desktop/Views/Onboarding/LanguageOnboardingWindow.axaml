@@ -1,0 +1,486 @@
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="GlucoDesk.Desktop.Views.Onboarding.LanguageOnboardingWindow"
+    Width="1080"
+    Height="700"
+    MinWidth="920"
+    MinHeight="620"
+    CanResize="False"
+    WindowStartupLocation="CenterScreen"
+    Title="GlucoDesk"
+    Background="#EEF8FF">
+
+  <Window.Styles>
+    <Style Selector="Button.language-choice">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Setter Property="Padding"
+              Value="0" />
+      <Setter Property="HorizontalContentAlignment"
+              Value="Stretch" />
+      <Setter Property="VerticalContentAlignment"
+              Value="Stretch" />
+    </Style>
+
+    <Style Selector="Border.language-card">
+      <Setter Property="Background"
+              Value="#FFFFFFFF" />
+      <Setter Property="BorderBrush"
+              Value="#B8DDF5" />
+      <Setter Property="BorderThickness"
+              Value="1.5" />
+      <Setter Property="CornerRadius"
+              Value="22" />
+    </Style>
+
+    <Style Selector="Border.language-card.selected">
+      <Setter Property="Background"
+              Value="#F0FAFF" />
+      <Setter Property="BorderBrush"
+              Value="#0799E5" />
+      <Setter Property="BorderThickness"
+              Value="2.5" />
+    </Style>
+
+    <!-- Language choice button visual states -->
+    <Style Selector="Button.language-choice:pointerover">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderBrush"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Setter Property="CornerRadius"
+              Value="22" />
+    </Style>
+
+    <Style Selector="Button.language-choice:pressed">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderBrush"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Setter Property="CornerRadius"
+              Value="22" />
+    </Style>
+
+    <Style Selector="Button.language-choice:focus">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderBrush"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Setter Property="CornerRadius"
+              Value="22" />
+    </Style>
+
+    <Style Selector="Button.language-choice /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderBrush"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Setter Property="CornerRadius"
+              Value="22" />
+      <Setter Property="Padding"
+              Value="0" />
+    </Style>
+
+    <Style Selector="Button.language-choice:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderBrush"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Setter Property="CornerRadius"
+              Value="22" />
+    </Style>
+
+    <Style Selector="Button.language-choice:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderBrush"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Setter Property="CornerRadius"
+              Value="22" />
+    </Style>
+
+    <Style Selector="Button.language-choice:focus /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background"
+              Value="Transparent" />
+      <Setter Property="BorderBrush"
+              Value="Transparent" />
+      <Setter Property="BorderThickness"
+              Value="0" />
+      <Setter Property="CornerRadius"
+              Value="22" />
+    </Style>
+
+    <!-- Il focus rimane visibile, ma segue gli angoli della card. -->
+    <Style Selector="Button.language-choice:focus Border.language-card">
+      <Setter Property="BorderBrush"
+              Value="#0799E5" />
+      <Setter Property="BorderThickness"
+              Value="2.5" />
+    </Style>
+
+  </Window.Styles>
+
+  <Grid>
+    <Border>
+      <Border.Background>
+        <LinearGradientBrush
+            StartPoint="0%,0%"
+            EndPoint="100%,100%">
+          <GradientStop
+              Color="#E6F8FF"
+              Offset="0" />
+          <GradientStop
+              Color="#F7FBFF"
+              Offset="0.48" />
+          <GradientStop
+              Color="#EDF1FF"
+              Offset="1" />
+        </LinearGradientBrush>
+      </Border.Background>
+    </Border>
+
+    <Canvas IsHitTestVisible="False">
+      <Ellipse
+          Width="360"
+          Height="360"
+          Canvas.Left="-110"
+          Canvas.Top="-130"
+          Fill="#2500A9F4" />
+      <Ellipse
+          Width="280"
+          Height="280"
+          Canvas.Right="-70"
+          Canvas.Bottom="-90"
+          Fill="#205E5CF4" />
+      <Ellipse
+          Width="120"
+          Height="120"
+          Canvas.Right="90"
+          Canvas.Top="54"
+          Fill="#1600D5E8" />
+    </Canvas>
+
+    <Border
+        Margin="28"
+        Background="#F8FFFFFF"
+        BorderBrush="#A8D6F0"
+        BorderThickness="1"
+        CornerRadius="30">
+
+      <Grid ColumnDefinitions="390,*">
+
+        <!-- Brand / value proposition -->
+        <Border
+            Grid.Column="0"
+            Margin="18"
+            Padding="34"
+            Background="#EAF8FF"
+            CornerRadius="24">
+
+          <Grid RowDefinitions="Auto,*,Auto">
+            <Image
+                Width="220"
+                HorizontalAlignment="Left"
+                Source="avares://GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png" />
+
+            <StackPanel
+                Grid.Row="1"
+                VerticalAlignment="Center"
+                Spacing="18">
+
+              <Border
+                  HorizontalAlignment="Left"
+                  Padding="12,6"
+                  Background="#D7F3FF"
+                  CornerRadius="14">
+                <TextBlock
+                    Text="{DynamicResource OnboardingEyebrow}"
+                    FontSize="11"
+                    FontWeight="Bold"
+                    Foreground="#0079B8" />
+              </Border>
+
+              <TextBlock
+                  Text="{DynamicResource OnboardingHeroTitle}"
+                  MaxWidth="310"
+                  FontSize="34"
+                  FontWeight="Bold"
+                  Foreground="#101D35"
+                  TextWrapping="Wrap" />
+
+              <TextBlock
+                  Text="{DynamicResource OnboardingHeroSubtitle}"
+                  MaxWidth="310"
+                  FontSize="15"
+                  LineHeight="22"
+                  Foreground="#49627C"
+                  TextWrapping="Wrap" />
+
+              <StackPanel
+                  Margin="0,12,0,0"
+                  Spacing="14">
+
+                <Grid ColumnDefinitions="34,*">
+                  <Border
+                      Width="28"
+                      Height="28"
+                      Background="#D9F8EC"
+                      CornerRadius="14">
+                    <TextBlock
+                        Text="✓"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontWeight="Bold"
+                        Foreground="#009B65" />
+                  </Border>
+
+                  <StackPanel Grid.Column="1">
+                    <TextBlock
+                        Text="{DynamicResource OnboardingPrivateTitle}"
+                        FontWeight="SemiBold"
+                        Foreground="#15243A" />
+                    <TextBlock
+                        Text="{DynamicResource OnboardingPrivateText}"
+                        Margin="0,3,0,0"
+                        FontSize="12"
+                        Foreground="#557089"
+                        TextWrapping="Wrap" />
+                  </StackPanel>
+                </Grid>
+
+                <Grid ColumnDefinitions="34,*">
+                  <Border
+                      Width="28"
+                      Height="28"
+                      Background="#E8E8FF"
+                      CornerRadius="14">
+                    <TextBlock
+                        Text="●"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="10"
+                        Foreground="#5E5CF4" />
+                  </Border>
+
+                  <StackPanel Grid.Column="1">
+                    <TextBlock
+                        Text="{DynamicResource OnboardingLocalTitle}"
+                        FontWeight="SemiBold"
+                        Foreground="#15243A" />
+                    <TextBlock
+                        Text="{DynamicResource OnboardingLocalText}"
+                        Margin="0,3,0,0"
+                        FontSize="12"
+                        Foreground="#557089"
+                        TextWrapping="Wrap" />
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </StackPanel>
+
+            <TextBlock
+                Grid.Row="2"
+                Text="GlucoDesk · Local-first CGM companion"
+                FontSize="11"
+                Foreground="#70869A" />
+          </Grid>
+        </Border>
+
+        <!-- Language selection -->
+        <Grid
+            Grid.Column="1"
+            Margin="46,42,46,38"
+            RowDefinitions="Auto,Auto,*,Auto,Auto">
+
+          <TextBlock
+              Text="{DynamicResource OnboardingTitle}"
+              FontSize="31"
+              FontWeight="Bold"
+              Foreground="#101D35" />
+
+          <TextBlock
+              Grid.Row="1"
+              Margin="0,10,0,0"
+              MaxWidth="520"
+              Text="{DynamicResource OnboardingSubtitle}"
+              FontSize="15"
+              LineHeight="22"
+              Foreground="#526B83"
+              TextWrapping="Wrap" />
+
+          <ScrollViewer
+              Grid.Row="2"
+              Margin="0,28,0,22"
+              HorizontalScrollBarVisibility="Disabled"
+              VerticalScrollBarVisibility="Auto">
+
+            <ItemsControl
+                ItemsSource="{Binding LanguageOptions}">
+
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Button
+                      Classes="language-choice"
+                      Command="{Binding SelectCommand}"
+                      Width="250"
+                      Height="190"
+                      Margin="0,0,16,16"
+                      AutomationProperties.Name="{Binding AccessibleName}">
+
+                    <Border
+                        Classes="language-card"
+                        Classes.selected="{Binding IsSelected}"
+                        Padding="22">
+
+                      <Grid RowDefinitions="Auto,*,Auto">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                          <Border
+                              Width="48"
+                              Height="48"
+                              Background="#E3F6FF"
+                              CornerRadius="15">
+                            <TextBlock
+                                Text="{Binding ShortCode}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                FontWeight="Bold"
+                                Foreground="#0089CE" />
+                          </Border>
+
+                          <Border
+                              Grid.Column="2"
+                              IsVisible="{Binding IsSelected}"
+                              Padding="9,4"
+                              Background="#D8F7EA"
+                              CornerRadius="12">
+                            <TextBlock
+                                Text="{DynamicResource OnboardingSelected}"
+                                FontSize="10"
+                                FontWeight="Bold"
+                                Foreground="#008C5B"  HorizontalAlignment="Center"  VerticalAlignment="Center"  TextAlignment="Center"  Margin="0"  TextWrapping="NoWrap" />
+                          </Border>
+                        </Grid>
+
+                        <StackPanel
+                            Grid.Row="1"
+                            Margin="0,26,0,0"
+                            VerticalAlignment="Top">
+                          <TextBlock
+                              Text="{Binding NativeName}"
+                              FontSize="22"
+                              FontWeight="Bold"
+                              Foreground="#13223A" />
+                          <TextBlock
+                              Text="{Binding DisplayName}"
+                              Margin="0,8,0,0"
+                              FontSize="13"
+                              Foreground="#657C92" />
+                        </StackPanel>
+
+                        <TextBlock
+                            Grid.Row="2"
+                            Text="{Binding Code}"
+                            FontSize="11"
+                            Foreground="#89A0B5" 
+                            Margin="0,18,0,0"
+                            VerticalAlignment="Bottom"/>
+                      </Grid>
+                    </Border>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+
+          <Border
+              Grid.Row="3"
+              IsVisible="{Binding HasError}"
+              Margin="0,0,0,14"
+              Padding="14,10"
+              Background="#FFF1F2"
+              BorderBrush="#FFB5BC"
+              BorderThickness="1"
+              CornerRadius="12">
+            <TextBlock
+                Text="{Binding ErrorMessage}"
+                Foreground="#B42332"
+                TextWrapping="Wrap" />
+          </Border>
+
+          <Grid
+              Grid.Row="4"
+              ColumnDefinitions="*,32,Auto">
+
+            <StackPanel
+                VerticalAlignment="Center">
+              <TextBlock
+                  Text="{DynamicResource OnboardingChangeLater}"
+                  MaxWidth="360"
+                  FontSize="12"
+                  Foreground="#6A8095"
+                  TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Button
+                Grid.Column="2"
+                Command="{Binding ContinueCommand}"
+                MinWidth="180"
+                Height="48"
+                Padding="16,0"
+                Background="#078CE1"
+                BorderBrush="#078CE1"
+                CornerRadius="15"
+                HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Center"
+              Margin="0">
+
+              <Grid
+                  ColumnDefinitions="30,*,30"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Center">
+
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{DynamicResource OnboardingContinue}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontWeight="Bold"
+                    Foreground="White" />
+
+                <TextBlock
+                    Grid.Column="2"
+                    Text="→"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="18"
+                    Foreground="White" />
+              </Grid>
+            </Button>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>
