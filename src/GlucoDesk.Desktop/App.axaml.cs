@@ -9,7 +9,9 @@ using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.Views.Main;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
+using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.ViewModels.Onboarding;
+using GlucoDesk.Desktop.Views.Onboarding;
 namespace GlucoDesk.Desktop;
 
 public partial class App : Avalonia.Application
@@ -18,68 +20,240 @@ public partial class App : Avalonia.Application
     private IServiceScope? _applicationScope;
     private bool _isExplicitShutdownRequested;
     private bool _isMainWindowHideInProgress;
+    private bool _hasStartedDesktopRuntime;
 
     /// <inheritdoc />
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        global::GlucoDesk.Desktop.Localization.LocalizationManager.InitializeIfNeeded();
     }
 
     /// <inheritdoc />
     public override void OnFrameworkInitializationCompleted()
     {
-        _serviceProvider = DesktopServiceProviderBuilder.BuildServiceProvider();
-        _applicationScope = _serviceProvider.CreateScope();
+        _serviceProvider =
+            DesktopServiceProviderBuilder.BuildServiceProvider();
 
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        _applicationScope =
+            _serviceProvider.CreateScope();
+
+        if (ApplicationLifetime
+            is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
-            desktop.MainWindow = _applicationScope
-                .ServiceProvider
-                .GetRequiredService<MainWindow>();
-
-            RegisterDesktopActivationHandler(desktop);
-
-            desktop.ShutdownRequested += (_, _) =>
-            {
-                _isExplicitShutdownRequested = true;
-            };
-
-            desktop.MainWindow.Closing += (_, eventArgs) =>
-            {
-                HandleMainWindowClosing(
-                    desktop,
-                    eventArgs);
-            };
-
-            desktop.MainWindow.Opened += (_, _) =>
-            {
-                StartDesktopPresenceSafely(
-                    desktop,
-                    _applicationScope.ServiceProvider);
-
-                _ = StartBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider);
-                _ = RunStartupHistoryContinuitySyncSafelyAsync(_applicationScope.ServiceProvider);
-            };
-
-            desktop.Exit += async (_, _) =>
-            {
-                _isExplicitShutdownRequested = true;
-
-                StopDesktopPresenceSafely(_applicationScope.ServiceProvider);
-
-                await StopBackgroundSyncSafelyAsync(_applicationScope.ServiceProvider)
-                    .ConfigureAwait(false);
-
-                DisposeServices();
-            };
+            ConfigureDesktopLifetime(desktop);
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Configures desktop lifetime events and selects the initial window.
+    /// </summary>
+    private void ConfigureDesktopLifetime(
+        IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+
+        var serviceProvider =
+            _applicationScope?.ServiceProvider
+            ?? throw new InvalidOperationException(
+                "The application service scope is not available.");
+
+        desktop.ShutdownMode =
+            ShutdownMode.OnExplicitShutdown;
+
+        RegisterDesktopActivationHandler(desktop);
+
+        desktop.ShutdownRequested += (_, _) =>
+        {
+            _isExplicitShutdownRequested = true;
+        };
+
+        desktop.Exit += async (_, _) =>
+        {
+            _isExplicitShutdownRequested = true;
+
+            StopDesktopPresenceSafely(serviceProvider);
+
+            await StopBackgroundSyncSafelyAsync(serviceProvider)
+                .ConfigureAwait(false);
+
+            DisposeServices();
+        };
+
+        if (ShouldShowLanguageOnboarding())
+        {
+            ConfigureLanguageOnboarding(
+                desktop,
+                serviceProvider);
+
+            return;
+        }
+
+        ConfigureMainApplicationWindow(
+            desktop,
+            serviceProvider,
+            showImmediately: false);
+    }
+
+    /// <summary>
+    /// Determines whether the first-launch language experience is required.
+    /// </summary>
+    private static bool ShouldShowLanguageOnboarding()
+    {
+        var preference =
+            LanguagePreferenceStore.ReadPreference();
+
+        var forceValue =
+            Environment.GetEnvironmentVariable(
+                "GLUCODESK_FORCE_LANGUAGE_ONBOARDING");
+
+        return LanguageOnboardingLaunchPolicy.ShouldShow(
+            preference.HasExplicitPreference,
+            forceValue);
+    }
+
+    /// <summary>
+    /// Configures the first-launch language window.
+    /// </summary>
+    private void ConfigureLanguageOnboarding(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        var onboardingWindow = serviceProvider
+            .GetRequiredService<LanguageOnboardingWindow>();
+
+        if (onboardingWindow.DataContext
+            is not LanguageOnboardingViewModel viewModel)
+        {
+            throw new InvalidOperationException(
+                "The language onboarding window does not expose "
+                + "the expected view model.");
+        }
+
+        var onboardingCompleted = false;
+
+        desktop.MainWindow = onboardingWindow;
+
+        viewModel.Completed += OnOnboardingCompleted;
+        onboardingWindow.Closed += OnOnboardingClosed;
+
+        void OnOnboardingCompleted(
+            object? sender,
+            LanguageOnboardingCompletedEventArgs eventArgs)
+        {
+            _ = sender;
+            _ = eventArgs;
+
+            if (onboardingCompleted)
+            {
+                return;
+            }
+
+            onboardingCompleted = true;
+
+            viewModel.Completed -= OnOnboardingCompleted;
+            onboardingWindow.Closed -= OnOnboardingClosed;
+
+            ConfigureMainApplicationWindow(
+                desktop,
+                serviceProvider,
+                showImmediately: true);
+
+            onboardingWindow.Close();
+        }
+
+        void OnOnboardingClosed(
+            object? sender,
+            EventArgs eventArgs)
+        {
+            _ = sender;
+            _ = eventArgs;
+
+            if (onboardingCompleted
+                || _isExplicitShutdownRequested)
+            {
+                return;
+            }
+
+            _isExplicitShutdownRequested = true;
+            desktop.Shutdown();
+        }
+    }
+
+    /// <summary>
+    /// Creates and configures the normal GlucoDesk main window.
+    /// </summary>
+    private void ConfigureMainApplicationWindow(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider,
+        bool showImmediately)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        var mainWindow = serviceProvider
+            .GetRequiredService<MainWindow>();
+
+        desktop.MainWindow = mainWindow;
+
+        mainWindow.Closing += (_, eventArgs) =>
+        {
+            HandleMainWindowClosing(
+                desktop,
+                eventArgs);
+        };
+
+        mainWindow.Opened += (_, _) =>
+        {
+            StartDesktopRuntime(
+                desktop,
+                serviceProvider);
+        };
+
+        if (!showImmediately)
+        {
+            return;
+        }
+
+        mainWindow.Show();
+        mainWindow.Activate();
+    }
+
+    /// <summary>
+    /// Starts tray, background synchronization and history continuity once.
+    /// </summary>
+    private void StartDesktopRuntime(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        if (_hasStartedDesktopRuntime)
+        {
+            return;
+        }
+
+        _hasStartedDesktopRuntime = true;
+
+        StartDesktopPresenceSafely(
+            desktop,
+            serviceProvider);
+
+        _ = StartBackgroundSyncSafelyAsync(
+            serviceProvider);
+
+        _ = RunStartupHistoryContinuitySyncSafelyAsync(
+            serviceProvider);
+    }
+
 
     /// <summary>
     /// Handles main window close requests without terminating the background desktop companion.

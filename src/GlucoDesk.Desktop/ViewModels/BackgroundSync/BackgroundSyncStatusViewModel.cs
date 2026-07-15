@@ -3,6 +3,8 @@ using GlucoDesk.Application.Cgm.BackgroundSync.Enums;
 using GlucoDesk.Application.Cgm.BackgroundSync.State;
 using GlucoDesk.Application.Cgm.BackgroundSync.State.Services.Abstractions;
 using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
+using System.Globalization;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.ViewModels.BackgroundSync;
 
@@ -13,23 +15,24 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
 {
     private readonly IBackgroundSyncStateService _stateService;
     private readonly IBackgroundSyncUiDispatcher _uiDispatcher;
+    private BackgroundSyncStateSnapshot _lastSnapshot;
 
     private bool _isDisposed;
 
     [ObservableProperty]
-    private string title = "Automatic sync";
+    private string title = T("BackgroundSyncAutomaticSync");
 
     [ObservableProperty]
-    private string statusText = "Waiting to start";
+    private string statusText = T("BackgroundSyncWaitingToStart");
 
     [ObservableProperty]
-    private string summaryText = "Your local history will update automatically while GlucoDesk is open.";
+    private string summaryText = T("BackgroundSyncLocalHistoryAutoUpdate");
 
     [ObservableProperty]
-    private string supportingText = "GlucoDesk will keep your recent readings up to date in the background.";
+    private string supportingText = T("BackgroundSyncRecentReadingsUpToDate");
 
     [ObservableProperty]
-    private string lastUpdateText = "No updates yet";
+    private string lastUpdateText = T("BackgroundSyncNoUpdatesYet");
 
     [ObservableProperty]
     private bool isRunning;
@@ -55,8 +58,12 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
         _stateService = stateService;
         _uiDispatcher = uiDispatcher;
 
-        ApplySnapshot(_stateService.CurrentSnapshot);
+        _lastSnapshot = _stateService.CurrentSnapshot;
+
+        ApplySnapshot(_lastSnapshot);
+
         _stateService.SnapshotChanged += OnSnapshotChanged;
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
     }
 
     /// <summary>
@@ -70,6 +77,8 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
         }
 
         _stateService.SnapshotChanged -= OnSnapshotChanged;
+        LocalizationManager.LanguageChanged -= OnLanguageChanged;
+
         _isDisposed = true;
     }
 
@@ -99,11 +108,31 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
     }
 
     /// <summary>
+    /// Rebuilds user-facing synchronization text when the language changes.
+    /// </summary>
+    private void OnLanguageChanged(object? sender, EventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        _uiDispatcher.Post(() =>
+        {
+            if (!_isDisposed)
+            {
+                ApplySnapshot(_lastSnapshot);
+            }
+        });
+    }
+
+    /// <summary>
     /// Applies a background sync state snapshot to user-facing bindable properties.
     /// </summary>
     /// <param name="snapshot">The background sync state snapshot.</param>
     private void ApplySnapshot(BackgroundSyncStateSnapshot snapshot)
     {
+        _lastSnapshot = snapshot;
+
+        Title = T("BackgroundSyncAutomaticSync");
         IsRunning = snapshot.IsRunning;
         NeedsAttention = snapshot.LastStatus is BackgroundSyncStatus.ProviderFailed or BackgroundSyncStatus.Failed;
         HasSuccessfulSync = snapshot.LastSucceededAt is not null;
@@ -123,25 +152,25 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
     {
         if (snapshot.LastStatus is BackgroundSyncStatus.ProviderFailed or BackgroundSyncStatus.Failed)
         {
-            return "Needs attention";
+            return T("BackgroundSyncNeedsAttention");
         }
 
         if (snapshot.IsRunning && snapshot.LastSucceededAt is not null)
         {
-            return "Sync active";
+            return T("BackgroundSyncActive");
         }
 
         if (snapshot.IsRunning)
         {
-            return "Preparing sync";
+            return T("BackgroundSyncPreparing");
         }
 
         if (snapshot.LastSucceededAt is not null)
         {
-            return "Sync paused";
+            return T("BackgroundSyncPaused");
         }
 
-        return "Waiting to start";
+        return T("BackgroundSyncWaitingToStart");
     }
 
     /// <summary>
@@ -153,20 +182,23 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
     {
         if (snapshot.LastStatus is BackgroundSyncStatus.ProviderFailed or BackgroundSyncStatus.Failed)
         {
-            return "Last update failed";
+            return T("BackgroundSyncLastUpdateFailed");
         }
 
         if (snapshot.LastSucceededAt is not null)
         {
-            return $"Updated at {FormatTime(snapshot.LastSucceededAt.Value)}";
+            return string.Format(
+                CultureInfo.CurrentCulture,
+                T("BackgroundSyncUpdatedAt"),
+                FormatTime(snapshot.LastSucceededAt.Value));
         }
 
         if (snapshot.IsRunning)
         {
-            return "Looking for recent readings";
+            return T("BackgroundSyncLookingForReadings");
         }
 
-        return "Your local history will update automatically while GlucoDesk is open.";
+        return T("BackgroundSyncLocalHistoryAutoUpdate");
     }
 
     /// <summary>
@@ -178,20 +210,20 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
     {
         if (snapshot.LastStatus is BackgroundSyncStatus.ProviderFailed or BackgroundSyncStatus.Failed)
         {
-            return "GlucoDesk will try again automatically. If the issue continues, check your account or connection.";
+            return T("BackgroundSyncRetryAutomatically");
         }
 
         if (snapshot.IsRunning)
         {
-            return "GlucoDesk keeps your local history updated while the app is open.";
+            return T("BackgroundSyncKeepsHistoryUpdated");
         }
 
         if (snapshot.LastSucceededAt is not null)
         {
-            return "Automatic updates will resume when background sync is active.";
+            return T("BackgroundSyncResumeWhenActive");
         }
 
-        return "GlucoDesk will keep your recent readings up to date in the background.";
+        return T("BackgroundSyncRecentReadingsUpToDate");
     }
 
     /// <summary>
@@ -202,8 +234,11 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
     private static string BuildLastUpdateText(BackgroundSyncStateSnapshot snapshot)
     {
         return snapshot.LastSucceededAt is null
-            ? "No updates yet"
-            : $"Last successful update: {FormatTime(snapshot.LastSucceededAt.Value)}";
+            ? T("BackgroundSyncNoUpdatesYet")
+            : string.Format(
+                    CultureInfo.CurrentCulture,
+                    T("BackgroundSyncLastSuccessfulUpdate"),
+                    FormatTime(snapshot.LastSucceededAt.Value));
     }
 
     /// <summary>
@@ -216,6 +251,11 @@ public sealed partial class BackgroundSyncStatusViewModel : ObservableObject, ID
         return timestamp
             .ToLocalTime()
             .ToString("HH:mm");
+    }
+
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
     }
 
     #endregion

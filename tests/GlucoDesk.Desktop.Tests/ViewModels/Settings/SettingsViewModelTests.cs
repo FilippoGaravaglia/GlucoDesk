@@ -11,10 +11,11 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Models;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Settings;
 
-public sealed class SettingsViewModelTests
+public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
 {
     [Fact]
     public async Task LoadCommand_ShouldPopulateFields_WhenSettingsLoadSucceeds()

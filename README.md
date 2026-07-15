@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/macOS-DMG--preview-00AEEF" alt="macOS DMG preview" />
   <img src="https://img.shields.io/badge/Windows-installer--preview-0078D4" alt="Windows installer preview" />
   <img src="https://img.shields.io/badge/local--first-yes-00AEEF" alt="Local-first" />
+  <img src="https://img.shields.io/badge/languages-English%20%7C%20Italian-0B8CE9" alt="English and Italian" />
 </p>
 
 <h1 align="center">GlucoDesk</h1>
@@ -19,7 +20,7 @@
 </p>
 
 <p align="center">
-  It brings current glucose awareness, recent trends, local history, data completeness, privacy mode, glucose awareness notifications and glycemic diary export into a clean desktop experience.
+  It brings current glucose awareness, recent trends, local history, data completeness, privacy mode, glucose awareness notifications, glycemic diary export and a complete English and Italian experience into a clean desktop app.
 </p>
 
 ---
@@ -32,6 +33,8 @@
   <a href="#installation-preview"><strong>Install preview</strong></a>
   ·
   <a href="#glucodesk-in-action"><strong>See it in action</strong></a>
+  ·
+  <a href="#multilingual-experience"><strong>Multilingual experience</strong></a>
   ·
   <a href="#safety-disclaimer"><strong>Safety disclaimer</strong></a>
 </p>
@@ -58,6 +61,7 @@
 
 * [What is GlucoDesk?](#what-is-glucodesk)
 * [GlucoDesk in action](#glucodesk-in-action)
+* [Multilingual experience](#multilingual-experience)
 * [Preview release status](#preview-release-status)
 * [Installation preview](#installation-preview)
 * [Key features](#key-features)
@@ -91,6 +95,8 @@ GlucoDesk focuses on:
 * glucose insights over selectable time windows;
 * readable glycemic diary export;
 * configurable display preferences;
+* complete English and Italian localization;
+* first-launch language onboarding with persistent local preference;
 * glucose awareness notifications;
 * secure local credential storage where supported by the operating system;
 * privacy-conscious local storage;
@@ -129,6 +135,50 @@ The demo above uses mock data and is for product preview purposes only.
 
 ---
 
+## Multilingual experience
+
+<p align="center">
+  <img src="./docs/assets/demo/glucodesk-language-onboarding.png" alt="GlucoDesk first-launch language onboarding with English and Italian selection" width="100%" />
+</p>
+
+<p align="center">
+  <em>A polished first-launch experience lets users choose their preferred language before entering GlucoDesk.</em>
+</p>
+
+GlucoDesk currently provides a complete desktop experience in:
+
+* English;
+* Italian.
+
+On first launch, GlucoDesk shows a dedicated language-selection window before opening the main dashboard.
+
+The onboarding flow:
+
+* detects a suitable initial language from the operating-system culture when possible;
+* presents every supported language as a clear, keyboard-accessible selection card;
+* previews the interface language immediately when the selection changes;
+* stores the confirmed preference locally on the user’s device;
+* opens the main application only after the language has been confirmed;
+* is skipped automatically on later launches;
+* remains compatible with language changes from **Settings**.
+
+The selected language is applied across:
+
+* dashboard and navigation;
+* account and connection diagnostics;
+* settings and validation messages;
+* glycemic diary and export dialogs;
+* background synchronization status;
+* in-app awareness messages;
+* supported native notification text;
+* dynamic runtime status messages.
+
+The localization system uses a shared translation catalog with automated key-parity tests between supported languages. The onboarding UI is populated from the supported-language collection rather than being hard-coded for exactly two cards, making future language additions straightforward.
+
+Language preferences remain local to the device and can be changed at any time from **Settings**.
+
+---
+
 ## Preview release status
 
 GlucoDesk is currently distributed as **v0.3.0-preview**.
@@ -136,7 +186,8 @@ GlucoDesk is currently distributed as **v0.3.0-preview**.
 This preview focuses on turning GlucoDesk into a complete desktop product loop:
 
 ```text
-Connect an optional CGM data source
+Choose a preferred language on first launch
+→ connect an optional CGM data source
 → show glucose awareness on desktop
 → keep local history updated
 → reduce local history gaps
@@ -147,7 +198,7 @@ Connect an optional CGM data source
 → package the app for macOS and Windows installation flows
 ```
 
-### Supported preview platform
+### Supported preview platforms
 
 | Platform            | Status            | Package type                                       | Notes                                           |
 | ------------------- | ----------------- | -------------------------------------------------- | ----------------------------------------------- |
@@ -243,6 +294,26 @@ The Windows installable ZIP package contains:
 * Windows setup installer;
 * SHA256 checksum file;
 * installation instructions.
+
+### First launch and language selection
+
+On the first launch, GlucoDesk asks the user to choose a preferred language before opening the dashboard.
+
+The current preview supports:
+
+```text
+English
+Italiano
+```
+
+After the user confirms the selection:
+
+1. the preference is stored locally;
+2. the application opens in the selected language;
+3. later launches go directly to the main window;
+4. the language remains editable from **Settings**.
+
+Existing users who already have a valid language preference are not shown the onboarding again.
 
 ### Updating an existing installation
 
@@ -437,6 +508,27 @@ The dashboard shows:
 
 The UI is designed to stay calm, readable and useful during desktop work.
 
+### English and Italian localization
+
+GlucoDesk provides a fully localized desktop experience in English and Italian.
+
+The current localization covers:
+
+* application navigation;
+* dashboard content and dynamic glucose status;
+* account configuration and connection diagnostics;
+* settings, validation and save states;
+* glycemic diary and export dialogs;
+* background synchronization messages;
+* glucose-awareness text;
+* first-launch language onboarding.
+
+The language is selected during the first-launch experience, stored locally and restored on later launches.
+
+Users can change the language at any time from **Settings** without reinstalling or resetting the application.
+
+The supported-language model and translation catalog are designed so additional languages can be introduced without redesigning the onboarding screen.
+
 ### macOS menu bar and Windows tray companion
 
 GlucoDesk includes a small desktop presence outside the main window:
@@ -596,10 +688,12 @@ The current diary direction focuses on:
 
 ### Settings
 
-The Settings page controls provider routing, glucose preferences, dashboard behavior and glucose awareness notifications.
+The Settings page controls language, provider routing, glucose preferences, dashboard behavior and glucose awareness notifications.
 
 The current preview includes improved settings handling for:
 
+* application language;
+* persistent language preference;
 * active live provider;
 * historical provider;
 * preferred glucose unit;
@@ -623,6 +717,7 @@ By design:
 
 * glucose history is stored locally on the user’s computer;
 * app settings are stored locally;
+* the selected interface language is stored locally;
 * dashboard and tray/menu-bar state are stored locally;
 * credentials are handled through the configured operating-system credential store where supported;
 * credentials must not be committed to Git;
@@ -809,6 +904,8 @@ Contains the Avalonia desktop application.
 This layer handles:
 
 * desktop UI;
+* first-launch language onboarding;
+* localization resources and runtime language switching;
 * view models;
 * dependency injection composition;
 * dashboard rendering;
@@ -835,6 +932,8 @@ Current quality practices include:
 * local-first data model;
 * platform-aware local storage paths;
 * automated tests across core, application, infrastructure and desktop layers;
+* translation-key parity tests across supported languages;
+* first-launch onboarding and language-preference persistence tests;
 * shared build configuration through `Directory.Build.props`;
 * nullable reference types enabled;
 * warnings treated as errors;
@@ -878,6 +977,7 @@ Current limitations:
 * Windows packages are not code-signed yet;
 * Windows may show a Microsoft Defender SmartScreen warning on first launch;
 * Linux runtime support is not available yet;
+* the interface currently supports English and Italian only;
 * auto-update is not available yet;
 * provider runtime behavior may depend on platform, region and account configuration;
 * local history completeness depends on sync availability and app runtime;
@@ -893,7 +993,9 @@ Planned improvements include:
 * signed and notarized macOS packages;
 * Windows code signing;
 * stronger release automation;
-* improved first-run onboarding;
+* additional interface languages;
+* localized installation and release documentation;
+* accessibility and keyboard-navigation refinements;
 * improved dashboard empty states;
 * improved dashboard error states;
 * richer diary and data-completeness reporting;

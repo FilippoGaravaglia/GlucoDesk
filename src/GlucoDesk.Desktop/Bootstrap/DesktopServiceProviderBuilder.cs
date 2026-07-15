@@ -33,6 +33,8 @@ using GlucoDesk.Desktop.Common.Dispatching.Abstractions;
 using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.DesktopPresence.Services;
 using GlucoDesk.Desktop.DesktopPresence.Formatters;
+using GlucoDesk.Desktop.ViewModels.Onboarding;
+using GlucoDesk.Desktop.Views.Onboarding;
 namespace GlucoDesk.Desktop.Bootstrap;
 
 /// <summary>
@@ -126,6 +128,8 @@ internal static class DesktopServiceProviderBuilder
         services.AddTransient<DiaryViewModel>();
         services.AddTransient<AccountViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<LanguageOnboardingViewModel>();
+        services.AddTransient<LanguageOnboardingWindow>();
         services.AddSingleton<IDiaryExportFileSaveService, AvaloniaDiaryExportFileSaveService>();
     }
 

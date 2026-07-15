@@ -20,10 +20,11 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Application.Cgm.Statistics.Requests;
 using GlucoDesk.Application.Cgm.Statistics.Results;
 using GlucoDesk.Application.Cgm.Statistics.Services.Abstractions;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Dashboard;
 
-public sealed class DashboardViewModelTests
+public sealed class DashboardViewModelTests : EnglishLocalizationTestBase
 {
     [Fact]
     public void Constructor_ShouldExposeDefaultFallbackAutoRefreshInterval()

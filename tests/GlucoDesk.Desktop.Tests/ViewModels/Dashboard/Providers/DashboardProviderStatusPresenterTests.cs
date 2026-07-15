@@ -1,9 +1,10 @@
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Providers;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Dashboard.Providers;
 
-public sealed class DashboardProviderStatusPresenterTests
+public sealed class DashboardProviderStatusPresenterTests : EnglishLocalizationTestBase
 {
     [Fact]
     public void Present_ShouldReturnMockPresentation_WhenProviderIsMock()

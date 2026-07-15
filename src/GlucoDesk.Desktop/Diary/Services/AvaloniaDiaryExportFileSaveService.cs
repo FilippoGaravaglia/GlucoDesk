@@ -8,6 +8,7 @@ using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Desktop.Diary.Results;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using AvaloniaApplication = Avalonia.Application;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.Diary.Services;
 
@@ -71,7 +72,7 @@ public sealed class AvaloniaDiaryExportFileSaveService : IDiaryExportFileSaveSer
                     completion.SetResult(Result<SaveFilePickerSelection>.Failure(
                         new Error(
                             "DiaryExport.StorageUnavailable",
-                            "Unable to access the desktop file save dialog.")));
+                            T("DiaryStorageUnavailable"))));
 
                     return;
                 }
@@ -125,7 +126,7 @@ public sealed class AvaloniaDiaryExportFileSaveService : IDiaryExportFileSaveSer
     {
         return new FilePickerSaveOptions
         {
-            Title = "Save glycemic diary",
+            Title = T("DiarySaveDialogTitle"),
             SuggestedFileName = file.FileName,
             FileTypeChoices =
             [
@@ -144,18 +145,23 @@ public sealed class AvaloniaDiaryExportFileSaveService : IDiaryExportFileSaveSer
     {
         if (file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
         {
-            return new FilePickerFileType("PDF document")
+            return new FilePickerFileType(T("DiaryFormatPdfDocument"))
             {
                 Patterns = ["*.pdf"],
                 MimeTypes = [file.ContentType]
             };
         }
 
-        return new FilePickerFileType("Excel workbook")
+        return new FilePickerFileType(T("DiaryFormatExcelWorkbook"))
         {
             Patterns = ["*.xlsx"],
             MimeTypes = [file.ContentType]
         };
+    }
+
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
     }
 
     #endregion

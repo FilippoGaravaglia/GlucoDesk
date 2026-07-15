@@ -17,10 +17,10 @@
               ColumnDefinitions="*,Auto"
               ColumnSpacing="24">
           <StackPanel Spacing="8">
-            <TextBlock Text="Settings"
+            <TextBlock Text="{DynamicResource NavSettings}"
                        Classes="page-title" />
 
-            <TextBlock Text="Configure GlucoDesk preferences, providers and dashboard behavior."
+            <TextBlock Text="{DynamicResource SettingsSubtitle}"
                        Classes="secondary"
                        FontSize="16"
                        TextWrapping="Wrap" />
@@ -29,7 +29,7 @@
           <Border MinWidth="260" Grid.Column="1"
                   Classes="badge-accent"
                   VerticalAlignment="Top">
-            <TextBlock Text="Local preferences"
+            <TextBlock Text="{DynamicResource SettingsLocalPreferences}"
                        FontSize="12"
                        FontWeight="SemiBold"
                        Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
@@ -51,10 +51,10 @@
                           Spacing="22">
 
                 <StackPanel Spacing="4">
-                  <TextBlock Text="CGM providers"
+                  <TextBlock Text="{DynamicResource SettingsCgmProvidersTitle}"
                              Classes="section-title" />
 
-                  <TextBlock Text="Select which provider GlucoDesk should use for live and historical glucose data."
+                  <TextBlock Text="{DynamicResource SettingsCgmProvidersSubtitle}"
                              Classes="secondary"
                              FontSize="13"
                              TextWrapping="Wrap" />
@@ -66,7 +66,7 @@
                         BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
                         Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
                   <StackPanel Spacing="8">
-                    <TextBlock Text="Runtime availability"
+                    <TextBlock Text="{DynamicResource SettingsRuntimeAvailability}"
                                Classes="metric-label" />
 
                     <TextBlock Text="{Binding ProviderAvailabilityStatusText}"
@@ -106,7 +106,7 @@
                       ColumnSpacing="20">
                   <StackPanel Grid.Column="0"
                               Spacing="8">
-                    <TextBlock Text="Live provider"
+                    <TextBlock Text="{DynamicResource SettingsLiveProvider}"
                                Classes="metric-label" />
 
                     <ComboBox ItemsSource="{Binding ProviderOptions}"
@@ -116,7 +116,7 @@
 
                   <StackPanel Grid.Column="1"
                               Spacing="8">
-                    <TextBlock Text="Historical provider"
+                    <TextBlock Text="{DynamicResource SettingsHistoricalProvider}"
                                Classes="metric-label" />
 
                     <ComboBox ItemsSource="{Binding ProviderOptions}"
@@ -136,10 +136,10 @@
                 <StackPanel Spacing="18">
 
                   <StackPanel Spacing="4">
-                    <TextBlock Text="Production notes"
+                    <TextBlock Text="{DynamicResource SettingsProductionNotes}"
                                Classes="section-title" />
 
-                    <TextBlock Text="Provider tokens and OAuth secrets are intentionally not stored here yet."
+                    <TextBlock Text="{DynamicResource SettingsProductionNotesDescription}"
                                Classes="secondary"
                                FontSize="13"
                                TextWrapping="Wrap" />
@@ -157,11 +157,11 @@
 
                       <StackPanel Grid.Column="1"
                                   Spacing="4">
-                        <TextBlock Text="Secure storage required"
+                        <TextBlock Text="{DynamicResource SettingsSecureStorageRequired}"
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
 
-                        <TextBlock Text="GlucoDesk currently stores only non-secret preferences in local JSON. Secret provider credentials should use secure storage in future production releases."
+                        <TextBlock Text="{DynamicResource SettingsSecureStorageDescription}"
                                    TextWrapping="Wrap"
                                    Classes="secondary"
                                    FontSize="13" />
@@ -179,11 +179,11 @@
 
                       <StackPanel Grid.Column="1"
                                   Spacing="4">
-                        <TextBlock Text="Provider safety"
+                        <TextBlock Text="{DynamicResource SettingsProviderSafety}"
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource GlucoDesk.Brush.Warning}" />
 
-                        <TextBlock Text="Only providers available in the current desktop runtime can be selected safely. Mock is always available; Dexcom and Nightscout require explicit configuration."
+                        <TextBlock Text="{DynamicResource SettingsProviderSafetyDescription}"
                                    TextWrapping="Wrap"
                                    Classes="secondary"
                                    FontSize="13" />
@@ -211,13 +211,24 @@
                             Spacing="20">
 
                   <StackPanel Spacing="4">
-                    <TextBlock Text="Glucose preferences"
+                    <TextBlock Text="{DynamicResource SettingsGlucosePreferencesTitle}"
                                Classes="section-title" />
 
-                    <TextBlock Text="Set the preferred unit and target range used by the dashboard, statistics and chart rendering."
+                    <TextBlock Text="{DynamicResource SettingsGlucosePreferencesSubtitle}"
                                Classes="secondary"
                                FontSize="13"
                                TextWrapping="Wrap" />
+
+                        <StackPanel Spacing="8" Margin="0,18,0,0">
+                            <TextBlock Text="{DynamicResource LanguageSettingsTitle}"
+                                       FontWeight="SemiBold" />
+                            <ComboBox Name="AppLanguageComboBox"
+                                      MinWidth="220"
+                                      SelectionChanged="OnAppLanguageSelectionChanged" />
+                            <TextBlock Text="{DynamicResource LanguageSettingsDescription}"
+                                       TextWrapping="Wrap"
+                                       Opacity="0.78" />
+                        </StackPanel>
                   </StackPanel>
 
                   <Grid ColumnDefinitions="*,*,*"
@@ -225,7 +236,7 @@
 
                     <StackPanel Grid.Column="0"
                                 Spacing="8">
-                      <TextBlock Text="Preferred unit"
+                      <TextBlock Text="{DynamicResource SettingsPreferredUnit}"
                                  Classes="metric-label" />
 
                       <ComboBox ItemsSource="{Binding PreferredUnitOptions}"
@@ -235,7 +246,7 @@
 
                     <StackPanel Grid.Column="1"
                                 Spacing="8">
-                      <TextBlock Text="Target low"
+                      <TextBlock Text="{DynamicResource SettingsTargetLow}"
                                  Classes="metric-label" />
 
                       <TextBox Text="{Binding TargetLowMgDlText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -250,7 +261,7 @@
 
                     <StackPanel Grid.Column="2"
                                 Spacing="8">
-                      <TextBlock Text="Target high"
+                      <TextBlock Text="{DynamicResource SettingsTargetHigh}"
                                  Classes="metric-label" />
 
                       <TextBox Text="{Binding TargetHighMgDlText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -276,17 +287,17 @@
                   <StackPanel Spacing="20">
 
                     <StackPanel Spacing="4">
-                      <TextBlock Text="Dashboard behavior"
+                      <TextBlock Text="{DynamicResource SettingsDashboardBehaviorTitle}"
                                  Classes="section-title" />
 
-                      <TextBlock Text="Configure refresh frequency and glucose chart scale."
+                      <TextBlock Text="{DynamicResource SettingsDashboardBehaviorSubtitle}"
                                  Classes="secondary"
                                  FontSize="13"
                                  TextWrapping="Wrap" />
                     </StackPanel>
 
                     <StackPanel Spacing="8">
-                      <TextBlock Text="Refresh interval"
+                      <TextBlock Text="{DynamicResource SettingsRefreshInterval}"
                                  Classes="metric-label" />
 
                       <TextBox x:Name="DashboardRefreshIntervalSecondsTextBox"
@@ -295,13 +306,13 @@
                                PlaceholderText="30"
                                HorizontalAlignment="Stretch" />
 
-                      <TextBlock Text="seconds"
+                      <TextBlock Text="{DynamicResource SettingsSeconds}"
                                  Classes="muted"
                                  FontSize="12" />
                     </StackPanel>
 
                     <StackPanel Spacing="8">
-                      <TextBlock Text="Chart maximum"
+                      <TextBlock Text="{DynamicResource SettingsChartMaximum}"
                                  Classes="metric-label" />
 
                       <ComboBox ItemsSource="{Binding ChartMaximumOptions}"
@@ -332,10 +343,10 @@
                             Spacing="18">
 
                   <StackPanel Spacing="4">
-                    <TextBlock Text="Glucose awareness notifications"
+                    <TextBlock Text="{DynamicResource SettingsGlucoseAwarenessNotificationsTitle}"
                                Classes="section-title" />
 
-                    <TextBlock Text="Show calm, non-medical desktop awareness messages when glucose is outside your configured target range."
+                    <TextBlock Text="{DynamicResource SettingsGlucoseAwarenessNotificationsSubtitle}"
                                Classes="secondary"
                                FontSize="13"
                                TextWrapping="Wrap" />
@@ -344,11 +355,11 @@
                   <Grid ColumnDefinitions="*,*"
                         ColumnSpacing="20">
                     <CheckBox Grid.Column="0"
-                              Content="Enable in-app banner"
+                              Content="{DynamicResource SettingsEnableInAppBanner}"
                               IsChecked="{Binding GlucoseAlertsEnabled, Mode=TwoWay}" />
 
                     <CheckBox Grid.Column="1"
-                              Content="Use privacy wording"
+                              Content="{DynamicResource SettingsUsePrivacyWording}"
                               IsChecked="{Binding GlucoseAlertPrivacyModeEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
                   </Grid>
@@ -356,17 +367,17 @@
                   <Grid ColumnDefinitions="*,*"
                         ColumnSpacing="20">
                     <CheckBox Grid.Column="0"
-                              Content="Notify below target"
+                              Content="{DynamicResource SettingsNotifyBelowTarget}"
                               IsChecked="{Binding LowGlucoseAlertsEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
 
                     <CheckBox Grid.Column="1"
-                              Content="Notify above target"
+                              Content="{DynamicResource SettingsNotifyAboveTarget}"
                               IsChecked="{Binding HighGlucoseAlertsEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
                   </Grid>
 
-                  <TextBlock Text="GlucoDesk notifications are awareness prompts only. Keep using official diabetes apps and devices for therapy decisions and urgent alerts."
+                  <TextBlock Text="{DynamicResource SettingsNotificationsSafetyNote}"
                              Classes="muted"
                              FontSize="12"
                              TextWrapping="Wrap" />
@@ -381,17 +392,17 @@
                   <StackPanel Spacing="18">
 
                     <StackPanel Spacing="4">
-                      <TextBlock Text="Anti-spam and OS notifications"
+                      <TextBlock Text="{DynamicResource SettingsAntiSpamTitle}"
                                  Classes="section-title" />
 
-                      <TextBlock Text="Native notifications are optional and protected by a repeat cooldown."
+                      <TextBlock Text="{DynamicResource SettingsAntiSpamSubtitle}"
                                  Classes="secondary"
                                  FontSize="13"
                                  TextWrapping="Wrap" />
                     </StackPanel>
 
                     <StackPanel Spacing="8">
-                      <TextBlock Text="Consecutive readings required"
+                      <TextBlock Text="{DynamicResource SettingsConsecutiveReadingsRequired}"
                                  Classes="label" />
 
                       <TextBox x:Name="GlucoseAlertRequiredConsecutiveReadingsTextBox"
@@ -399,13 +410,13 @@
                                TextChanged="OnPositiveIntegerSettingsTextChanged"
                                IsEnabled="{Binding GlucoseAlertsEnabled}" />
 
-                      <TextBlock Text="Number of consecutive out-of-range readings required before showing an alert. Use 1 for faster alerts, 2 as balanced default, or 3-5 to reduce noise."
+                      <TextBlock Text="{DynamicResource SettingsConsecutiveReadingsDescription}"
                                  Classes="muted"
                                  FontSize="12"
                                  TextWrapping="Wrap" />
                     </StackPanel>
 
-                    <CheckBox Content="Enable native OS notifications"
+                    <CheckBox Content="{DynamicResource SettingsEnableNativeNotifications}"
                               IsChecked="{Binding NativeGlucoseNotificationsEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding GlucoseAlertsEnabled}" />
 
@@ -417,7 +428,7 @@
                     <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="14">
                       <Button Grid.Column="0"
-                              Content="Send test notification"
+                              Content="{DynamicResource SettingsSendTestNotification}"
                               Command="{Binding SendNativeGlucoseTestNotificationCommand}"
                               IsEnabled="{Binding CanSendNativeGlucoseTestNotification}" />
 
@@ -430,7 +441,7 @@
                     </Grid>
 
                     <StackPanel Spacing="8">
-                      <TextBlock Text="Repeat cooldown"
+                      <TextBlock Text="{DynamicResource SettingsRepeatCooldown}"
                                  Classes="metric-label" />
 
                       <TextBox x:Name="GlucoseAlertRepeatIntervalMinutesTextBox"
@@ -440,7 +451,7 @@
                                HorizontalAlignment="Stretch"
                                IsEnabled="{Binding GlucoseAlertsEnabled}" />
 
-                      <TextBlock Text="minutes between repeated notifications for the same condition"
+                      <TextBlock Text="{DynamicResource SettingsRepeatCooldownDescription}"
                                  Classes="muted"
                                  FontSize="12"
                                  TextWrapping="Wrap" />
@@ -457,7 +468,7 @@
                     ColumnSpacing="18"
                     VerticalAlignment="Center">
                 <Button Grid.Column="0"
-                        Content="Save settings"
+                        Content="{DynamicResource SettingsSaveButton}"
                         Command="{Binding SaveCommand}"
                         VerticalAlignment="Center" />
 

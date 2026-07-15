@@ -1,10 +1,11 @@
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Chart;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Summaries;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Dashboard.Summaries;
 
-public sealed class AmbientGlucoseSummaryServiceTests
+public sealed class AmbientGlucoseSummaryServiceTests : EnglishLocalizationTestBase
 {
     private static readonly DateTimeOffset BaseTimestamp =
         new(2026, 7, 8, 9, 0, 0, TimeSpan.Zero);
