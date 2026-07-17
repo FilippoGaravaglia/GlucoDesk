@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="en" data-language="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>GlucoDesk — A calm desktop companion for glucose awareness</title>
+
+  <meta
+    name="description"
+    content="GlucoDesk is a local-first glucose awareness companion for macOS and Windows, with desktop presence, calm notifications, local history and bilingual glycemic diary exports.">
+
+  <meta name="theme-color" content="#071426">
+  <meta name="color-scheme" content="dark light">
+
+  <link
+    rel="canonical"
+    href="https://filippogaravaglia.github.io/GlucoDesk/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GlucoDesk">
+  <meta
+    property="og:title"
+    content="GlucoDesk — Your glucose, calmly in sight">
+  <meta
+    property="og:description"
+    content="A local-first desktop companion for glucose awareness on macOS and Windows.">
+  <meta
+    property="og:url"
+    content="https://filippogaravaglia.github.io/GlucoDesk/">
+  <meta
+    property="og:image"
+    content="https://filippogaravaglia.github.io/GlucoDesk/assets/images/glucodesk-social-preview.png">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta
+    name="twitter:title"
+    content="GlucoDesk — Your glucose, calmly in sight">
+  <meta
+    name="twitter:description"
+    content="A local-first desktop companion for glucose awareness.">
+  <meta
+    name="twitter:image"
+    content="https://filippogaravaglia.github.io/GlucoDesk/assets/images/glucodesk-social-preview.png">
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="assets/icons/glucodesk-app-icon.png">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="assets/css/styles.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "GlucoDesk",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "macOS, Windows",
+    "softwareVersion": "0.3.0-preview",
+    "description": "A local-first desktop companion for glucose awareness.",
+    "url": "https://filippogaravaglia.github.io/GlucoDesk/",
+    "downloadUrl": "https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.3.0-preview",
+    "license": "https://opensource.org/license/mit",
+    "isAccessibleForFree": true,
+    "author": {
+      "@type": "Person",
+      "name": "Filippo Garavaglia"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <a class="skip-link" href="#main-content">
+    Skip to content
+  </a>
+
+  <div class="page-glow page-glow-one" aria-hidden="true"></div>
+  <div class="page-glow page-glow-two" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+
+  <header class="site-header" data-header>
+    <div class="header-shell">
+      <a
+        class="brand-link"
+        href="#top"
+        aria-label="GlucoDesk home">
+        <img
+          class="brand-icon"
+          src="assets/icons/glucodesk-app-icon.png"
+          alt=""
+          width="42"
+          height="42">
+
+        <span class="brand-name">GlucoDesk</span>
+        <span class="preview-pill">Preview</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        <a href="#experience" data-i18n="navExperience">Experience</a>
+        <a href="#features" data-i18n="navFeatures">Features</a>
+        <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
+        <a href="#download" data-i18n="navDownload">Download</a>
+      </nav>
+
+      <div class="header-actions">
+        <div
+          class="language-switch"
+          role="group"
+          aria-label="Language">
+          <button
+            class="language-button is-active"
+            type="button"
+            data-language-button="en"
+            aria-pressed="true">
+            EN
+          </button>
+          <button
+            class="language-button"
+            type="button"
+            data-language-button="it"
+            aria-pressed="false">
+            IT
+          </button>
+        </div>
+
+        <a
+          class="github-button"
+          href="https://github.com/FilippoGaravaglia/GlucoDesk"
+          target="_blank"
+          rel="noreferrer">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 .7a11.5 11.5 0 0 0-3.64 22.4c.58.1.79-.25.79-.56v-2.2c-3.22.7-3.9-1.37-3.9-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.74-1.55-2.57-.29-5.27-1.29-5.27-5.73 0-1.27.45-2.3 1.19-3.11-.12-.3-.52-1.48.11-3.07 0 0 .97-.31 3.16 1.19a10.9 10.9 0 0 1 5.76 0c2.2-1.5 3.16-1.19 3.16-1.19.63 1.6.23 2.78.11 3.07.74.81 1.19 1.84 1.19 3.11 0 4.45-2.71 5.43-5.29 5.72.42.36.79 1.07.79 2.16v3.2c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z">
+            </path>
+          </svg>
+          <span>GitHub</span>
+        </a>
+
+        <button
+          class="mobile-menu-button"
+          type="button"
+          aria-label="Open navigation"
+          aria-expanded="false"
+          data-mobile-menu-button>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+
+    <nav
+      class="mobile-nav"
+      aria-label="Mobile navigation"
+      data-mobile-nav>
+      <a href="#experience" data-i18n="navExperience">Experience</a>
+      <a href="#features" data-i18n="navFeatures">Features</a>
+      <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
+      <a href="#download" data-i18n="navDownload">Download</a>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" id="top">
+      <div class="hero-orbit hero-orbit-one" aria-hidden="true"></div>
+      <div class="hero-orbit hero-orbit-two" aria-hidden="true"></div>
+
+      <div class="hero-grid site-shell">
+        <div class="hero-copy reveal">
+          <div class="eyebrow">
+            <span class="eyebrow-dot"></span>
+            <span data-i18n="heroEyebrow">
+              Local-first · macOS & Windows
+            </span>
+          </div>
+
+          <h1>
+            <span data-i18n="heroTitleLineOne">Your glucose.</span>
+            <span class="gradient-text" data-i18n="heroTitleLineTwo">
+              Calmly in sight.
+            </span>
+          </h1>
+
+          <p class="hero-description" data-i18n="heroDescription">
+            GlucoDesk brings recent glucose context to your desktop with a
+            glanceable menu bar presence, calm awareness notifications,
+            readable local history and bilingual diary exports.
+          </p>
+
+          <div class="hero-actions">
+            <a class="primary-cta" href="#download">
+              <span data-i18n="heroPrimaryAction">
+                Explore the preview
+              </span>
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                aria-hidden="true">
+                <path
+                  d="M5 12h14M13 6l6 6-6 6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                </path>
+              </svg>
+            </a>
+
+            <a
+              class="secondary-cta"
+              href="https://github.com/FilippoGaravaglia/GlucoDesk"
+              target="_blank"
+              rel="noreferrer">
+              <span data-i18n="heroSecondaryAction">
+                View source
+              </span>
+            </a>
+          </div>
+
+          <div class="hero-trust">
+            <div class="trust-item">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 3 5 6v5c0 4.6 2.8 8.2 7 10 4.2-1.8 7-5.4 7-10V6l-7-3Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8">
+                </path>
+                <path
+                  d="m9 12 2 2 4-5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                </path>
+              </svg>
+              <span data-i18n="trustLocal">Local-first</span>
+            </div>
+
+            <div class="trust-item">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M4 6h16v12H4zM8 21h8M12 18v3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round">
+                </path>
+              </svg>
+              <span data-i18n="trustPlatforms">macOS & Windows</span>
+            </div>
+
+            <div class="trust-item">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M4 5h16M4 12h10M4 19h13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round">
+                </path>
+              </svg>
+              <span data-i18n="trustOpenSource">Open source</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal reveal-delay-one">
+          <div class="floating-status floating-status-high">
+            <img
+              src="assets/icons/tray-high.png"
+              alt=""
+              width="34"
+              height="34">
+            <div>
+              <span class="floating-label" data-i18n="statusHigh">
+                High
+              </span>
+              <strong>192 mg/dL</strong>
+            </div>
+          </div>
+
+          <div class="floating-status floating-status-private">
+            <img
+              src="assets/icons/tray-privacy.png"
+              alt=""
+              width="34"
+              height="34">
+            <div>
+              <span class="floating-label" data-i18n="statusPrivacy">
+                Privacy mode
+              </span>
+              <strong data-i18n="statusHidden">Hidden</strong>
+            </div>
+          </div>
+
+          <div class="app-stage">
+            <div class="app-stage-glow" aria-hidden="true"></div>
+
+            <div class="desktop-window">
+              <div class="window-bar">
+                <div class="window-controls" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+                <span class="window-title">GlucoDesk</span>
+
+                <div class="window-live">
+                  <span></span>
+                  <span data-i18n="liveData">Live data</span>
+                </div>
+              </div>
+
+              <img
+                class="hero-dashboard"
+                src="assets/images/screenshots/dashboard.png"
+                alt="GlucoDesk desktop dashboard"
+                width="1440"
+                height="900">
+            </div>
+          </div>
+
+          <div class="glucose-mini-card" aria-hidden="true">
+            <div class="mini-card-header">
+              <span>Latest glucose</span>
+              <span class="live-dot"></span>
+            </div>
+            <div class="mini-value-row">
+              <strong>112</strong>
+              <span>mg/dL</span>
+              <span class="trend-arrow">→</span>
+            </div>
+            <svg
+              class="mini-chart"
+              viewBox="0 0 260 75"
+              preserveAspectRatio="none">
+              <defs>
+                <linearGradient
+                  id="miniChartFill"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1">
+                  <stop offset="0%" stop-color="#38bdf8" stop-opacity=".44"/>
+                  <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path
+                class="mini-chart-fill"
+                d="M0 57 C25 48, 39 55, 62 44 S102 31, 123 40 S157 58, 181 41 S218 22, 260 27 L260 75 L0 75Z">
+              </path>
+              <path
+                class="mini-chart-line"
+                d="M0 57 C25 48, 39 55, 62 44 S102 31, 123 40 S157 58, 181 41 S218 22, 260 27">
+              </path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-footer site-shell reveal">
+        <p data-i18n="heroFooter">
+          Designed for calm awareness while you work.
+        </p>
+
+        <div class="platform-strip">
+          <span>Apple Silicon</span>
+          <span>Intel Mac</span>
+          <span>Windows x64</span>
+          <span>English</span>
+          <span>Italiano</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-dark" id="experience">
+      <div class="site-shell">
+        <div class="section-heading centered reveal">
+          <span class="section-kicker" data-i18n="experienceKicker">
+            Glanceable by design
+          </span>
+
+          <h2 data-i18n="experienceTitle">
+            Awareness that stays out of your way.
+          </h2>
+
+          <p data-i18n="experienceDescription">
+            GlucoDesk lives quietly on your desktop and surfaces the context
+            you need without turning every reading into an interruption.
+          </p>
+        </div>
+
+        <div class="presence-showcase reveal">
+          <div class="presence-copy">
+            <span class="mini-kicker" data-i18n="presenceKicker">
+              Desktop presence
+            </span>
+
+            <h3 data-i18n="presenceTitle">
+              One icon. Immediate context.
+            </h3>
+
+            <p data-i18n="presenceDescription">
+              The GlucoDesk G updates as soon as a new reading changes your
+              glucose band, giving you immediate visual feedback in the macOS
+              menu bar or Windows system tray.
+            </p>
+
+            <div class="state-list">
+              <button
+                class="state-button is-active"
+                type="button"
+                data-state="in-range">
+                <img
+                  src="assets/icons/tray-in-range.png"
+                  alt=""
+                  width="30"
+                  height="30">
+                <span>
+                  <strong data-i18n="stateInRange">In range</strong>
+                  <small data-i18n="stateInRangeDescription">
+                    Calm green feedback
+                  </small>
+                </span>
+              </button>
+
+              <button
+                class="state-button"
+                type="button"
+                data-state="high">
+                <img
+                  src="assets/icons/tray-high.png"
+                  alt=""
+                  width="30"
+                  height="30">
+                <span>
+                  <strong data-i18n="stateHigh">High</strong>
+                  <small data-i18n="stateHighDescription">
+                    Visible yellow awareness
+                  </small>
+                </span>
+              </button>
+
+              <button
+                class="state-button"
+                type="button"
+                data-state="low">
+                <img
+                  src="assets/icons/tray-low.png"
+                  alt=""
+                  width="30"
+                  height="30">
+                <span>
+                  <strong data-i18n="stateLow">Low</strong>
+                  <small data-i18n="stateLowDescription">
+                    Clear red feedback
+                  </small>
+                </span>
+              </button>
+
+              <button
+                class="state-button"
+                type="button"
+                data-state="privacy">
+                <img
+                  src="assets/icons/tray-privacy.png"
+                  alt=""
+                  width="30"
+                  height="30">
+                <span>
+                  <strong data-i18n="statePrivacy">Privacy</strong>
+                  <small data-i18n="statePrivacyDescription">
+                    Values safely hidden
+                  </small>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="presence-demo" data-presence-demo="in-range">
+            <div class="mock-menu-bar">
+              <div class="mock-menu-left">
+                <span class="apple-symbol">●</span>
+                <strong>GlucoDesk</strong>
+                <span>File</span>
+                <span>View</span>
+              </div>
+
+              <div class="mock-menu-right">
+                <span>09:41</span>
+                <img
+                  data-state-icon
+                  src="assets/icons/tray-in-range.png"
+                  alt=""
+                  width="31"
+                  height="31">
+              </div>
+            </div>
+
+            <div class="presence-popover">
+              <div class="popover-brand">
+                <img
+                  src="assets/icons/glucodesk-app-icon.png"
+                  alt=""
+                  width="42"
+                  height="42">
+                <div>
+                  <strong>GlucoDesk</strong>
+                  <span data-i18n="popoverCaption">
+                    Desktop glucose awareness
+                  </span>
+                </div>
+              </div>
+
+              <div class="popover-reading">
+                <div>
+                  <span data-i18n="latestGlucose">Latest glucose</span>
+                  <strong data-state-value>112</strong>
+                  <small>mg/dL</small>
+                </div>
+                <span class="popover-trend" data-state-trend>→</span>
+              </div>
+
+              <div class="popover-state">
+                <span class="popover-state-dot" data-state-dot></span>
+                <span data-state-label>In range</span>
+                <span data-i18n="updatedNow">Updated now</span>
+              </div>
+
+              <button type="button" tabindex="-1">
+                <span data-i18n="openDashboard">Open dashboard</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-light" id="features">
+      <div class="site-shell">
+        <div class="section-heading reveal">
+          <span class="section-kicker" data-i18n="featuresKicker">
+            A complete desktop loop
+          </span>
+
+          <h2 data-i18n="featuresTitle">
+            From the latest reading to a clearer story.
+          </h2>
+
+          <p data-i18n="featuresDescription">
+            GlucoDesk combines live awareness, local history and readable
+            exports in one focused desktop experience.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card feature-card-wide reveal">
+            <div class="feature-card-copy">
+              <div class="feature-icon feature-icon-blue">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 18V9M10 18V5M16 18v-7M22 18H2"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round">
+                  </path>
+                </svg>
+              </div>
+
+              <span class="mini-kicker" data-i18n="dashboardKicker">
+                Live dashboard
+              </span>
+
+              <h3 data-i18n="dashboardTitle">
+                Current context without the noise.
+              </h3>
+
+              <p data-i18n="dashboardDescription">
+                See your latest reading, trend, target range, recent chart,
+                statistics and data health in a clean responsive layout.
+              </p>
+            </div>
+
+            <div class="feature-media">
+              <img
+                src="assets/images/screenshots/dashboard.png"
+                alt="GlucoDesk dashboard showing recent glucose context"
+                loading="lazy">
+            </div>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon feature-icon-green">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 3a7 7 0 0 0-7 7v4l-2 3h18l-2-3v-4a7 7 0 0 0-7-7ZM9 20h6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                </path>
+              </svg>
+            </div>
+
+            <span class="mini-kicker" data-i18n="notificationsKicker">
+              Calm awareness
+            </span>
+
+            <h3 data-i18n="notificationsTitle">
+              Notifications with boundaries.
+            </h3>
+
+            <p data-i18n="notificationsDescription">
+              Optional in-app and native notifications use cooldown, snooze,
+              dismiss and privacy-conscious wording to reduce alert fatigue.
+            </p>
+
+            <div class="notification-preview">
+              <img
+                src="assets/icons/glucodesk-app-icon.png"
+                alt=""
+                width="44"
+                height="44">
+
+              <div>
+                <strong>GlucoDesk</strong>
+                <span data-i18n="notificationPreview">
+                  Glucose is above your configured range.
+                </span>
+              </div>
+            </div>
+          </article>
+
+          <article class="feature-card reveal reveal-delay-one">
+            <div class="feature-icon feature-icon-indigo">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M6 3h9l4 4v14H6zM15 3v5h4M9 13h7M9 17h5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                </path>
+              </svg>
+            </div>
+
+            <span class="mini-kicker" data-i18n="diaryKicker">
+              Glycemic diary
+            </span>
+
+            <h3 data-i18n="diaryTitle">
+              History made readable.
+            </h3>
+
+            <p data-i18n="diaryDescription">
+              Export polished PDF and Excel diaries with daily summaries,
+              time blocks, weekly review, patterns and data completeness.
+            </p>
+
+            <div class="export-pills">
+              <span>PDF</span>
+              <span>Excel</span>
+              <span>EN</span>
+              <span>IT</span>
+            </div>
+          </article>
+
+          <article class="feature-card feature-card-wide feature-card-reverse reveal">
+            <div class="feature-card-copy">
+              <div class="feature-icon feature-icon-teal">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 16c3-7 5 1 8-6s5 2 8-5M4 20h16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round">
+                  </path>
+                </svg>
+              </div>
+
+              <span class="mini-kicker" data-i18n="patternsKicker">
+                Local insights
+              </span>
+
+              <h3 data-i18n="patternsTitle">
+                Understand what changed.
+              </h3>
+
+              <p data-i18n="patternsDescription">
+                Weekly comparison, recurring time-block patterns and history
+                completeness turn local readings into more understandable
+                personal context.
+              </p>
+            </div>
+
+            <div class="feature-media diary-media">
+              <img
+                src="assets/images/screenshots/diary.png"
+                alt="GlucoDesk glycemic diary and local insights"
+                loading="lazy">
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section gallery-section">
+      <div class="site-shell">
+        <div class="section-heading centered reveal">
+          <span class="section-kicker" data-i18n="galleryKicker">
+            Built as a real desktop product
+          </span>
+
+          <h2 data-i18n="galleryTitle">
+            Every screen follows the same calm visual language.
+          </h2>
+
+          <p data-i18n="galleryDescription">
+            Clean surfaces, clear hierarchy and consistent feedback keep
+            glucose context readable throughout the application.
+          </p>
+        </div>
+
+        <div class="gallery-tabs reveal" role="tablist">
+          <button
+            class="gallery-tab is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            data-gallery-tab="dashboard"
+            data-i18n="galleryDashboard">
+            Dashboard
+          </button>
+
+          <button
+            class="gallery-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-gallery-tab="diary"
+            data-i18n="galleryDiary">
+            Diary
+          </button>
+
+          <button
+            class="gallery-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-gallery-tab="settings"
+            data-i18n="gallerySettings">
+            Settings
+          </button>
+
+          <button
+            class="gallery-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-gallery-tab="account"
+            data-i18n="galleryAccount">
+            Account
+          </button>
+        </div>
+
+        <div class="gallery-window reveal">
+          <div class="window-bar">
+            <div class="window-controls" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+            <span class="window-title" data-gallery-title>
+              Dashboard
+            </span>
+
+            <span class="window-version">v0.3.0-preview</span>
+          </div>
+
+          <img
+            data-gallery-image
+            src="assets/images/screenshots/dashboard.png"
+            alt="GlucoDesk dashboard screenshot"
+            loading="lazy">
+        </div>
+      </div>
+    </section>
+
+    <section class="section language-section">
+      <div class="site-shell language-grid">
+        <div class="language-copy reveal">
+          <span class="section-kicker" data-i18n="languageKicker">
+            English and Italian
+          </span>
+
+          <h2 data-i18n="languageTitle">
+            One experience, fully localized.
+          </h2>
+
+          <p data-i18n="languageDescription">
+            Language selection starts at first launch and continues across
+            dashboard content, settings, notifications, menus and PDF or
+            Excel diary exports.
+          </p>
+
+          <div class="language-points">
+            <div>
+              <span>01</span>
+              <p data-i18n="languagePointOne">
+                Runtime language switching
+              </p>
+            </div>
+            <div>
+              <span>02</span>
+              <p data-i18n="languagePointTwo">
+                Culture-aware dates and numbers
+              </p>
+            </div>
+            <div>
+              <span>03</span>
+              <p data-i18n="languagePointThree">
+                Localized export content
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="language-media reveal reveal-delay-one">
+          <div class="language-badge language-badge-en">English</div>
+          <div class="language-badge language-badge-it">Italiano</div>
+
+          <img
+            src="assets/images/demo/language-onboarding.png"
+            alt="GlucoDesk first-launch language selection"
+            loading="lazy">
+        </div>
+      </div>
+    </section>
+
+    <section class="section privacy-section" id="privacy">
+      <div class="site-shell">
+        <div class="privacy-card reveal">
+          <div class="privacy-copy">
+            <div class="privacy-symbol">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 3 5 6v5c0 4.6 2.8 8.2 7 10 4.2-1.8 7-5.4 7-10V6l-7-3Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8">
+                </path>
+                <path
+                  d="M9 12h6M12 9v6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round">
+                </path>
+              </svg>
+            </div>
+
+            <span class="section-kicker" data-i18n="privacyKicker">
+              Local-first by design
+            </span>
+
+            <h2 data-i18n="privacyTitle">
+              Your desktop context stays yours.
+            </h2>
+
+            <p data-i18n="privacyDescription">
+              GlucoDesk does not require a custom GlucoDesk backend for your
+              credentials or glucose history. Settings, cached readings and
+              generated insights are handled locally on your computer.
+            </p>
+
+            <div class="privacy-grid">
+              <div>
+                <strong data-i18n="privacyLocalTitle">
+                  Local history
+                </strong>
+                <span data-i18n="privacyLocalDescription">
+                  Readings and analytics are stored locally.
+                </span>
+              </div>
+
+              <div>
+                <strong data-i18n="privacyCredentialsTitle">
+                  Protected credentials
+                </strong>
+                <span data-i18n="privacyCredentialsDescription">
+                  Platform credential stores are used where supported.
+                </span>
+              </div>
+
+              <div>
+                <strong data-i18n="privacyScreenTitle">
+                  Screen-share privacy
+                </strong>
+                <span data-i18n="privacyScreenDescription">
+                  Hide values instantly while preserving awareness.
+                </span>
+              </div>
+
+              <div>
+                <strong data-i18n="privacyOpenTitle">
+                  Open source
+                </strong>
+                <span data-i18n="privacyOpenDescription">
+                  The implementation is available for inspection.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="privacy-visual" aria-hidden="true">
+            <div class="privacy-ring privacy-ring-one"></div>
+            <div class="privacy-ring privacy-ring-two"></div>
+
+            <div class="privacy-center">
+              <img
+                src="assets/icons/tray-privacy.png"
+                alt=""
+                width="78"
+                height="78">
+              <strong>Hidden</strong>
+              <span>Privacy mode enabled</span>
+            </div>
+
+            <div class="privacy-chip privacy-chip-one">
+              Local data
+            </div>
+            <div class="privacy-chip privacy-chip-two">
+              No GlucoDesk cloud
+            </div>
+            <div class="privacy-chip privacy-chip-three">
+              Open source
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section download-section" id="download">
+      <div class="site-shell">
+        <div class="download-panel reveal">
+          <div class="download-heading">
+            <div>
+              <span class="section-kicker" data-i18n="downloadKicker">
+                v0.3.0-preview
+              </span>
+
+              <h2 data-i18n="downloadTitle">
+                Ready for your desktop.
+              </h2>
+
+              <p data-i18n="downloadDescription">
+                Choose the package built for your computer. Every download
+                comes from the official GlucoDesk v0.3.0-preview release.
+              </p>
+            </div>
+
+            <div class="release-status">
+              <span class="release-status-dot"></span>
+              <span data-i18n="downloadStatus">
+                Downloads available
+              </span>
+            </div>
+          </div>
+
+          <div class="download-grid">
+            <article class="download-card">
+              <div class="platform-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M16.7 13.1c0-2.7 2.2-4 2.3-4.1a5 5 0 0 0-3.9-2.1c-1.7-.2-3.2 1-4.1 1-.9 0-2.2-1-3.7-1-1.9 0-3.7 1.1-4.7 2.8-2 3.5-.5 8.7 1.4 11.5 1 1.4 2.1 3 3.6 2.9 1.4-.1 2-1 3.7-1s2.2 1 3.7 1c1.6 0 2.6-1.4 3.5-2.8a12 12 0 0 0 1.6-3.2 4.9 4.9 0 0 1-3.7-5Zm-2.7-8c.8-1 1.3-2.3 1.2-3.6-1.2.1-2.7.8-3.5 1.8-.7.8-1.4 2.2-1.2 3.4 1.3.1 2.7-.6 3.5-1.6Z"
+                    fill="currentColor">
+                  </path>
+                </svg>
+              </div>
+
+              <div>
+                <span class="download-platform">macOS</span>
+                <h3>Apple Silicon</h3>
+                <p>M1 · M2 · M3 · M4</p>
+              </div>
+
+              <a
+                class="download-button"
+                href="https://github.com/FilippoGaravaglia/GlucoDesk/releases/download/v0.3.0-preview/GlucoDesk-0.3.0-preview-macos-arm64-installable.zip"
+                data-download-platform="macos-arm64"
+                aria-label="Download GlucoDesk for Apple Silicon">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  aria-hidden="true">
+                  <path
+                    d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                  </path>
+                </svg>
+                <span data-i18n="downloadNow">
+                  Download preview
+                </span>
+              </a>
+            </article>
+
+            <article class="download-card">
+              <div class="platform-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M16.7 13.1c0-2.7 2.2-4 2.3-4.1a5 5 0 0 0-3.9-2.1c-1.7-.2-3.2 1-4.1 1-.9 0-2.2-1-3.7-1-1.9 0-3.7 1.1-4.7 2.8-2 3.5-.5 8.7 1.4 11.5 1 1.4 2.1 3 3.6 2.9 1.4-.1 2-1 3.7-1s2.2 1 3.7 1c1.6 0 2.6-1.4 3.5-2.8a12 12 0 0 0 1.6-3.2 4.9 4.9 0 0 1-3.7-5Zm-2.7-8c.8-1 1.3-2.3 1.2-3.6-1.2.1-2.7.8-3.5 1.8-.7.8-1.4 2.2-1.2 3.4 1.3.1 2.7-.6 3.5-1.6Z"
+                    fill="currentColor">
+                  </path>
+                </svg>
+              </div>
+
+              <div>
+                <span class="download-platform">macOS</span>
+                <h3>Intel</h3>
+                <p>Intel x64 Macs</p>
+              </div>
+
+              <a
+                class="download-button"
+                href="https://github.com/FilippoGaravaglia/GlucoDesk/releases/download/v0.3.0-preview/GlucoDesk-0.3.0-preview-macos-x64-installable.zip"
+                data-download-platform="macos-x64"
+                aria-label="Download GlucoDesk for Intel Mac">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  aria-hidden="true">
+                  <path
+                    d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                  </path>
+                </svg>
+                <span data-i18n="downloadNow">
+                  Download preview
+                </span>
+              </a>
+            </article>
+
+            <article class="download-card">
+              <div class="platform-icon platform-icon-windows">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="m3 5 7.5-1v7.2H3V5Zm8.5-1.1L21 2.5v8.7h-9.5V3.9ZM3 12.2h7.5v7.2L3 18.4v-6.2Zm8.5 0H21v8.7l-9.5-1.4v-7.3Z"
+                    fill="currentColor">
+                  </path>
+                </svg>
+              </div>
+
+              <div>
+                <span class="download-platform">Windows</span>
+                <h3>Windows x64</h3>
+                <p>Windows 10 · Windows 11</p>
+              </div>
+
+              <a
+                class="download-button"
+                href="https://github.com/FilippoGaravaglia/GlucoDesk/releases/download/v0.3.0-preview/GlucoDesk-0.3.0-preview-windows-x64-installable.zip"
+                data-download-platform="windows-x64"
+                aria-label="Download GlucoDesk for Windows x64">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  aria-hidden="true">
+                  <path
+                    d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                  </path>
+                </svg>
+                <span data-i18n="downloadNow">
+                  Download preview
+                </span>
+              </a>
+            </article>
+          </div>
+
+          <div class="download-footer">
+            <p data-i18n="downloadFooter">
+              GlucoDesk is currently distributed as an unsigned preview.
+              Installation instructions and SHA256 checksums will accompany
+              the final download links.
+            </p>
+
+            <a
+              href="https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.3.0-preview"
+              target="_blank"
+              rel="noreferrer">
+              <span data-i18n="releaseNotes">
+                Read release notes
+              </span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="safety-section">
+      <div class="site-shell">
+        <div class="safety-card reveal">
+          <div class="safety-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3 2.8 20h18.4L12 3Zm0 6v5M12 17.5v.1"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+              </path>
+            </svg>
+          </div>
+
+          <div>
+            <strong data-i18n="safetyTitle">
+              Awareness companion, not a medical device
+            </strong>
+
+            <p data-i18n="safetyDescription">
+              GlucoDesk must not be used for treatment decisions, insulin
+              dosing, emergency alerts, diagnosis or as a replacement for
+              approved diabetes applications, CGM systems or medical devices.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-shell footer-grid">
+      <div class="footer-brand">
+        <a class="brand-link" href="#top">
+          <img
+            class="brand-icon"
+            src="assets/icons/glucodesk-app-icon.png"
+            alt=""
+            width="42"
+            height="42">
+          <span class="brand-name">GlucoDesk</span>
+        </a>
+
+        <p data-i18n="footerDescription">
+          A calm, local-first desktop companion for glucose awareness.
+        </p>
+
+        <span>© <span data-current-year></span> Filippo Garavaglia</span>
+      </div>
+
+      <div class="footer-links">
+        <div>
+          <strong data-i18n="footerProduct">Product</strong>
+          <a href="#features" data-i18n="navFeatures">Features</a>
+          <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
+          <a href="#download" data-i18n="navDownload">Download</a>
+        </div>
+
+        <div>
+          <strong data-i18n="footerProject">Project</strong>
+          <a
+            href="https://github.com/FilippoGaravaglia/GlucoDesk"
+            target="_blank"
+            rel="noreferrer">
+            GitHub
+          </a>
+          <a
+            href="https://github.com/FilippoGaravaglia/GlucoDesk/releases"
+            target="_blank"
+            rel="noreferrer"
+            data-i18n="footerReleases">
+            Releases
+          </a>
+          <a
+            href="https://github.com/FilippoGaravaglia/GlucoDesk/blob/main/LICENSE"
+            target="_blank"
+            rel="noreferrer">
+            MIT License
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>
