@@ -100,7 +100,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         Assert.Equal("Report type", worksheet.Cell("A7").GetString());
         Assert.Equal("Local-first glycemic diary export", worksheet.Cell("B7").GetString());
         Assert.Equal("Period", worksheet.Cell("A8").GetString());
-        Assert.Contains("2026-06-19", worksheet.Cell("B8").GetString());
+        Assert.Contains("06/19/2026", worksheet.Cell("B8").GetString());
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         Assert.Equal(110d, worksheet.Cell(2, 4).GetValue<double>());
         Assert.Equal(170d, worksheet.Cell(2, 5).GetValue<double>());
         Assert.Equal(110d, worksheet.Cell(2, 10).GetValue<double>());
-        Assert.Equal("Yes", worksheet.Cell(2, 8).GetString());
+        Assert.Equal("Complete", worksheet.Cell(2, 8).GetString());
     }
 
     [Fact]

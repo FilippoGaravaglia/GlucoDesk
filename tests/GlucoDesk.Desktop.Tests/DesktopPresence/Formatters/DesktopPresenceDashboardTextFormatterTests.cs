@@ -1,9 +1,10 @@
 using GlucoDesk.Desktop.DesktopPresence.Formatters;
 using GlucoDesk.Desktop.DesktopPresence.Models;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.DesktopPresence.Formatters;
 
-public sealed class DesktopPresenceDashboardTextFormatterTests
+public sealed class DesktopPresenceDashboardTextFormatterTests : EnglishLocalizationTestBase
 {
     private readonly DesktopPresenceDashboardTextFormatter _formatter = new();
 
