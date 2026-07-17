@@ -21,6 +21,7 @@ using GlucoDesk.Application.Cgm.History.Completeness.Services.Abstractions;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.ValueObjects;
+using GlucoDesk.Infrastructure.Cgm.Diary.Localization;
 using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.Options;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -104,6 +105,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        using var localizationScope =
+            GlycemicDiaryExportLocalizer.BeginScope(
+                request.LanguageCode);
 
         var diaryResult = await _diaryService
             .CreateDiaryAsync(request.DiaryRequest, cancellationToken)
@@ -190,7 +195,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                     {
                         column.Spacing(3);
 
-                        column.Item().Text("Glycemic diary")
+                        column.Item().Text(GlycemicDiaryExportLocalizer.Translate("Glycemic diary"))
                             .FontSize(22)
                             .SemiBold()
                             .FontColor(BrandBlueDark);
@@ -199,7 +204,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                             .FontSize(10)
                             .FontColor(TextSecondary);
 
-                        column.Item().Text("Local-first glucose summary")
+                        column.Item().Text(GlycemicDiaryExportLocalizer.Translate("Local-first glucose summary"))
                             .FontSize(9)
                             .FontColor(TextMuted);
                     });
@@ -214,7 +219,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     {
         if (BrandLogoBytes is null)
         {
-            container.Text("GlucoDesk")
+            container.Text(GlycemicDiaryExportLocalizer.Translate("GlucoDesk"))
                 .FontSize(20)
                 .SemiBold()
                 .FontColor(BrandBlueDark);
@@ -312,7 +317,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         {
             column.Spacing(6);
 
-            column.Item().Text("Export metadata")
+            column.Item().Text(GlycemicDiaryExportLocalizer.Translate("Export metadata"))
                 .FontSize(12)
                 .SemiBold()
                 .FontColor(BrandBlueDark);
@@ -333,7 +338,21 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         GlycemicDiaryReport report,
         GlucoseUnit preferredUnit)
     {
-        return $"Generated at: {FormatGeneratedAt(DateTimeOffset.Now)} · Unit: {FormatUnit(preferredUnit)} · Target range: {FormatTargetRange(preferredUnit)} · Source: Local glucose history · Report type: Local-first glycemic diary export · Period: {FormatDateRange(report.PeriodStartsAt, report.PeriodEndsAt)}";
+        return
+            $"{GlycemicDiaryExportLocalizer.Translate("Generated at")}: " +
+            $"{FormatGeneratedAt(DateTimeOffset.Now)} · " +
+            $"{GlycemicDiaryExportLocalizer.Translate("Unit")}: " +
+            $"{FormatUnit(preferredUnit)} · " +
+            $"{GlycemicDiaryExportLocalizer.Translate("Target range")}: " +
+            $"{FormatTargetRange(preferredUnit)} · " +
+            $"{GlycemicDiaryExportLocalizer.Translate("Source")}: " +
+            $"{GlycemicDiaryExportLocalizer.Translate("Local glucose history")} · " +
+            $"{GlycemicDiaryExportLocalizer.Translate("Report type")}: " +
+            $"{GlycemicDiaryExportLocalizer.Translate("Local-first glycemic diary export")} · " +
+            $"{GlycemicDiaryExportLocalizer.Translate("Period")}: " +
+            FormatDateRange(
+                report.PeriodStartsAt,
+                report.PeriodEndsAt);
     }
 
     /// <summary>
@@ -344,7 +363,8 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private static string FormatGeneratedAt(
         DateTimeOffset generatedAt)
     {
-        return generatedAt.ToString("yyyy-MM-dd HH:mm zzz", CultureInfo.InvariantCulture);
+        return GlycemicDiaryExportLocalizer.FormatDateTime(
+            generatedAt);
     }
 
     /// <summary>
@@ -394,12 +414,15 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             {
                 row.RelativeItem().Column(title =>
                 {
-                    title.Item().Text("Overview")
+                    title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Overview"))
                         .FontSize(15)
                         .SemiBold()
                         .FontColor(BrandBlueDark);
 
-                    title.Item().Text($"Summary of the selected glucose history period. Values shown in {FormatGlucoseUnitLabel(preferredUnit)}.")
+                    title.Item().Text(
+                            $"{GlycemicDiaryExportLocalizer.Translate("Summary of the selected glucose history period.")} " +
+                            $"{GlycemicDiaryExportLocalizer.Translate("Unit")}: " +
+                            $"{FormatGlucoseUnitLabel(preferredUnit)}.")
                         .FontSize(8)
                         .FontColor(TextMuted);
                 });
@@ -407,7 +430,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 row.ConstantItem(150)
                     .AlignRight()
                     .AlignMiddle()
-                    .Text($"{completenessScore.StatusText} · {completenessScore.CoverageText}")
+                    .Text(
+                        $"{GlycemicDiaryExportLocalizer.Translate(completenessScore.StatusText)} · " +
+                        GlycemicDiaryExportLocalizer.Translate(
+                            completenessScore.CoverageText))
                     .FontSize(9)
                     .SemiBold()
                     .FontColor(BrandBlueDark);
@@ -425,9 +451,14 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
                 WriteMetric(table, "Average", FormatGlucoseValue(report.AverageMgDl, preferredUnit));
                 WriteMetric(table, "Range", FormatGlucoseRange(report.MinimumMgDl, report.MaximumMgDl, preferredUnit));
-                WriteMetric(table, "Time in range", FormatPercentage(report.TimeInRangePercentage));
-                WriteMetric(table, "History reliability", completenessScore.StatusText);
-                WriteMetric(table, "Data coverage", completenessScore.CoverageText);
+                WriteMetric(table, "Time in range", GlycemicDiaryExportLocalizer.FormatPercentage(report.TimeInRangePercentage));
+                WriteMetric(
+                    table,
+                    "History reliability",
+                    GlycemicDiaryExportLocalizer.Translate(
+                        completenessScore.StatusText));
+                WriteMetric(table, "Data coverage", GlycemicDiaryExportLocalizer.Translate(
+                            completenessScore.CoverageText));
                 WriteMetric(table, "Readings", report.ReadingsCount.ToString(CultureInfo.InvariantCulture));
                 WriteMetric(table, "Detected gaps", completenessScore.DetectedGapCount.ToString(CultureInfo.InvariantCulture));
                 WriteMetric(table, "Incomplete days", report.IncompleteDaysCount.ToString(CultureInfo.InvariantCulture));
@@ -455,12 +486,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             {
                 row.RelativeItem().Column(title =>
                 {
-                    title.Item().Text("Glucose story")
+                    title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Glucose story"))
                         .FontSize(15)
                         .SemiBold()
                         .FontColor(BrandBlueDark);
 
-                    title.Item().Text("Human-readable interpretation of the selected diary period.")
+                    title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Human-readable interpretation of the selected diary period."))
                         .FontSize(8)
                         .FontColor(TextMuted);
                 });
@@ -468,22 +499,24 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 row.ConstantItem(110)
                     .AlignRight()
                     .AlignMiddle()
-                    .Text(story.Level.ToString())
+                    .Text(
+                        GlycemicDiaryExportLocalizer.Translate(
+                            story.Level.ToString()))
                     .FontSize(9)
                     .SemiBold()
                     .FontColor(BrandBlueDark);
             });
 
-            column.Item().Text(story.Headline)
+            column.Item().Text(GlycemicDiaryExportLocalizer.Translate(story.Headline))
                 .FontSize(12)
                 .SemiBold()
                 .FontColor(BrandBlueDark);
 
-            column.Item().Text(story.SummaryText)
+            column.Item().Text(GlycemicDiaryExportLocalizer.Translate(story.SummaryText))
                 .FontSize(9)
                 .FontColor(TextSecondary);
 
-            column.Item().Text(story.HistoryReliabilityText)
+            column.Item().Text(GlycemicDiaryExportLocalizer.Translate(story.HistoryReliabilityText))
                 .FontSize(8)
                 .FontColor(TextMuted);
         });
@@ -506,12 +539,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             {
                 row.RelativeItem().Column(title =>
                 {
-                    title.Item().Text("Weekly review")
+                    title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Weekly review"))
                         .FontSize(15)
                         .SemiBold()
                         .FontColor(BrandBlueDark);
 
-                    title.Item().Text("Comparison with the previous equivalent period.")
+                    title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Comparison with the previous equivalent period."))
                         .FontSize(8)
                         .FontColor(TextMuted);
                 });
@@ -519,7 +552,11 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 row.ConstantItem(90)
                     .AlignRight()
                     .AlignMiddle()
-                    .Text(weeklyReview?.RequiresCaution == true ? "Caution" : "Info")
+                    .Text(
+                        GlycemicDiaryExportLocalizer.Translate(
+                            weeklyReview?.RequiresCaution == true
+                                ? "Caution"
+                                : "Info"))
                     .FontSize(9)
                     .SemiBold()
                     .FontColor(weeklyReview?.RequiresCaution == true ? WarningText : SuccessText);
@@ -527,28 +564,28 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
             if (weeklyReview is null)
             {
-                column.Item().Text("Weekly review unavailable")
+                column.Item().Text(GlycemicDiaryExportLocalizer.Translate("Weekly review unavailable"))
                     .FontSize(11)
                     .SemiBold()
                     .FontColor(BrandBlueDark);
 
-                column.Item().Text("The weekly comparison could not be generated for this export. The diary data below is still available.")
+                column.Item().Text(GlycemicDiaryExportLocalizer.Translate("The weekly comparison could not be generated for this export. The diary data below is still available."))
                     .FontSize(9)
                     .FontColor(TextSecondary);
 
                 return;
             }
 
-            column.Item().Text(weeklyReview.Headline)
+            column.Item().Text(GlycemicDiaryExportLocalizer.Translate(weeklyReview.Headline))
                 .FontSize(11)
                 .SemiBold()
                 .FontColor(BrandBlueDark);
 
-            column.Item().Text(weeklyReview.SummaryText)
+            column.Item().Text(GlycemicDiaryExportLocalizer.Translate(weeklyReview.SummaryText))
                 .FontSize(9)
                 .FontColor(TextSecondary);
 
-            column.Item().Text(weeklyReview.CurrentHistoryReliabilityText)
+            column.Item().Text(GlycemicDiaryExportLocalizer.Translate(weeklyReview.CurrentHistoryReliabilityText))
                 .FontSize(8)
                 .FontColor(TextMuted);
 
@@ -565,20 +602,28 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                     .PaddingTop(6)
                     .Row(row =>
                     {
-                        row.RelativeItem(2).Text(change.DisplayName)
+                        row.RelativeItem(2).Text(
+                            GlycemicDiaryExportLocalizer.Translate(
+                                change.DisplayName))
                             .FontSize(8)
                             .SemiBold()
                             .FontColor(BrandBlueDark);
 
-                        row.RelativeItem().AlignRight().Text(change.PreviousValueText)
+                        row.RelativeItem().AlignRight().Text(
+                            GlycemicDiaryExportLocalizer.FormatReviewValue(
+                                change.PreviousValueText))
                             .FontSize(8)
                             .FontColor(TextSecondary);
 
-                        row.RelativeItem().AlignRight().Text(change.CurrentValueText)
+                        row.RelativeItem().AlignRight().Text(
+                            GlycemicDiaryExportLocalizer.FormatReviewValue(
+                                change.CurrentValueText))
                             .FontSize(8)
                             .FontColor(TextSecondary);
 
-                        row.RelativeItem().AlignRight().Text(change.DeltaText)
+                        row.RelativeItem().AlignRight().Text(
+                            GlycemicDiaryExportLocalizer.FormatReviewValue(
+                                change.DeltaText))
                             .FontSize(8)
                             .SemiBold()
                             .FontColor(GetWeeklyReviewSeverityColor(change.Severity));
@@ -595,11 +640,19 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     private static string BuildComparisonPeriodText(
         GlycemicDiaryWeeklyReview weeklyReview)
     {
-        var comparisonPeriodText = $"Current period: {FormatDateRange(weeklyReview.CurrentPeriodStartsAt, weeklyReview.CurrentPeriodEndsAt)} · Previous period: {FormatDateRange(weeklyReview.PreviousPeriodStartsAt, weeklyReview.PreviousPeriodEndsAt)}";
+        var comparisonPeriodText =
+            $"{GlycemicDiaryExportLocalizer.Translate("Current period")}: " +
+            $"{FormatDateRange(weeklyReview.CurrentPeriodStartsAt, weeklyReview.CurrentPeriodEndsAt)} · " +
+            $"{GlycemicDiaryExportLocalizer.Translate("Previous period")}: " +
+            FormatDateRange(
+                weeklyReview.PreviousPeriodStartsAt,
+                weeklyReview.PreviousPeriodEndsAt);
 
         if (HasSharedBoundaryDate(weeklyReview))
         {
-            comparisonPeriodText += " (previous period ends before the current period starts)";
+            comparisonPeriodText +=
+                $" ({GlycemicDiaryExportLocalizer.Translate(
+                    "previous period ends before the current period starts")})";
         }
 
         return comparisonPeriodText;
@@ -627,7 +680,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         DateTimeOffset startsAt,
         DateTimeOffset endsAt)
     {
-        return $"{startsAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)} - {endsAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
+        return $"{GlycemicDiaryExportLocalizer.FormatDate(startsAt)} - {GlycemicDiaryExportLocalizer.FormatDate(endsAt)}";
     }
 
     /// <summary>
@@ -680,11 +733,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             .Take(5)
             .ToArray();
 
-        var patternSummaryText = analysis.Patterns.Count > patterns.Length
-            ? $"Top {patterns.Length} of {analysis.Patterns.Count}"
-            : analysis.HasPatterns
-                ? $"{analysis.Patterns.Count} detected"
-                : "None detected";
+        var patternSummaryText =
+            GlycemicDiaryExportLocalizer.FormatPatternSummary(
+                patterns.Length,
+                analysis.Patterns.Count);
 
         container.Element(Card).Column(column =>
         {
@@ -694,12 +746,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             {
                 row.RelativeItem().Column(title =>
                 {
-                    title.Item().Text("Local patterns")
+                    title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Local patterns"))
                         .FontSize(15)
                         .SemiBold()
                         .FontColor(BrandBlueDark);
 
-                    title.Item().Text("Recurring local glucose tendencies detected from diary time blocks.")
+                    title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Recurring local glucose tendencies detected from diary time blocks."))
                         .FontSize(8)
                         .FontColor(TextMuted);
                 });
@@ -715,7 +767,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
             if (patterns.Length == 0)
             {
-                column.Item().Text("No recurring local patterns were detected for the selected period.")
+                column.Item().Text(GlycemicDiaryExportLocalizer.Translate("No recurring local patterns were detected for the selected period."))
                     .FontSize(9)
                     .FontColor(TextSecondary);
 
@@ -735,20 +787,22 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
                         patternColumn.Item().Row(row =>
                         {
-                            row.RelativeItem().Text(pattern.Title)
+                            row.RelativeItem().Text(GlycemicDiaryExportLocalizer.Translate(pattern.Title))
                                 .FontSize(10)
                                 .SemiBold()
                                 .FontColor(BrandBlueDark);
 
                             row.ConstantItem(80)
                                 .AlignRight()
-                                .Text(pattern.Severity.ToString())
+                                .Text(
+                                    GlycemicDiaryExportLocalizer.Translate(
+                                        pattern.Severity.ToString()))
                                 .FontSize(8)
                                 .SemiBold()
                                 .FontColor(GetPatternSeverityColor(pattern.Severity));
                         });
 
-                        patternColumn.Item().Text(pattern.Description)
+                        patternColumn.Item().Text(GlycemicDiaryExportLocalizer.Translate(pattern.Description))
                             .FontSize(8)
                             .FontColor(TextSecondary);
 
@@ -767,11 +821,22 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <returns>The support text.</returns>
     private static string BuildPatternSupportText(GlycemicDiaryPattern pattern)
     {
-        var scope = pattern.TimeBlockLabel is null
-            ? "overall period"
-            : pattern.TimeBlockLabel;
+        var scope = GlycemicDiaryExportLocalizer.Translate(
+            pattern.TimeBlockLabel ?? "overall period");
 
-        return $"{pattern.SupportingDaysCount} supporting {Pluralize("day", pattern.SupportingDaysCount)} · {scope}";
+        if (GlycemicDiaryExportLocalizer.IsItalian)
+        {
+            var dayLabel = pattern.SupportingDaysCount == 1
+                ? "giorno di supporto"
+                : "giorni di supporto";
+
+            return
+                $"{pattern.SupportingDaysCount} {dayLabel} · {scope}";
+        }
+
+        return
+            $"{pattern.SupportingDaysCount} supporting " +
+            $"{Pluralize("day", pattern.SupportingDaysCount)} · {scope}";
     }
 
     /// <summary>
@@ -838,12 +903,13 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             {
                 title.Spacing(2);
 
-                title.Item().Text("Daily diary")
+                title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Daily diary"))
                     .FontSize(15)
                     .SemiBold()
                     .FontColor(BrandBlueDark);
 
-                title.Item().Text($"Daily glucose summaries and key time-block values shown in {FormatGlucoseUnitLabel(preferredUnit)}.")
+                title.Item().Text(GlycemicDiaryExportLocalizer.FormatDailyDiaryDescription(
+                        FormatGlucoseUnitLabel(preferredUnit)))
                     .FontSize(8)
                     .FontColor(TextMuted);
             });
@@ -865,39 +931,39 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
                 table.Header(header =>
                 {
-                    DailyHeaderCell(header.Cell()).Text("Date")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Date"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
 
-                    DailyHeaderCell(header.Cell()).Text("Avg")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Avg"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
 
-                    DailyHeaderCell(header.Cell()).Text("Min")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Min"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
 
-                    DailyHeaderCell(header.Cell()).Text("Max")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Max"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
 
-                    DailyHeaderCell(header.Cell()).Text("TIR")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("TIR"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
 
-                    DailyHeaderCell(header.Cell()).Text("Breakfast")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Breakfast"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
 
-                    DailyHeaderCell(header.Cell()).Text("Lunch")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Lunch"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
 
-                    DailyHeaderCell(header.Cell()).Text("Dinner")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Dinner"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
 
-                    DailyHeaderCell(header.Cell()).Text("Pre-night")
+                    DailyHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Pre-night"))
                         .FontColor(BrandBlueDark)
                         .SemiBold();
                 });
@@ -908,11 +974,12 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                 {
                     var isAlternate = rowIndex % 2 != 0;
 
-                    DailyBodyCell(table.Cell(), isAlternate).Text(day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(
+                        GlycemicDiaryExportLocalizer.FormatDate(day.Date));
                     DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(day.AverageMgDl, preferredUnit));
                     DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(day.MinimumMgDl, preferredUnit));
                     DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(day.MaximumMgDl, preferredUnit));
-                    DailyBodyCell(table.Cell(), isAlternate).Text(FormatPercentage(day.TimeInRangePercentage));
+                    DailyBodyCell(table.Cell(), isAlternate).Text(GlycemicDiaryExportLocalizer.FormatPercentage(day.TimeInRangePercentage));
                     DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(GetBlockValue(day, "Breakfast"), preferredUnit));
                     DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(GetBlockValue(day, "Lunch"), preferredUnit));
                     DailyBodyCell(table.Cell(), isAlternate).Text(FormatGlucoseAmount(GetBlockValue(day, "Dinner"), preferredUnit));
@@ -938,7 +1005,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         var backgroundColor = hasGoodCoverage ? SuccessSoft : WarningSoft;
         var borderColor = hasGoodCoverage ? SuccessBorder : WarningBorder;
         var statusColor = hasGoodCoverage ? SuccessText : WarningText;
-        var statusText = $"{completenessScore.StatusText} · {completenessScore.CoverageText}";
+        var statusText =
+            $"{GlycemicDiaryExportLocalizer.Translate(completenessScore.StatusText)} · " +
+            GlycemicDiaryExportLocalizer.Translate(
+                completenessScore.CoverageText);
 
         container
             .Background(backgroundColor)
@@ -956,12 +1026,15 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                     {
                         title.Spacing(2);
 
-                        title.Item().Text("Data completeness")
+                        title.Item().Text(GlycemicDiaryExportLocalizer.Translate("Data completeness"))
                             .FontSize(15)
                             .SemiBold()
                             .FontColor(BrandBlueDark);
 
-                        title.Item().Text($"{completenessScore.DetailText} Days marked as partial may contain missing CGM history and should be interpreted carefully.")
+                        title.Item().Text(
+                            $"{GlycemicDiaryExportLocalizer.Translate(completenessScore.DetailText)} " +
+                            GlycemicDiaryExportLocalizer.Translate(
+                                "Days marked as partial may contain missing CGM history and should be interpreted carefully."))
                             .FontSize(8)
                             .FontColor(TextSecondary);
                     });
@@ -987,19 +1060,19 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
                     table.Header(header =>
                     {
-                        CompletenessHeaderCell(header.Cell()).Text("Date")
+                        CompletenessHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Date"))
                             .FontColor(BrandBlueDark)
                             .SemiBold();
 
-                        CompletenessHeaderCell(header.Cell()).Text("Coverage")
+                        CompletenessHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Coverage"))
                             .FontColor(BrandBlueDark)
                             .SemiBold();
 
-                        CompletenessHeaderCell(header.Cell()).Text("Status")
+                        CompletenessHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Status"))
                             .FontColor(BrandBlueDark)
                             .SemiBold();
 
-                        CompletenessHeaderCell(header.Cell()).Text("Gaps")
+                        CompletenessHeaderCell(header.Cell()).Text(GlycemicDiaryExportLocalizer.Translate("Gaps"))
                             .FontColor(BrandBlueDark)
                             .SemiBold();
                     });
@@ -1010,9 +1083,14 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                     {
                         var isAlternate = rowIndex % 2 != 0;
                         var dayStatusColor = day.IsDataComplete ? SuccessText : WarningText;
-                        var dayStatusText = day.IsDataComplete ? "Complete" : "Partial";
+                        var dayStatusText =
+                            GlycemicDiaryExportLocalizer.Translate(
+                                day.IsDataComplete
+                                    ? "Complete"
+                                    : "Partial");
 
-                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+                        CompletenessBodyCell(table.Cell(), isAlternate).Text(
+                            GlycemicDiaryExportLocalizer.FormatDate(day.Date));
                         CompletenessBodyCell(table.Cell(), isAlternate).Text(FormatPercentage(day.DataCoveragePercentage));
 
                         CompletenessBodyCell(table.Cell(), isAlternate).Text(dayStatusText)
@@ -1051,13 +1129,15 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
 
                     row.RelativeItem()
                         .PaddingLeft(8)
-                        .Text("Safety notice")
+                        .Text(GlycemicDiaryExportLocalizer.Translate("Safety notice"))
                         .FontSize(11)
                         .SemiBold()
                         .FontColor(BrandBlueDark);
                 });
 
-                column.Item().Text(_options.SafetyDisclaimer)
+                column.Item().Text(
+                    GlycemicDiaryExportLocalizer.Translate(
+                        _options.SafetyDisclaimer))
                     .FontSize(8)
                     .FontColor(TextSecondary);
             });
@@ -1076,7 +1156,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
             .Row(row =>
             {
                 row.RelativeItem()
-                    .Text("Generated by GlucoDesk")
+                    .Text(GlycemicDiaryExportLocalizer.Translate("Generated by GlucoDesk"))
                     .FontSize(8)
                     .FontColor(TextMuted);
 
@@ -1084,7 +1164,8 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                     .AlignRight()
                     .Text(text =>
                     {
-                        text.Span("Page ")
+                        text.Span(
+                            $"{GlycemicDiaryExportLocalizer.Translate("Page")} ")
                             .FontSize(8)
                             .FontColor(TextMuted);
 
@@ -1092,7 +1173,8 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                             .FontSize(8)
                             .FontColor(TextMuted);
 
-                        text.Span(" of ")
+                        text.Span(
+                            $" {GlycemicDiaryExportLocalizer.Translate("of")} ")
                             .FontSize(8)
                             .FontColor(TextMuted);
 
@@ -1117,7 +1199,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         table.Cell().Element(MetricCell).Column(column =>
         {
             column.Spacing(2);
-            column.Item().Text(label).FontSize(8).FontColor(Colors.Grey.Darken2);
+            column.Item()
+                .Text(GlycemicDiaryExportLocalizer.Translate(label))
+                .FontSize(8)
+                .FontColor(Colors.Grey.Darken2);
             column.Item().Text(value).FontSize(11).SemiBold();
         });
     }
@@ -1161,7 +1246,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// <returns>The formatted date.</returns>
     private static string FormatDate(DateTimeOffset timestamp)
     {
-        return timestamp.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        return GlycemicDiaryExportLocalizer.FormatDate(timestamp);
     }
 
     /// <summary>
@@ -1269,11 +1354,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// </summary>
     /// <param name="value">The percentage value.</param>
     /// <returns>The formatted percentage.</returns>
-    private static string FormatPercentage(decimal? value)
+    private static string FormatPercentage(
+        decimal value)
     {
-        return value is null
-            ? "—"
-            : $"{value.Value.ToString("0.##", CultureInfo.InvariantCulture)}%";
+        return GlycemicDiaryExportLocalizer.FormatPercentage(value);
     }
 
     /// <summary>

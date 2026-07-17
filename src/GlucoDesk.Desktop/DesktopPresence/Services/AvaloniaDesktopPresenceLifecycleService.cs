@@ -723,44 +723,45 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     /// <summary>
     /// Refreshes native menu, tooltip and popover text after a language change.
     /// </summary>
-    private void OnLanguageChanged(object? sender, EventArgs e)
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs eventArgs)
     {
+        _ = sender;
+        _ = eventArgs;
+
         RunOnUiThread(() =>
         {
-            if (!_isStarted
-                || _trayIcon is null
-                || _desktopLifetime is null)
+            if (!_isStarted)
             {
                 return;
             }
 
-            var initialText = _textFormatter.Format(
-                CreateInitialSnapshot());
-
-            var statusMenuItem = new NativeMenuItem(
-                initialText.MenuHeader)
-            {
-                IsEnabled = false,
-            };
-
-            var presencePanelMenuItem = new NativeMenuItem(
-                _popoverWindow is null
-                    ? Text("DesktopPresenceShowPanel")
-                    : Text("DesktopPresenceHidePanel"));
-
-            presencePanelMenuItem.Click += (_, _) =>
-                TogglePopover(_desktopLifetime);
-
-            _statusMenuItem = statusMenuItem;
-            _presencePanelMenuItem = presencePanelMenuItem;
-
-            _trayIcon.Menu = CreateTrayMenu(
-                _desktopLifetime,
-                statusMenuItem,
-                presencePanelMenuItem);
-
+            /*
+             * Do not replace TrayIcon.Menu after Avalonia has exported it to
+             * the native macOS menu system.
+             *
+             * Avalonia Native requires the original NativeMenu instance to
+             * remain associated with the tray icon. Replacing it at runtime
+             * throws:
+             *
+             * "The menu being updated does not match."
+             *
+             * Refresh the existing menu item instances instead.
+             */
             RefreshFromDashboardState();
             UpdatePresencePanelMenuState();
+
+            /*
+             * A visible popover owns localized controls created with the
+             * previous language. Closing it avoids displaying mixed-language
+             * content; reopening it creates the controls with the new
+             * language.
+             */
+            if (_popoverWindow is not null)
+            {
+                ClosePopover();
+            }
         });
     }
 

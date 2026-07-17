@@ -590,7 +590,9 @@ public sealed class DiaryViewModel : ViewModelBase, IDisposable
                 .ExportAsync(
                     new GlycemicDiaryExcelExportRequest(
                         diaryRequest,
-                        preferredUnit: preferredUnit),
+                        preferredUnit: preferredUnit,
+                        languageCode:
+                            LocalizationManager.CurrentLanguageCode),
                     cancellationToken)
                 .ConfigureAwait(false),
 
@@ -598,7 +600,9 @@ public sealed class DiaryViewModel : ViewModelBase, IDisposable
                 .ExportAsync(
                     new GlycemicDiaryPdfExportRequest(
                         diaryRequest,
-                        preferredUnit: preferredUnit),
+                        preferredUnit: preferredUnit,
+                        languageCode:
+                            LocalizationManager.CurrentLanguageCode),
                     cancellationToken)
                 .ConfigureAwait(false),
 
