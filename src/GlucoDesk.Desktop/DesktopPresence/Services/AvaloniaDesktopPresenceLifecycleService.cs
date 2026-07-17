@@ -130,7 +130,6 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
                 AttachDashboardState(desktopLifetime);
                 RefreshFromDashboardState();
-                RefreshMenuBarIconFromDashboardState();
 
                 _logger.LogInformation("Desktop presence indicator started.");
             }
@@ -173,7 +172,6 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 _trayIcon = null;
                 _statusMenuItem = null;
                 _lastAppliedMenuBarIconAssetUri = null;
-                _lastAppliedMenuBarIconAssetUri = null;
                 _presencePanelMenuItem = null;
                 _isStarted = false;
 
@@ -191,12 +189,25 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     #region Helpers
 
     /// <summary>
-    /// Refreshes the menu bar icon using only the current glycemic alert state.
+    /// Refreshes the menu bar icon from the latest dashboard alert state.
+    /// The native tray icon is always mutated on the Avalonia UI thread.
     /// </summary>
     private void RefreshMenuBarIconFromDashboardState()
     {
-        var alertKindName = _dashboardViewModel?.CurrentGlucoseAlertKind.ToString();
-        var assetUri = SelectMenuBarIconAssetUri(alertKindName, _isPrivacyModeEnabled);
+        RunOnUiThread(RefreshMenuBarIconFromDashboardStateCore);
+    }
+
+    /// <summary>
+    /// Refreshes the menu bar icon while already executing on the UI thread.
+    /// </summary>
+    private void RefreshMenuBarIconFromDashboardStateCore()
+    {
+        var alertKindName =
+            _dashboardViewModel?.CurrentGlucoseAlertKind.ToString();
+
+        var assetUri = SelectMenuBarIconAssetUri(
+            alertKindName,
+            _isPrivacyModeEnabled);
 
         ApplyMenuBarIcon(assetUri);
     }
@@ -323,6 +334,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
     /// <summary>
     /// Refreshes the tray icon after an application theme change.
+    /// Glycemic and privacy variants are independent from the application
+    /// theme, so the currently required colored asset is reapplied.
     /// </summary>
     private void RefreshTrayIcon()
     {
@@ -333,16 +346,12 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 return;
             }
 
-            try
-            {
-                _trayIcon.Icon = LoadTrayIcon();
-            }
-            catch (Exception exception)
-            {
-                _logger.LogError(
-                    exception,
-                    "Unable to refresh the desktop presence icon after a theme change.");
-            }
+            /*
+             * Force a reload because the native platform may have recreated
+             * or invalidated its tray representation after a theme change.
+             */
+            _lastAppliedMenuBarIconAssetUri = null;
+            RefreshMenuBarIconFromDashboardStateCore();
         });
     }
 
@@ -551,6 +560,15 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             return;
         }
 
+        /*
+         * Dashboard readings may be applied by a background synchronization
+         * callback. RefreshFromDashboardState marshals the entire operation
+         * to the Avalonia UI thread, including the native tray icon update.
+         *
+         * No polling is introduced: every relevant reading notification
+         * performs only an enum/string-state comparison, while the icon asset
+         * is reloaded solely when the effective band actually changes.
+         */
         RefreshFromDashboardState();
     }
 
@@ -775,8 +793,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         RunOnUiThread(() =>
         {
             _isPrivacyModeEnabled = _privacyModeService.IsEnabled;
-            RefreshFromDashboardState();
-            RefreshMenuBarIconFromDashboardState();
+            RefreshFromDashboardStateCore();
         });
     }
 
@@ -832,26 +849,36 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
-    /// Refreshes the tray icon text from the current dashboard state.
+    /// Refreshes tray icon, tooltip, native menu and popover from the current
+    /// dashboard state.
     /// </summary>
     private void RefreshFromDashboardState()
     {
-        
-        RefreshMenuBarIconFromDashboardState();
-RunOnUiThread(() =>
+        RunOnUiThread(RefreshFromDashboardStateCore);
+    }
+
+    /// <summary>
+    /// Refreshes desktop presence while already executing on the UI thread.
+    /// </summary>
+    private void RefreshFromDashboardStateCore()
+    {
+        /*
+         * Apply the icon first so a new CGM reading crossing a glycemic band
+         * is reflected immediately in the system tray/menu bar.
+         */
+        RefreshMenuBarIconFromDashboardStateCore();
+
+        if (_dashboardViewModel is null)
         {
-            if (_dashboardViewModel is null)
-            {
-                RefreshPopoverState();
-                return;
-            }
+            RefreshPopoverState();
+            return;
+        }
 
-            var text = _dashboardTextFormatter.Format(
-                CreateDashboardState(_dashboardViewModel));
+        var text = _dashboardTextFormatter.Format(
+            CreateDashboardState(_dashboardViewModel));
 
-            ApplyDesktopPresenceText(text);
-            RefreshPopoverState(text);
-        });
+        ApplyDesktopPresenceText(text);
+        RefreshPopoverState(text);
     }
 
     /// <summary>
