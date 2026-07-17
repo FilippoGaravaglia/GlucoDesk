@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using GlucoDesk.Desktop.DesktopPresence.Models;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.DesktopPresence.Windows;
 
@@ -36,6 +37,9 @@ public sealed class DesktopPresencePopoverWindow : Window
 
     private readonly Border _privacyActionBorder;
     private readonly TextBlock _privacyActionTextBlock;
+
+    private readonly TextBlock _openActionTextBlock;
+    private readonly TextBlock _quitActionTextBlock;
 
     private readonly Func<Task> _refreshAsync;
     private readonly Action _togglePrivacyMode;
@@ -83,7 +87,7 @@ public sealed class DesktopPresencePopoverWindow : Window
             FontSize = 26,
             FontWeight = FontWeight.SemiBold,
             Foreground = PrimaryTextBrush,
-            Text = "Waiting for glucose data"
+            Text = Text("DesktopPresenceWaitingForData")
         };
 
         _detailsTextBlock = new TextBlock
@@ -91,11 +95,11 @@ public sealed class DesktopPresencePopoverWindow : Window
             FontSize = 13,
             Foreground = SecondaryTextBrush,
             TextWrapping = TextWrapping.Wrap,
-            Text = "GlucoDesk is waiting for fresh desktop presence data."
+            Text = Text("DesktopPresenceWaitingDetails")
         };
 
         var refreshAction = CreateActionControl(
-            "Refresh now",
+            Text("DesktopPresenceRefreshNow"),
             PrimaryButtonBrush,
             PrimaryButtonHoverBrush,
             PrimaryButtonPressedBrush);
@@ -104,7 +108,7 @@ public sealed class DesktopPresencePopoverWindow : Window
         _refreshActionTextBlock = refreshAction.Label;
 
         var privacyAction = CreateActionControl(
-            "Privacy mode: Off",
+            Text("DesktopPresencePrivacyOff"),
             PrimaryButtonBrush,
             PrimaryButtonHoverBrush,
             PrimaryButtonPressedBrush);
@@ -115,7 +119,9 @@ public sealed class DesktopPresencePopoverWindow : Window
         _refreshActionBorder.PointerReleased += async (_, _) => await RefreshSafelyAsync();
         _privacyActionBorder.PointerReleased += (_, _) => _togglePrivacyMode();
 
-        Content = CreateContent();
+        Content = CreateContent(
+            out _openActionTextBlock,
+            out _quitActionTextBlock);
 
         Deactivated += (_, _) => CloseAfterFocusLossSafely();
     }
@@ -139,8 +145,11 @@ public sealed class DesktopPresencePopoverWindow : Window
         SetRefreshVisualState(isRefreshing);
 
         _privacyActionTextBlock.Text = isPrivacyModeEnabled
-            ? "Privacy mode: On"
-            : "Privacy mode: Off";
+            ? Text("DesktopPresencePrivacyOn")
+            : Text("DesktopPresencePrivacyOff");
+
+        _openActionTextBlock.Text = Text("DesktopPresenceOpen");
+        _quitActionTextBlock.Text = Text("DesktopPresenceQuit");
 
         ApplyActionVisualState(
             _privacyActionBorder,
@@ -164,10 +173,12 @@ public sealed class DesktopPresencePopoverWindow : Window
     /// Creates the popover content.
     /// </summary>
     /// <returns>The popover content control.</returns>
-    private Control CreateContent()
+    private Control CreateContent(
+        out TextBlock openActionTextBlock,
+        out TextBlock quitActionTextBlock)
     {
         var openAction = CreateActionControl(
-            "Open GlucoDesk",
+            Text("DesktopPresenceOpen"),
             SecondaryButtonBrush,
             SecondaryButtonHoverBrush,
             SecondaryButtonPressedBrush);
@@ -178,11 +189,15 @@ public sealed class DesktopPresencePopoverWindow : Window
             CloseFromCode();
         };
 
+        openActionTextBlock = openAction.Label;
+
         var quitAction = CreateActionControl(
-            "Quit GlucoDesk",
+            Text("DesktopPresenceQuit"),
             SecondaryButtonBrush,
             SecondaryButtonHoverBrush,
             SecondaryButtonPressedBrush);
+
+        quitActionTextBlock = quitAction.Label;
 
         quitAction.Container.PointerReleased += (_, _) =>
         {
@@ -403,8 +418,8 @@ public sealed class DesktopPresencePopoverWindow : Window
         _isRefreshInProgress = isRefreshing;
 
         _refreshActionTextBlock.Text = isRefreshing
-            ? "Refreshing..."
-            : "Refresh now";
+            ? Text("DesktopPresenceRefreshing")
+            : Text("DesktopPresenceRefreshNow");
 
         ApplyActionVisualState(
             _refreshActionBorder,
@@ -455,6 +470,11 @@ public sealed class DesktopPresencePopoverWindow : Window
                 }
             },
             DispatcherPriority.Background);
+    }
+
+    private static string Text(string key)
+    {
+        return LocalizationManager.GetString(key);
     }
 
     #endregion

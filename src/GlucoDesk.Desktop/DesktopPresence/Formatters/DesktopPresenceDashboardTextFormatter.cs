@@ -1,11 +1,14 @@
+using System.Globalization;
 using GlucoDesk.Desktop.DesktopPresence.Models;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.DesktopPresence.Formatters;
 
 /// <summary>
 /// Formats dashboard presentation state for the desktop presence indicator.
 /// </summary>
-public sealed class DesktopPresenceDashboardTextFormatter : IDesktopPresenceDashboardTextFormatter
+public sealed class DesktopPresenceDashboardTextFormatter :
+    IDesktopPresenceDashboardTextFormatter
 {
     private const string ProductName = "GlucoDesk";
     private const string EmptyValue = "—";
@@ -21,11 +24,11 @@ public sealed class DesktopPresenceDashboardTextFormatter : IDesktopPresenceDash
         }
 
         var menuHeader = state.IsPrivacyModeEnabled
-            ? "Glucose hidden"
+            ? Text("DesktopPresenceGlucoseHidden")
             : FormatGlucoseMenuHeader(state);
 
         var tooltipValueText = state.IsPrivacyModeEnabled
-            ? "glucose hidden"
+            ? Text("DesktopPresenceGlucoseHiddenLower")
             : menuHeader;
 
         var tooltipParts = new[]
@@ -45,12 +48,8 @@ public sealed class DesktopPresenceDashboardTextFormatter : IDesktopPresenceDash
 
     #region Helpers
 
-    /// <summary>
-    /// Formats the glucose menu header from dashboard value and trend text.
-    /// </summary>
-    /// <param name="state">The dashboard presentation state.</param>
-    /// <returns>The formatted glucose menu header.</returns>
-    private static string FormatGlucoseMenuHeader(DesktopPresenceDashboardState state)
+    private static string FormatGlucoseMenuHeader(
+        DesktopPresenceDashboardState state)
     {
         var trendSymbol = ExtractTrendSymbol(state.TrendText);
 
@@ -59,18 +58,14 @@ public sealed class DesktopPresenceDashboardTextFormatter : IDesktopPresenceDash
             : $"{Normalize(state.LatestValueText)} {trendSymbol}";
     }
 
-    /// <summary>
-    /// Formats a dashboard state without a current glucose value.
-    /// </summary>
-    /// <param name="state">The dashboard presentation state.</param>
-    /// <returns>The formatted desktop presence text.</returns>
-    private static DesktopPresenceText FormatUnavailableState(DesktopPresenceDashboardState state)
+    private static DesktopPresenceText FormatUnavailableState(
+        DesktopPresenceDashboardState state)
     {
         var statusText = NormalizeOptional(state.StatusText);
 
         if (string.IsNullOrWhiteSpace(statusText))
         {
-            statusText = "Waiting for glucose data";
+            statusText = Text("DesktopPresenceWaitingForData");
         }
 
         var providerText = NormalizeOptional(state.ProviderDisplayName);
@@ -88,38 +83,33 @@ public sealed class DesktopPresenceDashboardTextFormatter : IDesktopPresenceDash
             statusText);
     }
 
-    /// <summary>
-    /// Determines whether a dashboard value text represents a missing glucose value.
-    /// </summary>
-    /// <param name="valueText">The dashboard value text.</param>
-    /// <returns><c>true</c> when the value is missing; otherwise, <c>false</c>.</returns>
     private static bool IsMissingValue(string? valueText)
     {
         return string.IsNullOrWhiteSpace(valueText)
-               || string.Equals(valueText.Trim(), EmptyValue, StringComparison.Ordinal);
+               || string.Equals(
+                   valueText.Trim(),
+                   EmptyValue,
+                   StringComparison.Ordinal);
     }
 
-    /// <summary>
-    /// Extracts the compact trend symbol from the dashboard trend text.
-    /// </summary>
-    /// <param name="trendText">The dashboard trend text.</param>
-    /// <returns>The compact trend symbol, or an empty string.</returns>
     private static string ExtractTrendSymbol(string? trendText)
     {
         var normalizedTrendText = NormalizeOptional(trendText);
 
-        if (string.IsNullOrWhiteSpace(normalizedTrendText))
-        {
-            return string.Empty;
-        }
-
-        if (string.Equals(normalizedTrendText, EmptyValue, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(normalizedTrendText)
+            || string.Equals(
+                normalizedTrendText,
+                EmptyValue,
+                StringComparison.Ordinal))
         {
             return string.Empty;
         }
 
         var firstToken = normalizedTrendText
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(
+                ' ',
+                StringSplitOptions.RemoveEmptyEntries
+                | StringSplitOptions.TrimEntries)
             .FirstOrDefault();
 
         return string.IsNullOrWhiteSpace(firstToken)
@@ -127,48 +117,40 @@ public sealed class DesktopPresenceDashboardTextFormatter : IDesktopPresenceDash
             : firstToken;
     }
 
-    /// <summary>
-    /// Formats the last updated text for the tooltip.
-    /// </summary>
-    /// <param name="lastUpdatedText">The dashboard last updated text.</param>
-    /// <returns>The formatted last updated text.</returns>
     private static string FormatLastUpdated(string? lastUpdatedText)
     {
         var normalizedLastUpdatedText = NormalizeOptional(lastUpdatedText);
 
-        if (string.IsNullOrWhiteSpace(normalizedLastUpdatedText))
+        if (string.IsNullOrWhiteSpace(normalizedLastUpdatedText)
+            || string.Equals(
+                normalizedLastUpdatedText,
+                EmptyValue,
+                StringComparison.Ordinal))
         {
             return string.Empty;
         }
 
-        if (string.Equals(normalizedLastUpdatedText, EmptyValue, StringComparison.Ordinal))
-        {
-            return string.Empty;
-        }
-
-        return $"updated {normalizedLastUpdatedText}";
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            Text("DesktopPresenceUpdatedAt"),
+            normalizedLastUpdatedText);
     }
 
-    /// <summary>
-    /// Normalizes required user-facing text.
-    /// </summary>
-    /// <param name="text">The text to normalize.</param>
-    /// <returns>The normalized text.</returns>
     private static string Normalize(string text)
     {
         return text.Trim();
     }
 
-    /// <summary>
-    /// Normalizes optional user-facing text.
-    /// </summary>
-    /// <param name="text">The text to normalize.</param>
-    /// <returns>The normalized text, or an empty string.</returns>
     private static string NormalizeOptional(string? text)
     {
         return string.IsNullOrWhiteSpace(text)
             ? string.Empty
             : text.Trim();
+    }
+
+    private static string Text(string key)
+    {
+        return LocalizationManager.GetString(key);
     }
 
     #endregion

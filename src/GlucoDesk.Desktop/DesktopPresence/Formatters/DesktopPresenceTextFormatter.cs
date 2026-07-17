@@ -1,6 +1,7 @@
 using System.Globalization;
 using GlucoDesk.Desktop.DesktopPresence.Enums;
 using GlucoDesk.Desktop.DesktopPresence.Models;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.DesktopPresence.Formatters;
 
@@ -14,36 +15,38 @@ public sealed class DesktopPresenceTextFormatter : IDesktopPresenceTextFormatter
     /// <inheritdoc />
     public DesktopPresenceText Format(DesktopPresenceSnapshot snapshot)
     {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
         return snapshot.DataState switch
         {
-            DesktopPresenceDataState.ProviderNotConfigured => new DesktopPresenceText(
-                $"{ProductName} · provider not configured",
-                "Provider not configured"),
+            DesktopPresenceDataState.ProviderNotConfigured =>
+                new DesktopPresenceText(
+                    Text("DesktopPresenceProviderNotConfiguredTooltip"),
+                    Text("DesktopPresenceProviderNotConfigured")),
 
-            DesktopPresenceDataState.NoData => new DesktopPresenceText(
-                $"{ProductName} · no glucose data",
-                "No glucose data available"),
+            DesktopPresenceDataState.NoData =>
+                new DesktopPresenceText(
+                    Text("DesktopPresenceNoDataTooltip"),
+                    Text("DesktopPresenceNoData")),
 
-            DesktopPresenceDataState.Fresh or DesktopPresenceDataState.Stale => FormatReadingSnapshot(snapshot),
+            DesktopPresenceDataState.Fresh or DesktopPresenceDataState.Stale =>
+                FormatReadingSnapshot(snapshot),
 
-            _ => new DesktopPresenceText(
-                $"{ProductName} · unavailable",
-                "Glucose status unavailable")
+            _ =>
+                new DesktopPresenceText(
+                    Text("DesktopPresenceUnavailableTooltip"),
+                    Text("DesktopPresenceUnavailable"))
         };
     }
 
     #region Helpers
 
-    /// <summary>
-    /// Formats a snapshot that contains a glucose reading.
-    /// </summary>
-    /// <param name="snapshot">The desktop presence snapshot.</param>
-    /// <returns>The formatted desktop presence text.</returns>
-    private static DesktopPresenceText FormatReadingSnapshot(DesktopPresenceSnapshot snapshot)
+    private static DesktopPresenceText FormatReadingSnapshot(
+        DesktopPresenceSnapshot snapshot)
     {
         var freshnessText = snapshot.DataState is DesktopPresenceDataState.Fresh
-            ? "fresh"
-            : "stale";
+            ? Text("DesktopPresenceFresh")
+            : Text("DesktopPresenceStale");
 
         var ageText = FormatReadingAge(
             snapshot.ReadingTimestamp,
@@ -52,8 +55,8 @@ public sealed class DesktopPresenceTextFormatter : IDesktopPresenceTextFormatter
         if (snapshot.IsPrivacyModeEnabled)
         {
             return new DesktopPresenceText(
-                $"{ProductName} · glucose hidden · {freshnessText} · {ageText}",
-                "Privacy mode enabled");
+                $"{ProductName} · {Text("DesktopPresenceGlucoseHiddenLower")} · {freshnessText} · {ageText}",
+                Text("DesktopPresencePrivacyEnabled"));
         }
 
         var valueText = FormatValue(
@@ -67,19 +70,13 @@ public sealed class DesktopPresenceTextFormatter : IDesktopPresenceTextFormatter
             $"{valueText}{trendText}");
     }
 
-    /// <summary>
-    /// Formats the glucose value using the selected display unit.
-    /// </summary>
-    /// <param name="displayValue">The display glucose value.</param>
-    /// <param name="unitSymbol">The selected unit symbol.</param>
-    /// <returns>The formatted glucose value.</returns>
     private static string FormatValue(
         decimal? displayValue,
         string unitSymbol)
     {
         if (displayValue is null)
         {
-            return "glucose unavailable";
+            return Text("DesktopPresenceGlucoseUnavailable");
         }
 
         var normalizedUnitSymbol = string.IsNullOrWhiteSpace(unitSymbol)
@@ -93,11 +90,6 @@ public sealed class DesktopPresenceTextFormatter : IDesktopPresenceTextFormatter
         return $"{valueText} {normalizedUnitSymbol}";
     }
 
-    /// <summary>
-    /// Formats the optional trend text.
-    /// </summary>
-    /// <param name="trendText">The optional trend text.</param>
-    /// <returns>The formatted trend suffix.</returns>
     private static string FormatTrend(string? trendText)
     {
         return string.IsNullOrWhiteSpace(trendText)
@@ -105,36 +97,27 @@ public sealed class DesktopPresenceTextFormatter : IDesktopPresenceTextFormatter
             : $" {trendText.Trim()}";
     }
 
-    /// <summary>
-    /// Formats the age of the glucose reading.
-    /// </summary>
-    /// <param name="readingTimestamp">The glucose reading timestamp.</param>
-    /// <param name="now">The current timestamp.</param>
-    /// <returns>The formatted reading age.</returns>
     private static string FormatReadingAge(
         DateTimeOffset? readingTimestamp,
         DateTimeOffset now)
     {
         if (readingTimestamp is null)
         {
-            return "unknown age";
+            return Text("DesktopPresenceUnknownAge");
         }
 
         var age = now - readingTimestamp.Value;
 
-        if (age <= TimeSpan.Zero)
+        if (age <= TimeSpan.Zero || age.TotalMinutes < 1)
         {
-            return "just now";
-        }
-
-        if (age.TotalMinutes < 1)
-        {
-            return "just now";
+            return Text("DesktopPresenceJustNow");
         }
 
         if (age.TotalHours < 1)
         {
-            return $"{(int)age.TotalMinutes} min ago";
+            return Format(
+                "DesktopPresenceMinutesAgo",
+                (int)age.TotalMinutes);
         }
 
         if (age.TotalDays < 1)
@@ -143,11 +126,29 @@ public sealed class DesktopPresenceTextFormatter : IDesktopPresenceTextFormatter
             var minutes = age.Minutes;
 
             return minutes == 0
-                ? $"{hours} h ago"
-                : $"{hours} h {minutes} min ago";
+                ? Format("DesktopPresenceHoursAgo", hours)
+                : Format(
+                    "DesktopPresenceHoursMinutesAgo",
+                    hours,
+                    minutes);
         }
 
-        return $"{(int)age.TotalDays} d ago";
+        return Format(
+            "DesktopPresenceDaysAgo",
+            (int)age.TotalDays);
+    }
+
+    private static string Text(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
+    private static string Format(string key, params object[] arguments)
+    {
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            Text(key),
+            arguments);
     }
 
     #endregion

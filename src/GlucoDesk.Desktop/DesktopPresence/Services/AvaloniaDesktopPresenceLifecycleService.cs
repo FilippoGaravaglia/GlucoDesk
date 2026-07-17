@@ -12,6 +12,7 @@ using GlucoDesk.Desktop.DesktopPresence.Layout;
 using GlucoDesk.Desktop.DesktopPresence.Models;
 using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.DesktopPresence.Windows;
+using GlucoDesk.Desktop.Localization;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Main;
 using Microsoft.Extensions.Logging;
@@ -43,6 +44,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     private NativeMenuItem? _presencePanelMenuItem;
     private DesktopPresencePopoverWindow? _popoverWindow;
     private DashboardViewModel? _dashboardViewModel;
+    private IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private bool _isStarted;
     private bool _isPrivacyModeEnabled;
     private const string MenuBarIconInRangeAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-in-range.png";
@@ -118,10 +120,13 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 application.PropertyChanged += OnApplicationPropertyChanged;
 
                 _application = application;
+                _desktopLifetime = desktopLifetime;
                 _trayIcon = trayIcon;
                 _statusMenuItem = statusMenuItem;
                 _presencePanelMenuItem = presencePanelMenuItem;
                 _isStarted = true;
+
+                LocalizationManager.LanguageChanged += OnLanguageChanged;
 
                 AttachDashboardState(desktopLifetime);
                 RefreshFromDashboardState();
@@ -150,6 +155,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
             try
             {
+                LocalizationManager.LanguageChanged -= OnLanguageChanged;
+
                 ClosePopover();
                 DetachDashboardState();
 
@@ -162,6 +169,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 _trayIcon?.Dispose();
 
                 _application = null;
+                _desktopLifetime = null;
                 _trayIcon = null;
                 _statusMenuItem = null;
                 _lastAppliedMenuBarIconAssetUri = null;
@@ -282,7 +290,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             IsEnabled = false,
         };
 
-        presencePanelMenuItem = new NativeMenuItem("Show presence panel");
+        presencePanelMenuItem = new NativeMenuItem(
+            Text("DesktopPresenceShowPanel"));
         presencePanelMenuItem.Click += (_, _) => TogglePopover(desktopLifetime);
 
         return new TrayIcon
@@ -478,10 +487,12 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         NativeMenuItem statusMenuItem,
         NativeMenuItem presencePanelMenuItem)
     {
-        var openItem = new NativeMenuItem("Open GlucoDesk");
+        var openItem = new NativeMenuItem(
+            Text("DesktopPresenceOpen"));
         openItem.Click += (_, _) => ShowMainWindow(desktopLifetime);
 
-        var quitItem = new NativeMenuItem("Quit GlucoDesk");
+        var quitItem = new NativeMenuItem(
+            Text("DesktopPresenceQuit"));
         quitItem.Click += (_, _) => desktopLifetime.Shutdown();
 
         return new NativeMenu
@@ -710,6 +721,50 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
+    /// Refreshes native menu, tooltip and popover text after a language change.
+    /// </summary>
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        RunOnUiThread(() =>
+        {
+            if (!_isStarted
+                || _trayIcon is null
+                || _desktopLifetime is null)
+            {
+                return;
+            }
+
+            var initialText = _textFormatter.Format(
+                CreateInitialSnapshot());
+
+            var statusMenuItem = new NativeMenuItem(
+                initialText.MenuHeader)
+            {
+                IsEnabled = false,
+            };
+
+            var presencePanelMenuItem = new NativeMenuItem(
+                _popoverWindow is null
+                    ? Text("DesktopPresenceShowPanel")
+                    : Text("DesktopPresenceHidePanel"));
+
+            presencePanelMenuItem.Click += (_, _) =>
+                TogglePopover(_desktopLifetime);
+
+            _statusMenuItem = statusMenuItem;
+            _presencePanelMenuItem = presencePanelMenuItem;
+
+            _trayIcon.Menu = CreateTrayMenu(
+                _desktopLifetime,
+                statusMenuItem,
+                presencePanelMenuItem);
+
+            RefreshFromDashboardState();
+            UpdatePresencePanelMenuState();
+        });
+    }
+
+    /// <summary>
     /// Handles desktop presence privacy mode state changes.
     /// </summary>
     /// <param name="sender">The event sender.</param>
@@ -809,8 +864,8 @@ RunOnUiThread(() =>
         }
 
         _presencePanelMenuItem.Header = _popoverWindow is null
-            ? "Show presence panel"
-            : "Hide presence panel";
+            ? Text("DesktopPresenceShowPanel")
+            : Text("DesktopPresenceHidePanel");
     }
 
     /// <summary>
@@ -918,6 +973,11 @@ RunOnUiThread(() =>
         }
 
         Dispatcher.UIThread.Post(action);
+    }
+
+    private static string Text(string key)
+    {
+        return LocalizationManager.GetString(key);
     }
 
     #endregion
