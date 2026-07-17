@@ -1,5 +1,6 @@
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.GlucoseAlerts.Services;
 
@@ -52,8 +53,12 @@ public sealed class GlucoseAlertNotificationTestService : IGlucoseAlertNotificat
     private static GlucoseAlertNativeNotification CreatePrivacySafeTestNotification()
     {
         return new GlucoseAlertNativeNotification(
-            "GlucoDesk notification test",
-            "Native glucose awareness notifications are enabled on this desktop.");
+            LocalizationManager.GetString(
+                "GlucoseAlertTestTitle"),
+            LocalizationManager.GetString(
+                "GlucoseAlertTestMessage"),
+            LocalizationManager.GetString(
+                "GlucoseAlertNativeSubtitle"));
     }
 
     #endregion

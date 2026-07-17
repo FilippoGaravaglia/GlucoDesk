@@ -116,7 +116,9 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
                     "--args",
                     notification.Title,
                     notification.Message,
-                    "Glucose awareness"
+                    string.IsNullOrWhiteSpace(notification.Subtitle)
+                        ? "GlucoDesk"
+                        : notification.Subtitle
                 }
             };
 

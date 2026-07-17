@@ -12,6 +12,7 @@ using GlucoDesk.Desktop.DesktopPresence.Layout;
 using GlucoDesk.Desktop.DesktopPresence.Models;
 using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
 using GlucoDesk.Desktop.DesktopPresence.Windows;
+using GlucoDesk.Desktop.Localization;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Main;
 using Microsoft.Extensions.Logging;
@@ -43,6 +44,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     private NativeMenuItem? _presencePanelMenuItem;
     private DesktopPresencePopoverWindow? _popoverWindow;
     private DashboardViewModel? _dashboardViewModel;
+    private IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private bool _isStarted;
     private bool _isPrivacyModeEnabled;
     private const string MenuBarIconInRangeAssetUri = "avares://GlucoDesk.Desktop/Assets/MenuBar/glucodesk-menubar-icon-in-range.png";
@@ -118,14 +120,16 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 application.PropertyChanged += OnApplicationPropertyChanged;
 
                 _application = application;
+                _desktopLifetime = desktopLifetime;
                 _trayIcon = trayIcon;
                 _statusMenuItem = statusMenuItem;
                 _presencePanelMenuItem = presencePanelMenuItem;
                 _isStarted = true;
 
+                LocalizationManager.LanguageChanged += OnLanguageChanged;
+
                 AttachDashboardState(desktopLifetime);
                 RefreshFromDashboardState();
-                RefreshMenuBarIconFromDashboardState();
 
                 _logger.LogInformation("Desktop presence indicator started.");
             }
@@ -150,6 +154,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
             try
             {
+                LocalizationManager.LanguageChanged -= OnLanguageChanged;
+
                 ClosePopover();
                 DetachDashboardState();
 
@@ -162,9 +168,9 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 _trayIcon?.Dispose();
 
                 _application = null;
+                _desktopLifetime = null;
                 _trayIcon = null;
                 _statusMenuItem = null;
-                _lastAppliedMenuBarIconAssetUri = null;
                 _lastAppliedMenuBarIconAssetUri = null;
                 _presencePanelMenuItem = null;
                 _isStarted = false;
@@ -183,12 +189,25 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     #region Helpers
 
     /// <summary>
-    /// Refreshes the menu bar icon using only the current glycemic alert state.
+    /// Refreshes the menu bar icon from the latest dashboard alert state.
+    /// The native tray icon is always mutated on the Avalonia UI thread.
     /// </summary>
     private void RefreshMenuBarIconFromDashboardState()
     {
-        var alertKindName = _dashboardViewModel?.CurrentGlucoseAlertKind.ToString();
-        var assetUri = SelectMenuBarIconAssetUri(alertKindName, _isPrivacyModeEnabled);
+        RunOnUiThread(RefreshMenuBarIconFromDashboardStateCore);
+    }
+
+    /// <summary>
+    /// Refreshes the menu bar icon while already executing on the UI thread.
+    /// </summary>
+    private void RefreshMenuBarIconFromDashboardStateCore()
+    {
+        var alertKindName =
+            _dashboardViewModel?.CurrentGlucoseAlertKind.ToString();
+
+        var assetUri = SelectMenuBarIconAssetUri(
+            alertKindName,
+            _isPrivacyModeEnabled);
 
         ApplyMenuBarIcon(assetUri);
     }
@@ -282,7 +301,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             IsEnabled = false,
         };
 
-        presencePanelMenuItem = new NativeMenuItem("Show presence panel");
+        presencePanelMenuItem = new NativeMenuItem(
+            Text("DesktopPresenceShowPanel"));
         presencePanelMenuItem.Click += (_, _) => TogglePopover(desktopLifetime);
 
         return new TrayIcon
@@ -314,6 +334,8 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
 
     /// <summary>
     /// Refreshes the tray icon after an application theme change.
+    /// Glycemic and privacy variants are independent from the application
+    /// theme, so the currently required colored asset is reapplied.
     /// </summary>
     private void RefreshTrayIcon()
     {
@@ -324,16 +346,12 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
                 return;
             }
 
-            try
-            {
-                _trayIcon.Icon = LoadTrayIcon();
-            }
-            catch (Exception exception)
-            {
-                _logger.LogError(
-                    exception,
-                    "Unable to refresh the desktop presence icon after a theme change.");
-            }
+            /*
+             * Force a reload because the native platform may have recreated
+             * or invalidated its tray representation after a theme change.
+             */
+            _lastAppliedMenuBarIconAssetUri = null;
+            RefreshMenuBarIconFromDashboardStateCore();
         });
     }
 
@@ -478,10 +496,12 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         NativeMenuItem statusMenuItem,
         NativeMenuItem presencePanelMenuItem)
     {
-        var openItem = new NativeMenuItem("Open GlucoDesk");
+        var openItem = new NativeMenuItem(
+            Text("DesktopPresenceOpen"));
         openItem.Click += (_, _) => ShowMainWindow(desktopLifetime);
 
-        var quitItem = new NativeMenuItem("Quit GlucoDesk");
+        var quitItem = new NativeMenuItem(
+            Text("DesktopPresenceQuit"));
         quitItem.Click += (_, _) => desktopLifetime.Shutdown();
 
         return new NativeMenu
@@ -540,6 +560,15 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
             return;
         }
 
+        /*
+         * Dashboard readings may be applied by a background synchronization
+         * callback. RefreshFromDashboardState marshals the entire operation
+         * to the Avalonia UI thread, including the native tray icon update.
+         *
+         * No polling is introduced: every relevant reading notification
+         * performs only an enum/string-state comparison, while the icon asset
+         * is reloaded solely when the effective band actually changes.
+         */
         RefreshFromDashboardState();
     }
 
@@ -710,6 +739,51 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
+    /// Refreshes native menu, tooltip and popover text after a language change.
+    /// </summary>
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        RunOnUiThread(() =>
+        {
+            if (!_isStarted)
+            {
+                return;
+            }
+
+            /*
+             * Do not replace TrayIcon.Menu after Avalonia has exported it to
+             * the native macOS menu system.
+             *
+             * Avalonia Native requires the original NativeMenu instance to
+             * remain associated with the tray icon. Replacing it at runtime
+             * throws:
+             *
+             * "The menu being updated does not match."
+             *
+             * Refresh the existing menu item instances instead.
+             */
+            RefreshFromDashboardState();
+            UpdatePresencePanelMenuState();
+
+            /*
+             * A visible popover owns localized controls created with the
+             * previous language. Closing it avoids displaying mixed-language
+             * content; reopening it creates the controls with the new
+             * language.
+             */
+            if (_popoverWindow is not null)
+            {
+                ClosePopover();
+            }
+        });
+    }
+
+    /// <summary>
     /// Handles desktop presence privacy mode state changes.
     /// </summary>
     /// <param name="sender">The event sender.</param>
@@ -719,8 +793,7 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
         RunOnUiThread(() =>
         {
             _isPrivacyModeEnabled = _privacyModeService.IsEnabled;
-            RefreshFromDashboardState();
-            RefreshMenuBarIconFromDashboardState();
+            RefreshFromDashboardStateCore();
         });
     }
 
@@ -776,26 +849,36 @@ public sealed class AvaloniaDesktopPresenceLifecycleService : IDesktopPresenceLi
     }
 
     /// <summary>
-    /// Refreshes the tray icon text from the current dashboard state.
+    /// Refreshes tray icon, tooltip, native menu and popover from the current
+    /// dashboard state.
     /// </summary>
     private void RefreshFromDashboardState()
     {
-        
-        RefreshMenuBarIconFromDashboardState();
-RunOnUiThread(() =>
+        RunOnUiThread(RefreshFromDashboardStateCore);
+    }
+
+    /// <summary>
+    /// Refreshes desktop presence while already executing on the UI thread.
+    /// </summary>
+    private void RefreshFromDashboardStateCore()
+    {
+        /*
+         * Apply the icon first so a new CGM reading crossing a glycemic band
+         * is reflected immediately in the system tray/menu bar.
+         */
+        RefreshMenuBarIconFromDashboardStateCore();
+
+        if (_dashboardViewModel is null)
         {
-            if (_dashboardViewModel is null)
-            {
-                RefreshPopoverState();
-                return;
-            }
+            RefreshPopoverState();
+            return;
+        }
 
-            var text = _dashboardTextFormatter.Format(
-                CreateDashboardState(_dashboardViewModel));
+        var text = _dashboardTextFormatter.Format(
+            CreateDashboardState(_dashboardViewModel));
 
-            ApplyDesktopPresenceText(text);
-            RefreshPopoverState(text);
-        });
+        ApplyDesktopPresenceText(text);
+        RefreshPopoverState(text);
     }
 
     /// <summary>
@@ -809,8 +892,8 @@ RunOnUiThread(() =>
         }
 
         _presencePanelMenuItem.Header = _popoverWindow is null
-            ? "Show presence panel"
-            : "Hide presence panel";
+            ? Text("DesktopPresenceShowPanel")
+            : Text("DesktopPresenceHidePanel");
     }
 
     /// <summary>
@@ -918,6 +1001,11 @@ RunOnUiThread(() =>
         }
 
         Dispatcher.UIThread.Post(action);
+    }
+
+    private static string Text(string key)
+    {
+        return LocalizationManager.GetString(key);
     }
 
     #endregion

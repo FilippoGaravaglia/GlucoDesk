@@ -3,6 +3,7 @@ using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
+using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.GlucoseAlerts.Services;
 
@@ -218,12 +219,12 @@ public sealed class GlucoseAlertCoordinator
         bool shouldSendNativeNotification)
     {
         var title = kind == GlucoseAlertKind.Low
-            ? "Glucose below target"
-            : "Glucose above target";
+            ? Text("GlucoseAlertLowTitle")
+            : Text("GlucoseAlertHighTitle");
 
         var badgeText = kind == GlucoseAlertKind.Low
-            ? "Below target"
-            : "Above target";
+            ? Text("GlucoseAlertLowBadge")
+            : Text("GlucoseAlertHighBadge");
 
         var message = settings.GlucoseAlertPrivacyModeEnabled
             ? BuildPrivacyMessage(kind)
@@ -234,7 +235,7 @@ public sealed class GlucoseAlertCoordinator
             title,
             message,
             badgeText,
-            "Check your official diabetes app before making therapy decisions.",
+            Text("GlucoseAlertSafetyAction"),
             shouldSendNativeNotification);
     }
 
@@ -246,8 +247,8 @@ public sealed class GlucoseAlertCoordinator
     private static string BuildPrivacyMessage(GlucoseAlertKind kind)
     {
         return kind == GlucoseAlertKind.Low
-            ? "Your glucose is currently below your configured target range."
-            : "Your glucose is currently above your configured target range.";
+            ? Text("GlucoseAlertLowPrivacyMessage")
+            : Text("GlucoseAlertHighPrivacyMessage");
     }
 
     /// <summary>
@@ -268,9 +269,18 @@ public sealed class GlucoseAlertCoordinator
         var targetLow = FormatGlucoseAmount(settings.TargetLowMgDl, displayUnit);
         var targetHigh = FormatGlucoseAmount(settings.TargetHighMgDl, displayUnit);
         var unitLabel = FormatGlucoseUnitLabel(displayUnit);
-        var direction = kind == GlucoseAlertKind.Low ? "below" : "above";
 
-        return $"Current reading is {currentValue}, {direction} your target range of {targetLow}-{targetHigh} {unitLabel}.";
+        var messageKey = kind == GlucoseAlertKind.Low
+            ? "GlucoseAlertDetailedLowMessage"
+            : "GlucoseAlertDetailedHighMessage";
+
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            Text(messageKey),
+            currentValue,
+            targetLow,
+            targetHigh,
+            unitLabel);
     }
 
     /// <summary>
@@ -326,6 +336,11 @@ public sealed class GlucoseAlertCoordinator
         return displayUnit == GlucoseUnit.MmolL
             ? GlucoseUnit.MmolL
             : GlucoseUnit.MgDl;
+    }
+
+    private static string Text(string key)
+    {
+        return LocalizationManager.GetString(key);
     }
 
     #endregion
