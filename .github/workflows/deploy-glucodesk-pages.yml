@@ -1,0 +1,92 @@
+name: Deploy GlucoDesk website
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "site/**"
+      - ".github/workflows/deploy-glucodesk-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: glucodesk-pages
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate website
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required website files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_files=(
+            "site/index.html"
+            "site/404.html"
+            "site/.nojekyll"
+            "site/robots.txt"
+            "site/sitemap.xml"
+            "site/manifest.webmanifest"
+            "site/assets/css/styles.css"
+            "site/assets/js/app.js"
+            "site/assets/icons/glucodesk-app-icon.png"
+            "site/assets/images/screenshots/dashboard.png"
+            "site/assets/images/screenshots/diary.png"
+            "site/assets/images/screenshots/settings.png"
+            "site/assets/images/screenshots/account.png"
+          )
+
+          for file in "${required_files[@]}"; do
+            test -f "$file"
+          done
+
+          if grep -RInE \
+            'href="/|src="/' \
+            site \
+            --include='*.html' \
+            --include='*.css' \
+            --include='*.js'; then
+            echo "Absolute root references are not allowed for project Pages."
+            exit 1
+          fi
+
+          echo "Website validation completed."
+
+  deploy:
+    name: Deploy GitHub Pages
+    needs:
+      - validate
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
