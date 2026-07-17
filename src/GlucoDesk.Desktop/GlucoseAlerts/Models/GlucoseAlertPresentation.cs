@@ -1,3 +1,5 @@
+using GlucoDesk.Desktop.Localization;
+
 namespace GlucoDesk.Desktop.GlucoseAlerts.Models;
 
 /// <summary>
@@ -34,6 +36,10 @@ public sealed record GlucoseAlertPresentation(
     /// <returns>The native OS notification.</returns>
     public GlucoseAlertNativeNotification ToNativeNotification()
     {
-        return new GlucoseAlertNativeNotification(Title, Message);
+        return new GlucoseAlertNativeNotification(
+            Title,
+            Message,
+            LocalizationManager.GetString(
+                "GlucoseAlertNativeSubtitle"));
     }
 }
