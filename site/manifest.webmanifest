@@ -1,14 +1,21 @@
 {
   "name": "GlucoDesk",
   "short_name": "GlucoDesk",
-  "description": "A calm local-first desktop companion for glucose awareness.",
-  "start_url": "./",
+  "description": "Your glucose, always in sight on macOS and Windows.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#071426",
   "theme_color": "#071426",
+  "lang": "en",
+  "categories": [
+    "health",
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
-      "src": "assets/icons/glucodesk-app-icon.png",
+      "src": "/assets/icons/glucodesk-app-icon.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any maskable"

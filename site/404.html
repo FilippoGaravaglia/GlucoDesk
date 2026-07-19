@@ -5,13 +5,119 @@
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="0; url=./">
-  <title>GlucoDesk</title>
+
+  <title>Page not found — GlucoDesk</title>
+
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#071426">
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family:
+        Inter,
+        ui-sans-serif,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      margin: 0;
+      padding: 24px;
+      color: #f7fbff;
+      background:
+        radial-gradient(
+          circle at 70% 25%,
+          rgba(56, 189, 248, .17),
+          transparent 34%
+        ),
+        linear-gradient(145deg, #071426, #040b15);
+    }
+
+    main {
+      width: min(100%, 620px);
+      padding: 48px;
+      border: 1px solid rgba(148, 198, 235, .18);
+      border-radius: 30px;
+      text-align: center;
+      background: rgba(15, 34, 56, .72);
+      box-shadow: 0 40px 100px rgba(0, 15, 38, .42);
+    }
+
+    img {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      box-shadow: 0 18px 45px rgba(2, 132, 199, .28);
+    }
+
+    h1 {
+      margin: 26px 0 0;
+      font-size: clamp(2.4rem, 8vw, 4rem);
+      line-height: 1;
+      letter-spacing: -.06em;
+    }
+
+    p {
+      margin: 20px auto 0;
+      max-width: 440px;
+      color: #c4d6e8;
+      line-height: 1.65;
+    }
+
+    a {
+      min-height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 30px;
+      padding: 0 22px;
+      border-radius: 15px;
+      color: #05243b;
+      background: linear-gradient(135deg, #8bdcff, #39c6f6);
+      font-weight: 760;
+      text-decoration: none;
+      box-shadow: 0 16px 42px rgba(2, 132, 199, .3);
+    }
+
+    a:focus-visible {
+      outline: 3px solid #a5f3fc;
+      outline-offset: 4px;
+    }
+
+    @media (max-width: 520px) {
+      main {
+        padding: 36px 22px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <p>
-    Redirecting to
-    <a href="./">GlucoDesk</a>…
-  </p>
+  <main>
+    <img
+      src="/assets/icons/glucodesk-app-icon.png"
+      alt=""
+      width="72"
+      height="72">
+
+    <h1>Page not found.</h1>
+
+    <p>
+      The page you were looking for does not exist or may have moved.
+      Return to GlucoDesk to keep your glucose always in sight.
+    </p>
+
+    <a href="/">Return to GlucoDesk</a>
+  </main>
 </body>
 </html>
