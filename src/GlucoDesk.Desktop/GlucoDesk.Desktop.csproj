@@ -6,7 +6,7 @@
     <TargetFramework Condition="'$(RuntimeIdentifier)' != 'win-x64' And !$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
     <EnableWindowsTargeting Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))">true</EnableWindowsTargeting>
     <WindowsPackageType Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))">None</WindowsPackageType>
-    <WindowsAppSDKSelfContained Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))">true</WindowsAppSDKSelfContained>
+    <WindowsAppSDKSelfContained Condition="'$(RuntimeIdentifier)' == 'win-x64'">true</WindowsAppSDKSelfContained>
     <RuntimeIdentifiers>osx-x64;osx-arm64;win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
