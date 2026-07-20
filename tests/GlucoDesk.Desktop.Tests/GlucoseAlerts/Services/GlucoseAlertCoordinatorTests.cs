@@ -3,10 +3,11 @@ using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
 using GlucoDesk.Desktop.GlucoseAlerts.Services;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.GlucoseAlerts.Services;
 
-public sealed class GlucoseAlertCoordinatorTests
+public sealed class GlucoseAlertCoordinatorTests : EnglishLocalizationTestBase
 {
     [Fact]
     public void Evaluate_ShouldReturnNone_WhenAlertsAreDisabled()
