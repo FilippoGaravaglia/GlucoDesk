@@ -1,9 +1,10 @@
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Desktop.ViewModels.Settings.Selections;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Settings.Selections;
 
-public sealed class ProviderSelectionItemTests
+public sealed class ProviderSelectionItemTests : EnglishLocalizationTestBase
 {
     [Fact]
     public void Constructor_ShouldCreateAvailableProviderSelectionItem()
