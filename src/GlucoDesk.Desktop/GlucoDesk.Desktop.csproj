@@ -12,7 +12,7 @@
       exposed through the WinRT ABI, so the WinRT/AOT-specific MVVMTK0045
       diagnostic is not applicable to this desktop target.
     -->
-    <NoWarn Condition="'$(TargetPlatformIdentifier)' == 'Windows'">$(NoWarn);MVVMTK0045</NoWarn>
+    <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
     <RuntimeIdentifiers>osx-x64;osx-arm64;win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
