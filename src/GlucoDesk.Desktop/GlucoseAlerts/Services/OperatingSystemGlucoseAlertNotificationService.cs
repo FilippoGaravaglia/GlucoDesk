@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 
@@ -21,10 +20,12 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
             return new MacOsGlucoseAlertNotificationService();
         }
 
+#if WINDOWS
         if (OperatingSystem.IsWindows())
         {
             return new WindowsGlucoseAlertNotificationService();
         }
+#endif
 
         return NoOpGlucoseAlertNotificationService.Instance;
     }
@@ -193,84 +194,6 @@ public abstract class OperatingSystemGlucoseAlertNotificationService : IGlucoseA
             return value
                 .Replace("\\", "\\\\", StringComparison.Ordinal)
                 .Replace("\"", "\\\"", StringComparison.Ordinal);
-        }
-    }
-
-    private sealed class WindowsGlucoseAlertNotificationService : OperatingSystemGlucoseAlertNotificationService
-    {
-        /// <inheritdoc />
-        public override Task<NativeNotificationRequestResult> ShowAsync(
-            GlucoseAlertNativeNotification notification,
-            CancellationToken cancellationToken)
-        {
-            ArgumentNullException.ThrowIfNull(notification);
-
-            var script = BuildWindowsToastScript(notification);
-            var encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-
-            var startInfo = new ProcessStartInfo("powershell.exe")
-            {
-                ArgumentList =
-                {
-                    "-NoProfile",
-                    "-ExecutionPolicy",
-                    "Bypass",
-                    "-EncodedCommand",
-                    encodedCommand
-                }
-            };
-
-            return RequestBestEffortProcessAsync(startInfo, cancellationToken);
-        }
-
-        /// <summary>
-        /// Builds a best-effort Windows toast script.
-        /// </summary>
-        /// <param name="notification">The notification to show.</param>
-        /// <returns>The PowerShell script.</returns>
-        private static string BuildWindowsToastScript(GlucoseAlertNativeNotification notification)
-        {
-            var title = EscapePowerShellSingleQuotedString(notification.Title);
-            var message = EscapePowerShellSingleQuotedString(notification.Message);
-
-            return $$"""
-try {
-    [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-    [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-
-    $title = '{{title}}'
-    $message = '{{message}}'
-
-    $template = @"
-<toast>
-  <visual>
-    <binding template="ToastGeneric">
-      <text>$title</text>
-      <text>$message</text>
-    </binding>
-  </visual>
-</toast>
-"@
-
-    $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-    $xml.LoadXml($template)
-
-    $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
-    $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('GlucoDesk')
-    $notifier.Show($toast)
-} catch {
-}
-""";
-        }
-
-        /// <summary>
-        /// Escapes text for a PowerShell single-quoted string literal.
-        /// </summary>
-        /// <param name="value">The raw value.</param>
-        /// <returns>The escaped value.</returns>
-        private static string EscapePowerShellSingleQuotedString(string value)
-        {
-            return value.Replace("'", "''", StringComparison.Ordinal);
         }
     }
 }
