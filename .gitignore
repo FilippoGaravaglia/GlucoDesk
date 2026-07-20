@@ -484,3 +484,7 @@ $RECYCLE.BIN/
 # Test results
 TestResults/
 *.trx
+
+# Microsoft Store MSIX build and local signing artifacts
+artifacts/store/
+*.pfx
