@@ -7,6 +7,12 @@
     <EnableWindowsTargeting Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))">true</EnableWindowsTargeting>
     <WindowsPackageType Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))">None</WindowsPackageType>
     <WindowsAppSDKSelfContained Condition="'$(RuntimeIdentifier)' == 'win-x64'">true</WindowsAppSDKSelfContained>
+    <!--
+      GlucoDesk uses Avalonia rather than WinUI. Its MVVM view models are not
+      exposed through the WinRT ABI, so the WinRT/AOT-specific MVVMTK0045
+      diagnostic is not applicable to this desktop target.
+    -->
+    <NoWarn Condition="'$(TargetPlatformIdentifier)' == 'Windows'">$(NoWarn);MVVMTK0045</NoWarn>
     <RuntimeIdentifiers>osx-x64;osx-arm64;win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
