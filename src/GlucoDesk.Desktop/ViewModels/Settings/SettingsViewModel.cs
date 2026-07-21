@@ -22,6 +22,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Diagnostics;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.DataBackup.Services.Abstractions;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -54,6 +55,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private readonly IReadOnlyCollection<IDexcomDesktopConnectionService> _dexcomDesktopConnectionServices;
     private readonly IReadOnlyCollection<INightscoutDesktopConnectionService> _nightscoutDesktopConnectionServices;
     private readonly IGlucoseAlertNotificationTestService _glucoseAlertNotificationTestService;
+    private readonly ILocalDataBackupService? _localDataBackupService;
+    private readonly ILocalDataBackupFileService? _localDataBackupFileService;
+    private byte[]? _pendingBackupContent;
 
     [ObservableProperty]
     private IReadOnlyList<ProviderSelectionItem> _providerOptions = [];
@@ -153,6 +157,25 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private string _nativeGlucoseTestNotificationStatusText =
         T("SettingsEnableNativeForTest");
 
+    [ObservableProperty]
+    private bool _isBackupBusy;
+
+    [ObservableProperty]
+    private bool _isBackupImportPending;
+
+    [ObservableProperty]
+    private string _pendingBackupFileName = string.Empty;
+
+    [ObservableProperty]
+    private string _backupStatusMessage =
+        T("LocalBackupReadyStatus");
+
+    [ObservableProperty]
+    private bool _hasBackupError;
+
+    [ObservableProperty]
+    private string? _backupErrorMessage;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
@@ -162,13 +185,17 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// <param name="dexcomDesktopConnectionServices">The registered desktop Dexcom connection services.</param>
     /// <param name="nightscoutDesktopConnectionServices">The registered desktop Nightscout connection services.</param>
     /// <param name="glucoseAlertNotificationTestService">The optional native glucose notification test service.</param>
+    /// <param name="localDataBackupService">The optional service used to export and import portable local-data backups.</param>
+    /// <param name="localDataBackupFileService">The optional desktop file picker service used to save and open backup files.</param>
     public SettingsViewModel(
         IApplicationSettingsService settingsService,
         IEnumerable<ICgmMetadataProvider>? metadataProviders = null,
         IEnumerable<IDexcomConnectionStatusService>? dexcomConnectionStatusServices = null,
         IEnumerable<IDexcomDesktopConnectionService>? dexcomDesktopConnectionServices = null,
         IEnumerable<INightscoutDesktopConnectionService>? nightscoutDesktopConnectionServices = null,
-        IGlucoseAlertNotificationTestService? glucoseAlertNotificationTestService = null)
+        IGlucoseAlertNotificationTestService? glucoseAlertNotificationTestService = null,
+        ILocalDataBackupService? localDataBackupService = null,
+        ILocalDataBackupFileService? localDataBackupFileService = null)
     {
         ArgumentNullException.ThrowIfNull(settingsService);
 
@@ -179,6 +206,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _nightscoutDesktopConnectionServices = nightscoutDesktopConnectionServices?.ToArray() ?? [];
         _glucoseAlertNotificationTestService = glucoseAlertNotificationTestService
             ?? new GlucoseAlertNotificationTestService(OperatingSystemGlucoseAlertNotificationService.Create());
+        _localDataBackupService = localDataBackupService;
+        _localDataBackupFileService = localDataBackupFileService;
 
         CanConnectDexcom = _dexcomDesktopConnectionServices.Count > 0;
         CanTestNightscoutConnection = _nightscoutDesktopConnectionServices.Count > 0;
@@ -585,6 +614,261 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Creates a portable backup and lets the user choose where to save it.
+    /// </summary>
+    [RelayCommand]
+    private async Task ExportLocalDataBackupAsync(
+        CancellationToken cancellationToken)
+    {
+        if (IsBackupBusy)
+        {
+            return;
+        }
+
+        if (_localDataBackupService is null ||
+            _localDataBackupFileService is null)
+        {
+            ApplyBackupFailure(
+                T("LocalBackupUnavailable"));
+            return;
+        }
+
+        ResetPendingBackupImport();
+
+        IsBackupBusy = true;
+        HasBackupError = false;
+        BackupErrorMessage = null;
+        BackupStatusMessage =
+            T("LocalBackupExportingStatus");
+
+        try
+        {
+            var exportResult = await _localDataBackupService
+                .ExportAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (exportResult.IsFailure)
+            {
+                ApplyBackupFailure(
+                    exportResult.Error.Message);
+                return;
+            }
+
+            var saveResult = await _localDataBackupFileService
+                .SaveAsync(
+                    exportResult.Value,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (saveResult.IsFailure)
+            {
+                ApplyBackupFailure(
+                    saveResult.Error.Message);
+                return;
+            }
+
+            BackupStatusMessage =
+                saveResult.Value.WasCanceled
+                    ? T("LocalBackupExportCanceledStatus")
+                    : TF(
+                        "LocalBackupExportedStatusFormat",
+                        saveResult.Value.FileName
+                            ?? exportResult.Value.FileName);
+        }
+        catch (OperationCanceledException)
+        {
+            BackupStatusMessage =
+                T("LocalBackupExportCanceledStatus");
+        }
+        catch (Exception exception)
+        {
+            ApplyBackupFailure(
+                exception.Message);
+        }
+        finally
+        {
+            IsBackupBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Lets the user choose a backup and prepares an explicit import confirmation.
+    /// </summary>
+    [RelayCommand]
+    private async Task SelectLocalDataBackupAsync(
+        CancellationToken cancellationToken)
+    {
+        if (IsBackupBusy)
+        {
+            return;
+        }
+
+        if (_localDataBackupFileService is null)
+        {
+            ApplyBackupFailure(
+                T("LocalBackupUnavailable"));
+            return;
+        }
+
+        ResetPendingBackupImport();
+
+        IsBackupBusy = true;
+        HasBackupError = false;
+        BackupErrorMessage = null;
+        BackupStatusMessage =
+            T("LocalBackupSelectingStatus");
+
+        try
+        {
+            var openResult = await _localDataBackupFileService
+                .OpenAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (openResult.IsFailure)
+            {
+                ApplyBackupFailure(
+                    openResult.Error.Message);
+                return;
+            }
+
+            if (openResult.Value.WasCanceled)
+            {
+                BackupStatusMessage =
+                    T("LocalBackupImportCanceledStatus");
+                return;
+            }
+
+            var content = openResult.Value.Content;
+
+            if (content is null || content.Length == 0)
+            {
+                ApplyBackupFailure(
+                    T("LocalBackupEmptyFile"));
+                return;
+            }
+
+            _pendingBackupContent = content;
+            PendingBackupFileName =
+                openResult.Value.FileName
+                ?? T("LocalBackupUnknownFileName");
+
+            IsBackupImportPending = true;
+            BackupStatusMessage =
+                T("LocalBackupConfirmationRequiredStatus");
+        }
+        catch (OperationCanceledException)
+        {
+            BackupStatusMessage =
+                T("LocalBackupImportCanceledStatus");
+        }
+        catch (Exception exception)
+        {
+            ApplyBackupFailure(
+                exception.Message);
+        }
+        finally
+        {
+            IsBackupBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Imports the previously selected backup after explicit confirmation.
+    /// </summary>
+    [RelayCommand]
+    private async Task ConfirmLocalDataImportAsync(
+        CancellationToken cancellationToken)
+    {
+        if (IsBackupBusy)
+        {
+            return;
+        }
+
+        if (_localDataBackupService is null)
+        {
+            ApplyBackupFailure(
+                T("LocalBackupUnavailable"));
+            return;
+        }
+
+        if (_pendingBackupContent is null ||
+            _pendingBackupContent.Length == 0)
+        {
+            ApplyBackupFailure(
+                T("LocalBackupNoPendingFile"));
+            ResetPendingBackupImport();
+            return;
+        }
+
+        IsBackupBusy = true;
+        HasBackupError = false;
+        BackupErrorMessage = null;
+        BackupStatusMessage =
+            T("LocalBackupImportingStatus");
+
+        try
+        {
+            await using var stream =
+                new MemoryStream(
+                    _pendingBackupContent,
+                    writable: false);
+
+            var importResult = await _localDataBackupService
+                .ImportAsync(
+                    stream,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (importResult.IsFailure)
+            {
+                ApplyBackupFailure(
+                    importResult.Error.Message);
+                return;
+            }
+
+            var summary = importResult.Value;
+
+            BackupStatusMessage = TF(
+                "LocalBackupImportedStatusFormat",
+                summary.AddedReadingsCount,
+                summary.DuplicateReadingsCount,
+                summary.StoredReadingsCount);
+
+            ResetPendingBackupImport();
+
+            await LoadAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            BackupStatusMessage =
+                T("LocalBackupImportCanceledStatus");
+        }
+        catch (Exception exception)
+        {
+            ApplyBackupFailure(
+                exception.Message);
+        }
+        finally
+        {
+            IsBackupBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Cancels the pending import confirmation.
+    /// </summary>
+    [RelayCommand]
+    private void CancelLocalDataImport()
+    {
+        ResetPendingBackupImport();
+        HasBackupError = false;
+        BackupErrorMessage = null;
+        BackupStatusMessage =
+            T("LocalBackupImportCanceledStatus");
+    }
+
+    /// <summary>
     /// Sanitizes a target value input using the currently selected glucose unit.
     /// </summary>
     /// <param name="text">The raw target input text.</param>
@@ -734,10 +1018,40 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         UpdateNativeGlucoseTestNotificationAvailability();
 
+        if (!IsBackupBusy &&
+            !IsBackupImportPending &&
+            !HasBackupError)
+        {
+            BackupStatusMessage =
+                T("LocalBackupReadyStatus");
+        }
+
         OnPropertyChanged(nameof(ProviderOptions));
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Applies a backup-specific failure without overwriting normal settings errors.
+    /// </summary>
+    private void ApplyBackupFailure(
+        string message)
+    {
+        HasBackupError = true;
+        BackupErrorMessage = message;
+        BackupStatusMessage =
+            T("LocalBackupFailedStatus");
+    }
+
+    /// <summary>
+    /// Clears the currently selected pending backup.
+    /// </summary>
+    private void ResetPendingBackupImport()
+    {
+        _pendingBackupContent = null;
+        PendingBackupFileName = string.Empty;
+        IsBackupImportPending = false;
+    }
 
     /// <summary>
     /// Updates native glucose test notification availability and helper text.

@@ -102,6 +102,11 @@ public partial class SettingsView : UserControl
             NotificationsSectionGrid,
             NotificationsRightPanel,
             isCompact);
+
+        UpdateSectionLayout(
+            BackupSectionGrid,
+            BackupRightPanel,
+            isCompact);
     }
 
     /// <summary>
