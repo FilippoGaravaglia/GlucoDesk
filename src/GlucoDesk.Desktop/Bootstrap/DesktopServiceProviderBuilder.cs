@@ -10,6 +10,8 @@ using GlucoDesk.Desktop.Cgm.History.Continuity.Services;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
 using GlucoDesk.Desktop.Diary.Services;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
+using GlucoDesk.Desktop.DataBackup.Services;
+using GlucoDesk.Desktop.DataBackup.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
@@ -136,6 +138,8 @@ internal static class DesktopServiceProviderBuilder
         services.AddTransient<FeatureTourViewModel>();
         services.AddTransient<FeatureTourWindow>();
         services.AddSingleton<IDiaryExportFileSaveService, AvaloniaDiaryExportFileSaveService>();
+        services.AddScoped<ILocalDataBackupService, LocalDataBackupService>();
+        services.AddSingleton<ILocalDataBackupFileService, AvaloniaLocalDataBackupFileService>();
     }
 
     #endregion

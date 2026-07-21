@@ -464,6 +464,140 @@
               <Border Height="1"
                       Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
 
+              <Grid
+                  x:Name="BackupSectionGrid"
+                  ColumnDefinitions="1.15*,0.85*"
+                  ColumnSpacing="34">
+
+                <StackPanel
+                    Grid.Column="0"
+                    Spacing="16">
+
+                  <StackPanel Spacing="4">
+                    <TextBlock
+                        Text="{DynamicResource LocalBackupSectionTitle}"
+                        Classes="section-title" />
+
+                    <TextBlock
+                        Text="{DynamicResource LocalBackupSectionSubtitle}"
+                        Classes="secondary"
+                        FontSize="13"
+                        TextWrapping="Wrap" />
+                  </StackPanel>
+
+                  <WrapPanel Orientation="Horizontal">
+                    <Button
+                        Content="{DynamicResource LocalBackupExportButton}"
+                        Command="{Binding ExportLocalDataBackupCommand}"
+                        IsEnabled="{Binding !IsBackupBusy}"
+                        Margin="0,0,10,10" />
+
+                    <Button
+                        Content="{DynamicResource LocalBackupImportButton}"
+                        Command="{Binding SelectLocalDataBackupCommand}"
+                        IsEnabled="{Binding !IsBackupBusy}"
+                        Margin="0,0,10,10" />
+                  </WrapPanel>
+
+                  <TextBlock
+                      Text="{DynamicResource LocalBackupCredentialsExcluded}"
+                      Classes="muted"
+                      FontSize="12"
+                      TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border
+                    x:Name="BackupRightPanel"
+                    Grid.Column="1"
+                    MinWidth="260"
+                    BorderThickness="1,0,0,0"
+                    BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                    Padding="28,0,0,0">
+
+                  <StackPanel Spacing="14">
+
+                    <Border Classes="badge-accent"
+                            HorizontalAlignment="Left">
+                      <TextBlock
+                          Text="{DynamicResource LocalBackupPrivacyBadge}"
+                          FontSize="12"
+                          FontWeight="SemiBold"
+                          Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+                    </Border>
+
+                    <TextBlock
+                        Text="{Binding BackupStatusMessage}"
+                        Classes="secondary"
+                        TextWrapping="Wrap" />
+
+                    <Border
+                        IsVisible="{Binding IsBackupImportPending}"
+                        Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
+                        BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Padding="16">
+
+                      <StackPanel Spacing="12">
+                        <TextBlock
+                            Text="{DynamicResource LocalBackupConfirmationTitle}"
+                            FontWeight="SemiBold"
+                            Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+                        <TextBlock
+                            Text="{DynamicResource LocalBackupConfirmationDescription}"
+                            Classes="secondary"
+                            FontSize="13"
+                            TextWrapping="Wrap" />
+
+                        <StackPanel Spacing="4">
+                          <TextBlock
+                              Text="{DynamicResource LocalBackupSelectedFile}"
+                              Classes="metric-label" />
+
+                          <TextBlock
+                              Text="{Binding PendingBackupFileName}"
+                              FontWeight="SemiBold"
+                              TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <WrapPanel Orientation="Horizontal">
+                          <Button
+                              Content="{DynamicResource LocalBackupConfirmImportButton}"
+                              Command="{Binding ConfirmLocalDataImportCommand}"
+                              IsEnabled="{Binding !IsBackupBusy}"
+                              Margin="0,0,10,10" />
+
+                          <Button
+                              Content="{DynamicResource LocalBackupCancelImportButton}"
+                              Command="{Binding CancelLocalDataImportCommand}"
+                              IsEnabled="{Binding !IsBackupBusy}"
+                              Margin="0,0,10,10" />
+                        </WrapPanel>
+                      </StackPanel>
+                    </Border>
+
+                    <Border
+                        IsVisible="{Binding HasBackupError}"
+                        Background="{StaticResource GlucoDesk.Brush.DangerSoft}"
+                        BorderBrush="{StaticResource GlucoDesk.Brush.Danger}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="14">
+
+                      <TextBlock
+                          Text="{Binding BackupErrorMessage}"
+                          TextWrapping="Wrap"
+                          FontWeight="SemiBold"
+                          Foreground="{StaticResource GlucoDesk.Brush.Danger}" />
+                    </Border>
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <Border Height="1"
+                      Background="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+
               <Grid ColumnDefinitions="Auto,*"
                     ColumnSpacing="18"
                     VerticalAlignment="Center">
