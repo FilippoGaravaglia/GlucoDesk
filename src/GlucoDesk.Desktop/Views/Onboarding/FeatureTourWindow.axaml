@@ -1,0 +1,858 @@
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="GlucoDesk.Desktop.Views.Onboarding.FeatureTourWindow"
+    Width="1120"
+    Height="760"
+    MinWidth="1120"
+    MinHeight="760"
+    CanResize="False"
+    WindowStartupLocation="CenterScreen"
+    WindowDecorations="BorderOnly"
+    Background="#F4FAFF"
+    Title="GlucoDesk">
+
+  <Window.Styles>
+    <Style Selector="Border.tour-shell">
+      <Setter Property="Background" Value="#FFFFFF" />
+      <Setter Property="CornerRadius" Value="28" />
+      <Setter Property="BorderBrush" Value="#CFE3F5" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="Border.tour-highlight">
+      <Setter Property="Background" Value="#F4FAFF" />
+      <Setter Property="BorderBrush" Value="#D7E8F8" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="18" />
+      <Setter Property="Padding" Value="18,16" />
+    </Style>
+
+    <Style Selector="Border.tour-chip">
+      <Setter Property="Background" Value="#E8F4FF" />
+      <Setter Property="CornerRadius" Value="999" />
+      <Setter Property="Padding" Value="10,5" />
+    </Style>
+
+    <Style Selector="Button.tour-primary">
+      <Setter Property="Background" Value="#1786D9" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
+      <Setter Property="CornerRadius" Value="18" />
+      <Setter Property="Padding" Value="30,16" />
+      <Setter Property="MinWidth" Value="220" />
+      <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <Style Selector="Button.tour-secondary">
+      <Setter Property="Background" Value="#FFFFFF" />
+      <Setter Property="Foreground" Value="#164A7B" />
+      <Setter Property="BorderBrush" Value="#BCD6ED" />
+      <Setter Property="BorderThickness" Value="1.5" />
+      <Setter Property="CornerRadius" Value="18" />
+      <Setter Property="Padding" Value="24,16" />
+      <Setter Property="MinWidth" Value="140" />
+    </Style>
+
+    <Style Selector="TextBlock.tour-body">
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Foreground" Value="#5B748E" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style Selector="TextBlock.tour-title">
+      <Setter Property="FontSize" Value="34" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="#0C4E8A" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style Selector="TextBlock.visual-caption">
+      <Setter Property="Foreground" Value="#D7EEFF" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style Selector="TextBlock.visual-strong">
+      <Setter Property="Foreground" Value="#FFFFFF" />
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+  </Window.Styles>
+
+  <Grid
+      Margin="24"
+      RowDefinitions="Auto,*,Auto">
+
+    <!-- HEADER -->
+    <Grid
+        ColumnDefinitions="Auto,*,Auto,Auto"
+        VerticalAlignment="Center"
+        Margin="0,0,0,20">
+
+      <StackPanel
+          Orientation="Horizontal"
+          Spacing="0"
+          VerticalAlignment="Center">
+        <TextBlock
+            Text="Gluco"
+            FontSize="29"
+            FontWeight="Bold"
+            Foreground="#123F75" />
+        <TextBlock
+            Text="Desk"
+            FontSize="29"
+            FontWeight="Bold"
+            Foreground="#1D9AE8" />
+      </StackPanel>
+
+      <ProgressBar
+          Grid.Column="1"
+          Margin="36,0,24,0"
+          Height="12"
+          Minimum="0"
+          Maximum="{Binding ProgressMaximum}"
+          Value="{Binding ProgressValue}"
+          VerticalAlignment="Center" />
+
+      <TextBlock
+          Grid.Column="2"
+          Text="{Binding StepCounterText}"
+          VerticalAlignment="Center"
+          Margin="0,0,18,0"
+          FontSize="16"
+          FontWeight="SemiBold"
+          Foreground="#446C95" />
+
+      <Button
+          Grid.Column="3"
+          Classes="tour-secondary"
+          Content="{Binding SkipButtonText}"
+          Command="{Binding SkipCommand}" />
+    </Grid>
+
+    <!-- MAIN CARD -->
+    <Border
+        Grid.Row="1"
+        Classes="tour-shell"
+        Padding="0">
+
+      <Grid
+          ColumnDefinitions="0.93*,1.07*"
+          MinHeight="0">
+
+        <!-- LEFT VISUAL PANEL -->
+        <Border
+            Background="#0C5391"
+            CornerRadius="28,0,0,28"
+            Padding="28">
+
+          <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+            <Grid
+                Width="88"
+                Height="88"
+                HorizontalAlignment="Left">
+              <Border
+                  Background="#1EA0EB"
+                  CornerRadius="24" />
+              <TextBlock
+                  Text="{Binding StepNumberText}"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  FontSize="26"
+                  FontWeight="Bold"
+                  Foreground="#FFFFFF" />
+            </Grid>
+
+            <TextBlock
+                Grid.Row="1"
+                Margin="0,18,0,0"
+                Text="{Binding EyebrowText}"
+                FontSize="17"
+                FontWeight="SemiBold"
+                Foreground="#A9D8FF"
+                TextWrapping="Wrap" />
+
+            <!-- VISUAL HOST -->
+            <Grid
+                Grid.Row="2"
+                Margin="0,22,0,22"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Stretch">
+
+              <!-- WELCOME -->
+              <Grid
+                  IsVisible="{Binding IsWelcomeVisual}"
+                  Width="340"
+                  Height="250"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+
+                <Border
+                    Width="130"
+                    Height="88"
+                    Background="#1263AA"
+                    CornerRadius="20"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Margin="2,26,0,0"
+                    Padding="16">
+                  <StackPanel>
+                    <Border
+                        Width="44"
+                        Height="8"
+                        Background="#58C3FF"
+                        CornerRadius="999" />
+                    <Border
+                        Width="82"
+                        Height="8"
+                        Background="#C3E7FF"
+                        CornerRadius="999"
+                        Margin="0,12,0,0" />
+                    <Border
+                        Width="62"
+                        Height="8"
+                        Background="#C3E7FF"
+                        CornerRadius="999"
+                        Margin="0,10,0,0" />
+                  </StackPanel>
+                </Border>
+
+                <Border
+                    Width="150"
+                    Height="98"
+                    Background="#0F6ABA"
+                    CornerRadius="22"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,48,14,0"
+                    Padding="16">
+                  <StackPanel>
+                    <Border
+                        Width="58"
+                        Height="10"
+                        Background="#5FD3FF"
+                        CornerRadius="999" />
+                    <Grid
+                        Margin="0,16,0,0"
+                        ColumnDefinitions="Auto,Auto,Auto"
+                        ColumnSpacing="8">
+                      <Border Width="24" Height="24" Background="#DFF2FF" CornerRadius="12" />
+                      <Border Grid.Column="1" Width="24" Height="24" Background="#DFF2FF" CornerRadius="12" />
+                      <Border Grid.Column="2" Width="24" Height="24" Background="#DFF2FF" CornerRadius="12" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+
+                <Border
+                    Width="194"
+                    Height="118"
+                    Background="#125B9F"
+                    CornerRadius="26"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    Margin="0,0,0,0"
+                    Padding="18">
+                  <Grid RowDefinitions="Auto,Auto,*">
+                    <TextBlock Text="118 mg/dL" FontSize="24" FontWeight="Bold" Foreground="#FFFFFF" />
+                    <TextBlock Grid.Row="1" Text="↗ steady" FontSize="14" Foreground="#9FDEFF" Margin="0,6,0,0" />
+                    <Grid Grid.Row="2" Margin="0,16,0,0" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="7" VerticalAlignment="Bottom">
+                      <Border Height="28" Background="#87D8FF" CornerRadius="7" VerticalAlignment="Bottom" />
+                      <Border Grid.Column="1" Height="44" Background="#87D8FF" CornerRadius="7" VerticalAlignment="Bottom" />
+                      <Border Grid.Column="2" Height="34" Background="#87D8FF" CornerRadius="7" VerticalAlignment="Bottom" />
+                      <Border Grid.Column="3" Height="60" Background="#4BC4FF" CornerRadius="7" VerticalAlignment="Bottom" />
+                      <Border Grid.Column="4" Height="48" Background="#4BC4FF" CornerRadius="7" VerticalAlignment="Bottom" />
+                    </Grid>
+                  </Grid>
+                </Border>
+              </Grid>
+
+              <!-- DASHBOARD -->
+              <Grid
+                  IsVisible="{Binding IsDashboardVisual}"
+                  Width="340"
+                  Height="250"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+
+                <Border
+                    Background="#125B9F"
+                    CornerRadius="26"
+                    Padding="20">
+
+                  <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel>
+                        <TextBlock Text="118" FontSize="38" FontWeight="Bold" Foreground="#FFFFFF" />
+                        <TextBlock Text="mg/dL" FontSize="15" Foreground="#A9DBFF" Margin="0,-4,0,0" />
+                      </StackPanel>
+
+                      <Border
+                          Grid.Column="1"
+                          Background="#1EA0EB"
+                          CornerRadius="18"
+                          Padding="12,10"
+                          VerticalAlignment="Top">
+                        <TextBlock Text="↗" FontSize="24" Foreground="#FFFFFF" />
+                      </Border>
+                    </Grid>
+
+                    <Grid
+                        Grid.Row="1"
+                        Margin="0,18,0,0"
+                        ColumnDefinitions="Auto,Auto,Auto"
+                        ColumnSpacing="10">
+                      <Border Classes="tour-chip">
+                        <TextBlock Text="Range" Foreground="#0C5391" FontWeight="SemiBold" />
+                      </Border>
+                      <Border Grid.Column="1" Classes="tour-chip">
+                        <TextBlock Text="Trend" Foreground="#0C5391" FontWeight="SemiBold" />
+                      </Border>
+                      <Border Grid.Column="2" Classes="tour-chip">
+                        <TextBlock Text="24h" Foreground="#0C5391" FontWeight="SemiBold" />
+                      </Border>
+                    </Grid>
+
+                    <Border
+                        Grid.Row="2"
+                        Margin="0,18,0,0"
+                        Background="#0E4D87"
+                        CornerRadius="20"
+                        Padding="16">
+                      <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="8" VerticalAlignment="Bottom">
+                        <Border Height="34" Background="#BCE8FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="1" Height="54" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="2" Height="46" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="3" Height="72" Background="#9DDBFF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="4" Height="42" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="5" Height="58" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                      </Grid>
+                    </Border>
+
+                    <Grid
+                        Grid.Row="3"
+                        Margin="0,16,0,0"
+                        ColumnDefinitions="*,Auto">
+                      <TextBlock
+                          Text="Current value, direction and chart at a glance"
+                          Classes="visual-caption"
+                          VerticalAlignment="Center" />
+                      <Border
+                          Grid.Column="1"
+                          Background="#0E4D87"
+                          CornerRadius="14"
+                          Padding="10,6">
+                        <TextBlock Text="Live" Foreground="#DFF4FF" FontSize="13" FontWeight="SemiBold" />
+                      </Border>
+                    </Grid>
+                  </Grid>
+                </Border>
+              </Grid>
+
+              <!-- HISTORY -->
+              <Grid
+                  IsVisible="{Binding IsHistoryVisual}"
+                  Width="340"
+                  Height="250"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+
+                <Border
+                    Background="#125B9F"
+                    CornerRadius="26"
+                    Padding="18">
+
+                  <Grid RowDefinitions="Auto,*,Auto">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="Local history" Classes="visual-strong" />
+                      <Border
+                          Grid.Column="1"
+                          Background="#1EA0EB"
+                          CornerRadius="14"
+                          Padding="10,6">
+                        <TextBlock Text="Synced" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold" />
+                      </Border>
+                    </Grid>
+
+                    <StackPanel Grid.Row="1" Spacing="10" Margin="0,16,0,0">
+                      <Border Background="#0E4D87" CornerRadius="16" Padding="12">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                          <Border Width="12" Height="12" Background="#5FD3FF" CornerRadius="6" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="Last 24 hours" Foreground="#DFF4FF" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="2" Text="96%" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center" />
+                        </Grid>
+                      </Border>
+
+                      <Border Background="#0E4D87" CornerRadius="16" Padding="12">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                          <Border Width="12" Height="12" Background="#9DDBFF" CornerRadius="6" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="Weekly continuity" Foreground="#DFF4FF" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="2" Text="7d" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center" />
+                        </Grid>
+                      </Border>
+
+                      <Border Background="#0E4D87" CornerRadius="16" Padding="12">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                          <Border Width="12" Height="12" Background="#BFE8FF" CornerRadius="6" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="Saved locally" Foreground="#DFF4FF" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="2" Text="OK" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center" />
+                        </Grid>
+                      </Border>
+                    </StackPanel>
+
+                    <TextBlock
+                        Grid.Row="2"
+                        Text="History becomes more useful over time on your device."
+                        Classes="visual-caption"
+                        Margin="0,16,0,0" />
+                  </Grid>
+                </Border>
+              </Grid>
+
+              <!-- DIARY -->
+              <Grid
+                  IsVisible="{Binding IsDiaryVisual}"
+                  Width="340"
+                  Height="250"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+
+                <Grid>
+                  <Border
+                      Width="190"
+                      Height="214"
+                      Background="#FFFFFF"
+                      BorderBrush="#9DD4FF"
+                      BorderThickness="2"
+                      CornerRadius="20"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Bottom"
+                      Margin="26,0,0,0"
+                      Padding="16">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
+                      <TextBlock Text="Glycemic diary" Foreground="#0C5391" FontWeight="Bold" FontSize="15" />
+                      <Border Grid.Row="1" Height="8" Width="110" Background="#D7EFFF" CornerRadius="999" Margin="0,12,0,0" />
+                      <Border Grid.Row="2" Height="8" Width="92" Background="#D7EFFF" CornerRadius="999" Margin="0,10,0,0" />
+                      <Border Grid.Row="3" Height="8" Width="126" Background="#D7EFFF" CornerRadius="999" Margin="0,10,0,0" />
+                      <Grid Grid.Row="4" Margin="0,18,0,0" ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Border Background="#F0F8FF" CornerRadius="16" Padding="10">
+                          <StackPanel>
+                            <TextBlock Text="PDF" Foreground="#0C5391" FontWeight="Bold" />
+                            <TextBlock Text="visit-ready" Foreground="#567290" FontSize="12" />
+                          </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Background="#F0F8FF" CornerRadius="16" Padding="10">
+                          <StackPanel>
+                            <TextBlock Text="Excel" Foreground="#0C5391" FontWeight="Bold" />
+                            <TextBlock Text="data-friendly" Foreground="#567290" FontSize="12" />
+                          </StackPanel>
+                        </Border>
+                      </Grid>
+                    </Grid>
+                  </Border>
+
+                  <Border
+                      Width="156"
+                      Height="184"
+                      Background="#CFEAFF"
+                      CornerRadius="18"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Top"
+                      Margin="0,20,28,0"
+                      Opacity="0.95"
+                      Padding="16">
+                    <StackPanel>
+                      <TextBlock Text="Daily summary" Foreground="#0C5391" FontWeight="Bold" />
+                      <Grid Margin="0,16,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Border Width="12" Height="12" Background="#1EA0EB" CornerRadius="6" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Morning" Foreground="#0C5391" />
+                      </Grid>
+                      <Grid Margin="0,10,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Border Width="12" Height="12" Background="#1EA0EB" CornerRadius="6" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Meals" Foreground="#0C5391" />
+                      </Grid>
+                      <Grid Margin="0,10,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Border Width="12" Height="12" Background="#1EA0EB" CornerRadius="6" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Night" Foreground="#0C5391" />
+                      </Grid>
+                    </StackPanel>
+                  </Border>
+                </Grid>
+              </Grid>
+
+              <!-- ACCOUNT -->
+              <Grid
+                  IsVisible="{Binding IsAccountVisual}"
+                  Width="340"
+                  Height="250"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+
+                <Border
+                    Background="#125B9F"
+                    CornerRadius="26"
+                    Padding="18">
+
+                  <Grid RowDefinitions="Auto,*,Auto">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="Account" Classes="visual-strong" />
+                      <Border
+                          Grid.Column="1"
+                          Background="#1EA0EB"
+                          CornerRadius="14"
+                          Padding="10,6">
+                        <TextBlock Text="Dexcom Share" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold" />
+                      </Border>
+                    </Grid>
+
+                    <Grid
+                        Grid.Row="1"
+                        Margin="0,18,0,0"
+                        ColumnDefinitions="1.1*,0.9*"
+                        ColumnSpacing="14">
+
+                      <Border
+                          Background="#0E4D87"
+                          CornerRadius="18"
+                          Padding="14">
+                        <StackPanel>
+                          <TextBlock Text="Sign in" Foreground="#DFF4FF" FontWeight="Bold" />
+                          <Border Height="8" Width="90" Background="#9DDBFF" CornerRadius="999" Margin="0,14,0,0" />
+                          <Border Height="8" Width="114" Background="#BFE8FF" CornerRadius="999" Margin="0,10,0,0" />
+                          <Border Height="8" Width="76" Background="#BFE8FF" CornerRadius="999" Margin="0,10,0,0" />
+                        </StackPanel>
+                      </Border>
+
+                      <Border
+                          Grid.Column="1"
+                          Background="#1A72BD"
+                          CornerRadius="18"
+                          Padding="14">
+                        <StackPanel VerticalAlignment="Center">
+                          <TextBlock Text="Secure" Foreground="#FFFFFF" FontWeight="Bold" />
+                          <Border
+                              Width="62"
+                              Height="62"
+                              Background="#DFF4FF"
+                              CornerRadius="31"
+                              HorizontalAlignment="Center"
+                              Margin="0,18,0,0">
+                            <TextBlock
+                                Text="🔒"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="26" />
+                          </Border>
+                        </StackPanel>
+                      </Border>
+                    </Grid>
+
+                    <TextBlock
+                        Grid.Row="2"
+                        Text="Connect Dexcom Share from Account and keep the rest local."
+                        Classes="visual-caption"
+                        Margin="0,16,0,0" />
+                  </Grid>
+                </Border>
+              </Grid>
+
+              <!-- DESKTOP -->
+              <Grid
+                  IsVisible="{Binding IsDesktopVisual}"
+                  Width="340"
+                  Height="250"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+
+                <Grid>
+                  <Border
+                      Width="244"
+                      Height="156"
+                      Background="#0E4D87"
+                      CornerRadius="22"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Top"
+                      Padding="14">
+                    <Grid RowDefinitions="Auto,*">
+                      <Grid ColumnDefinitions="Auto,Auto,Auto,*" ColumnSpacing="6">
+                        <Border Width="10" Height="10" Background="#9DDBFF" CornerRadius="5" />
+                        <Border Grid.Column="1" Width="10" Height="10" Background="#9DDBFF" CornerRadius="5" />
+                        <Border Grid.Column="2" Width="10" Height="10" Background="#9DDBFF" CornerRadius="5" />
+                      </Grid>
+
+                      <Grid
+                          Grid.Row="1"
+                          Margin="0,18,0,0"
+                          ColumnDefinitions="0.8*,1.2*"
+                          ColumnSpacing="12">
+                        <Border Background="#125B9F" CornerRadius="16" Padding="12">
+                          <StackPanel>
+                            <TextBlock Text="124" FontSize="26" FontWeight="Bold" Foreground="#FFFFFF" />
+                            <TextBlock Text="mg/dL" Foreground="#A9DBFF" />
+                          </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Background="#125B9F" CornerRadius="16" Padding="12">
+                          <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6" VerticalAlignment="Bottom">
+                            <Border Height="24" Background="#BCE8FF" CornerRadius="6" VerticalAlignment="Bottom" />
+                            <Border Grid.Column="1" Height="38" Background="#5FD3FF" CornerRadius="6" VerticalAlignment="Bottom" />
+                            <Border Grid.Column="2" Height="30" Background="#5FD3FF" CornerRadius="6" VerticalAlignment="Bottom" />
+                            <Border Grid.Column="3" Height="48" Background="#9DDBFF" CornerRadius="6" VerticalAlignment="Bottom" />
+                          </Grid>
+                        </Border>
+                      </Grid>
+                    </Grid>
+                  </Border>
+
+                  <Border
+                      Width="112"
+                      Height="44"
+                      Background="#DFF4FF"
+                      CornerRadius="16"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Top"
+                      Margin="0,18,24,0"
+                      Padding="10,8">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                      <Border Width="18" Height="18" Background="#1EA0EB" CornerRadius="9" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Text="Tray" Foreground="#0C5391" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </Grid>
+                  </Border>
+
+                  <Border
+                      Width="180"
+                      Height="92"
+                      Background="#FFFFFF"
+                      BorderBrush="#B9D9F2"
+                      BorderThickness="1.5"
+                      CornerRadius="20"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Bottom"
+                      Margin="0,0,10,10"
+                      Padding="14">
+                    <StackPanel>
+                      <TextBlock Text="Desktop alert" Foreground="#0C5391" FontWeight="Bold" />
+                      <TextBlock Text="Native notifications when enabled" Foreground="#567290" FontSize="13" Margin="0,8,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                </Grid>
+              </Grid>
+
+              <!-- READY -->
+              <Grid
+                  IsVisible="{Binding IsReadyVisual}"
+                  Width="340"
+                  Height="250"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+
+                <Border
+                    Background="#125B9F"
+                    CornerRadius="26"
+                    Padding="20">
+                  <Grid RowDefinitions="Auto,*,Auto">
+                    <TextBlock Text="Ready for GlucoDesk" Classes="visual-strong" />
+
+                    <Grid Grid.Row="1" Margin="0,20,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="18">
+                      <Border
+                          Width="96"
+                          Height="96"
+                          Background="#1EA0EB"
+                          CornerRadius="30"
+                          VerticalAlignment="Center">
+                        <TextBlock
+                            Text="✓"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="42"
+                            FontWeight="Bold"
+                            Foreground="#FFFFFF" />
+                      </Border>
+
+                      <StackPanel VerticalAlignment="Center" Spacing="10">
+                        <Border Background="#0E4D87" CornerRadius="16" Padding="12,10">
+                          <TextBlock Text="Dashboard first" Foreground="#DFF4FF" />
+                        </Border>
+                        <Border Background="#0E4D87" CornerRadius="16" Padding="12,10">
+                          <TextBlock Text="Account for Dexcom Share" Foreground="#DFF4FF" />
+                        </Border>
+                        <Border Background="#0E4D87" CornerRadius="16" Padding="12,10">
+                          <TextBlock Text="Settings anytime" Foreground="#DFF4FF" />
+                        </Border>
+                      </StackPanel>
+                    </Grid>
+
+                    <TextBlock
+                        Grid.Row="2"
+                        Text="Your calm glucose workspace starts here."
+                        Classes="visual-caption"
+                        Margin="0,16,0,0" />
+                  </Grid>
+                </Border>
+              </Grid>
+            </Grid>
+
+            <Border
+                Grid.Row="3"
+                Background="#0A477E"
+                CornerRadius="18"
+                Padding="16,14">
+              <TextBlock
+                  Text="{Binding FooterText}"
+                  Foreground="#D8F0FF"
+                  FontSize="13"
+                  TextWrapping="Wrap" />
+            </Border>
+          </Grid>
+        </Border>
+
+        <!-- RIGHT CONTENT PANEL -->
+        <Border
+            Grid.Column="1"
+            Background="#FFFFFF"
+            CornerRadius="0,28,28,0"
+            Padding="34,28,34,26">
+
+          <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+            <TextBlock
+                Text="{Binding TitleText}"
+                Classes="tour-title" />
+
+            <TextBlock
+                Grid.Row="1"
+                Margin="0,18,0,0"
+                Text="{Binding DescriptionText}"
+                Classes="tour-body" />
+
+            <ScrollViewer
+                Grid.Row="2"
+                Margin="0,22,0,22"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+
+              <StackPanel Spacing="14">
+
+                <Border Classes="tour-highlight">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border
+                        Width="40"
+                        Height="40"
+                        Background="#D9F0FF"
+                        CornerRadius="20"
+                        VerticalAlignment="Top">
+                      <TextBlock
+                          Text="✓"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          FontSize="22"
+                          FontWeight="Bold"
+                          Foreground="#1786D9" />
+                    </Border>
+
+                    <TextBlock
+                        Grid.Column="1"
+                        Text="{Binding HighlightOneText}"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Foreground="#164A7B"
+                        TextWrapping="Wrap"
+                        VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+
+                <Border Classes="tour-highlight">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border
+                        Width="40"
+                        Height="40"
+                        Background="#D9F0FF"
+                        CornerRadius="20"
+                        VerticalAlignment="Top">
+                      <TextBlock
+                          Text="✓"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          FontSize="22"
+                          FontWeight="Bold"
+                          Foreground="#1786D9" />
+                    </Border>
+
+                    <TextBlock
+                        Grid.Column="1"
+                        Text="{Binding HighlightTwoText}"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Foreground="#164A7B"
+                        TextWrapping="Wrap"
+                        VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+
+                <Border Classes="tour-highlight">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border
+                        Width="40"
+                        Height="40"
+                        Background="#D9F0FF"
+                        CornerRadius="20"
+                        VerticalAlignment="Top">
+                      <TextBlock
+                          Text="✓"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          FontSize="22"
+                          FontWeight="Bold"
+                          Foreground="#1786D9" />
+                    </Border>
+
+                    <TextBlock
+                        Grid.Column="1"
+                        Text="{Binding HighlightThreeText}"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Foreground="#164A7B"
+                        TextWrapping="Wrap"
+                        VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+              </StackPanel>
+            </ScrollViewer>
+
+            <Grid
+                Grid.Row="3"
+                ColumnDefinitions="Auto,*,Auto"
+                VerticalAlignment="Center">
+
+              <Button
+                  Classes="tour-secondary"
+                  Content="{Binding BackButtonText}"
+                  Command="{Binding BackCommand}"
+                  IsVisible="{Binding CanGoBack}" />
+
+              <Button
+                  Grid.Column="2"
+                  Classes="tour-primary"
+                  Content="{Binding PrimaryButtonText}"
+                  Command="{Binding NextCommand}" />
+            </Grid>
+          </Grid>
+        </Border>
+      </Grid>
+    </Border>
+
+    <!-- FOOTER -->
+    <TextBlock
+        Grid.Row="2"
+        Margin="0,18,0,0"
+        HorizontalAlignment="Center"
+        Text="{Binding FooterText}"
+        FontSize="15"
+        Foreground="#6A8199"
+        TextWrapping="Wrap" />
+  </Grid>
+</Window>

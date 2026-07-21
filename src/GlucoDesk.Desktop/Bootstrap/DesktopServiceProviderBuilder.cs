@@ -35,6 +35,7 @@ using GlucoDesk.Desktop.DesktopPresence.Services;
 using GlucoDesk.Desktop.DesktopPresence.Formatters;
 using GlucoDesk.Desktop.ViewModels.Onboarding;
 using GlucoDesk.Desktop.Views.Onboarding;
+using GlucoDesk.Desktop.Onboarding;
 namespace GlucoDesk.Desktop.Bootstrap;
 
 /// <summary>
@@ -130,6 +131,10 @@ internal static class DesktopServiceProviderBuilder
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<LanguageOnboardingViewModel>();
         services.AddTransient<LanguageOnboardingWindow>();
+        services.AddSingleton(
+            _ => FeatureTourPreferenceStore.CreateDefault());
+        services.AddTransient<FeatureTourViewModel>();
+        services.AddTransient<FeatureTourWindow>();
         services.AddSingleton<IDiaryExportFileSaveService, AvaloniaDiaryExportFileSaveService>();
     }
 

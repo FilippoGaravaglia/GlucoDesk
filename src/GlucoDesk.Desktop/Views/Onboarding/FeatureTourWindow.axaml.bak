@@ -1,0 +1,402 @@
+<Window
+    x:Class="GlucoDesk.Desktop.Views.Onboarding.FeatureTourWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:GlucoDesk.Desktop.ViewModels.Onboarding"
+    mc:Ignorable="d"
+    Width="1080"
+    Height="700"
+    MinWidth="920"
+    MinHeight="620"
+    CanResize="False"
+    WindowStartupLocation="CenterScreen"
+    WindowDecorations="Full"
+    Title="GlucoDesk"
+    Background="#F5FAFE">
+
+  <Design.DataContext>
+    <vm:FeatureTourViewModel />
+  </Design.DataContext>
+
+  <Window.Styles>
+    <Style Selector="Button.tour-primary">
+      <Setter Property="Background" Value="#0B79D0" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="BorderBrush" Value="#0B79D0" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="18" />
+      <Setter Property="Padding" Value="28,16" />
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="MinWidth" Value="260" />
+      <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <Style Selector="Button.tour-primary:pointerover">
+      <Setter Property="Background" Value="#0A6AB6" />
+    </Style>
+
+    <Style Selector="Button.tour-secondary">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#173B69" />
+      <Setter Property="BorderBrush" Value="#C5D7EA" />
+      <Setter Property="BorderThickness" Value="1.5" />
+      <Setter Property="CornerRadius" Value="18" />
+      <Setter Property="Padding" Value="22,16" />
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="MinWidth" Value="140" />
+    </Style>
+
+    <Style Selector="Border.tour-highlight">
+      <Setter Property="Background" Value="#F2F8FD" />
+      <Setter Property="BorderBrush" Value="#D6E6F5" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="18" />
+      <Setter Property="Padding" Value="18" />
+      <Setter Property="Margin" Value="0,0,0,14" />
+    </Style>
+
+    <Style Selector="Border.tour-visual-card">
+      <Setter Property="Background" Value="#155694" />
+      <Setter Property="CornerRadius" Value="28" />
+      <Setter Property="Padding" Value="32" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Width" Value="260" />
+      <Setter Property="Height" Value="260" />
+    </Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+    <Grid
+        Grid.Row="0"
+        ColumnDefinitions="Auto,*,Auto"
+        VerticalAlignment="Center"
+        Margin="0,0,0,18">
+
+      <TextBlock
+          VerticalAlignment="Center"
+          FontSize="27"
+          FontWeight="Bold"
+          Foreground="#163A68">
+        <Run Text="Gluco" />
+        <Run Text="Desk" Foreground="#1696E5" />
+      </TextBlock>
+
+      <StackPanel
+          Grid.Column="1"
+          Margin="36,0"
+          VerticalAlignment="Center"
+          Spacing="8">
+        <ProgressBar
+            Minimum="0"
+            Maximum="{Binding ProgressMaximum}"
+            Value="{Binding ProgressValue}"
+            Height="10"
+            Background="#DCEBF7"
+            Foreground="#0B79D0" />
+        <TextBlock
+            Text="{Binding StepCounterText}"
+            HorizontalAlignment="Right"
+            FontSize="16"
+            FontWeight="SemiBold"
+            Foreground="#567494" />
+      </StackPanel>
+
+      <Button
+          Grid.Column="2"
+          Classes="tour-secondary"
+          Content="{Binding SkipButtonText}"
+          Command="{Binding SkipCommand}" />
+    </Grid>
+
+    <Border
+        Grid.Row="1"
+        Background="White"
+        BorderBrush="#D9E6F2"
+        BorderThickness="1"
+        CornerRadius="28">
+      <Grid ColumnDefinitions="0.92*,1.08*">
+        <Border
+            Background="#0F4A84"
+            CornerRadius="28,0,0,28"
+            Padding="30">
+          <Grid RowDefinitions="Auto,*,Auto">
+            <StackPanel Spacing="18">
+              <Border
+                  Width="84"
+                  Height="84"
+                  CornerRadius="22"
+                  Background="#1696E5"
+                  HorizontalAlignment="Left">
+                <TextBlock
+                    Text="{Binding StepNumberText}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="26"
+                    FontWeight="Bold"
+                    Foreground="White" />
+              </Border>
+
+              <TextBlock
+                  Text="{Binding EyebrowText}"
+                  FontSize="18"
+                  FontWeight="SemiBold"
+                  Foreground="#BFE0FF"
+                  TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Grid Grid.Row="1">
+              <Border
+                  Classes="tour-visual-card"
+                  IsVisible="{Binding IsWelcomeVisual}">
+                <TextBlock
+                    Text="✦"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="88"
+                    Foreground="White" />
+              </Border>
+
+              <Border
+                  Classes="tour-visual-card"
+                  IsVisible="{Binding IsDashboardVisual}">
+                <TextBlock
+                    Text="⌂"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="88"
+                    Foreground="White" />
+              </Border>
+
+              <Border
+                  Classes="tour-visual-card"
+                  IsVisible="{Binding IsHistoryVisual}">
+                <TextBlock
+                    Text="↺"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="88"
+                    Foreground="White" />
+              </Border>
+
+              <Border
+                  Classes="tour-visual-card"
+                  IsVisible="{Binding IsDiaryVisual}">
+                <TextBlock
+                    Text="🗒"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="82"
+                    Foreground="White" />
+              </Border>
+
+              <Border
+                  Classes="tour-visual-card"
+                  IsVisible="{Binding IsAccountVisual}">
+                <TextBlock
+                    Text="👤"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="82"
+                    Foreground="White" />
+              </Border>
+
+              <Border
+                  Classes="tour-visual-card"
+                  IsVisible="{Binding IsDesktopVisual}">
+                <TextBlock
+                    Text="🖥"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="82"
+                    Foreground="White" />
+              </Border>
+
+              <Border
+                  Classes="tour-visual-card"
+                  IsVisible="{Binding IsReadyVisual}">
+                <TextBlock
+                    Text="✓"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="96"
+                    FontWeight="Bold"
+                    Foreground="White" />
+              </Border>
+            </Grid>
+
+            <Border
+                Grid.Row="2"
+                Background="#0C4175"
+                CornerRadius="20"
+                Padding="18">
+              <TextBlock
+                  Text="{Binding FooterText}"
+                  FontSize="15"
+                  Foreground="#D7EAFF"
+                  TextWrapping="Wrap" />
+            </Border>
+          </Grid>
+        </Border>
+
+        <Grid
+            Grid.Column="1"
+            RowDefinitions="*,Auto,Auto">
+          <ScrollViewer
+              Grid.Row="0"
+              Margin="0"
+              Padding="38,26,38,16"
+              HorizontalScrollBarVisibility="Disabled"
+              VerticalScrollBarVisibility="Auto">
+            <StackPanel
+                Spacing="18"
+                VerticalAlignment="Center">
+              <TextBlock
+                  Text="{Binding TitleText}"
+                  FontSize="36"
+                  FontWeight="Bold"
+                  Foreground="#123A69"
+                  TextWrapping="Wrap" />
+
+              <TextBlock
+                  Text="{Binding DescriptionText}"
+                  FontSize="16"
+                  Foreground="#5B748E"
+                  TextWrapping="Wrap"
+                  LineHeight="25" />
+
+              <Border Classes="tour-highlight">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                  <Border
+                      Width="42"
+                      Height="42"
+                      CornerRadius="21"
+                      Background="#DFF2FF">
+                    <TextBlock
+                        Text="✓"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="22"
+                        FontWeight="Bold"
+                        Foreground="#0B79D0" />
+                  </Border>
+
+                  <TextBlock
+                      Grid.Column="1"
+                      Text="{Binding HighlightOneText}"
+                      VerticalAlignment="Center"
+                      FontSize="16"
+                      FontWeight="SemiBold"
+                      Foreground="#1E466F"
+                      TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+
+              <Border Classes="tour-highlight">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                  <Border
+                      Width="42"
+                      Height="42"
+                      CornerRadius="21"
+                      Background="#DFF2FF">
+                    <TextBlock
+                        Text="✓"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="22"
+                        FontWeight="Bold"
+                        Foreground="#0B79D0" />
+                  </Border>
+
+                  <TextBlock
+                      Grid.Column="1"
+                      Text="{Binding HighlightTwoText}"
+                      VerticalAlignment="Center"
+                      FontSize="16"
+                      FontWeight="SemiBold"
+                      Foreground="#1E466F"
+                      TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+
+              <Border Classes="tour-highlight">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                  <Border
+                      Width="42"
+                      Height="42"
+                      CornerRadius="21"
+                      Background="#DFF2FF">
+                    <TextBlock
+                        Text="✓"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="22"
+                        FontWeight="Bold"
+                        Foreground="#0B79D0" />
+                  </Border>
+
+                  <TextBlock
+                      Grid.Column="1"
+                      Text="{Binding HighlightThreeText}"
+                      VerticalAlignment="Center"
+                      FontSize="16"
+                      FontWeight="SemiBold"
+                      Foreground="#1E466F"
+                      TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+
+          <Border
+              Grid.Row="1"
+              Margin="38,0,38,14"
+              Padding="18"
+              CornerRadius="16"
+              Background="#FDECEC"
+              BorderBrush="#F3B9B9"
+              BorderThickness="1"
+              IsVisible="{Binding HasError}">
+            <TextBlock
+                Text="{Binding ErrorMessage}"
+                Foreground="#B42318"
+                FontSize="16"
+                FontWeight="SemiBold"
+                TextWrapping="Wrap" />
+          </Border>
+
+          <Grid
+              Grid.Row="2"
+              ColumnDefinitions="Auto,*,Auto"
+              Margin="38,0,38,30"
+              VerticalAlignment="Center">
+
+            <Button
+                Classes="tour-secondary"
+                Content="{Binding BackButtonText}"
+                Command="{Binding BackCommand}"
+                IsVisible="{Binding CanGoBack}" />
+
+            <Button
+                Grid.Column="2"
+                Classes="tour-primary"
+                Content="{Binding PrimaryButtonText}"
+                Command="{Binding NextCommand}" />
+          </Grid>
+        </Grid>
+      </Grid>
+    </Border>
+
+    <TextBlock
+        Grid.Row="2"
+        Margin="0,18,0,0"
+        HorizontalAlignment="Center"
+        Text="{Binding FooterText}"
+        FontSize="15"
+        Foreground="#6A8199" />
+  </Grid>
+</Window>
