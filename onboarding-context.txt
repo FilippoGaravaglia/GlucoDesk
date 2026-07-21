@@ -1,0 +1,3529 @@
+===== CURRENT BRANCH =====
+feature/first-run-onboarding-tour
+
+===== RELEVANT FILE LIST =====
+src/GlucoDesk.Application/Settings/Abstractions/IApplicationSettingsChangeNotifier.cs
+src/GlucoDesk.Application/Settings/Abstractions/IApplicationSettingsService.cs
+src/GlucoDesk.Application/Settings/Abstractions/IApplicationSettingsStore.cs
+src/GlucoDesk.Application/Settings/Events/ApplicationSettingsChangedEventArgs.cs
+src/GlucoDesk.Application/Settings/Models/ApplicationSettings.cs
+src/GlucoDesk.Application/Settings/Services/ApplicationSettingsChangeNotifier.cs
+src/GlucoDesk.Application/Settings/Services/ApplicationSettingsService.cs
+src/GlucoDesk.Desktop/App.axaml
+src/GlucoDesk.Desktop/App.axaml.cs
+src/GlucoDesk.Desktop/Bootstrap/DesktopServiceProviderBuilder.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Connection/Models/DexcomDesktopConnectionResult.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Connection/Nightscout/Enums/NightscoutConnectionState.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Connection/Nightscout/Models/NightscoutConnectionStatus.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Connection/Nightscout/Services/INightscoutDesktopConnectionService.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Connection/Nightscout/Services/NightscoutDesktopConnectionService.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Connection/Services/DexcomDesktopConnectionService.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Connection/Services/IDexcomDesktopConnectionService.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/DependencyInjection/DesktopCgmProviderServiceCollectionExtensions.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/DexcomShare/DesktopDexcomShareProviderOptions.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Options/DesktopDexcomProviderOptions.cs
+src/GlucoDesk.Desktop/Bootstrap/Providers/Options/DesktopNightscoutProviderOptions.cs
+src/GlucoDesk.Desktop/Localization/AppLanguageOption.cs
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs
+src/GlucoDesk.Desktop/ViewModels/Main/MainWindowViewModel.cs
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingCompletedEventArgs.cs
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingLaunchPolicy.cs
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingOptionViewModel.cs
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs
+src/GlucoDesk.Desktop/ViewModels/Settings/Providers/ProviderActivationSelector.cs
+src/GlucoDesk.Desktop/ViewModels/Settings/Selections/GlucoseUnitSelectionItem.cs
+src/GlucoDesk.Desktop/ViewModels/Settings/Selections/ProviderSelectionItem.cs
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs
+src/GlucoDesk.Desktop/Views/Main/MainWindow.axaml
+src/GlucoDesk.Desktop/Views/Main/MainWindow.axaml.cs
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml.cs
+src/GlucoDesk.Desktop/Views/Settings/SettingsView.axaml
+src/GlucoDesk.Desktop/Views/Settings/SettingsView.axaml.cs
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs
+src/GlucoDesk.Infrastructure/Settings/DependencyInjection/LocalSettingsServiceCollectionExtensions.cs
+src/GlucoDesk.Infrastructure/Settings/Options/LocalSettingsStorageOptions.cs
+src/GlucoDesk.Infrastructure/Settings/Stores/JsonApplicationSettingsStore.cs
+tests/GlucoDesk.Desktop.Tests/Bootstrap/DesktopServiceProviderBuilderTests.cs
+tests/GlucoDesk.Desktop.Tests/Bootstrap/Providers/Connection/Models/DexcomDesktopConnectionResultTests.cs
+tests/GlucoDesk.Desktop.Tests/Bootstrap/Providers/Connection/Nightscout/Services/NightscoutDesktopConnectionServiceTests.cs
+tests/GlucoDesk.Desktop.Tests/Bootstrap/Providers/Connection/Services/DexcomDesktopConnectionServiceTests.cs
+tests/GlucoDesk.Desktop.Tests/Bootstrap/Providers/DependencyInjection/DesktopCgmProviderServiceCollectionExtensionsTests.cs
+tests/GlucoDesk.Desktop.Tests/Bootstrap/Providers/Options/DesktopDexcomProviderOptionsTests.cs
+tests/GlucoDesk.Desktop.Tests/Bootstrap/Providers/Options/DesktopNightscoutProviderOptionsTests.cs
+tests/GlucoDesk.Desktop.Tests/Localization/DesktopPresenceNotificationTranslationTests.cs
+tests/GlucoDesk.Desktop.Tests/Localization/EnglishLocalizationTestBase.cs
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs
+tests/GlucoDesk.Desktop.Tests/Localization/TranslationCatalogTests.cs
+tests/GlucoDesk.Desktop.Tests/ViewModels/Main/MainWindowViewModelTests.cs
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs
+tests/GlucoDesk.Desktop.Tests/ViewModels/Settings/Providers/ProviderActivationSelectorTests.cs
+tests/GlucoDesk.Desktop.Tests/ViewModels/Settings/Selections/ProviderSelectionItemTests.cs
+tests/GlucoDesk.Desktop.Tests/ViewModels/Settings/SettingsUnitConversionDecimalTests.cs
+tests/GlucoDesk.Desktop.Tests/ViewModels/Settings/SettingsViewModelTests.cs
+tests/GlucoDesk.Infrastructure.Tests/Cgm/Diary/Localization/GlycemicDiaryExportFinalPolishTests.cs
+tests/GlucoDesk.Infrastructure.Tests/Cgm/Diary/Localization/GlycemicDiaryExportLocalizerFinalRegressionTests.cs
+tests/GlucoDesk.Infrastructure.Tests/Cgm/Diary/Localization/GlycemicDiaryExportLocalizerRegressionTests.cs
+tests/GlucoDesk.Infrastructure.Tests/Cgm/Diary/Localization/GlycemicDiaryExportLocalizerTests.cs
+tests/GlucoDesk.Infrastructure.Tests/Settings/DependencyInjection/LocalSettingsServiceCollectionExtensionsTests.cs
+tests/GlucoDesk.Infrastructure.Tests/Settings/Options/LocalSettingsStorageOptionsTests.cs
+tests/GlucoDesk.Infrastructure.Tests/Settings/Stores/JsonApplicationSettingsStoreTests.cs
+
+===== src/GlucoDesk.Desktop/App.axaml =====
+<Application
+    x:Class="GlucoDesk.Desktop.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Name="GlucoDesk"
+    RequestedThemeVariant="Light">
+
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://GlucoDesk.Desktop/Styles/GlucoDeskTheme.axaml" />
+  </Application.Styles>
+</Application>
+
+===== src/GlucoDesk.Desktop/App.axaml.cs =====
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
+using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
+using GlucoDesk.Desktop.Bootstrap;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
+using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
+using GlucoDesk.Desktop.Views.Main;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.ViewModels.Onboarding;
+using GlucoDesk.Desktop.Views.Onboarding;
+namespace GlucoDesk.Desktop;
+
+public partial class App : Avalonia.Application
+{
+    private ServiceProvider? _serviceProvider;
+    private IServiceScope? _applicationScope;
+    private bool _isExplicitShutdownRequested;
+    private bool _isMainWindowHideInProgress;
+    private bool _hasStartedDesktopRuntime;
+
+    /// <inheritdoc />
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        global::GlucoDesk.Desktop.Localization.LocalizationManager.InitializeIfNeeded();
+    }
+
+    /// <inheritdoc />
+    public override void OnFrameworkInitializationCompleted()
+    {
+        _serviceProvider =
+            DesktopServiceProviderBuilder.BuildServiceProvider();
+
+        _applicationScope =
+            _serviceProvider.CreateScope();
+
+        if (ApplicationLifetime
+            is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            ConfigureDesktopLifetime(desktop);
+        }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Configures desktop lifetime events and selects the initial window.
+    /// </summary>
+    private void ConfigureDesktopLifetime(
+        IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+
+        var serviceProvider =
+            _applicationScope?.ServiceProvider
+            ?? throw new InvalidOperationException(
+                "The application service scope is not available.");
+
+        desktop.ShutdownMode =
+            ShutdownMode.OnExplicitShutdown;
+
+        RegisterDesktopActivationHandler(desktop);
+
+        desktop.ShutdownRequested += (_, _) =>
+        {
+            _isExplicitShutdownRequested = true;
+        };
+
+        desktop.Exit += async (_, _) =>
+        {
+            _isExplicitShutdownRequested = true;
+
+            StopDesktopPresenceSafely(serviceProvider);
+
+            await StopBackgroundSyncSafelyAsync(serviceProvider)
+                .ConfigureAwait(false);
+
+            DisposeServices();
+        };
+
+        if (ShouldShowLanguageOnboarding())
+        {
+            ConfigureLanguageOnboarding(
+                desktop,
+                serviceProvider);
+
+            return;
+        }
+
+        ConfigureMainApplicationWindow(
+            desktop,
+            serviceProvider,
+            showImmediately: false);
+    }
+
+    /// <summary>
+    /// Determines whether the first-launch language experience is required.
+    /// </summary>
+    private static bool ShouldShowLanguageOnboarding()
+    {
+        var preference =
+            LanguagePreferenceStore.ReadPreference();
+
+        var forceValue =
+            Environment.GetEnvironmentVariable(
+                "GLUCODESK_FORCE_LANGUAGE_ONBOARDING");
+
+        return LanguageOnboardingLaunchPolicy.ShouldShow(
+            preference.HasExplicitPreference,
+            forceValue);
+    }
+
+    /// <summary>
+    /// Configures the first-launch language window.
+    /// </summary>
+    private void ConfigureLanguageOnboarding(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        var onboardingWindow = serviceProvider
+            .GetRequiredService<LanguageOnboardingWindow>();
+
+        if (onboardingWindow.DataContext
+            is not LanguageOnboardingViewModel viewModel)
+        {
+            throw new InvalidOperationException(
+                "The language onboarding window does not expose "
+                + "the expected view model.");
+        }
+
+        var onboardingCompleted = false;
+
+        desktop.MainWindow = onboardingWindow;
+
+        viewModel.Completed += OnOnboardingCompleted;
+        onboardingWindow.Closed += OnOnboardingClosed;
+
+        void OnOnboardingCompleted(
+            object? sender,
+            LanguageOnboardingCompletedEventArgs eventArgs)
+        {
+            _ = sender;
+            _ = eventArgs;
+
+            if (onboardingCompleted)
+            {
+                return;
+            }
+
+            onboardingCompleted = true;
+
+            viewModel.Completed -= OnOnboardingCompleted;
+            onboardingWindow.Closed -= OnOnboardingClosed;
+
+            ConfigureMainApplicationWindow(
+                desktop,
+                serviceProvider,
+                showImmediately: true);
+
+            onboardingWindow.Close();
+        }
+
+        void OnOnboardingClosed(
+            object? sender,
+            EventArgs eventArgs)
+        {
+            _ = sender;
+            _ = eventArgs;
+
+            if (onboardingCompleted
+                || _isExplicitShutdownRequested)
+            {
+                return;
+            }
+
+            _isExplicitShutdownRequested = true;
+            desktop.Shutdown();
+        }
+    }
+
+    /// <summary>
+    /// Creates and configures the normal GlucoDesk main window.
+    /// </summary>
+    private void ConfigureMainApplicationWindow(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider,
+        bool showImmediately)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        var mainWindow = serviceProvider
+            .GetRequiredService<MainWindow>();
+
+        desktop.MainWindow = mainWindow;
+
+        mainWindow.Closing += (_, eventArgs) =>
+        {
+            HandleMainWindowClosing(
+                desktop,
+                eventArgs);
+        };
+
+        mainWindow.Opened += (_, _) =>
+        {
+            StartDesktopRuntime(
+                desktop,
+                serviceProvider);
+        };
+
+        if (!showImmediately)
+        {
+            return;
+        }
+
+        mainWindow.Show();
+        mainWindow.Activate();
+    }
+
+    /// <summary>
+    /// Starts tray, background synchronization and history continuity once.
+    /// </summary>
+    private void StartDesktopRuntime(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        if (_hasStartedDesktopRuntime)
+        {
+            return;
+        }
+
+        _hasStartedDesktopRuntime = true;
+
+        StartDesktopPresenceSafely(
+            desktop,
+            serviceProvider);
+
+        _ = StartBackgroundSyncSafelyAsync(
+            serviceProvider);
+
+        _ = RunStartupHistoryContinuitySyncSafelyAsync(
+            serviceProvider);
+    }
+
+
+    /// <summary>
+    /// Handles main window close requests without terminating the background desktop companion.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="eventArgs">The window closing event arguments.</param>
+    private void HandleMainWindowClosing(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        WindowClosingEventArgs eventArgs)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(eventArgs);
+
+        if (_isExplicitShutdownRequested)
+        {
+            return;
+        }
+
+        eventArgs.Cancel = true;
+
+        var mainWindow = desktop.MainWindow;
+
+        if (mainWindow is null)
+        {
+            return;
+        }
+
+        if (_isMainWindowHideInProgress)
+        {
+            return;
+        }
+
+        if (mainWindow.WindowState == WindowState.FullScreen)
+        {
+            _isMainWindowHideInProgress = true;
+            _ = HideMainWindowAfterLeavingFullscreenAsync(mainWindow);
+            return;
+        }
+
+        mainWindow.Hide();
+    }
+
+    /// <summary>
+    /// Leaves fullscreen first and then hides the main window after the macOS fullscreen transition.
+    /// </summary>
+    /// <param name="mainWindow">The main application window.</param>
+    /// <returns>A task representing the asynchronous hide operation.</returns>
+    private async Task HideMainWindowAfterLeavingFullscreenAsync(Window mainWindow)
+    {
+        ArgumentNullException.ThrowIfNull(mainWindow);
+
+        try
+        {
+            mainWindow.WindowState = WindowState.Normal;
+
+            await Task.Delay(TimeSpan.FromMilliseconds(650))
+                .ConfigureAwait(false);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!_isExplicitShutdownRequested)
+                {
+                    mainWindow.Hide();
+                }
+            });
+        }
+        catch
+        {
+            // Closing from fullscreen is best-effort on macOS/Avalonia and must not break the app lifecycle.
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                _isMainWindowHideInProgress = false;
+            });
+        }
+    }
+
+    /// <summary>
+    /// Registers desktop activation handling so the main window can be reopened from the macOS Dock.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    private void RegisterDesktopActivationHandler(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var activatableLifetime = TryGetFeature(typeof(IActivatableLifetime)) as IActivatableLifetime;
+
+        if (activatableLifetime is null)
+        {
+            return;
+        }
+
+        activatableLifetime.Activated += (_, eventArgs) =>
+        {
+            if (eventArgs.Kind != ActivationKind.Reopen)
+            {
+                return;
+            }
+
+            ShowMainWindowSafely(
+                desktop,
+                _applicationScope?.ServiceProvider);
+        };
+    }
+
+    /// <summary>
+    /// Shows and activates the main application window without breaking application activation.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="serviceProvider">The service provider, when available.</param>
+    private static void ShowMainWindowSafely(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider? serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+
+        try
+        {
+            RunOnUiThread(() => ShowMainWindow(desktop));
+        }
+        catch (Exception exception)
+        {
+            if (serviceProvider is not null)
+            {
+                LogSafely(
+                    serviceProvider,
+                    exception,
+                    "Unexpected error while reopening the main window from desktop activation.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Shows and activates the main application window.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    private static void ShowMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var mainWindow = desktop.MainWindow;
+
+        if (mainWindow is null)
+        {
+            return;
+        }
+
+        if (mainWindow.WindowState == WindowState.Minimized)
+        {
+            mainWindow.WindowState = WindowState.Normal;
+        }
+
+        mainWindow.Show();
+        mainWindow.Activate();
+    }
+
+    /// <summary>
+    /// Runs the specified action on the Avalonia UI thread.
+    /// </summary>
+    /// <param name="action">The action to run.</param>
+    private static void RunOnUiThread(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(action);
+    }
+
+    /// <summary>
+    /// Starts the desktop presence indicator without breaking application startup.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="serviceProvider">The service provider.</param>
+    private static void StartDesktopPresenceSafely(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopPresenceLifecycleService>();
+
+            lifecycleService?.Start(desktop);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while starting the desktop presence indicator.");
+        }
+    }
+
+    /// <summary>
+    /// Stops the desktop presence indicator without breaking application shutdown.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    private static void StopDesktopPresenceSafely(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopPresenceLifecycleService>();
+
+            lifecycleService?.Stop();
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while stopping the desktop presence indicator.");
+        }
+    }
+
+    /// <summary>
+    /// Starts the desktop background sync lifecycle without breaking application startup.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task StartBackgroundSyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopBackgroundSyncLifecycleService>();
+
+            if (lifecycleService is null)
+            {
+                return;
+            }
+
+            _ = await lifecycleService
+                .StartAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while starting the desktop background sync lifecycle.");
+        }
+    }
+
+    /// <summary>
+    /// Runs startup history continuity synchronization without blocking the Avalonia UI startup flow.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task RunStartupHistoryContinuitySyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var coordinator = serviceProvider
+                .GetService<IDesktopHistoryContinuitySyncCoordinator>();
+
+            if (coordinator is null)
+            {
+                return;
+            }
+
+            _ = await coordinator
+                .RunStartupSyncAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while running startup history continuity synchronization.");
+        }
+    }
+
+    /// <summary>
+    /// Stops the desktop background sync lifecycle without breaking application shutdown.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task StopBackgroundSyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopBackgroundSyncLifecycleService>();
+
+            if (lifecycleService is null)
+            {
+                return;
+            }
+
+            _ = await lifecycleService
+                .StopAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while stopping the desktop background sync lifecycle.");
+        }
+    }
+
+    /// <summary>
+    /// Logs an application startup or shutdown error when logging services are available.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <param name="exception">The exception to log.</param>
+    /// <param name="message">The log message.</param>
+    private static void LogSafely(
+        IServiceProvider serviceProvider,
+        Exception exception,
+        string message)
+    {
+        try
+        {
+            var logger = serviceProvider.GetService<ILogger<App>>();
+
+            logger?.LogError(
+                exception,
+                "{Message}",
+                message);
+        }
+        catch
+        {
+            // Logging must never break application startup or shutdown.
+        }
+    }
+
+    /// <summary>
+    /// Disposes application-level dependency injection services.
+    /// </summary>
+    private void DisposeServices()
+    {
+        _applicationScope?.Dispose();
+        _serviceProvider?.Dispose();
+
+        _applicationScope = null;
+        _serviceProvider = null;
+    }
+
+    #endregion
+}
+
+===== src/GlucoDesk.Desktop/Program.cs =====
+﻿using Avalonia;
+
+namespace GlucoDesk.Desktop;
+
+internal static class Program
+{
+    [STAThread]
+    public static void Main(string[] args)
+    {
+        BuildAvaloniaApp()
+            .StartWithClassicDesktopLifetime(args);
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Builds the Avalonia application instance.
+    /// </summary>
+    /// <returns>The configured Avalonia application builder.</returns>
+    private static AppBuilder BuildAvaloniaApp()
+    {
+        return AppBuilder
+            .Configure<App>()
+            .UsePlatformDetect()
+            .WithInterFont()
+            .LogToTrace();
+    }
+
+    #endregion
+}
+===== src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs =====
+using System.Globalization;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using GlucoDesk.Desktop.Localization;
+
+namespace GlucoDesk.Desktop.ViewModels.Onboarding;
+
+/// <summary>
+/// Represents the first-launch language selection experience.
+/// </summary>
+public sealed class LanguageOnboardingViewModel : ObservableObject
+{
+    private readonly Action<string> _previewLanguage;
+    private readonly Action<string> _persistLanguage;
+
+    private LanguageOnboardingOptionViewModel _selectedOption;
+    private bool _hasError;
+    private string _errorMessage = string.Empty;
+
+    /// <summary>
+    /// Initializes the production onboarding ViewModel.
+    /// </summary>
+    public LanguageOnboardingViewModel()
+        : this(
+            LocalizationManager.AvailableLanguages,
+            CultureInfo.CurrentUICulture.Name,
+            LocalizationManager.SetLanguageForCurrentProcess,
+            LocalizationManager.SetLanguage)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a testable onboarding ViewModel.
+    /// </summary>
+    public LanguageOnboardingViewModel(
+        IReadOnlyList<AppLanguageOption> languages,
+        string? suggestedLanguageCode,
+        Action<string> previewLanguage,
+        Action<string> persistLanguage)
+    {
+        ArgumentNullException.ThrowIfNull(languages);
+        ArgumentNullException.ThrowIfNull(previewLanguage);
+        ArgumentNullException.ThrowIfNull(persistLanguage);
+
+        if (languages.Count == 0)
+        {
+            throw new ArgumentException(
+                "At least one supported language is required.",
+                nameof(languages));
+        }
+
+        var duplicateCode = languages
+            .GroupBy(
+                language => language.Code,
+                StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        if (duplicateCode is not null)
+        {
+            throw new ArgumentException(
+                $"Duplicate language code '{duplicateCode.Key}'.",
+                nameof(languages));
+        }
+
+        _previewLanguage = previewLanguage;
+        _persistLanguage = persistLanguage;
+
+        var options = languages
+            .Select(language =>
+                new LanguageOnboardingOptionViewModel(
+                    language,
+                    SelectOption))
+            .ToArray();
+
+        LanguageOptions = options;
+
+        var normalizedSuggestion =
+            TranslationCatalog.NormalizeLanguageCode(
+                suggestedLanguageCode);
+
+        _selectedOption =
+            options.FirstOrDefault(option =>
+                string.Equals(
+                    option.Code,
+                    normalizedSuggestion,
+                    StringComparison.OrdinalIgnoreCase))
+            ?? options[0];
+
+        _selectedOption.IsSelected = true;
+
+        ContinueCommand = new RelayCommand(
+            CompleteSelection);
+
+        _previewLanguage(_selectedOption.Code);
+    }
+
+    public event EventHandler<LanguageOnboardingCompletedEventArgs>?
+        Completed;
+
+    public IReadOnlyList<LanguageOnboardingOptionViewModel>
+        LanguageOptions { get; }
+
+    public LanguageOnboardingOptionViewModel SelectedOption
+    {
+        get => _selectedOption;
+        private set
+        {
+            if (SetProperty(
+                    ref _selectedOption,
+                    value))
+            {
+                OnPropertyChanged(nameof(SelectedLanguageName));
+            }
+        }
+    }
+
+    public string SelectedLanguageName =>
+        SelectedOption.NativeName;
+
+    public bool HasError
+    {
+        get => _hasError;
+        private set => SetProperty(
+            ref _hasError,
+            value);
+    }
+
+    public string ErrorMessage
+    {
+        get => _errorMessage;
+        private set => SetProperty(
+            ref _errorMessage,
+            value);
+    }
+
+    public IRelayCommand ContinueCommand { get; }
+
+    private void SelectOption(
+        LanguageOnboardingOptionViewModel option)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+
+        if (ReferenceEquals(
+                SelectedOption,
+                option))
+        {
+            return;
+        }
+
+        foreach (var languageOption in LanguageOptions)
+        {
+            languageOption.IsSelected =
+                ReferenceEquals(languageOption, option);
+        }
+
+        SelectedOption = option;
+        HasError = false;
+        ErrorMessage = string.Empty;
+
+        _previewLanguage(option.Code);
+    }
+
+    private void CompleteSelection()
+    {
+        try
+        {
+            _persistLanguage(SelectedOption.Code);
+
+            HasError = false;
+            ErrorMessage = string.Empty;
+
+            Completed?.Invoke(
+                this,
+                new LanguageOnboardingCompletedEventArgs(
+                    SelectedOption.Code));
+        }
+        catch
+        {
+            HasError = true;
+            ErrorMessage = TranslationCatalog.Translate(
+                SelectedOption.Code,
+                "OnboardingSaveError");
+        }
+    }
+}
+
+===== tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs =====
+using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.ViewModels.Onboarding;
+
+namespace GlucoDesk.Desktop.Tests.ViewModels.Onboarding;
+
+public sealed class LanguageOnboardingViewModelTests
+{
+    private static readonly IReadOnlyList<AppLanguageOption>
+        Languages =
+        [
+            new AppLanguageOption(
+                "en",
+                "English",
+                "English"),
+
+            new AppLanguageOption(
+                "it",
+                "Italian",
+                "Italiano")
+        ];
+
+    [Fact]
+    public void Constructor_ShouldExposeEverySupportedLanguage()
+    {
+        var previewedLanguages = new List<string>();
+
+        var viewModel = CreateViewModel(
+            suggestedLanguageCode: "en",
+            previewLanguage: previewedLanguages.Add);
+
+        Assert.Equal(
+            Languages.Count,
+            viewModel.LanguageOptions.Count);
+
+        Assert.Equal(
+            ["en", "it"],
+            viewModel.LanguageOptions
+                .Select(option => option.Code)
+                .ToArray());
+
+        Assert.Equal("en", viewModel.SelectedOption.Code);
+        Assert.Equal(["en"], previewedLanguages);
+    }
+
+    [Fact]
+    public void Constructor_ShouldSuggestMatchingOperatingSystemLanguage()
+    {
+        var previewedLanguages = new List<string>();
+
+        var viewModel = CreateViewModel(
+            suggestedLanguageCode: "it-IT",
+            previewLanguage: previewedLanguages.Add);
+
+        Assert.Equal("it", viewModel.SelectedOption.Code);
+        Assert.Equal("Italiano", viewModel.SelectedLanguageName);
+        Assert.Equal(["it"], previewedLanguages);
+    }
+
+    [Fact]
+    public void SelectingLanguage_ShouldPreviewWithoutPersisting()
+    {
+        var previewedLanguages = new List<string>();
+        var persistedLanguages = new List<string>();
+
+        var viewModel = CreateViewModel(
+            suggestedLanguageCode: "en",
+            previewLanguage: previewedLanguages.Add,
+            persistLanguage: persistedLanguages.Add);
+
+        var italianOption = viewModel.LanguageOptions.Single(
+            option => option.Code == "it");
+
+        italianOption.SelectCommand.Execute(null);
+
+        Assert.Equal("it", viewModel.SelectedOption.Code);
+        Assert.True(italianOption.IsSelected);
+        Assert.False(
+            viewModel.LanguageOptions.Single(
+                option => option.Code == "en")
+            .IsSelected);
+
+        Assert.Equal(
+            ["en", "it"],
+            previewedLanguages);
+
+        Assert.Empty(persistedLanguages);
+    }
+
+    [Fact]
+    public void Continue_ShouldPersistAndRaiseCompletedEvent()
+    {
+        var persistedLanguages = new List<string>();
+        string? completedLanguage = null;
+
+        var viewModel = CreateViewModel(
+            suggestedLanguageCode: "it",
+            persistLanguage: persistedLanguages.Add);
+
+        viewModel.Completed += (_, eventArgs) =>
+        {
+            completedLanguage = eventArgs.LanguageCode;
+        };
+
+        viewModel.ContinueCommand.Execute(null);
+
+        Assert.Equal(["it"], persistedLanguages);
+        Assert.Equal("it", completedLanguage);
+        Assert.False(viewModel.HasError);
+    }
+
+    [Fact]
+    public void Continue_ShouldExposeLocalizedError_WhenPersistenceFails()
+    {
+        var completedCount = 0;
+
+        var viewModel = CreateViewModel(
+            suggestedLanguageCode: "it",
+            persistLanguage: _ =>
+                throw new IOException(
+                    "Simulated persistence failure."));
+
+        viewModel.Completed += (_, _) =>
+        {
+            completedCount++;
+        };
+
+        viewModel.ContinueCommand.Execute(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.Equal(
+            TranslationCatalog.Translate(
+                "it",
+                "OnboardingSaveError"),
+            viewModel.ErrorMessage);
+
+        Assert.Equal(0, completedCount);
+    }
+
+    private static LanguageOnboardingViewModel CreateViewModel(
+        string suggestedLanguageCode,
+        Action<string>? previewLanguage = null,
+        Action<string>? persistLanguage = null)
+    {
+        return new LanguageOnboardingViewModel(
+            Languages,
+            suggestedLanguageCode,
+            previewLanguage ?? (_ => { }),
+            persistLanguage ?? (_ => { }));
+    }
+}
+
+===== ONBOARDING REFERENCES =====
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/GlucoseAlertNotificationTestService.cs:31:                .ShowAsync(CreatePrivacySafeTestNotification(), cancellationToken)
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/OperatingSystemGlucoseAlertNotificationService.cs:34:    public abstract Task<NativeNotificationRequestResult> ShowAsync(
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/OperatingSystemGlucoseAlertNotificationService.cs:78:        public override Task<NativeNotificationRequestResult> ShowAsync(
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/GlucoseAlertCoordinator.cs:117:        return _notificationService.ShowAsync(
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/WindowsGlucoseAlertNotificationService.cs:15:    public override Task<NativeNotificationRequestResult> ShowAsync(
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/IGlucoseAlertNotificationService.cs:17:    Task<NativeNotificationRequestResult> ShowAsync(
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/NoOpGlucoseAlertNotificationService.cs:21:    public Task<NativeNotificationRequestResult> ShowAsync(
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:6:namespace GlucoDesk.Desktop.ViewModels.Onboarding;
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:11:public sealed class LanguageOnboardingViewModel : ObservableObject
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:16:    private LanguageOnboardingOptionViewModel _selectedOption;
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:23:    public LanguageOnboardingViewModel()
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:35:    public LanguageOnboardingViewModel(
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:70:                new LanguageOnboardingOptionViewModel(
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:97:    public event EventHandler<LanguageOnboardingCompletedEventArgs>?
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:100:    public IReadOnlyList<LanguageOnboardingOptionViewModel>
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:103:    public LanguageOnboardingOptionViewModel SelectedOption
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:139:        LanguageOnboardingOptionViewModel option)
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:174:                new LanguageOnboardingCompletedEventArgs(
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:182:                "OnboardingSaveError");
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingCompletedEventArgs.cs:1:namespace GlucoDesk.Desktop.ViewModels.Onboarding;
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingCompletedEventArgs.cs:6:public sealed class LanguageOnboardingCompletedEventArgs : EventArgs
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingCompletedEventArgs.cs:8:    public LanguageOnboardingCompletedEventArgs(
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingLaunchPolicy.cs:1:namespace GlucoDesk.Desktop.ViewModels.Onboarding;
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingLaunchPolicy.cs:6:public static class LanguageOnboardingLaunchPolicy
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingLaunchPolicy.cs:14:    /// <param name="forceOnboardingValue">
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingLaunchPolicy.cs:22:        string? forceOnboardingValue)
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingLaunchPolicy.cs:24:        return IsEnabled(forceOnboardingValue)
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingOptionViewModel.cs:5:namespace GlucoDesk.Desktop.ViewModels.Onboarding;
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingOptionViewModel.cs:10:public sealed class LanguageOnboardingOptionViewModel : ObservableObject
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingOptionViewModel.cs:19:    public LanguageOnboardingOptionViewModel(
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingOptionViewModel.cs:21:        Action<LanguageOnboardingOptionViewModel> select)
+src/GlucoDesk.Desktop/Bootstrap/DesktopServiceProviderBuilder.cs:36:using GlucoDesk.Desktop.ViewModels.Onboarding;
+src/GlucoDesk.Desktop/Bootstrap/DesktopServiceProviderBuilder.cs:37:using GlucoDesk.Desktop.Views.Onboarding;
+src/GlucoDesk.Desktop/Bootstrap/DesktopServiceProviderBuilder.cs:131:        services.AddTransient<LanguageOnboardingViewModel>();
+src/GlucoDesk.Desktop/Bootstrap/DesktopServiceProviderBuilder.cs:132:        services.AddTransient<LanguageOnboardingWindow>();
+src/GlucoDesk.Desktop/App.axaml.cs:13:using GlucoDesk.Desktop.ViewModels.Onboarding;
+src/GlucoDesk.Desktop/App.axaml.cs:14:using GlucoDesk.Desktop.Views.Onboarding;
+src/GlucoDesk.Desktop/App.axaml.cs:87:        if (ShouldShowLanguageOnboarding())
+src/GlucoDesk.Desktop/App.axaml.cs:89:            ConfigureLanguageOnboarding(
+src/GlucoDesk.Desktop/App.axaml.cs:105:    private static bool ShouldShowLanguageOnboarding()
+src/GlucoDesk.Desktop/App.axaml.cs:114:        return LanguageOnboardingLaunchPolicy.ShouldShow(
+src/GlucoDesk.Desktop/App.axaml.cs:122:    private void ConfigureLanguageOnboarding(
+src/GlucoDesk.Desktop/App.axaml.cs:130:            .GetRequiredService<LanguageOnboardingWindow>();
+src/GlucoDesk.Desktop/App.axaml.cs:133:            is not LanguageOnboardingViewModel viewModel)
+src/GlucoDesk.Desktop/App.axaml.cs:144:        viewModel.Completed += OnOnboardingCompleted;
+src/GlucoDesk.Desktop/App.axaml.cs:145:        onboardingWindow.Closed += OnOnboardingClosed;
+src/GlucoDesk.Desktop/App.axaml.cs:147:        void OnOnboardingCompleted(
+src/GlucoDesk.Desktop/App.axaml.cs:149:            LanguageOnboardingCompletedEventArgs eventArgs)
+src/GlucoDesk.Desktop/App.axaml.cs:161:            viewModel.Completed -= OnOnboardingCompleted;
+src/GlucoDesk.Desktop/App.axaml.cs:162:            onboardingWindow.Closed -= OnOnboardingClosed;
+src/GlucoDesk.Desktop/App.axaml.cs:172:        void OnOnboardingClosed(
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml.cs:2:using GlucoDesk.Desktop.ViewModels.Onboarding;
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml.cs:4:namespace GlucoDesk.Desktop.Views.Onboarding;
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml.cs:9:public partial class LanguageOnboardingWindow : Window
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml.cs:11:    public LanguageOnboardingWindow()
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml.cs:16:    public LanguageOnboardingWindow(
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml.cs:17:        LanguageOnboardingViewModel viewModel)
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:4:    x:Class="GlucoDesk.Desktop.Views.Onboarding.LanguageOnboardingWindow"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:212:                    Text="{DynamicResource OnboardingEyebrow}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:219:                  Text="{DynamicResource OnboardingHeroTitle}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:227:                  Text="{DynamicResource OnboardingHeroSubtitle}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:254:                        Text="{DynamicResource OnboardingPrivateTitle}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:258:                        Text="{DynamicResource OnboardingPrivateText}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:282:                        Text="{DynamicResource OnboardingLocalTitle}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:286:                        Text="{DynamicResource OnboardingLocalText}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:311:              Text="{DynamicResource OnboardingTitle}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:320:              Text="{DynamicResource OnboardingSubtitle}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:379:                                Text="{DynamicResource OnboardingSelected}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:439:                  Text="{DynamicResource OnboardingChangeLater}"
+src/GlucoDesk.Desktop/Views/Onboarding/LanguageOnboardingWindow.axaml:466:                    Text="{DynamicResource OnboardingContinue}"
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:20:        ["OnboardingEyebrow"] = "WELCOME TO GLUCODESK",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:21:        ["OnboardingHeroTitle"] = "Your glucose companion, in your language.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:22:        ["OnboardingHeroSubtitle"] = "A calm desktop space for understanding glucose trends while keeping your data and preferences close to you.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:23:        ["OnboardingPrivateTitle"] = "Private by design",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:24:        ["OnboardingPrivateText"] = "Your language preference is stored locally on this device.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:25:        ["OnboardingLocalTitle"] = "Built around your routine",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:26:        ["OnboardingLocalText"] = "Choose once now and change language later from Settings.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:27:        ["OnboardingTitle"] = "Choose your language",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:28:        ["OnboardingSubtitle"] = "Select the language GlucoDesk should use for screens, dialogs and notifications.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:29:        ["OnboardingSelected"] = "SELECTED",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:30:        ["OnboardingContinue"] = "Continue",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:31:        ["OnboardingChangeLater"] = "You can change this choice later from GlucoDesk Settings.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:32:        ["OnboardingSaveError"] = "GlucoDesk could not save the selected language. Please try again.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:487:        ["OnboardingEyebrow"] = "BENVENUTO IN GLUCODESK",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:488:        ["OnboardingHeroTitle"] = "Il tuo companion glicemico, nella tua lingua.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:489:        ["OnboardingHeroSubtitle"] = "Uno spazio desktop semplice e rassicurante per comprendere l’andamento glicemico mantenendo dati e preferenze vicini a te.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:490:        ["OnboardingPrivateTitle"] = "Privacy fin dalla progettazione",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:491:        ["OnboardingPrivateText"] = "La preferenza della lingua viene salvata localmente su questo dispositivo.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:492:        ["OnboardingLocalTitle"] = "Pensato per la tua quotidianità",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:493:        ["OnboardingLocalText"] = "Scegli ora la lingua e modificala in seguito dalle Impostazioni.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:494:        ["OnboardingTitle"] = "Scegli la tua lingua",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:495:        ["OnboardingSubtitle"] = "Seleziona la lingua che GlucoDesk userà per schermate, dialog e notifiche.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:496:        ["OnboardingSelected"] = "SELEZIONATA",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:497:        ["OnboardingContinue"] = "Continua",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:498:        ["OnboardingChangeLater"] = "Potrai modificare questa scelta in seguito dalle Impostazioni di GlucoDesk.",
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:499:        ["OnboardingSaveError"] = "GlucoDesk non è riuscito a salvare la lingua selezionata. Riprova.",
+tests/GlucoDesk.Desktop.Tests/GlucoseAlerts/Services/GlucoseAlertNotificationTestServiceTests.cs:70:        public Task<NativeNotificationRequestResult> ShowAsync(
+tests/GlucoDesk.Desktop.Tests/GlucoseAlerts/Services/GlucoseAlertNotificationTestServiceTests.cs:82:        public Task<NativeNotificationRequestResult> ShowAsync(
+tests/GlucoDesk.Desktop.Tests/GlucoseAlerts/Services/GlucoseAlertNotificationTestServiceTests.cs:92:        public Task<NativeNotificationRequestResult> ShowAsync(
+tests/GlucoDesk.Desktop.Tests/GlucoseAlerts/Services/GlucoseAlertCoordinatorTests.cs:140:        public Task<NativeNotificationRequestResult> ShowAsync(
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:2:using GlucoDesk.Desktop.ViewModels.Onboarding;
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:4:namespace GlucoDesk.Desktop.Tests.ViewModels.Onboarding;
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:6:public sealed class LanguageOnboardingViewModelTests
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:133:                "OnboardingSaveError"),
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:139:    private static LanguageOnboardingViewModel CreateViewModel(
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:144:        return new LanguageOnboardingViewModel(
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:1:using GlucoDesk.Desktop.ViewModels.Onboarding;
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:3:namespace GlucoDesk.Desktop.Tests.ViewModels.Onboarding;
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:5:public sealed class LanguageOnboardingLaunchPolicyTests
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:10:        var result = LanguageOnboardingLaunchPolicy.ShouldShow(
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:12:            forceOnboardingValue: null);
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:20:        var result = LanguageOnboardingLaunchPolicy.ShouldShow(
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:22:            forceOnboardingValue: null);
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:35:        var result = LanguageOnboardingLaunchPolicy.ShouldShow(
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:37:            forceOnboardingValue: value);
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:50:        var result = LanguageOnboardingLaunchPolicy.ShouldShow(
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingLaunchPolicyTests.cs:52:            forceOnboardingValue: value);
+
+===== LOCALIZATION FILES =====
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs
+
+===== LOCALIZATION MANAGER =====
+
+===== src/GlucoDesk.Desktop/Localization/LocalizationManager.cs =====
+namespace GlucoDesk.Desktop.Localization;
+
+/// <summary>
+/// Applies localized strings to Avalonia dynamic resources and persists the selected language.
+/// </summary>
+public static class LocalizationManager
+{
+    private static bool isInitialized;
+    private static string currentLanguageCode = TranslationCatalog.DefaultLanguageCode;
+
+    /// <summary>
+    /// Raised when the application language changes.
+    /// </summary>
+    public static event EventHandler? LanguageChanged;
+
+    /// <summary>
+    /// Gets the current language code.
+    /// </summary>
+    public static string CurrentLanguageCode => currentLanguageCode;
+
+    /// <summary>
+    /// Gets the supported languages.
+    /// </summary>
+    public static IReadOnlyList<AppLanguageOption> AvailableLanguages => TranslationCatalog.SupportedLanguages;
+
+    /// <summary>
+    /// Initializes localization once using the persisted preference.
+    /// </summary>
+    public static void InitializeIfNeeded()
+    {
+        if (isInitialized)
+        {
+            return;
+        }
+
+        currentLanguageCode = LanguagePreferenceStore.LoadLanguageCode();
+        ApplyLanguageResources(currentLanguageCode);
+        isInitialized = true;
+    }
+
+    /// <summary>
+    /// Changes the current language and persists the preference.
+    /// </summary>
+    /// <param name="languageCode">The requested language code.</param>
+    public static void SetLanguage(string languageCode)
+    {
+        InitializeIfNeeded();
+
+        var normalizedLanguageCode = TranslationCatalog.NormalizeLanguageCode(languageCode);
+
+        if (string.Equals(
+                currentLanguageCode,
+                normalizedLanguageCode,
+                StringComparison.Ordinal))
+        {
+            ApplyLanguageResources(currentLanguageCode);
+            return;
+        }
+
+        currentLanguageCode = normalizedLanguageCode;
+        LanguagePreferenceStore.SaveLanguageCode(currentLanguageCode);
+        ApplyLanguageResources(currentLanguageCode);
+        LanguageChanged?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Changes the application language for the current process without
+    /// persisting the preference to disk.
+    /// </summary>
+    /// <param name="languageCode">The requested language code.</param>
+    public static void SetLanguageForCurrentProcess(string languageCode)
+    {
+        var normalizedLanguageCode =
+            TranslationCatalog.NormalizeLanguageCode(languageCode);
+
+        var hasLanguageChanged = !string.Equals(
+            currentLanguageCode,
+            normalizedLanguageCode,
+            StringComparison.Ordinal);
+
+        currentLanguageCode = normalizedLanguageCode;
+        isInitialized = true;
+
+        ApplyLanguageResources(currentLanguageCode);
+
+        if (hasLanguageChanged)
+        {
+            LanguageChanged?.Invoke(null, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Gets the supported language option for the given code.
+    /// </summary>
+    /// <param name="languageCode">The requested language code.</param>
+    /// <returns>The matching language option.</returns>
+    public static AppLanguageOption GetLanguageOption(string? languageCode)
+    {
+        var normalizedLanguageCode = TranslationCatalog.NormalizeLanguageCode(languageCode);
+
+        return AvailableLanguages.FirstOrDefault(language =>
+                string.Equals(
+                    language.Code,
+                    normalizedLanguageCode,
+                    StringComparison.Ordinal))
+            ?? AvailableLanguages[0];
+    }
+
+    /// <summary>
+    /// Translates a key using the current language.
+    /// </summary>
+    /// <param name="key">The translation key.</param>
+    /// <returns>The localized text.</returns>
+    public static string GetString(string key)
+    {
+        InitializeIfNeeded();
+
+        return TranslationCatalog.Translate(currentLanguageCode, key);
+    }
+
+    private static void ApplyLanguageResources(string languageCode)
+    {
+        if (global::Avalonia.Application.Current is null)
+        {
+            return;
+        }
+
+        var translations = TranslationCatalog.GetTranslations(languageCode);
+
+        foreach (var translation in translations)
+        {
+            global::Avalonia.Application.Current.Resources[translation.Key] = translation.Value;
+        }
+    }
+}
+
+===== LANGUAGE STORAGE REFERENCES =====
+src/GlucoDesk.Desktop/Cgm/History/Continuity/ViewModels/DesktopHistoryContinuitySyncStatusViewModel.cs:314:                .ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.CurrentCulture);
+src/GlucoDesk.Desktop/Cgm/History/Continuity/ViewModels/DesktopHistoryContinuitySyncStatusViewModel.cs:333:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/GlucoseAlertCoordinator.cs:278:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/GlucoseAlertCoordinator.cs:311:            return (valueMgDl / MmolLConversionFactor).ToString("0.0", CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/GlucoseAlerts/Services/GlucoseAlertCoordinator.cs:314:        return valueMgDl.ToString("0", CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:678:        if (int.TryParse(sanitizedValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedValue) &&
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:682:                .ToString(CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:788:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1050:            .ToString(CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1057:            .ToString(CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1059:            .ToString(CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1183:            GlucoseUnit.MgDl => value.Amount.ToString("0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1184:            GlucoseUnit.MmolL => value.Amount.ToString("0.0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1185:            _ => valueMgDl.ToString(CultureInfo.InvariantCulture)
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1204:            GlucoseUnit.MgDl => value.Amount.ToString("0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1205:            GlucoseUnit.MmolL => value.Amount.ToString("0.0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1206:            _ => valueMgDl.ToString(CultureInfo.InvariantCulture)
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1236:                    CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1244:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1593:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/ViewModels/Settings/SettingsViewModel.cs:1795:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Statistics/DashboardStatisticsPresenter.cs:43:            string.Format(CultureInfo.InvariantCulture, T("DashboardStatisticsCalculatedFromReadings"), result.AnalyzedReadingsCount),
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Statistics/DashboardStatisticsPresenter.cs:78:            string.Format(CultureInfo.InvariantCulture, T("DashboardStatisticsUpdateFailed"), errorCode),
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Statistics/DashboardStatisticsPresenter.cs:99:            return string.Format(CultureInfo.InvariantCulture, T("DashboardAnalyzedReadings"), result.AnalyzedReadingsCount);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Statistics/DashboardStatisticsPresenter.cs:102:        return string.Format(CultureInfo.InvariantCulture, T("DashboardAnalyzedLoadedReadings"), result.AnalyzedReadingsCount, result.LoadedReadingsCount);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Statistics/DashboardStatisticsPresenter.cs:112:        return string.Format(CultureInfo.InvariantCulture, T("DashboardStatisticsTargetRangeFormat"), FormatDecimal(targetRange.Low), FormatDecimal(targetRange.High), FormatUnit(targetRange.Unit));
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Statistics/DashboardStatisticsPresenter.cs:135:            ? value.ToString("0", CultureInfo.InvariantCulture)
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Statistics/DashboardStatisticsPresenter.cs:136:            : value.ToString("0.0", CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:127:    private string _recentReadingsCountText = string.Format(CultureInfo.InvariantCulture, T("DashboardReadingsCount"), 0);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:160:    private string _targetRangeText = string.Format(CultureInfo.InvariantCulture, T("DashboardTargetRangeFormat"), "70", "180", "mg/dL");
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:268:    private string _statisticsWindowStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardLocalInsightsWindow"), "24H");
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:377:        AutoRefreshStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardAutoRefreshEvery"), FormatInterval(_autoRefreshInterval));
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:597:        GlucoseAlertSnoozeStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardSnoozedUntil"), snoozedUntil.ToString("HH:mm", CultureInfo.InvariantCulture));
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:731:        return string.Format(CultureInfo.InvariantCulture, T("DashboardProviderSummary"), providerDisplayName, freshnessText, readingsCountText, lastUpdatedText);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:753:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:762:                CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1013:            ? string.Format(CultureInfo.InvariantCulture, T("DashboardLocalInsightsCalculatedForWindow"), selectedWindow.Label)
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1021:            StatisticsInsufficientHistoryTitle = string.Format(CultureInfo.InvariantCulture, T("DashboardNotEnoughHistoryTitle"), selectedWindow.Label);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1043:            StatisticsWindowStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardLocalInsightsWindow"), selectedWindow.Label);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1176:            return string.Format(CultureInfo.InvariantCulture, T("DashboardSelectedWindowNoReadings"), selectedWindow.Label);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1180:            ? string.Format(CultureInfo.InvariantCulture, T("DashboardSelectedWindowAnalyzedReadings"), selectedWindow.Label, result.AnalyzedReadingsCount)
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1181:            : string.Format(CultureInfo.InvariantCulture, T("DashboardSelectedWindowAvailableLocally"), selectedWindow.Label, availability.AvailablePeriodText);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1199:            return string.Format(CultureInfo.InvariantCulture, T("DashboardNoLocalReadingsForWindow"), selectedWindow.Label);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1202:        return string.Format(CultureInfo.InvariantCulture, T("DashboardSelectedWindowNeedsHistory"), selectedWindow.Label, selectedWindow.Description, availability.AvailablePeriodText);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1356:        AutoRefreshStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardAutoRefreshEvery"), FormatInterval(_autoRefreshInterval));
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1380:        AutoRefreshStatusText = string.Format(CultureInfo.InvariantCulture, T("DashboardAutoRefreshEvery"), FormatInterval(_autoRefreshInterval));
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1425:        RecentReadingsCountText = string.Format(CultureInfo.InvariantCulture, T("DashboardReadingsCount"), snapshot.RecentReadings.Count);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1651:            return string.Format(CultureInfo.InvariantCulture, T("DashboardProviderNoCurrentReading"), snapshot.Metadata.DisplayName);
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1655:            ? string.Format(CultureInfo.InvariantCulture, T("DashboardProviderReturnedStaleData"), snapshot.Metadata.DisplayName, freshnessText.ToLowerInvariant())
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1656:            : string.Format(CultureInfo.InvariantCulture, T("DashboardProviderReturnedData"), snapshot.Metadata.DisplayName, freshnessText.ToLowerInvariant());
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1914:        return string.Format(CultureInfo.InvariantCulture, T("DashboardLastWindowReadingsRange"), normalizedWindowHours, chartPoints.Count, FormatGlucoseValueLabel(minimumValue, normalizedDisplayUnit), FormatGlucoseValueLabel(maximumValue, normalizedDisplayUnit), FormatGlucoseUnitLabel(normalizedDisplayUnit));
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:1955:        return string.Format(CultureInfo.InvariantCulture, T("DashboardTargetRangeFormat"), FormatGlucoseValueLabel(targetLowMgDl, normalizedDisplayUnit), FormatGlucoseValueLabel(targetHighMgDl, normalizedDisplayUnit), FormatGlucoseUnitLabel(normalizedDisplayUnit));
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:2005:            GlucoseUnit.MgDl => amount.ToString("0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:2006:            GlucoseUnit.MmolL => amount.ToString("0.0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Desktop/ViewModels/Dashboard/DashboardViewModel.cs:2007:            _ => amount.ToString("0", CultureInfo.InvariantCulture)
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Providers/DashboardProviderStatusPresenter.cs:89:                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedLive"), providerDisplayName),
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Providers/DashboardProviderStatusPresenter.cs:92:                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedNearRealTime"), providerDisplayName),
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Providers/DashboardProviderStatusPresenter.cs:95:                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedDelayed"), providerDisplayName),
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Providers/DashboardProviderStatusPresenter.cs:98:                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedHistorical"), providerDisplayName),
+src/GlucoDesk.Desktop/ViewModels/Dashboard/Providers/DashboardProviderStatusPresenter.cs:101:                string.Format(CultureInfo.InvariantCulture, T("DashboardProviderConnectedGeneric"), providerDisplayName)
+src/GlucoDesk.Desktop/ViewModels/Diary/DiaryViewModel.cs:424:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/ViewModels/Diary/DiaryViewModel.cs:595:                            LocalizationManager.CurrentLanguageCode),
+src/GlucoDesk.Desktop/ViewModels/Diary/DiaryViewModel.cs:605:                            LocalizationManager.CurrentLanguageCode),
+src/GlucoDesk.Desktop/ViewModels/Diary/DiaryViewModel.cs:852:        return $"{value.ToString("0.##", CultureInfo.InvariantCulture)}%";
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:26:            CultureInfo.CurrentUICulture.Name,
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:27:            LocalizationManager.SetLanguageForCurrentProcess,
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:28:            LocalizationManager.SetLanguage)
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:37:        string? suggestedLanguageCode,
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:78:            TranslationCatalog.NormalizeLanguageCode(
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:79:                suggestedLanguageCode);
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:112:                OnPropertyChanged(nameof(SelectedLanguageName));
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingViewModel.cs:117:    public string SelectedLanguageName =>
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingCompletedEventArgs.cs:18:        LanguageCode = languageCode;
+src/GlucoDesk.Desktop/ViewModels/Onboarding/LanguageOnboardingCompletedEventArgs.cs:21:    public string LanguageCode { get; }
+src/GlucoDesk.Desktop/ViewModels/BackgroundSync/BackgroundSyncStatusViewModel.cs:191:                CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/ViewModels/BackgroundSync/BackgroundSyncStatusViewModel.cs:239:                    CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/DesktopPresence/Formatters/DesktopPresenceDashboardTextFormatter.cs:134:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/DesktopPresence/Formatters/DesktopPresenceTextFormatter.cs:87:            ? displayValue.Value.ToString("0", CultureInfo.InvariantCulture)
+src/GlucoDesk.Desktop/DesktopPresence/Formatters/DesktopPresenceTextFormatter.cs:88:            : displayValue.Value.ToString("0.0", CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/DesktopPresence/Formatters/DesktopPresenceTextFormatter.cs:149:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/DesktopPresence/Services/WindowsTrayIconThemeDetector.cs:47:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/Converters/WidthThresholdConverters.cs:13:    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/WidthThresholdConverters.cs:22:    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/WidthThresholdConverters.cs:34:    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/WidthThresholdConverters.cs:43:    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/WidthThresholdConverters.cs:60:    public static double ReadWidth(object? value, CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/WidthThresholdConverters.cs:73:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/Converters/WidthThresholdConverters.cs:90:    public static double ReadThreshold(object? parameter, CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/PercentageTrackWidthMultiConverter.cs:18:        CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/PercentageTrackWidthMultiConverter.cs:71:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/Converters/PercentageTrackWidthMultiConverter.cs:76:                CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/Converters/PercentageToWidthConverter.cs:16:        CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/PercentageToWidthConverter.cs:32:        CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/PercentageToWidthConverter.cs:45:    private static double ReadDouble(object? value, CultureInfo culture)
+src/GlucoDesk.Desktop/Converters/PercentageToWidthConverter.cs:58:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Desktop/Views/Settings/SettingsView.axaml.cs:275:            LocalizationManager.CurrentLanguageCode);
+src/GlucoDesk.Desktop/Views/Settings/SettingsView.axaml.cs:298:        LocalizationManager.SetLanguage(selectedLanguage.Code);
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:348:            GlucoseUnit.MgDl => convertedValue.Amount.ToString("0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:349:            GlucoseUnit.MmolL => convertedValue.Amount.ToString("0.0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:350:            _ => valueMgDl.ToString("0", CultureInfo.InvariantCulture)
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:641:            var label = tick.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:1056:        var timeText = nearestPoint.Source.Timestamp.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:1062:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:1144:                CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:1149:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/Views/Dashboard/Controls/GlucoseTrendChart.cs:1273:            CultureInfo.CurrentCulture,
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:9:    private static string currentLanguageCode = TranslationCatalog.DefaultLanguageCode;
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:19:    public static string CurrentLanguageCode => currentLanguageCode;
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:36:        currentLanguageCode = LanguagePreferenceStore.LoadLanguageCode();
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:37:        ApplyLanguageResources(currentLanguageCode);
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:45:    public static void SetLanguage(string languageCode)
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:49:        var normalizedLanguageCode = TranslationCatalog.NormalizeLanguageCode(languageCode);
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:52:                currentLanguageCode,
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:53:                normalizedLanguageCode,
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:56:            ApplyLanguageResources(currentLanguageCode);
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:60:        currentLanguageCode = normalizedLanguageCode;
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:61:        LanguagePreferenceStore.SaveLanguageCode(currentLanguageCode);
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:62:        ApplyLanguageResources(currentLanguageCode);
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:71:    public static void SetLanguageForCurrentProcess(string languageCode)
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:73:        var normalizedLanguageCode =
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:74:            TranslationCatalog.NormalizeLanguageCode(languageCode);
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:77:            currentLanguageCode,
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:78:            normalizedLanguageCode,
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:81:        currentLanguageCode = normalizedLanguageCode;
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:84:        ApplyLanguageResources(currentLanguageCode);
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:99:        var normalizedLanguageCode = TranslationCatalog.NormalizeLanguageCode(languageCode);
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:104:                    normalizedLanguageCode,
+src/GlucoDesk.Desktop/Localization/LocalizationManager.cs:118:        return TranslationCatalog.Translate(currentLanguageCode, key);
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:11:/// <param name="LanguageCode">
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:16:    string LanguageCode);
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:70:            if (!TryNormalizeSupportedLanguageCode(
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:71:                    preferenceFile?.LanguageCode,
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:79:                LanguageCode: languageCode);
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:101:        if (!TryNormalizeSupportedLanguageCode(
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:103:                out var normalizedLanguageCode))
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:125:                LanguageCode = normalizedLanguageCode
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:151:            LanguageCode: TranslationCatalog.DefaultLanguageCode);
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:154:    private static bool TryNormalizeSupportedLanguageCode(
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:156:        out string normalizedLanguageCode)
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:158:        normalizedLanguageCode =
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:159:            TranslationCatalog.DefaultLanguageCode;
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:166:        var neutralLanguageCode = languageCode
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:175:        if (string.IsNullOrWhiteSpace(neutralLanguageCode))
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:184:                    neutralLanguageCode,
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:192:        normalizedLanguageCode = supportedLanguage.Code;
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:200:        public string? LanguageCode { get; init; }
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:215:    public static string LoadLanguageCode()
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:219:            .LanguageCode;
+src/GlucoDesk.Desktop/Localization/LanguagePreferenceStore.cs:243:    public static void SaveLanguageCode(string languageCode)
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:11:    public const string DefaultLanguageCode = "en";
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:966:    public static string NormalizeLanguageCode(string? languageCode)
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:970:            return DefaultLanguageCode;
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:985:        return DefaultLanguageCode;
+src/GlucoDesk.Desktop/Localization/TranslationCatalog.cs:995:        return NormalizeLanguageCode(languageCode) switch
+src/GlucoDesk.Infrastructure/Cgm/Dexcom/Egvs/Clients/DexcomEgvClient.cs:158:            CultureInfo.InvariantCulture,
+src/GlucoDesk.Infrastructure/Cgm/Dexcom/Egvs/Clients/DexcomEgvClient.cs:179:            .ToString("O", CultureInfo.InvariantCulture);
+src/GlucoDesk.Infrastructure/Cgm/Dexcom/Egvs/Mappers/DexcomEgvMapper.cs:103:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Infrastructure/Cgm/WidgetState/Stores/JsonWidgetStateStore.cs:383:            CultureInfo.InvariantCulture);
+src/GlucoDesk.Infrastructure/Cgm/History/Stores/JsonGlucoseHistoryStore.cs:549:            CultureInfo.InvariantCulture);
+src/GlucoDesk.Infrastructure/Cgm/History/Stores/JsonGlucoseHistoryStore.cs:640:                Timestamp.ToUniversalTime().Ticks.ToString(CultureInfo.InvariantCulture),
+src/GlucoDesk.Infrastructure/Cgm/Nightscout/Clients/NightscoutEntriesClient.cs:123:            new("find[date][$gte]", ToEpochMilliseconds(request.From).ToString(CultureInfo.InvariantCulture)),
+src/GlucoDesk.Infrastructure/Cgm/Nightscout/Clients/NightscoutEntriesClient.cs:124:            new("find[date][$lte]", ToEpochMilliseconds(request.To).ToString(CultureInfo.InvariantCulture)),
+src/GlucoDesk.Infrastructure/Cgm/Nightscout/Clients/NightscoutEntriesClient.cs:125:            new("count", request.Count.ToString(CultureInfo.InvariantCulture))
+src/GlucoDesk.Infrastructure/Cgm/Nightscout/Mappers/NightscoutEntryMapper.cs:90:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Infrastructure/Cgm/Diary/Excel/Services/ClosedXmlGlycemicDiaryExcelExportService.cs:84:                request.LanguageCode);
+src/GlucoDesk.Infrastructure/Cgm/Diary/Pdf/Services/QuestPdfGlycemicDiaryPdfExportService.cs:111:                request.LanguageCode);
+src/GlucoDesk.Infrastructure/Cgm/Diary/Pdf/Services/QuestPdfGlycemicDiaryPdfExportService.cs:462:                WriteMetric(table, "Readings", report.ReadingsCount.ToString(CultureInfo.InvariantCulture));
+src/GlucoDesk.Infrastructure/Cgm/Diary/Pdf/Services/QuestPdfGlycemicDiaryPdfExportService.cs:463:                WriteMetric(table, "Detected gaps", completenessScore.DetectedGapCount.ToString(CultureInfo.InvariantCulture));
+src/GlucoDesk.Infrastructure/Cgm/Diary/Pdf/Services/QuestPdfGlycemicDiaryPdfExportService.cs:464:                WriteMetric(table, "Incomplete days", report.IncompleteDaysCount.ToString(CultureInfo.InvariantCulture));
+src/GlucoDesk.Infrastructure/Cgm/Diary/Pdf/Services/QuestPdfGlycemicDiaryPdfExportService.cs:465:                WriteMetric(table, "Empty days", report.EmptyDaysCount.ToString(CultureInfo.InvariantCulture));
+src/GlucoDesk.Infrastructure/Cgm/Diary/Pdf/Services/QuestPdfGlycemicDiaryPdfExportService.cs:1100:                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.GapCount.ToString(CultureInfo.InvariantCulture));
+src/GlucoDesk.Infrastructure/Cgm/Diary/Pdf/Services/QuestPdfGlycemicDiaryPdfExportService.cs:1306:            GlucoseUnit.MgDl => convertedValue.Value.ToString("0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Infrastructure/Cgm/Diary/Pdf/Services/QuestPdfGlycemicDiaryPdfExportService.cs:1307:            GlucoseUnit.MmolL => convertedValue.Value.ToString("0.0", CultureInfo.InvariantCulture),
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:18:    private const string DefaultLanguageCode = "en";
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:20:    private static readonly AsyncLocal<string?> CurrentLanguageCode = new();
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:22:    private static readonly CultureInfo EnglishCulture =
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:23:        CultureInfo.GetCultureInfo("en-US");
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:25:    private static readonly CultureInfo ItalianCulture =
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:26:        CultureInfo.GetCultureInfo("it-IT");
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:232:        var previousLanguageCode = CurrentLanguageCode.Value;
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:233:        CurrentLanguageCode.Value = NormalizeLanguageCode(languageCode);
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:235:        return new LocalizationScope(previousLanguageCode);
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:243:            CurrentLanguageCode.Value,
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:250:    public static CultureInfo Culture =>
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:849:    private static string NormalizeLanguageCode(string? languageCode)
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:853:            return DefaultLanguageCode;
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:862:            : DefaultLanguageCode;
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:867:        private readonly string? _previousLanguageCode;
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:870:        public LocalizationScope(string? previousLanguageCode)
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:872:            _previousLanguageCode = previousLanguageCode;
+src/GlucoDesk.Infrastructure/Cgm/Diary/Localization/GlycemicDiaryExportLocalizer.cs:882:            CurrentLanguageCode.Value = _previousLanguageCode;
+src/GlucoDesk.Infrastructure/Cgm/DexcomShare/Mapping/DexcomShareGlucoseValueMapper.cs:225:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Infrastructure/Cgm/DexcomShare/Mapping/DexcomShareGlucoseValueMapper.cs:247:                CultureInfo.InvariantCulture,
+src/GlucoDesk.Infrastructure/Cgm/DexcomShare/Mapping/DexcomShareGlucoseValueMapper.cs:256:                CultureInfo.InvariantCulture,
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:28:            suggestedLanguageCode: "en",
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:51:            suggestedLanguageCode: "it-IT",
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:55:        Assert.Equal("Italiano", viewModel.SelectedLanguageName);
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:66:            suggestedLanguageCode: "en",
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:96:            suggestedLanguageCode: "it",
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:101:            completedLanguage = eventArgs.LanguageCode;
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:117:            suggestedLanguageCode: "it",
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:140:        string suggestedLanguageCode,
+tests/GlucoDesk.Desktop.Tests/ViewModels/Onboarding/LanguageOnboardingViewModelTests.cs:146:            suggestedLanguageCode,
+tests/GlucoDesk.Desktop.Tests/Converters/WidthThresholdConvertersTests.cs:24:            CultureInfo.InvariantCulture);
+tests/GlucoDesk.Desktop.Tests/Converters/WidthThresholdConvertersTests.cs:44:            CultureInfo.InvariantCulture);
+tests/GlucoDesk.Desktop.Tests/Converters/WidthThresholdConvertersTests.cs:54:            CultureInfo.InvariantCulture);
+tests/GlucoDesk.Desktop.Tests/Converters/WidthThresholdConvertersTests.cs:68:            CultureInfo.InvariantCulture);
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs:19:        Assert.Equal("en", result.LanguageCode);
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs:34:              "LanguageCode": "it"
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs:43:        Assert.Equal("it", result.LanguageCode);
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs:59:              "LanguageCode": "fr"
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs:68:        Assert.Equal("en", result.LanguageCode);
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs:88:        Assert.Equal("en", result.LanguageCode);
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs:106:        Assert.Equal("it", result.LanguageCode);
+tests/GlucoDesk.Desktop.Tests/Localization/LanguagePreferenceFileStoreTests.cs:126:                .GetProperty("LanguageCode")
+tests/GlucoDesk.Desktop.Tests/Localization/EnglishLocalizationTestBase.cs:18:        LocalizationManager.SetLanguageForCurrentProcess("en");
+tests/GlucoDesk.Desktop.Tests/Localization/TranslationCatalogTests.cs:33:    public void NormalizeLanguageCode_ShouldReturnSupportedLanguageCode(
+tests/GlucoDesk.Desktop.Tests/Localization/TranslationCatalogTests.cs:35:        string expectedLanguageCode)
+tests/GlucoDesk.Desktop.Tests/Localization/TranslationCatalogTests.cs:38:        var normalizedLanguageCode = TranslationCatalog.NormalizeLanguageCode(languageCode);
+tests/GlucoDesk.Desktop.Tests/Localization/TranslationCatalogTests.cs:41:        Assert.Equal(expectedLanguageCode, normalizedLanguageCode);
+
+===== APPLICATION SETTINGS MODEL =====
+using GlucoDesk.Core.Glucose.Enums;
+
+namespace GlucoDesk.Application.Settings.Models;
+
+/// <summary>
+/// Represents user-configurable GlucoDesk application settings.
+/// </summary>
+public sealed record ApplicationSettings
+{
+    /// <summary>
+    /// Gets the minimum supported glucose alert repeat interval.
+    /// </summary>
+    public static readonly TimeSpan MinimumGlucoseAlertRepeatInterval = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Gets the maximum supported glucose alert repeat interval.
+    /// </summary>
+    public static readonly TimeSpan MaximumGlucoseAlertRepeatInterval = TimeSpan.FromMinutes(180);
+
+    /// <summary>
+    /// Gets the default glucose alert repeat interval.
+    /// </summary>
+    public static readonly TimeSpan DefaultGlucoseAlertRepeatInterval = TimeSpan.FromMinutes(30);
+
+    /// <summary>
+    /// The minimum number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    public const int MinimumGlucoseAlertRequiredConsecutiveReadings = 1;
+
+    /// <summary>
+    /// The maximum number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    public const int MaximumGlucoseAlertRequiredConsecutiveReadings = 5;
+
+    /// <summary>
+    /// The default number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    public const int DefaultGlucoseAlertRequiredConsecutiveReadings = 2;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApplicationSettings"/> class.
+    /// </summary>
+    /// <param name="activeLiveProvider">The active live CGM provider.</param>
+    /// <param name="historicalProvider">The active historical CGM provider.</param>
+    /// <param name="preferredUnit">The preferred glucose display unit.</param>
+    /// <param name="targetLowMgDl">The lower glucose target expressed in mg/dL.</param>
+    /// <param name="targetHighMgDl">The upper glucose target expressed in mg/dL.</param>
+    /// <param name="dashboardRefreshInterval">The dashboard refresh interval.</param>
+    /// <param name="chartMaximumMgDl">The maximum chart value expressed in mg/dL.</param>
+    /// <param name="glucoseAlertsEnabled">A value indicating whether in-app glucose awareness alerts are enabled.</param>
+    /// <param name="lowGlucoseAlertsEnabled">A value indicating whether below-target glucose awareness alerts are enabled.</param>
+    /// <param name="highGlucoseAlertsEnabled">A value indicating whether above-target glucose awareness alerts are enabled.</param>
+    /// <param name="nativeGlucoseNotificationsEnabled">A value indicating whether native OS glucose awareness notifications are enabled.</param>
+    /// <param name="glucoseAlertPrivacyModeEnabled">A value indicating whether alert messages should hide glucose values.</param>
+    /// <param name="glucoseAlertRepeatInterval">The minimum repeat interval for repeated native notifications of the same condition.</param>
+    /// <param name="glucoseAlertRequiredConsecutiveReadings">The number of consecutive out-of-range readings required before showing a glucose alert.</param>
+    /// <exception cref="ArgumentException">Thrown when provider or unit values are invalid.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when target range, refresh interval, chart maximum or notification interval values are invalid.</exception>
+    public ApplicationSettings(
+        CgmProviderKind activeLiveProvider = CgmProviderKind.Mock,
+        CgmProviderKind historicalProvider = CgmProviderKind.Mock,
+        GlucoseUnit preferredUnit = GlucoseUnit.MgDl,
+        int targetLowMgDl = 70,
+        int targetHighMgDl = 180,
+        TimeSpan? dashboardRefreshInterval = null,
+        int chartMaximumMgDl = 300,
+        bool glucoseAlertsEnabled = true,
+        bool lowGlucoseAlertsEnabled = true,
+        bool highGlucoseAlertsEnabled = true,
+        bool nativeGlucoseNotificationsEnabled = false,
+        bool glucoseAlertPrivacyModeEnabled = true,
+        TimeSpan? glucoseAlertRepeatInterval = null,
+        int glucoseAlertRequiredConsecutiveReadings = DefaultGlucoseAlertRequiredConsecutiveReadings)
+    {
+        var effectiveDashboardRefreshInterval = dashboardRefreshInterval ?? TimeSpan.FromSeconds(30);
+        var effectiveGlucoseAlertRepeatInterval = glucoseAlertRepeatInterval ?? DefaultGlucoseAlertRepeatInterval;
+
+        if (activeLiveProvider == CgmProviderKind.Unknown)
+        {
+            throw new ArgumentException("Active live provider must be specified.", nameof(activeLiveProvider));
+        }
+
+        if (historicalProvider == CgmProviderKind.Unknown)
+        {
+            throw new ArgumentException("Historical provider must be specified.", nameof(historicalProvider));
+        }
+
+        if (!Enum.IsDefined(preferredUnit))
+        {
+            throw new ArgumentException("Preferred glucose unit is not valid.", nameof(preferredUnit));
+        }
+
+        if (targetLowMgDl <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(targetLowMgDl),
+                targetLowMgDl,
+                "Target low value must be greater than zero.");
+        }
+
+        if (targetHighMgDl <= targetLowMgDl)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(targetHighMgDl),
+                targetHighMgDl,
+                "Target high value must be greater than target low value.");
+        }
+
+        if (effectiveDashboardRefreshInterval <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(dashboardRefreshInterval),
+                dashboardRefreshInterval,
+                "Dashboard refresh interval must be greater than zero.");
+        }
+
+        if (chartMaximumMgDl is not 300 and not 400)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(chartMaximumMgDl),
+                chartMaximumMgDl,
+                "Chart maximum value must be either 300 or 400 mg/dL.");
+        }
+
+        if (effectiveGlucoseAlertRepeatInterval < MinimumGlucoseAlertRepeatInterval ||
+            effectiveGlucoseAlertRepeatInterval > MaximumGlucoseAlertRepeatInterval)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(glucoseAlertRepeatInterval),
+                glucoseAlertRepeatInterval,
+                "Glucose alert repeat interval must be between 5 and 180 minutes.");
+        }
+
+        ActiveLiveProvider = activeLiveProvider;
+        HistoricalProvider = historicalProvider;
+        PreferredUnit = preferredUnit;
+        TargetLowMgDl = targetLowMgDl;
+        TargetHighMgDl = targetHighMgDl;
+        DashboardRefreshInterval = effectiveDashboardRefreshInterval;
+        ChartMaximumMgDl = chartMaximumMgDl;
+        GlucoseAlertsEnabled = glucoseAlertsEnabled;
+        LowGlucoseAlertsEnabled = lowGlucoseAlertsEnabled;
+        HighGlucoseAlertsEnabled = highGlucoseAlertsEnabled;
+        NativeGlucoseNotificationsEnabled = nativeGlucoseNotificationsEnabled;
+        GlucoseAlertPrivacyModeEnabled = glucoseAlertPrivacyModeEnabled;
+        GlucoseAlertRepeatInterval = effectiveGlucoseAlertRepeatInterval;
+    
+        GlucoseAlertRequiredConsecutiveReadings = NormalizeGlucoseAlertRequiredConsecutiveReadings(
+            glucoseAlertRequiredConsecutiveReadings);
+}
+
+    /// <summary>
+    /// Gets the default application settings.
+    /// </summary>
+    public static ApplicationSettings Default { get; } = new();
+
+    /// <summary>
+    /// Gets the active live CGM provider.
+    /// </summary>
+    public CgmProviderKind ActiveLiveProvider { get; }
+
+    /// <summary>
+    /// Gets the active historical CGM provider.
+    /// </summary>
+    public CgmProviderKind HistoricalProvider { get; }
+
+    /// <summary>
+    /// Gets the preferred glucose display unit.
+    /// </summary>
+    public GlucoseUnit PreferredUnit { get; }
+
+    /// <summary>
+    /// Gets the lower glucose target expressed in mg/dL.
+    /// </summary>
+    public int TargetLowMgDl { get; }
+
+    /// <summary>
+    /// Gets the upper glucose target expressed in mg/dL.
+    /// </summary>
+    public int TargetHighMgDl { get; }
+
+    /// <summary>
+    /// Gets the dashboard refresh interval.
+    /// </summary>
+    public TimeSpan DashboardRefreshInterval { get; }
+
+    /// <summary>
+    /// Gets the maximum chart value expressed in mg/dL.
+    /// </summary>
+    public int ChartMaximumMgDl { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether in-app glucose awareness alerts are enabled.
+    /// </summary>
+    public bool GlucoseAlertsEnabled { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether below-target glucose awareness alerts are enabled.
+    /// </summary>
+    public bool LowGlucoseAlertsEnabled { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether above-target glucose awareness alerts are enabled.
+    /// </summary>
+    public bool HighGlucoseAlertsEnabled { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether native OS glucose awareness notifications are enabled.
+    /// </summary>
+    public bool NativeGlucoseNotificationsEnabled { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether alert messages should hide glucose values.
+    /// </summary>
+    public bool GlucoseAlertPrivacyModeEnabled { get; }
+
+    /// <summary>
+    /// Gets the minimum repeat interval for repeated native notifications of the same condition.
+    /// </summary>
+    public TimeSpan GlucoseAlertRepeatInterval { get; }
+
+    /// <summary>
+    /// Gets the number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    public int GlucoseAlertRequiredConsecutiveReadings { get; }
+    /// <summary>
+    /// Normalizes and validates the number of consecutive out-of-range readings required before showing a glucose alert.
+    /// </summary>
+    /// <param name="requiredConsecutiveReadings">The required consecutive readings.</param>
+    /// <returns>The validated required consecutive readings.</returns>
+    private static int NormalizeGlucoseAlertRequiredConsecutiveReadings(int requiredConsecutiveReadings)
+    {
+        if (requiredConsecutiveReadings is < MinimumGlucoseAlertRequiredConsecutiveReadings or > MaximumGlucoseAlertRequiredConsecutiveReadings)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(requiredConsecutiveReadings),
+                requiredConsecutiveReadings,
+                $"Glucose alert stability must be between {MinimumGlucoseAlertRequiredConsecutiveReadings} and {MaximumGlucoseAlertRequiredConsecutiveReadings} consecutive readings.");
+        }
+
+        return requiredConsecutiveReadings;
+    }
+
+}
+
+===== SETTINGS STORE =====
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using GlucoDesk.Application.Common.Errors;
+using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Application.Settings.Abstractions;
+using GlucoDesk.Application.Settings.Models;
+using GlucoDesk.Core.Glucose.Enums;
+using GlucoDesk.Infrastructure.Settings.Options;
+
+namespace GlucoDesk.Infrastructure.Settings.Stores;
+
+/// <summary>
+/// Stores GlucoDesk application settings in a local JSON file.
+/// </summary>
+public sealed class JsonApplicationSettingsStore : IApplicationSettingsStore
+{
+    private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
+
+    private readonly LocalSettingsStorageOptions _options;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonApplicationSettingsStore"/> class.
+    /// </summary>
+    /// <param name="options">The local settings storage options.</param>
+    public JsonApplicationSettingsStore(LocalSettingsStorageOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        _options = options;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<ApplicationSettings>> LoadAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!File.Exists(_options.SettingsFilePath))
+            {
+                return Result<ApplicationSettings>.Success(ApplicationSettings.Default);
+            }
+
+            await using var stream = File.OpenRead(_options.SettingsFilePath);
+
+            var document = await JsonSerializer
+                .DeserializeAsync<ApplicationSettingsDocument>(stream, SerializerOptions, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (document is null)
+            {
+                return Result<ApplicationSettings>.Failure(
+                    new Error("Settings.EmptyFile", "The settings file is empty or invalid."));
+            }
+
+            return Result<ApplicationSettings>.Success(document.ToApplicationSettings());
+        }
+        catch (JsonException)
+        {
+            return Result<ApplicationSettings>.Failure(
+                new Error("Settings.InvalidFormat", "The settings file contains invalid JSON."));
+        }
+        catch (ArgumentException)
+        {
+            return Result<ApplicationSettings>.Failure(
+                new Error("Settings.InvalidContent", "The settings file contains invalid settings values."));
+        }
+        catch (Exception exception) when (IsStorageException(exception))
+        {
+            return Result<ApplicationSettings>.Failure(
+                new Error("Settings.LoadFailed", "Unable to load the settings file."));
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<Result> SaveAsync(
+        ApplicationSettings settings,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        try
+        {
+            EnsureSettingsDirectoryExists(_options.SettingsFilePath);
+
+            var temporaryFilePath = BuildTemporaryFilePath(_options.SettingsFilePath);
+            var document = ApplicationSettingsDocument.FromApplicationSettings(settings);
+
+            await using (var stream = File.Create(temporaryFilePath))
+            {
+                await JsonSerializer
+                    .SerializeAsync(stream, document, SerializerOptions, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            File.Move(temporaryFilePath, _options.SettingsFilePath, overwrite: true);
+
+            return Result.Success();
+        }
+        catch (Exception exception) when (IsStorageException(exception))
+        {
+            return Result.Failure(
+                new Error("Settings.SaveFailed", "Unable to save the settings file."));
+        }
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Creates JSON serializer options used by the settings store.
+    /// </summary>
+    /// <returns>The JSON serializer options.</returns>
+    private static JsonSerializerOptions CreateSerializerOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true
+        };
+
+        options.Converters.Add(new JsonStringEnumConverter<CgmProviderKind>());
+        options.Converters.Add(new JsonStringEnumConverter<GlucoseUnit>());
+
+        return options;
+    }
+
+    /// <summary>
+    /// Ensures the settings directory exists.
+    /// </summary>
+    /// <param name="settingsFilePath">The settings file path.</param>
+    private static void EnsureSettingsDirectoryExists(string settingsFilePath)
+    {
+        var directoryPath = Path.GetDirectoryName(settingsFilePath);
+
+        if (string.IsNullOrWhiteSpace(directoryPath))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(directoryPath);
+    }
+
+    /// <summary>
+    /// Builds a temporary file path used for atomic settings writes.
+    /// </summary>
+    /// <param name="settingsFilePath">The final settings file path.</param>
+    /// <returns>The temporary settings file path.</returns>
+    private static string BuildTemporaryFilePath(string settingsFilePath)
+    {
+        return $"{settingsFilePath}.{Guid.NewGuid():N}.tmp";
+    }
+
+    /// <summary>
+    /// Returns whether the exception is related to local storage access.
+    /// </summary>
+    /// <param name="exception">The exception to evaluate.</param>
+    /// <returns>True when the exception is storage-related; otherwise false.</returns>
+    private static bool IsStorageException(Exception exception)
+    {
+        return exception is IOException or UnauthorizedAccessException or NotSupportedException;
+    }
+
+    #endregion
+
+    private sealed record ApplicationSettingsDocument
+    {
+        /// <summary>
+        /// Gets the active live CGM provider.
+        /// </summary>
+        public CgmProviderKind ActiveLiveProvider { get; init; } = CgmProviderKind.Mock;
+
+        /// <summary>
+        /// Gets the active historical CGM provider.
+        /// </summary>
+        public CgmProviderKind HistoricalProvider { get; init; } = CgmProviderKind.Mock;
+
+        /// <summary>
+        /// Gets the preferred glucose display unit.
+        /// </summary>
+        public GlucoseUnit PreferredUnit { get; init; } = GlucoseUnit.MgDl;
+
+        /// <summary>
+        /// Gets the lower glucose target expressed in mg/dL.
+        /// </summary>
+        public int TargetLowMgDl { get; init; } = 70;
+
+        /// <summary>
+        /// Gets the upper glucose target expressed in mg/dL.
+        /// </summary>
+        public int TargetHighMgDl { get; init; } = 180;
+
+        /// <summary>
+        /// Gets the maximum chart value expressed in mg/dL.
+        /// </summary>
+        public int ChartMaximumMgDl { get; init; } = 300;
+
+        /// <summary>
+        /// Gets the dashboard refresh interval.
+        /// </summary>
+        public TimeSpan DashboardRefreshInterval { get; init; } = TimeSpan.FromSeconds(30);
+
+        /// <summary>
+        /// Gets a value indicating whether in-app glucose awareness alerts are enabled.
+        /// </summary>
+        public bool GlucoseAlertsEnabled { get; init; } = true;
+
+        /// <summary>
+        /// Gets a value indicating whether below-target glucose awareness alerts are enabled.
+        /// </summary>
+        public bool LowGlucoseAlertsEnabled { get; init; } = true;
+
+        /// <summary>
+        /// Gets a value indicating whether above-target glucose awareness alerts are enabled.
+        /// </summary>
+        public bool HighGlucoseAlertsEnabled { get; init; } = true;
+
+        /// <summary>
+        /// Gets a value indicating whether native OS glucose awareness notifications are enabled.
+        /// </summary>
+        public bool NativeGlucoseNotificationsEnabled { get; init; }
+
+        /// <summary>
+        /// Gets a value indicating whether glucose alert privacy mode is enabled.
+        /// </summary>
+        public bool GlucoseAlertPrivacyModeEnabled { get; init; } = true;
+
+        /// <summary>
+        /// Gets the glucose alert repeat interval.
+        /// </summary>
+        public TimeSpan GlucoseAlertRepeatInterval { get; init; } =
+            ApplicationSettings.DefaultGlucoseAlertRepeatInterval;
+
+        /// <summary>
+        /// Gets the number of consecutive out-of-range readings required before showing a glucose alert.
+        /// </summary>
+        public int GlucoseAlertRequiredConsecutiveReadings { get; init; } =
+            ApplicationSettings.DefaultGlucoseAlertRequiredConsecutiveReadings;
+
+        /// <summary>
+        /// Creates a settings document from application settings.
+        /// </summary>
+        /// <param name="settings">The application settings.</param>
+        /// <returns>The settings document.</returns>
+        public static ApplicationSettingsDocument FromApplicationSettings(ApplicationSettings settings)
+        {
+            ArgumentNullException.ThrowIfNull(settings);
+
+            return new ApplicationSettingsDocument
+            {
+                ActiveLiveProvider = settings.ActiveLiveProvider,
+                HistoricalProvider = settings.HistoricalProvider,
+                PreferredUnit = settings.PreferredUnit,
+                TargetLowMgDl = settings.TargetLowMgDl,
+                TargetHighMgDl = settings.TargetHighMgDl,
+                DashboardRefreshInterval = settings.DashboardRefreshInterval,
+                ChartMaximumMgDl = settings.ChartMaximumMgDl,
+                GlucoseAlertsEnabled = settings.GlucoseAlertsEnabled,
+                LowGlucoseAlertsEnabled = settings.LowGlucoseAlertsEnabled,
+                HighGlucoseAlertsEnabled = settings.HighGlucoseAlertsEnabled,
+                NativeGlucoseNotificationsEnabled = settings.NativeGlucoseNotificationsEnabled,
+                GlucoseAlertPrivacyModeEnabled = settings.GlucoseAlertPrivacyModeEnabled,
+                GlucoseAlertRepeatInterval = settings.GlucoseAlertRepeatInterval,
+                GlucoseAlertRequiredConsecutiveReadings = settings.GlucoseAlertRequiredConsecutiveReadings
+            };
+        }
+
+        /// <summary>
+        /// Converts the settings document to application settings.
+        /// </summary>
+        /// <returns>The application settings.</returns>
+        public ApplicationSettings ToApplicationSettings()
+        {
+            return new ApplicationSettings(
+                activeLiveProvider: ActiveLiveProvider,
+                historicalProvider: HistoricalProvider,
+                preferredUnit: PreferredUnit,
+                targetLowMgDl: TargetLowMgDl,
+                targetHighMgDl: TargetHighMgDl,
+                dashboardRefreshInterval: DashboardRefreshInterval,
+                chartMaximumMgDl: NormalizeChartMaximumMgDl(ChartMaximumMgDl),
+                glucoseAlertsEnabled: GlucoseAlertsEnabled,
+                lowGlucoseAlertsEnabled: LowGlucoseAlertsEnabled,
+                highGlucoseAlertsEnabled: HighGlucoseAlertsEnabled,
+                nativeGlucoseNotificationsEnabled: NativeGlucoseNotificationsEnabled,
+                glucoseAlertPrivacyModeEnabled: GlucoseAlertPrivacyModeEnabled,
+                glucoseAlertRepeatInterval: NormalizeGlucoseAlertRepeatInterval(GlucoseAlertRepeatInterval),
+                glucoseAlertRequiredConsecutiveReadings: NormalizeGlucoseAlertRequiredConsecutiveReadings(
+                    GlucoseAlertRequiredConsecutiveReadings));
+        }
+
+        /// <summary>
+        /// Normalizes persisted chart maximum values to supported options.
+        /// </summary>
+        /// <param name="chartMaximumMgDl">The persisted chart maximum value.</param>
+        /// <returns>The normalized chart maximum value.</returns>
+        private static int NormalizeChartMaximumMgDl(int chartMaximumMgDl)
+        {
+            return chartMaximumMgDl is 400
+                ? 400
+                : 300;
+        }
+
+        /// <summary>
+        /// Normalizes persisted glucose alert repeat intervals to supported options.
+        /// </summary>
+        /// <param name="repeatInterval">The persisted repeat interval.</param>
+        /// <returns>The normalized repeat interval.</returns>
+        private static TimeSpan NormalizeGlucoseAlertRepeatInterval(TimeSpan repeatInterval)
+        {
+            if (repeatInterval < ApplicationSettings.MinimumGlucoseAlertRepeatInterval ||
+                repeatInterval > ApplicationSettings.MaximumGlucoseAlertRepeatInterval)
+            {
+                return ApplicationSettings.DefaultGlucoseAlertRepeatInterval;
+            }
+
+            return repeatInterval;
+        }
+
+        /// <summary>
+        /// Normalizes the persisted glucose alert stability value.
+        /// </summary>
+        /// <param name="requiredConsecutiveReadings">The persisted required consecutive readings.</param>
+        /// <returns>The normalized required consecutive readings.</returns>
+        private static int NormalizeGlucoseAlertRequiredConsecutiveReadings(int requiredConsecutiveReadings)
+        {
+            if (requiredConsecutiveReadings is < ApplicationSettings.MinimumGlucoseAlertRequiredConsecutiveReadings or > ApplicationSettings.MaximumGlucoseAlertRequiredConsecutiveReadings)
+            {
+                return ApplicationSettings.DefaultGlucoseAlertRequiredConsecutiveReadings;
+            }
+
+            return requiredConsecutiveReadings;
+        }
+    }
+}
+
+===== MAIN WINDOW FILES =====
+
+===== src/GlucoDesk.Desktop/ViewModels/Main/MainWindowViewModel.cs =====
+using System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
+using GlucoDesk.Desktop.ViewModels.Account;
+using GlucoDesk.Desktop.ViewModels.BackgroundSync;
+using GlucoDesk.Desktop.ViewModels.Common;
+using GlucoDesk.Desktop.ViewModels.Dashboard;
+using GlucoDesk.Desktop.ViewModels.Diary;
+using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Desktop.Localization;
+
+namespace GlucoDesk.Desktop.ViewModels.Main;
+
+/// <summary>
+/// Represents the main window view model.
+/// </summary>
+public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
+{
+    private bool _isDisposed;
+
+    [ObservableProperty]
+    private ViewModelBase _currentContent = null!;
+
+    [ObservableProperty]
+    private bool _isDashboardSelected;
+
+    [ObservableProperty]
+    private bool _isDiarySelected;
+
+    [ObservableProperty]
+    private bool _isAccountSelected;
+
+    [ObservableProperty]
+    private bool _isSettingsSelected;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
+    /// </summary>
+    /// <param name="dashboard">The dashboard view model.</param>
+    /// <param name="account">The account view model.</param>
+    /// <param name="settings">The settings view model.</param>
+    /// <param name="backgroundSyncStatus">The background sync status view model.</param>
+    /// <param name="diary">The diary view model.</param>
+    /// <param name="historyContinuitySyncStatus">The history continuity synchronization status ViewModel.</param>
+    public MainWindowViewModel(
+        DashboardViewModel dashboard,
+        AccountViewModel account,
+        SettingsViewModel settings,
+        BackgroundSyncStatusViewModel backgroundSyncStatus,
+        DiaryViewModel diary,
+        DesktopHistoryContinuitySyncStatusViewModel historyContinuitySyncStatus)
+    {
+        ArgumentNullException.ThrowIfNull(dashboard);
+        ArgumentNullException.ThrowIfNull(account);
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(backgroundSyncStatus);
+        ArgumentNullException.ThrowIfNull(diary);
+        ArgumentNullException.ThrowIfNull(historyContinuitySyncStatus);
+
+        Dashboard = dashboard;
+        Account = account;
+        Settings = settings;
+        BackgroundSyncStatus = backgroundSyncStatus;
+        Diary = diary;
+        HistoryContinuitySyncStatus = historyContinuitySyncStatus;
+
+        BackgroundSyncStatus.PropertyChanged += OnBackgroundSyncStatusPropertyChanged;
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
+
+        SelectSection(Dashboard);
+    }
+
+    /// <summary>
+    /// Gets the dashboard view model.
+    /// </summary>
+    public DashboardViewModel Dashboard { get; }
+
+    /// <summary>
+    /// Gets the account view model.
+    /// </summary>
+    public AccountViewModel Account { get; }
+
+    /// <summary>
+    /// Gets the settings view model.
+    /// </summary>
+    public SettingsViewModel Settings { get; }
+
+    /// <summary>
+    /// Gets the background sync status view model.
+    /// </summary>
+    public BackgroundSyncStatusViewModel BackgroundSyncStatus { get; }
+
+    /// <summary>
+    /// Gets the diary view model.
+    /// </summary>
+    public DiaryViewModel Diary { get; }
+
+    /// <summary>
+    /// Gets the history continuity synchronization status ViewModel.
+    /// </summary>
+    public DesktopHistoryContinuitySyncStatusViewModel HistoryContinuitySyncStatus { get; }
+
+    /// <summary>
+    /// Gets the consumer-facing local history status text.
+    /// </summary>
+    public string LocalHistoryStatusText =>
+        BackgroundSyncStatus.HasSuccessfulSync
+            ? T("SidebarLocalHistoryUpToDate")
+            : BackgroundSyncStatus.StatusText;
+
+    /// <summary>
+    /// Gets the consumer-facing local history badge text.
+    /// </summary>
+    public string LocalHistoryBadgeText =>
+        BackgroundSyncStatus.HasSuccessfulSync
+            ? T("SidebarLocalHistorySynced")
+            : T("SidebarLocalHistoryUpdating");
+
+    /// <summary>
+    /// Gets the consumer-facing local history description text.
+    /// </summary>
+    public string LocalHistoryDescriptionText =>
+        T("SidebarLocalHistoryDescription");
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        BackgroundSyncStatus.PropertyChanged -=
+            OnBackgroundSyncStatusPropertyChanged;
+
+        LocalizationManager.LanguageChanged -= OnLanguageChanged;
+
+        _isDisposed = true;
+    }
+
+    /// <summary>
+    /// Selects the dashboard section.
+    /// </summary>
+    [RelayCommand]
+    private void ShowDashboard()
+    {
+        SelectSection(Dashboard);
+    }
+
+    /// <summary>
+    /// Selects the diary section.
+    /// </summary>
+    [RelayCommand]
+    private void ShowDiary()
+    {
+        SelectSection(Diary);
+    }
+
+    /// <summary>
+    /// Selects the account section.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private async Task ShowAccountAsync(CancellationToken cancellationToken)
+    {
+        await Account.LoadAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        SelectSection(Account);
+    }
+
+    /// <summary>
+    /// Selects the settings section.
+    /// </summary>
+    [RelayCommand]
+    private void ShowSettings()
+    {
+        SelectSection(Settings);
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Handles background sync status changes and refreshes consumer-facing sidebar properties.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="eventArgs">The property changed event arguments.</param>
+    private void OnBackgroundSyncStatusPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs eventArgs)
+    {
+        if (eventArgs.PropertyName is null ||
+            eventArgs.PropertyName == nameof(BackgroundSyncStatusViewModel.HasSuccessfulSync) ||
+            eventArgs.PropertyName == nameof(BackgroundSyncStatusViewModel.StatusText))
+        {
+            OnPropertyChanged(nameof(LocalHistoryStatusText));
+            OnPropertyChanged(nameof(LocalHistoryBadgeText));
+        }
+    }
+
+    /// <summary>
+    /// Refreshes localized sidebar values when the application language changes.
+    /// </summary>
+    private void OnLanguageChanged(object? sender, EventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        OnPropertyChanged(nameof(LocalHistoryStatusText));
+        OnPropertyChanged(nameof(LocalHistoryBadgeText));
+        OnPropertyChanged(nameof(LocalHistoryDescriptionText));
+    }
+
+    /// <summary>
+    /// Selects the active main window section and updates navigation state.
+    /// </summary>
+    /// <param name="selectedContent">The selected content view model.</param>
+    private void SelectSection(ViewModelBase selectedContent)
+    {
+        ArgumentNullException.ThrowIfNull(selectedContent);
+
+        CurrentContent = selectedContent;
+        IsDashboardSelected = ReferenceEquals(selectedContent, Dashboard);
+        IsDiarySelected = ReferenceEquals(selectedContent, Diary);
+        IsAccountSelected = ReferenceEquals(selectedContent, Account);
+        IsSettingsSelected = ReferenceEquals(selectedContent, Settings);
+    }
+
+    private static string T(string key)
+    {
+        return LocalizationManager.GetString(key);
+    }
+
+    #endregion
+}
+===== src/GlucoDesk.Desktop/Views/Main/MainWindow.axaml =====
+<Window
+    x:Class="GlucoDesk.Desktop.Views.Main.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:accountViews="clr-namespace:GlucoDesk.Desktop.Views.Account"
+    xmlns:accountViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Account"
+    xmlns:dashboardViews="clr-namespace:GlucoDesk.Desktop.Views.Dashboard"
+    xmlns:dashboardViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Dashboard"
+    xmlns:diaryViews="clr-namespace:GlucoDesk.Desktop.Views.Diary"
+    xmlns:diaryViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Diary"
+    xmlns:settingsViews="clr-namespace:GlucoDesk.Desktop.Views.Settings"
+    xmlns:settingsViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Settings"
+    Title="GlucoDesk"
+    Width="1280"
+    Height="820"
+    MinWidth="1180"
+    MinHeight="760"
+    Background="{StaticResource GlucoDesk.Brush.AppBackground}">
+
+  <Window.DataTemplates>
+    <DataTemplate DataType="{x:Type dashboardViewModels:DashboardViewModel}">
+      <dashboardViews:DashboardView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type diaryViewModels:DiaryViewModel}">
+      <diaryViews:DiaryView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type accountViewModels:AccountViewModel}">
+      <accountViews:AccountView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type settingsViewModels:SettingsViewModel}">
+      <settingsViews:SettingsView />
+    </DataTemplate>
+  </Window.DataTemplates>
+
+  <Grid ColumnDefinitions="280,*"
+        Background="{StaticResource GlucoDesk.Brush.AppBackground}">
+
+    <Border Grid.Column="0"
+            Classes="app-sidebar"
+            Padding="22">
+
+      <Grid RowDefinitions="Auto,*,Auto">
+
+        <StackPanel Grid.Row="0"
+                    Spacing="24">
+
+          <StackPanel Spacing="10">
+            <Image Source="avares://GlucoDesk.Desktop/Assets/Brand/glucodesk-wordmark-removebg-preview.png"
+                   Width="228"
+                   Height="64"
+                   Stretch="Uniform"
+                   HorizontalAlignment="Left"
+                   Margin="0,2,0,0" />
+
+            <TextBlock Text="{DynamicResource SidebarSubtitle}"
+                       Classes="sidebar-subtitle"
+                       Margin="4,0,0,0" />
+          </StackPanel>
+
+          <StackPanel Spacing="10">
+            <Button Content="{DynamicResource NavDashboard}"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsDashboardSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowDashboardCommand}" />
+
+            <Button Content="{DynamicResource NavDiary}"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsDiarySelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowDiaryCommand}" />
+
+            <Button Content="{DynamicResource NavAccount}"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsAccountSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowAccountCommand}" />
+
+            <Button Content="{DynamicResource NavSettings}"
+                    Classes="nav-button"
+                    Classes.accent="{Binding IsSettingsSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowSettingsCommand}" />
+          </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2"
+                    Spacing="14"
+                    VerticalAlignment="Bottom">
+
+          <Border Padding="18"
+                  CornerRadius="20"
+                  BorderThickness="1"
+                  BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                  Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+            <StackPanel Spacing="8">
+
+              <Grid ColumnDefinitions="*,Auto"
+                    ColumnSpacing="12">
+                <StackPanel Spacing="3">
+                  <TextBlock Text="{DynamicResource SidebarLocalHistoryTitle}"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+                  <TextBlock Text="{Binding LocalHistoryStatusText}"
+                             FontSize="13"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Classes="badge"
+                        VerticalAlignment="Top">
+                  <TextBlock Text="{Binding LocalHistoryBadgeText}"
+                             FontSize="12"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+                </Border>
+              </Grid>
+
+              <TextBlock Text="{Binding LocalHistoryDescriptionText}"
+                         TextWrapping="Wrap"
+                         Classes="sidebar-note" />
+
+              <TextBlock Text="{Binding BackgroundSyncStatus.LastUpdateText}"
+                         Classes="sync-status-meta"
+                         IsVisible="{Binding BackgroundSyncStatus.HasSuccessfulSync}"
+                         TextWrapping="Wrap" />
+
+            </StackPanel>
+          </Border>
+
+          <Border Padding="18"
+                  CornerRadius="20"
+                  BorderThickness="1"
+                  BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                  Background="{StaticResource GlucoDesk.Brush.AccentPale}">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="12">
+              <Border Width="10"
+                      Height="10"
+                      CornerRadius="999"
+                      Background="{StaticResource GlucoDesk.Brush.Accent}"
+                      VerticalAlignment="Top"
+                      Margin="0,5,0,0" />
+
+              <StackPanel Grid.Column="1"
+                          Spacing="6">
+                <TextBlock Text="{DynamicResource SidebarPrivateByDesignTitle}"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+
+                <TextBlock Text="{DynamicResource SidebarPrivateByDesignDescription}"
+                           TextWrapping="Wrap"
+                           Classes="sidebar-note" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Border Padding="18"
+                  CornerRadius="20"
+                  BorderThickness="1"
+                  BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                  Background="{StaticResource GlucoDesk.Brush.IndigoSoft}">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="12">
+              <Border Width="10"
+                      Height="10"
+                      CornerRadius="999"
+                      Background="{StaticResource GlucoDesk.Brush.Indigo}"
+                      VerticalAlignment="Top"
+                      Margin="0,5,0,0" />
+
+              <StackPanel Grid.Column="1"
+                          Spacing="6">
+                <TextBlock Text="{DynamicResource SidebarSafetyNoticeTitle}"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
+
+                <TextBlock Text="{DynamicResource SidebarSafetyNoticeDescription}"
+                           TextWrapping="Wrap"
+                           Classes="sidebar-note" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ContentControl Grid.Column="1"
+                    Content="{Binding CurrentContent}" />
+  </Grid>
+</Window>
+
+===== src/GlucoDesk.Desktop/Views/Main/MainWindow.axaml.cs =====
+using Avalonia.Controls;
+using GlucoDesk.Desktop.ViewModels.Main;
+
+namespace GlucoDesk.Desktop.Views.Main;
+
+public partial class MainWindow : Window
+{
+    private const double MinimumReleaseWidth = 1180;
+    private const double MinimumReleaseHeight = 760;
+
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainWindow"/> class.
+    /// </summary>
+    public MainWindow()
+    {
+        InitializeComponent();
+
+        MinWidth = MinimumReleaseWidth;
+        MinHeight = MinimumReleaseHeight;
+
+        if (Width < MinimumReleaseWidth)
+        {
+            Width = MinimumReleaseWidth;
+        }
+
+        if (Height < MinimumReleaseHeight)
+        {
+            Height = MinimumReleaseHeight;
+        }
+}
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainWindow"/> class.
+    /// </summary>
+    /// <param name="viewModel">The main window view model.</param>
+    public MainWindow(MainWindowViewModel viewModel)
+        : this()
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+
+        DataContext = viewModel;
+    }
+}
+
+===== DEPENDENCY INJECTION AND BOOTSTRAP REFERENCES =====
+
+===== src/GlucoDesk.Desktop/App.axaml.cs =====
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
+using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
+using GlucoDesk.Desktop.Bootstrap;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
+using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
+using GlucoDesk.Desktop.Views.Main;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.ViewModels.Onboarding;
+using GlucoDesk.Desktop.Views.Onboarding;
+namespace GlucoDesk.Desktop;
+
+public partial class App : Avalonia.Application
+{
+    private ServiceProvider? _serviceProvider;
+    private IServiceScope? _applicationScope;
+    private bool _isExplicitShutdownRequested;
+    private bool _isMainWindowHideInProgress;
+    private bool _hasStartedDesktopRuntime;
+
+    /// <inheritdoc />
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        global::GlucoDesk.Desktop.Localization.LocalizationManager.InitializeIfNeeded();
+    }
+
+    /// <inheritdoc />
+    public override void OnFrameworkInitializationCompleted()
+    {
+        _serviceProvider =
+            DesktopServiceProviderBuilder.BuildServiceProvider();
+
+        _applicationScope =
+            _serviceProvider.CreateScope();
+
+        if (ApplicationLifetime
+            is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            ConfigureDesktopLifetime(desktop);
+        }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Configures desktop lifetime events and selects the initial window.
+    /// </summary>
+    private void ConfigureDesktopLifetime(
+        IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+
+        var serviceProvider =
+            _applicationScope?.ServiceProvider
+            ?? throw new InvalidOperationException(
+                "The application service scope is not available.");
+
+        desktop.ShutdownMode =
+            ShutdownMode.OnExplicitShutdown;
+
+        RegisterDesktopActivationHandler(desktop);
+
+        desktop.ShutdownRequested += (_, _) =>
+        {
+            _isExplicitShutdownRequested = true;
+        };
+
+        desktop.Exit += async (_, _) =>
+        {
+            _isExplicitShutdownRequested = true;
+
+            StopDesktopPresenceSafely(serviceProvider);
+
+            await StopBackgroundSyncSafelyAsync(serviceProvider)
+                .ConfigureAwait(false);
+
+            DisposeServices();
+        };
+
+        if (ShouldShowLanguageOnboarding())
+        {
+            ConfigureLanguageOnboarding(
+                desktop,
+                serviceProvider);
+
+            return;
+        }
+
+        ConfigureMainApplicationWindow(
+            desktop,
+            serviceProvider,
+            showImmediately: false);
+    }
+
+    /// <summary>
+    /// Determines whether the first-launch language experience is required.
+    /// </summary>
+    private static bool ShouldShowLanguageOnboarding()
+    {
+        var preference =
+            LanguagePreferenceStore.ReadPreference();
+
+        var forceValue =
+            Environment.GetEnvironmentVariable(
+                "GLUCODESK_FORCE_LANGUAGE_ONBOARDING");
+
+        return LanguageOnboardingLaunchPolicy.ShouldShow(
+            preference.HasExplicitPreference,
+            forceValue);
+    }
+
+    /// <summary>
+    /// Configures the first-launch language window.
+    /// </summary>
+    private void ConfigureLanguageOnboarding(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        var onboardingWindow = serviceProvider
+            .GetRequiredService<LanguageOnboardingWindow>();
+
+        if (onboardingWindow.DataContext
+            is not LanguageOnboardingViewModel viewModel)
+        {
+            throw new InvalidOperationException(
+                "The language onboarding window does not expose "
+                + "the expected view model.");
+        }
+
+        var onboardingCompleted = false;
+
+        desktop.MainWindow = onboardingWindow;
+
+        viewModel.Completed += OnOnboardingCompleted;
+        onboardingWindow.Closed += OnOnboardingClosed;
+
+        void OnOnboardingCompleted(
+            object? sender,
+            LanguageOnboardingCompletedEventArgs eventArgs)
+        {
+            _ = sender;
+            _ = eventArgs;
+
+            if (onboardingCompleted)
+            {
+                return;
+            }
+
+            onboardingCompleted = true;
+
+            viewModel.Completed -= OnOnboardingCompleted;
+            onboardingWindow.Closed -= OnOnboardingClosed;
+
+            ConfigureMainApplicationWindow(
+                desktop,
+                serviceProvider,
+                showImmediately: true);
+
+            onboardingWindow.Close();
+        }
+
+        void OnOnboardingClosed(
+            object? sender,
+            EventArgs eventArgs)
+        {
+            _ = sender;
+            _ = eventArgs;
+
+            if (onboardingCompleted
+                || _isExplicitShutdownRequested)
+            {
+                return;
+            }
+
+            _isExplicitShutdownRequested = true;
+            desktop.Shutdown();
+        }
+    }
+
+    /// <summary>
+    /// Creates and configures the normal GlucoDesk main window.
+    /// </summary>
+    private void ConfigureMainApplicationWindow(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider,
+        bool showImmediately)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        var mainWindow = serviceProvider
+            .GetRequiredService<MainWindow>();
+
+        desktop.MainWindow = mainWindow;
+
+        mainWindow.Closing += (_, eventArgs) =>
+        {
+            HandleMainWindowClosing(
+                desktop,
+                eventArgs);
+        };
+
+        mainWindow.Opened += (_, _) =>
+        {
+            StartDesktopRuntime(
+                desktop,
+                serviceProvider);
+        };
+
+        if (!showImmediately)
+        {
+            return;
+        }
+
+        mainWindow.Show();
+        mainWindow.Activate();
+    }
+
+    /// <summary>
+    /// Starts tray, background synchronization and history continuity once.
+    /// </summary>
+    private void StartDesktopRuntime(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        if (_hasStartedDesktopRuntime)
+        {
+            return;
+        }
+
+        _hasStartedDesktopRuntime = true;
+
+        StartDesktopPresenceSafely(
+            desktop,
+            serviceProvider);
+
+        _ = StartBackgroundSyncSafelyAsync(
+            serviceProvider);
+
+        _ = RunStartupHistoryContinuitySyncSafelyAsync(
+            serviceProvider);
+    }
+
+
+    /// <summary>
+    /// Handles main window close requests without terminating the background desktop companion.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="eventArgs">The window closing event arguments.</param>
+    private void HandleMainWindowClosing(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        WindowClosingEventArgs eventArgs)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(eventArgs);
+
+        if (_isExplicitShutdownRequested)
+        {
+            return;
+        }
+
+        eventArgs.Cancel = true;
+
+        var mainWindow = desktop.MainWindow;
+
+        if (mainWindow is null)
+        {
+            return;
+        }
+
+        if (_isMainWindowHideInProgress)
+        {
+            return;
+        }
+
+        if (mainWindow.WindowState == WindowState.FullScreen)
+        {
+            _isMainWindowHideInProgress = true;
+            _ = HideMainWindowAfterLeavingFullscreenAsync(mainWindow);
+            return;
+        }
+
+        mainWindow.Hide();
+    }
+
+    /// <summary>
+    /// Leaves fullscreen first and then hides the main window after the macOS fullscreen transition.
+    /// </summary>
+    /// <param name="mainWindow">The main application window.</param>
+    /// <returns>A task representing the asynchronous hide operation.</returns>
+    private async Task HideMainWindowAfterLeavingFullscreenAsync(Window mainWindow)
+    {
+        ArgumentNullException.ThrowIfNull(mainWindow);
+
+        try
+        {
+            mainWindow.WindowState = WindowState.Normal;
+
+            await Task.Delay(TimeSpan.FromMilliseconds(650))
+                .ConfigureAwait(false);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!_isExplicitShutdownRequested)
+                {
+                    mainWindow.Hide();
+                }
+            });
+        }
+        catch
+        {
+            // Closing from fullscreen is best-effort on macOS/Avalonia and must not break the app lifecycle.
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                _isMainWindowHideInProgress = false;
+            });
+        }
+    }
+
+    /// <summary>
+    /// Registers desktop activation handling so the main window can be reopened from the macOS Dock.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    private void RegisterDesktopActivationHandler(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var activatableLifetime = TryGetFeature(typeof(IActivatableLifetime)) as IActivatableLifetime;
+
+        if (activatableLifetime is null)
+        {
+            return;
+        }
+
+        activatableLifetime.Activated += (_, eventArgs) =>
+        {
+            if (eventArgs.Kind != ActivationKind.Reopen)
+            {
+                return;
+            }
+
+            ShowMainWindowSafely(
+                desktop,
+                _applicationScope?.ServiceProvider);
+        };
+    }
+
+    /// <summary>
+    /// Shows and activates the main application window without breaking application activation.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="serviceProvider">The service provider, when available.</param>
+    private static void ShowMainWindowSafely(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider? serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+
+        try
+        {
+            RunOnUiThread(() => ShowMainWindow(desktop));
+        }
+        catch (Exception exception)
+        {
+            if (serviceProvider is not null)
+            {
+                LogSafely(
+                    serviceProvider,
+                    exception,
+                    "Unexpected error while reopening the main window from desktop activation.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Shows and activates the main application window.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    private static void ShowMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var mainWindow = desktop.MainWindow;
+
+        if (mainWindow is null)
+        {
+            return;
+        }
+
+        if (mainWindow.WindowState == WindowState.Minimized)
+        {
+            mainWindow.WindowState = WindowState.Normal;
+        }
+
+        mainWindow.Show();
+        mainWindow.Activate();
+    }
+
+    /// <summary>
+    /// Runs the specified action on the Avalonia UI thread.
+    /// </summary>
+    /// <param name="action">The action to run.</param>
+    private static void RunOnUiThread(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(action);
+    }
+
+    /// <summary>
+    /// Starts the desktop presence indicator without breaking application startup.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="serviceProvider">The service provider.</param>
+    private static void StartDesktopPresenceSafely(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopPresenceLifecycleService>();
+
+            lifecycleService?.Start(desktop);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while starting the desktop presence indicator.");
+        }
+    }
+
+    /// <summary>
+    /// Stops the desktop presence indicator without breaking application shutdown.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    private static void StopDesktopPresenceSafely(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopPresenceLifecycleService>();
+
+            lifecycleService?.Stop();
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while stopping the desktop presence indicator.");
+        }
+    }
+
+    /// <summary>
+    /// Starts the desktop background sync lifecycle without breaking application startup.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task StartBackgroundSyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopBackgroundSyncLifecycleService>();
+
+            if (lifecycleService is null)
+            {
+                return;
+            }
+
+            _ = await lifecycleService
+                .StartAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while starting the desktop background sync lifecycle.");
+        }
+    }
+
+    /// <summary>
+    /// Runs startup history continuity synchronization without blocking the Avalonia UI startup flow.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task RunStartupHistoryContinuitySyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var coordinator = serviceProvider
+                .GetService<IDesktopHistoryContinuitySyncCoordinator>();
+
+            if (coordinator is null)
+            {
+                return;
+            }
+
+            _ = await coordinator
+                .RunStartupSyncAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while running startup history continuity synchronization.");
+        }
+    }
+
+    /// <summary>
+    /// Stops the desktop background sync lifecycle without breaking application shutdown.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task StopBackgroundSyncSafelyAsync(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            var lifecycleService = serviceProvider
+                .GetService<IDesktopBackgroundSyncLifecycleService>();
+
+            if (lifecycleService is null)
+            {
+                return;
+            }
+
+            _ = await lifecycleService
+                .StopAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while stopping the desktop background sync lifecycle.");
+        }
+    }
+
+    /// <summary>
+    /// Logs an application startup or shutdown error when logging services are available.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <param name="exception">The exception to log.</param>
+    /// <param name="message">The log message.</param>
+    private static void LogSafely(
+        IServiceProvider serviceProvider,
+        Exception exception,
+        string message)
+    {
+        try
+        {
+            var logger = serviceProvider.GetService<ILogger<App>>();
+
+            logger?.LogError(
+                exception,
+                "{Message}",
+                message);
+        }
+        catch
+        {
+            // Logging must never break application startup or shutdown.
+        }
+    }
+
+    /// <summary>
+    /// Disposes application-level dependency injection services.
+    /// </summary>
+    private void DisposeServices()
+    {
+        _applicationScope?.Dispose();
+        _serviceProvider?.Dispose();
+
+        _applicationScope = null;
+        _serviceProvider = null;
+    }
+
+    #endregion
+}
+
+===== src/GlucoDesk.Desktop/Bootstrap/DesktopServiceProviderBuilder.cs =====
+using GlucoDesk.Application.Cgm.BackgroundSync.DependencyInjection;
+using GlucoDesk.Application.Common.DependencyInjection;
+using GlucoDesk.Desktop.BackgroundSync.Dispatching;
+using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
+using GlucoDesk.Desktop.BackgroundSync.Options;
+using GlucoDesk.Desktop.BackgroundSync.Services;
+using GlucoDesk.Desktop.BackgroundSync.Services.Abstractions;
+using GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Services;
+using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
+using GlucoDesk.Desktop.Diary.Services;
+using GlucoDesk.Desktop.Diary.Services.Abstractions;
+using GlucoDesk.Desktop.ViewModels.Account;
+using GlucoDesk.Desktop.ViewModels.BackgroundSync;
+using GlucoDesk.Desktop.ViewModels.Dashboard;
+using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
+using GlucoDesk.Desktop.ViewModels.Diary;
+using GlucoDesk.Desktop.ViewModels.Main;
+using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Desktop.Views.Main;
+using GlucoDesk.Infrastructure.Cgm.DexcomShare.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.Diary.Excel.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.Diary.Pdf.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.History.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.WidgetState.DependencyInjection;
+using GlucoDesk.Infrastructure.Settings.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
+using GlucoDesk.Desktop.Common.Dispatching;
+using GlucoDesk.Desktop.Common.Dispatching.Abstractions;
+
+using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
+using GlucoDesk.Desktop.DesktopPresence.Services;
+using GlucoDesk.Desktop.DesktopPresence.Formatters;
+using GlucoDesk.Desktop.ViewModels.Onboarding;
+using GlucoDesk.Desktop.Views.Onboarding;
+namespace GlucoDesk.Desktop.Bootstrap;
+
+/// <summary>
+/// Builds the dependency injection container used by the desktop application.
+/// </summary>
+internal static class DesktopServiceProviderBuilder
+{
+    /// <summary>
+    /// Builds the desktop service provider.
+    /// </summary>
+    /// <returns>The configured service provider.</returns>
+    public static ServiceProvider BuildServiceProvider()
+    {
+        var services = new ServiceCollection();
+
+        services.AddLogging();
+
+        services.AddGlucoDeskApplication();
+        services.AddDesktopCgmProviders();
+        services.AddDexcomShareCgmProvider();
+        services.AddJsonApplicationSettingsStore();
+        services.AddJsonGlucoseHistoryStore();
+        services.AddGlycemicDiaryExcelExport();
+        services.AddGlycemicDiaryPdfExport();
+        services.AddJsonWidgetStateStore();
+        services.AddCgmBackgroundSync();
+        services.AddDesktopBackgroundSyncLifecycle();
+        services.AddDesktopHistoryContinuitySync();
+        services.AddDesktopShell();
+        services.AddDesktopCommonServices();
+
+        services.AddSingleton<IDesktopPresenceTextFormatter, DesktopPresenceTextFormatter>();
+        services.AddSingleton<IDesktopPresenceDashboardTextFormatter, DesktopPresenceDashboardTextFormatter>();
+        services.AddSingleton<IDesktopPresencePrivacyModeStore, FileDesktopPresencePrivacyModeStore>();
+        services.AddSingleton<IDesktopPresencePrivacyModeService, DesktopPresencePrivacyModeService>();
+        services.AddSingleton<IDesktopPresenceLifecycleService, AvaloniaDesktopPresenceLifecycleService>();
+
+        return services.BuildServiceProvider(
+            new ServiceProviderOptions
+            {
+                ValidateOnBuild = true,
+                ValidateScopes = true
+            });
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Registers common desktop services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddDesktopCommonServices(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IDesktopUiDispatcher, AvaloniaDesktopUiDispatcher>();
+    }
+
+    /// <summary>
+    /// Registers desktop background sync lifecycle services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddDesktopBackgroundSyncLifecycle(this IServiceCollection services)
+    {
+        services.AddSingleton(DesktopBackgroundSyncLifecycleOptions.Default);
+        services.AddSingleton<IBackgroundSyncUiDispatcher, AvaloniaBackgroundSyncUiDispatcher>();
+        services.AddSingleton<IDesktopBackgroundSyncLifecycleService, DesktopBackgroundSyncLifecycleService>();
+        services.AddSingleton<BackgroundSyncStatusViewModel>();
+    }
+
+    /// <summary>
+    /// Registers desktop history continuity synchronization services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddDesktopHistoryContinuitySync(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IDesktopHistoryContinuitySyncStatusStore, DesktopHistoryContinuitySyncStatusStore>();
+        services.TryAddSingleton<IDesktopHistoryContinuitySyncCoordinator, DesktopHistoryContinuitySyncCoordinator>();
+        services.TryAddSingleton<DesktopHistoryContinuitySyncStatusViewModel>();
+    }
+
+    /// <summary>
+    /// Registers desktop windows, view models and desktop-specific options.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddDesktopShell(this IServiceCollection services)
+    {
+        services.AddSingleton(DashboardRefreshOptions.Default);
+
+        services.AddTransient<MainWindow>();
+        services.AddTransient<MainWindowViewModel>();
+        services.AddTransient<DashboardViewModel>();
+        services.AddTransient<DiaryViewModel>();
+        services.AddTransient<AccountViewModel>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<LanguageOnboardingViewModel>();
+        services.AddTransient<LanguageOnboardingWindow>();
+        services.AddSingleton<IDiaryExportFileSaveService, AvaloniaDiaryExportFileSaveService>();
+    }
+
+    #endregion
+}
+===== src/GlucoDesk.Desktop/Bootstrap/Providers/DependencyInjection/DesktopCgmProviderServiceCollectionExtensions.cs =====
+using GlucoDesk.Desktop.Bootstrap.Providers.Options;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Providers.DependencyInjection;
+using GlucoDesk.Infrastructure.Cgm.Mock.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.DependencyInjection;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
+using GlucoDesk.Infrastructure.Cgm.Nightscout.DependencyInjection;
+using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
+
+namespace GlucoDesk.Desktop.Bootstrap.Providers.DependencyInjection;
+
+/// <summary>
+/// Provides desktop dependency injection registrations for CGM providers.
+/// </summary>
+public static class DesktopCgmProviderServiceCollectionExtensions
+{
+    /// <summary>
+    /// Adds desktop CGM providers to the service collection.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="dexcomOptions">The optional Dexcom provider options.</param>
+    /// <param name="nightscoutOptions">The optional Nightscout provider options.</param>
+    /// <returns>The updated service collection.</returns>
+    public static IServiceCollection AddDesktopCgmProviders(
+        this IServiceCollection services,
+        DesktopDexcomProviderOptions? dexcomOptions = null,
+        DesktopNightscoutProviderOptions? nightscoutOptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.TryAddSingleton(TimeProvider.System);
+
+        services.AddMockCgmProvider();
+
+        var effectiveDexcomOptions = dexcomOptions ?? DesktopDexcomProviderOptions.FromEnvironmentVariables();
+
+        if (effectiveDexcomOptions.IsEnabled)
+        {
+            services.TryAddSingleton(effectiveDexcomOptions);
+
+            services.AddDexcomOfficialCgmProvider(
+                effectiveDexcomOptions.ToApiOptions(),
+                effectiveDexcomOptions.ToProviderOptions());
+
+            services.AddDexcomConnectionStatus();
+
+            services.TryAddScoped<IDexcomDesktopConnectionService, DexcomDesktopConnectionService>();
+        }
+
+        var effectiveNightscoutOptions = nightscoutOptions ?? DesktopNightscoutProviderOptions.FromEnvironmentVariables();
+
+        if (effectiveNightscoutOptions.IsEnabled)
+        {
+            services.TryAddSingleton(effectiveNightscoutOptions);
+        
+            services.AddNightscoutCgmProvider(
+                effectiveNightscoutOptions.ToNightscoutOptions());
+        
+            services.AddHttpClient<INightscoutDesktopConnectionService, NightscoutDesktopConnectionService>();
+        }
+
+        return services;
+    }
+}
+===== DESKTOP PROJECT =====
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ApplicationIcon>Assets/AppIcon/glucodesk-app-icon.ico</ApplicationIcon>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework Condition="'$(RuntimeIdentifier)' != 'win-x64' And !$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
+    <EnableWindowsTargeting Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))">true</EnableWindowsTargeting>
+    <WindowsPackageType Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))">None</WindowsPackageType>
+<RuntimeIdentifiers>osx-x64;osx-arm64;win-x64</RuntimeIdentifiers>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <UseAppHost>true</UseAppHost>
+    <AssemblyName>GlucoDesk.Desktop</AssemblyName>
+    <Product>GlucoDesk</Product>
+    <Company>Filippo Garavaglia</Company>
+    <Authors>Filippo Garavaglia</Authors>
+    <Description>Desktop companion for glucose awareness.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.0.4" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.4" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.10" Condition="'$(RuntimeIdentifier)' == 'win-x64' Or $([MSBuild]::IsOSPlatform('Windows'))" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/**" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' != 'win-x64' And !$([MSBuild]::IsOSPlatform('Windows'))">
+    <Compile Remove="GlucoseAlerts/Services/WindowsGlucoseAlertNotificationService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GlucoDesk.Core\GlucoDesk.Core.csproj" />
+    <ProjectReference Include="..\GlucoDesk.Application\GlucoDesk.Application.csproj" />
+    <ProjectReference Include="..\GlucoDesk.Infrastructure\GlucoDesk.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
+
+===== DESKTOP TEST PROJECT =====
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework Condition="!$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\GlucoDesk.Core\GlucoDesk.Core.csproj" />
+    <ProjectReference Include="..\..\src\GlucoDesk.Application\GlucoDesk.Application.csproj" />
+    <ProjectReference Include="..\..\src\GlucoDesk.Desktop\GlucoDesk.Desktop.csproj" />
+  </ItemGroup>
+
+</Project>

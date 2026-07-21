@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using GlucoDesk.Desktop.Localization;
 using GlucoDesk.Desktop.ViewModels.Onboarding;
 using GlucoDesk.Desktop.Views.Onboarding;
+using GlucoDesk.Desktop.Onboarding;
 namespace GlucoDesk.Desktop;
 
 public partial class App : Avalonia.Application
@@ -93,6 +94,15 @@ public partial class App : Avalonia.Application
             return;
         }
 
+        if (ShouldShowFeatureTour(serviceProvider))
+        {
+            ConfigureFeatureTour(
+                desktop,
+                serviceProvider);
+
+            return;
+        }
+
         ConfigureMainApplicationWindow(
             desktop,
             serviceProvider,
@@ -161,12 +171,11 @@ public partial class App : Avalonia.Application
             viewModel.Completed -= OnOnboardingCompleted;
             onboardingWindow.Closed -= OnOnboardingClosed;
 
-            ConfigureMainApplicationWindow(
-                desktop,
-                serviceProvider,
-                showImmediately: true);
-
             onboardingWindow.Close();
+
+            ConfigureFeatureTour(
+                desktop,
+                serviceProvider);
         }
 
         void OnOnboardingClosed(
@@ -181,6 +190,114 @@ public partial class App : Avalonia.Application
             {
                 return;
             }
+
+            _isExplicitShutdownRequested = true;
+            desktop.Shutdown();
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the localized feature tour is required.
+    /// </summary>
+    private static bool ShouldShowFeatureTour(
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        var preferenceStore = serviceProvider
+            .GetRequiredService<FeatureTourPreferenceStore>();
+
+        var forceValue =
+            Environment.GetEnvironmentVariable(
+                "GLUCODESK_FORCE_FEATURE_TOUR");
+
+        return FeatureTourLaunchPolicy.ShouldShow(
+            preferenceStore.HasCompletedCurrentTour(),
+            forceValue);
+    }
+
+    /// <summary>
+    /// Configures the first-run localized product tour.
+    /// </summary>
+    private void ConfigureFeatureTour(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        if (!ShouldShowFeatureTour(serviceProvider))
+        {
+            ConfigureMainApplicationWindow(
+                desktop,
+                serviceProvider,
+                showImmediately: true);
+
+            return;
+        }
+
+        var tourWindow = serviceProvider
+            .GetRequiredService<FeatureTourWindow>();
+
+        if (tourWindow.DataContext
+            is not FeatureTourViewModel viewModel)
+        {
+            throw new InvalidOperationException(
+                "The feature tour window does not expose "
+                + "the expected view model.");
+        }
+
+        var tourCompleted = false;
+
+        desktop.MainWindow = tourWindow;
+
+        viewModel.Completed += OnTourCompleted;
+        tourWindow.Show();
+        tourWindow.Activate();
+        tourWindow.Closed += OnTourClosed;
+
+        void OnTourCompleted(
+            object? sender,
+            FeatureTourCompletedEventArgs eventArgs)
+        {
+            _ = sender;
+            _ = eventArgs;
+
+            if (tourCompleted)
+            {
+                return;
+            }
+
+            tourCompleted = true;
+
+            viewModel.Completed -= OnTourCompleted;
+            tourWindow.Closed -= OnTourClosed;
+            viewModel.Dispose();
+
+            ConfigureMainApplicationWindow(
+                desktop,
+                serviceProvider,
+                showImmediately: true);
+
+            tourWindow.Close();
+        }
+
+        void OnTourClosed(
+            object? sender,
+            EventArgs eventArgs)
+        {
+            _ = sender;
+            _ = eventArgs;
+
+            if (tourCompleted
+                || _isExplicitShutdownRequested)
+            {
+                return;
+            }
+
+            viewModel.Completed -= OnTourCompleted;
+            tourWindow.Closed -= OnTourClosed;
+            viewModel.Dispose();
 
             _isExplicitShutdownRequested = true;
             desktop.Shutdown();
