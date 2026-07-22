@@ -631,6 +631,197 @@
             </StackPanel>
           </Border>
 
+          <Border Classes="surface-card"
+                  Padding="24">
+            <Grid x:Name="AboutSupportSectionGrid"
+                  ColumnDefinitions="1.15*,0.85*"
+                  RowDefinitions="Auto"
+                  ColumnSpacing="34">
+
+              <StackPanel Grid.Column="0"
+                          Grid.Row="0"
+                          Spacing="20">
+
+                <StackPanel Spacing="4">
+                  <TextBlock
+                      Text="{DynamicResource AboutSupportSectionTitle}"
+                      Classes="section-title" />
+
+                  <TextBlock
+                      Text="{DynamicResource AboutSupportSectionSubtitle}"
+                      Classes="secondary"
+                      FontSize="13"
+                      TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Grid ColumnDefinitions="*,*"
+                      RowDefinitions="Auto,Auto"
+                      ColumnSpacing="18"
+                      RowSpacing="18">
+
+                  <Border Grid.Column="0"
+                          Grid.Row="0"
+                          Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
+                          BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                          BorderThickness="1"
+                          CornerRadius="16"
+                          Padding="16">
+                    <Grid RowDefinitions="Auto,*,Auto"
+                          RowSpacing="10">
+                      <TextBlock Grid.Row="0"
+                                 Text="{DynamicResource AboutSupportWebsiteTitle}"
+                                 FontWeight="SemiBold" />
+
+                      <TextBlock Grid.Row="1"
+                                 Text="{DynamicResource AboutSupportWebsiteDescription}"
+                                 Classes="secondary"
+                                 FontSize="13"
+                                 TextWrapping="Wrap" />
+
+                      <Button Grid.Row="2"
+                              Content="{DynamicResource AboutSupportWebsiteButton}"
+                              Command="{Binding OpenWebsiteCommand}"
+                              IsEnabled="{Binding !IsAboutSupportBusy}"
+                              HorizontalAlignment="Left" />
+                    </Grid>
+                  </Border>
+
+                  <Border Grid.Column="1"
+                          Grid.Row="0"
+                          Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
+                          BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                          BorderThickness="1"
+                          CornerRadius="16"
+                          Padding="16">
+                    <Grid RowDefinitions="Auto,*,Auto"
+                          RowSpacing="10">
+                      <TextBlock Grid.Row="0"
+                                 Text="{DynamicResource AboutSupportSourceTitle}"
+                                 FontWeight="SemiBold" />
+
+                      <TextBlock Grid.Row="1"
+                                 Text="{DynamicResource AboutSupportSourceDescription}"
+                                 Classes="secondary"
+                                 FontSize="13"
+                                 TextWrapping="Wrap" />
+
+                      <Button Grid.Row="2"
+                              Content="{DynamicResource AboutSupportSourceButton}"
+                              Command="{Binding OpenSourceCodeCommand}"
+                              IsEnabled="{Binding !IsAboutSupportBusy}"
+                              HorizontalAlignment="Left" />
+                    </Grid>
+                  </Border>
+
+
+                  <Border Grid.Column="0"
+                          Grid.Row="1"
+                          Grid.ColumnSpan="2"
+                          Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
+                          BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                          BorderThickness="1"
+                          CornerRadius="16"
+                          Padding="16">
+                    <Grid RowDefinitions="Auto,*,Auto"
+                          RowSpacing="10">
+                      <TextBlock Grid.Row="0"
+                                 Text="{DynamicResource AboutSupportReportIssueTitle}"
+                                 FontWeight="SemiBold" />
+
+                      <TextBlock Grid.Row="1"
+                                 Text="{DynamicResource AboutSupportReportIssueDescription}"
+                                 Classes="secondary"
+                                 FontSize="13"
+                                 TextWrapping="Wrap" />
+
+                      <Button Grid.Row="2"
+                              Content="{DynamicResource AboutSupportReportIssueButton}"
+                              Command="{Binding ReportIssueCommand}"
+                              IsEnabled="{Binding !IsAboutSupportBusy}"
+                              HorizontalAlignment="Left" />
+                    </Grid>
+                  </Border>
+
+                </Grid>
+              </StackPanel>
+
+              <Border x:Name="AboutSupportRightPanel"
+                      Grid.Column="1"
+                      Grid.Row="0"
+                      MinWidth="260"
+                      BorderThickness="1,0,0,0"
+                      BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                      Padding="28,0,0,0">
+
+                <StackPanel Spacing="18">
+
+                  <Border Classes="badge-accent"
+                          HorizontalAlignment="Left">
+                    <TextBlock
+                        Text="{DynamicResource AboutSupportProductBadge}"
+                        FontSize="12"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+                  </Border>
+
+                  <StackPanel Spacing="5">
+                    <TextBlock
+                        Text="{DynamicResource AboutSupportVersionLabel}"
+                        Classes="metric-label" />
+
+                    <TextBlock
+                        Text="{Binding ApplicationVersionText}"
+                        FontSize="20"
+                        FontWeight="SemiBold" />
+                  </StackPanel>
+
+                  <Border
+                      Background="{StaticResource GlucoDesk.Brush.WarningSoft}"
+                      BorderBrush="{StaticResource GlucoDesk.Brush.Warning}"
+                      BorderThickness="1"
+                      CornerRadius="16"
+                      Padding="16">
+
+                    <StackPanel Spacing="8">
+                      <TextBlock
+                          Text="{DynamicResource AboutSupportMedicalNoticeTitle}"
+                          FontWeight="SemiBold"
+                          Foreground="{StaticResource GlucoDesk.Brush.Warning}" />
+
+                      <TextBlock
+                          Text="{DynamicResource AboutSupportMedicalNoticeDescription}"
+                          Classes="secondary"
+                          FontSize="13"
+                          TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+
+                  <TextBlock
+                      Text="{Binding AboutSupportStatusMessage}"
+                      Classes="secondary"
+                      TextWrapping="Wrap" />
+
+                  <Border
+                      IsVisible="{Binding HasAboutSupportError}"
+                      Background="{StaticResource GlucoDesk.Brush.DangerSoft}"
+                      BorderBrush="{StaticResource GlucoDesk.Brush.Danger}"
+                      BorderThickness="1"
+                      CornerRadius="14"
+                      Padding="14">
+
+                    <TextBlock
+                        Text="{Binding AboutSupportErrorMessage}"
+                        TextWrapping="Wrap"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource GlucoDesk.Brush.Danger}" />
+                  </Border>
+
+                </StackPanel>
+              </Border>
+
+            </Grid>
+          </Border>
+
         </StackPanel>
       </Grid>
     </ScrollViewer>

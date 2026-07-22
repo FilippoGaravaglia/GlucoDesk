@@ -107,6 +107,11 @@ public partial class SettingsView : UserControl
             BackupSectionGrid,
             BackupRightPanel,
             isCompact);
+
+        UpdateSectionLayout(
+            AboutSupportSectionGrid,
+            AboutSupportRightPanel,
+            isCompact);
     }
 
     /// <summary>

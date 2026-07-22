@@ -22,6 +22,8 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Diagnostics;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.AboutSupport.Enums;
+using GlucoDesk.Desktop.AboutSupport.Services.Abstractions;
 using GlucoDesk.Desktop.DataBackup.Services.Abstractions;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
@@ -57,6 +59,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private readonly IGlucoseAlertNotificationTestService _glucoseAlertNotificationTestService;
     private readonly ILocalDataBackupService? _localDataBackupService;
     private readonly ILocalDataBackupFileService? _localDataBackupFileService;
+    private readonly IAboutSupportService? _aboutSupportService;
     private byte[]? _pendingBackupContent;
 
     [ObservableProperty]
@@ -176,6 +179,23 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _backupErrorMessage;
 
+    [ObservableProperty]
+    private string _applicationVersionText =
+        T("AboutSupportVersionUnavailable");
+
+    [ObservableProperty]
+    private bool _isAboutSupportBusy;
+
+    [ObservableProperty]
+    private string _aboutSupportStatusMessage =
+        T("AboutSupportReadyStatus");
+
+    [ObservableProperty]
+    private bool _hasAboutSupportError;
+
+    [ObservableProperty]
+    private string? _aboutSupportErrorMessage;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
@@ -187,6 +207,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// <param name="glucoseAlertNotificationTestService">The optional native glucose notification test service.</param>
     /// <param name="localDataBackupService">The optional service used to export and import portable local-data backups.</param>
     /// <param name="localDataBackupFileService">The optional desktop file picker service used to save and open backup files.</param>
+    /// <param name="aboutSupportService">The optional service used to expose product information and open trusted support links.</param>
     public SettingsViewModel(
         IApplicationSettingsService settingsService,
         IEnumerable<ICgmMetadataProvider>? metadataProviders = null,
@@ -195,7 +216,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
         IEnumerable<INightscoutDesktopConnectionService>? nightscoutDesktopConnectionServices = null,
         IGlucoseAlertNotificationTestService? glucoseAlertNotificationTestService = null,
         ILocalDataBackupService? localDataBackupService = null,
-        ILocalDataBackupFileService? localDataBackupFileService = null)
+        ILocalDataBackupFileService? localDataBackupFileService = null,
+        IAboutSupportService? aboutSupportService = null)
     {
         ArgumentNullException.ThrowIfNull(settingsService);
 
@@ -208,6 +230,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
             ?? new GlucoseAlertNotificationTestService(OperatingSystemGlucoseAlertNotificationService.Create());
         _localDataBackupService = localDataBackupService;
         _localDataBackupFileService = localDataBackupFileService;
+        _aboutSupportService = aboutSupportService;
+
+        LoadAboutSupportInformation();
 
         CanConnectDexcom = _dexcomDesktopConnectionServices.Count > 0;
         CanTestNightscoutConnection = _nightscoutDesktopConnectionServices.Count > 0;
@@ -611,6 +636,44 @@ public sealed partial class SettingsViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>
+    /// Opens the official GlucoDesk website.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task OpenWebsiteAsync(
+        CancellationToken cancellationToken)
+    {
+        return OpenAboutSupportLinkAsync(
+            AboutSupportLinkKind.Website,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Opens the public GlucoDesk source repository.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task OpenSourceCodeAsync(
+        CancellationToken cancellationToken)
+    {
+        return OpenAboutSupportLinkAsync(
+            AboutSupportLinkKind.SourceCode,
+            cancellationToken);
+    }
+/// <summary>
+    /// Opens the public GlucoDesk issue-reporting workflow.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task ReportIssueAsync(
+        CancellationToken cancellationToken)
+    {
+        return OpenAboutSupportLinkAsync(
+            AboutSupportLinkKind.ReportIssue,
+            cancellationToken);
     }
 
     /// <summary>
@@ -1026,10 +1089,121 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 T("LocalBackupReadyStatus");
         }
 
+        if (!IsAboutSupportBusy &&
+            !HasAboutSupportError)
+        {
+            AboutSupportStatusMessage =
+                T("AboutSupportReadyStatus");
+        }
+
         OnPropertyChanged(nameof(ProviderOptions));
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Loads immutable product information exposed by the support service.
+    /// </summary>
+    private void LoadAboutSupportInformation()
+    {
+        if (_aboutSupportService is null)
+        {
+            ApplicationVersionText =
+                T("AboutSupportVersionUnavailable");
+            return;
+        }
+
+        try
+        {
+            var information =
+                _aboutSupportService.GetInformation();
+
+            ApplicationVersionText =
+                string.IsNullOrWhiteSpace(
+                    information.Version)
+                    ? T("AboutSupportVersionUnavailable")
+                    : information.Version;
+        }
+        catch (Exception)
+        {
+            ApplicationVersionText =
+                T("AboutSupportVersionUnavailable");
+        }
+    }
+
+    /// <summary>
+    /// Opens one trusted product or support destination.
+    /// </summary>
+    /// <param name="linkKind">The destination to open.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    private async Task OpenAboutSupportLinkAsync(
+        AboutSupportLinkKind linkKind,
+        CancellationToken cancellationToken)
+    {
+        if (IsAboutSupportBusy)
+        {
+            return;
+        }
+
+        if (_aboutSupportService is null)
+        {
+            ApplyAboutSupportFailure(
+                T("AboutSupportUnavailable"));
+            return;
+        }
+
+        IsAboutSupportBusy = true;
+        HasAboutSupportError = false;
+        AboutSupportErrorMessage = null;
+        AboutSupportStatusMessage =
+            T("AboutSupportOpeningStatus");
+
+        try
+        {
+            var result = await _aboutSupportService
+                .OpenAsync(
+                    linkKind,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (result.IsFailure)
+            {
+                ApplyAboutSupportFailure(
+                    T("AboutSupportOpenFailedDescription"));
+                return;
+            }
+
+            AboutSupportStatusMessage =
+                T("AboutSupportOpenedStatus");
+        }
+        catch (OperationCanceledException)
+        {
+            AboutSupportStatusMessage =
+                T("AboutSupportCanceledStatus");
+        }
+        catch (Exception)
+        {
+            ApplyAboutSupportFailure(
+                T("AboutSupportOpenFailedDescription"));
+        }
+        finally
+        {
+            IsAboutSupportBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Applies a user-facing support navigation failure.
+    /// </summary>
+    /// <param name="message">The safe user-facing message.</param>
+    private void ApplyAboutSupportFailure(
+        string message)
+    {
+        HasAboutSupportError = true;
+        AboutSupportErrorMessage = message;
+        AboutSupportStatusMessage =
+            T("AboutSupportFailedStatus");
+    }
 
     /// <summary>
     /// Applies a backup-specific failure without overwriting normal settings errors.

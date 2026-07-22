@@ -1,3 +1,5 @@
+using GlucoDesk.Desktop.AboutSupport.Services;
+using GlucoDesk.Desktop.AboutSupport.Services.Abstractions;
 using GlucoDesk.Application.Cgm.BackgroundSync.DependencyInjection;
 using GlucoDesk.Application.Common.DependencyInjection;
 using GlucoDesk.Desktop.BackgroundSync.Dispatching;
@@ -68,6 +70,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddDesktopHistoryContinuitySync();
         services.AddDesktopShell();
         services.AddDesktopCommonServices();
+        services.AddAboutAndSupport();
 
         services.AddSingleton<IDesktopPresenceTextFormatter, DesktopPresenceTextFormatter>();
         services.AddSingleton<IDesktopPresenceDashboardTextFormatter, DesktopPresenceDashboardTextFormatter>();
@@ -84,6 +87,26 @@ internal static class DesktopServiceProviderBuilder
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Registers product information and support services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private static void AddAboutAndSupport(
+        this IServiceCollection services)
+    {
+        services.TryAddSingleton<
+            IApplicationVersionProvider,
+            AssemblyApplicationVersionProvider>();
+
+        services.TryAddSingleton<
+            IExternalUriLauncher,
+            OperatingSystemExternalUriLauncher>();
+
+        services.TryAddSingleton<
+            IAboutSupportService,
+            AboutSupportService>();
+    }
 
     /// <summary>
     /// Registers common desktop services.
