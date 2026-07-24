@@ -247,7 +247,7 @@
 
                 <Border
                     Width="194"
-                    Height="118"
+                    Height="138"
                     Background="#125B9F"
                     CornerRadius="26"
                     HorizontalAlignment="Center"
@@ -256,8 +256,8 @@
                     Padding="18">
                   <Grid RowDefinitions="Auto,Auto,*">
                     <TextBlock Text="118 mg/dL" FontSize="24" FontWeight="Bold" Foreground="#FFFFFF" />
-                    <TextBlock Grid.Row="1" Text="↗ steady" FontSize="14" Foreground="#9FDEFF" Margin="0,6,0,0" />
-                    <Grid Grid.Row="2" Margin="0,16,0,0" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="7" VerticalAlignment="Bottom">
+                    <TextBlock Grid.Row="1" Text="{DynamicResource FeatureTourVisualSteady}" FontSize="14" Foreground="#9FDEFF" Margin="0,6,0,0" />
+                    <Grid Grid.Row="2" Margin="0,8,0,0" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="7" VerticalAlignment="Bottom">
                       <Border Height="28" Background="#87D8FF" CornerRadius="7" VerticalAlignment="Bottom" />
                       <Border Grid.Column="1" Height="44" Background="#87D8FF" CornerRadius="7" VerticalAlignment="Bottom" />
                       <Border Grid.Column="2" Height="34" Background="#87D8FF" CornerRadius="7" VerticalAlignment="Bottom" />
@@ -272,16 +272,16 @@
               <Grid
                   IsVisible="{Binding IsDashboardVisual}"
                   Width="340"
-                  Height="250"
+                  Height="286"
                   HorizontalAlignment="Center"
                   VerticalAlignment="Center">
 
                 <Border
                     Background="#125B9F"
                     CornerRadius="26"
-                    Padding="20">
+                    Padding="20,20,20,36">
 
-                  <Grid RowDefinitions="Auto,Auto,*,Auto">
+                  <Grid RowDefinitions="Auto,Auto,100,Auto">
 
                     <Grid ColumnDefinitions="*,Auto">
                       <StackPanel>
@@ -301,33 +301,49 @@
 
                     <Grid
                         Grid.Row="1"
-                        Margin="0,18,0,0"
+                        Margin="0,12,0,0"
                         ColumnDefinitions="Auto,Auto,Auto"
-                        ColumnSpacing="10">
+                        ColumnSpacing="6"
+                        HorizontalAlignment="Left"
+                        ZIndex="2">
                       <Border Classes="tour-chip">
-                        <TextBlock Text="Range" Foreground="#0C5391" FontWeight="SemiBold" />
+                        <TextBlock
+                            Text="{DynamicResource FeatureTourVisualRange}"
+                            Foreground="#0C5391"
+                            FontSize="12"
+                            FontWeight="SemiBold" />
                       </Border>
                       <Border Grid.Column="1" Classes="tour-chip">
-                        <TextBlock Text="Trend" Foreground="#0C5391" FontWeight="SemiBold" />
+                        <TextBlock
+                            Text="{DynamicResource FeatureTourVisualTrend}"
+                            Foreground="#0C5391"
+                            FontSize="12"
+                            FontWeight="SemiBold" />
                       </Border>
                       <Border Grid.Column="2" Classes="tour-chip">
-                        <TextBlock Text="24h" Foreground="#0C5391" FontWeight="SemiBold" />
+                        <TextBlock
+                            Text="24h"
+                            Foreground="#0C5391"
+                            FontSize="12"
+                            FontWeight="SemiBold" />
                       </Border>
                     </Grid>
 
                     <Border
                         Grid.Row="2"
-                        Margin="0,18,0,0"
+                        Margin="0,16,0,0"
+                        Height="84"
                         Background="#0E4D87"
                         CornerRadius="20"
-                        Padding="16">
+                        Padding="16,10,16,16"
+                        VerticalAlignment="Top">
                       <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="8" VerticalAlignment="Bottom">
-                        <Border Height="34" Background="#BCE8FF" CornerRadius="8" VerticalAlignment="Bottom" />
-                        <Border Grid.Column="1" Height="54" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
-                        <Border Grid.Column="2" Height="46" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
-                        <Border Grid.Column="3" Height="72" Background="#9DDBFF" CornerRadius="8" VerticalAlignment="Bottom" />
-                        <Border Grid.Column="4" Height="42" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
-                        <Border Grid.Column="5" Height="58" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Height="24" Background="#BCE8FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="1" Height="38" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="2" Height="32" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="3" Height="52" Background="#9DDBFF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="4" Height="30" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
+                        <Border Grid.Column="5" Height="42" Background="#5FD3FF" CornerRadius="8" VerticalAlignment="Bottom" />
                       </Grid>
                     </Border>
 
@@ -336,7 +352,7 @@
                         Margin="0,16,0,0"
                         ColumnDefinitions="*,Auto">
                       <TextBlock
-                          Text="Current value, direction and chart at a glance"
+                          Text="{DynamicResource FeatureTourVisualDashboardSummary}"
                           Classes="visual-caption"
                           VerticalAlignment="Center" />
                       <Border
@@ -344,7 +360,7 @@
                           Background="#0E4D87"
                           CornerRadius="14"
                           Padding="10,6">
-                        <TextBlock Text="Live" Foreground="#DFF4FF" FontSize="13" FontWeight="SemiBold" />
+                        <TextBlock Text="{DynamicResource FeatureTourVisualLive}" Foreground="#DFF4FF" FontSize="13" FontWeight="SemiBold" />
                       </Border>
                     </Grid>
                   </Grid>
@@ -367,13 +383,13 @@
                   <Grid RowDefinitions="Auto,*,Auto">
 
                     <Grid ColumnDefinitions="*,Auto">
-                      <TextBlock Text="Local history" Classes="visual-strong" />
+                      <TextBlock Text="{DynamicResource FeatureTourVisualLocalHistory}" Classes="visual-strong" />
                       <Border
                           Grid.Column="1"
                           Background="#1EA0EB"
                           CornerRadius="14"
                           Padding="10,6">
-                        <TextBlock Text="Synced" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold" />
+                        <TextBlock Text="{DynamicResource FeatureTourVisualSynced}" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold" />
                       </Border>
                     </Grid>
 
@@ -381,7 +397,7 @@
                       <Border Background="#0E4D87" CornerRadius="16" Padding="12">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                           <Border Width="12" Height="12" Background="#5FD3FF" CornerRadius="6" VerticalAlignment="Center" />
-                          <TextBlock Grid.Column="1" Text="Last 24 hours" Foreground="#DFF4FF" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="{DynamicResource FeatureTourVisualLastTwentyFourHours}" Foreground="#DFF4FF" VerticalAlignment="Center" />
                           <TextBlock Grid.Column="2" Text="96%" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center" />
                         </Grid>
                       </Border>
@@ -389,7 +405,7 @@
                       <Border Background="#0E4D87" CornerRadius="16" Padding="12">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                           <Border Width="12" Height="12" Background="#9DDBFF" CornerRadius="6" VerticalAlignment="Center" />
-                          <TextBlock Grid.Column="1" Text="Weekly continuity" Foreground="#DFF4FF" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="{DynamicResource FeatureTourVisualWeeklyContinuity}" Foreground="#DFF4FF" VerticalAlignment="Center" />
                           <TextBlock Grid.Column="2" Text="7d" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center" />
                         </Grid>
                       </Border>
@@ -397,7 +413,7 @@
                       <Border Background="#0E4D87" CornerRadius="16" Padding="12">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                           <Border Width="12" Height="12" Background="#BFE8FF" CornerRadius="6" VerticalAlignment="Center" />
-                          <TextBlock Grid.Column="1" Text="Saved locally" Foreground="#DFF4FF" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="{DynamicResource FeatureTourVisualSavedLocally}" Foreground="#DFF4FF" VerticalAlignment="Center" />
                           <TextBlock Grid.Column="2" Text="OK" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center" />
                         </Grid>
                       </Border>
@@ -405,8 +421,12 @@
 
                     <TextBlock
                         Grid.Row="2"
-                        Text="History becomes more useful over time on your device."
+                        Text="{DynamicResource FeatureTourVisualHistoryDescription}"
                         Classes="visual-caption"
+                        FontSize="12"
+                        LineHeight="13"
+                        TextWrapping="Wrap"
+                        MaxLines="2"
                         Margin="0,16,0,0" />
                   </Grid>
                 </Border>
@@ -433,7 +453,7 @@
                       Margin="26,0,0,0"
                       Padding="16">
                     <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
-                      <TextBlock Text="Glycemic diary" Foreground="#0C5391" FontWeight="Bold" FontSize="15" />
+                      <TextBlock Text="{DynamicResource FeatureTourVisualGlycemicDiary}" Foreground="#0C5391" FontWeight="Bold" FontSize="15" />
                       <Border Grid.Row="1" Height="8" Width="110" Background="#D7EFFF" CornerRadius="999" Margin="0,12,0,0" />
                       <Border Grid.Row="2" Height="8" Width="92" Background="#D7EFFF" CornerRadius="999" Margin="0,10,0,0" />
                       <Border Grid.Row="3" Height="8" Width="126" Background="#D7EFFF" CornerRadius="999" Margin="0,10,0,0" />
@@ -441,13 +461,27 @@
                         <Border Background="#F0F8FF" CornerRadius="16" Padding="10">
                           <StackPanel>
                             <TextBlock Text="PDF" Foreground="#0C5391" FontWeight="Bold" />
-                            <TextBlock Text="visit-ready" Foreground="#567290" FontSize="12" />
+                            <TextBlock
+                                Text="{DynamicResource FeatureTourVisualVisitReady}"
+                                Foreground="#567290"
+                                FontSize="10"
+                                LineHeight="11"
+                                TextWrapping="Wrap"
+                                MaxLines="2"
+                                MinHeight="22" />
                           </StackPanel>
                         </Border>
                         <Border Grid.Column="1" Background="#F0F8FF" CornerRadius="16" Padding="10">
                           <StackPanel>
                             <TextBlock Text="Excel" Foreground="#0C5391" FontWeight="Bold" />
-                            <TextBlock Text="data-friendly" Foreground="#567290" FontSize="12" />
+                            <TextBlock
+                                Text="{DynamicResource FeatureTourVisualDataFriendly}"
+                                Foreground="#567290"
+                                FontSize="10"
+                                LineHeight="11"
+                                TextWrapping="Wrap"
+                                MaxLines="2"
+                                MinHeight="22" />
                           </StackPanel>
                         </Border>
                       </Grid>
@@ -465,18 +499,18 @@
                       Opacity="0.95"
                       Padding="16">
                     <StackPanel>
-                      <TextBlock Text="Daily summary" Foreground="#0C5391" FontWeight="Bold" />
+                      <TextBlock Text="{DynamicResource FeatureTourVisualDailySummary}" Foreground="#0C5391" FontWeight="Bold" />
                       <Grid Margin="0,16,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <Border Width="12" Height="12" Background="#1EA0EB" CornerRadius="6" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="Morning" Foreground="#0C5391" />
+                        <TextBlock Grid.Column="1" Text="{DynamicResource FeatureTourVisualMorning}" Foreground="#0C5391" />
                       </Grid>
                       <Grid Margin="0,10,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <Border Width="12" Height="12" Background="#1EA0EB" CornerRadius="6" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="Meals" Foreground="#0C5391" />
+                        <TextBlock Grid.Column="1" Text="{DynamicResource FeatureTourVisualMeals}" Foreground="#0C5391" />
                       </Grid>
                       <Grid Margin="0,10,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <Border Width="12" Height="12" Background="#1EA0EB" CornerRadius="6" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="Night" Foreground="#0C5391" />
+                        <TextBlock Grid.Column="1" Text="{DynamicResource FeatureTourVisualNight}" Foreground="#0C5391" />
                       </Grid>
                     </StackPanel>
                   </Border>
@@ -499,7 +533,7 @@
                   <Grid RowDefinitions="Auto,*,Auto">
 
                     <Grid ColumnDefinitions="*,Auto">
-                      <TextBlock Text="Account" Classes="visual-strong" />
+                      <TextBlock Text="{DynamicResource FeatureTourVisualAccount}" Classes="visual-strong" />
                       <Border
                           Grid.Column="1"
                           Background="#1EA0EB"
@@ -520,7 +554,7 @@
                           CornerRadius="18"
                           Padding="14">
                         <StackPanel>
-                          <TextBlock Text="Sign in" Foreground="#DFF4FF" FontWeight="Bold" />
+                          <TextBlock Text="{DynamicResource FeatureTourVisualSignIn}" Foreground="#DFF4FF" FontWeight="Bold" />
                           <Border Height="8" Width="90" Background="#9DDBFF" CornerRadius="999" Margin="0,14,0,0" />
                           <Border Height="8" Width="114" Background="#BFE8FF" CornerRadius="999" Margin="0,10,0,0" />
                           <Border Height="8" Width="76" Background="#BFE8FF" CornerRadius="999" Margin="0,10,0,0" />
@@ -533,7 +567,7 @@
                           CornerRadius="18"
                           Padding="14">
                         <StackPanel VerticalAlignment="Center">
-                          <TextBlock Text="Secure" Foreground="#FFFFFF" FontWeight="Bold" />
+                          <TextBlock Text="{DynamicResource FeatureTourVisualSecure}" Foreground="#FFFFFF" FontWeight="Bold" />
                           <Border
                               Width="62"
                               Height="62"
@@ -553,7 +587,7 @@
 
                     <TextBlock
                         Grid.Row="2"
-                        Text="Connect Dexcom Share from Account and keep the rest local."
+                        Text="{DynamicResource FeatureTourVisualAccountDescription}"
                         Classes="visual-caption"
                         Margin="0,16,0,0" />
                   </Grid>
@@ -609,17 +643,24 @@
                   </Border>
 
                   <Border
-                      Width="112"
+                      Width="156"
                       Height="44"
                       Background="#DFF4FF"
                       CornerRadius="16"
                       HorizontalAlignment="Right"
                       VerticalAlignment="Top"
-                      Margin="0,18,24,0"
+                      Margin="0,18,4,0"
                       Padding="10,8">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
                       <Border Width="18" Height="18" Background="#1EA0EB" CornerRadius="9" VerticalAlignment="Center" />
-                      <TextBlock Grid.Column="1" Text="Tray" Foreground="#0C5391" FontWeight="SemiBold" VerticalAlignment="Center" />
+                      <TextBlock
+                          Grid.Column="1"
+                          Text="{DynamicResource FeatureTourVisualTray}"
+                          Foreground="#0C5391"
+                          FontSize="11"
+                          FontWeight="SemiBold"
+                          VerticalAlignment="Center"
+                          TextWrapping="NoWrap" />
                     </Grid>
                   </Border>
 
@@ -635,8 +676,8 @@
                       Margin="0,0,10,10"
                       Padding="14">
                     <StackPanel>
-                      <TextBlock Text="Desktop alert" Foreground="#0C5391" FontWeight="Bold" />
-                      <TextBlock Text="Native notifications when enabled" Foreground="#567290" FontSize="13" Margin="0,8,0,0" TextWrapping="Wrap" />
+                      <TextBlock Text="{DynamicResource FeatureTourVisualDesktopAlert}" Foreground="#0C5391" FontWeight="Bold" />
+                      <TextBlock Text="{DynamicResource FeatureTourVisualNativeNotifications}" Foreground="#567290" FontSize="13" Margin="0,8,0,0" TextWrapping="Wrap" />
                     </StackPanel>
                   </Border>
                 </Grid>
@@ -655,12 +696,12 @@
                     CornerRadius="26"
                     Padding="20">
                   <Grid RowDefinitions="Auto,*,Auto">
-                    <TextBlock Text="Ready for GlucoDesk" Classes="visual-strong" />
+                    <TextBlock Text="{DynamicResource FeatureTourVisualReady}" Classes="visual-strong" />
 
                     <Grid Grid.Row="1" Margin="0,20,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="18">
                       <Border
-                          Width="96"
-                          Height="96"
+                          Width="82"
+                          Height="82"
                           Background="#1EA0EB"
                           CornerRadius="30"
                           VerticalAlignment="Center">
@@ -673,23 +714,39 @@
                             Foreground="#FFFFFF" />
                       </Border>
 
-                      <StackPanel VerticalAlignment="Center" Spacing="10">
+                      <StackPanel VerticalAlignment="Center" Spacing="10"
+                          Grid.Column="1">
                         <Border Background="#0E4D87" CornerRadius="16" Padding="12,10">
-                          <TextBlock Text="Dashboard first" Foreground="#DFF4FF" />
+                          <TextBlock
+                              Text="{DynamicResource FeatureTourVisualDashboardFirst}"
+                              Foreground="#DFF4FF"
+                              FontSize="13"
+                              TextTrimming="CharacterEllipsis" />
                         </Border>
                         <Border Background="#0E4D87" CornerRadius="16" Padding="12,10">
-                          <TextBlock Text="Account for Dexcom Share" Foreground="#DFF4FF" />
+                          <TextBlock
+                              Text="{DynamicResource FeatureTourVisualAccountForDexcom}"
+                              Foreground="#DFF4FF"
+                              FontSize="13"
+                              TextTrimming="CharacterEllipsis" />
                         </Border>
                         <Border Background="#0E4D87" CornerRadius="16" Padding="12,10">
-                          <TextBlock Text="Settings anytime" Foreground="#DFF4FF" />
+                          <TextBlock
+                              Text="{DynamicResource FeatureTourVisualSettingsAnytime}"
+                              Foreground="#DFF4FF"
+                              FontSize="13"
+                              TextTrimming="CharacterEllipsis" />
                         </Border>
                       </StackPanel>
                     </Grid>
 
                     <TextBlock
                         Grid.Row="2"
-                        Text="Your calm glucose workspace starts here."
+                        Text="{DynamicResource FeatureTourVisualReadyDescription}"
                         Classes="visual-caption"
+                        FontSize="12"
+                        TextWrapping="Wrap"
+                        MaxLines="2"
                         Margin="0,16,0,0" />
                   </Grid>
                 </Border>
