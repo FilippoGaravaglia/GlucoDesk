@@ -46,21 +46,52 @@ public static class LocalizationManager
     {
         InitializeIfNeeded();
 
-        var normalizedLanguageCode = TranslationCatalog.NormalizeLanguageCode(languageCode);
+        ApplyAndPersistLanguage(
+            languageCode,
+            LanguagePreferenceStore.SaveLanguageCode);
+    }
 
-        if (string.Equals(
+    /// <summary>
+    /// Applies and persists a language selection.
+    /// </summary>
+    /// <param name="languageCode">
+    /// The requested supported language code.
+    /// </param>
+    /// <param name="persistLanguage">
+    /// The persistence action.
+    /// </param>
+    internal static void ApplyAndPersistLanguage(
+        string languageCode,
+        Action<string> persistLanguage)
+    {
+        ArgumentNullException.ThrowIfNull(
+            persistLanguage);
+
+        var normalizedLanguageCode =
+            TranslationCatalog.NormalizeLanguageCode(
+                languageCode);
+
+        var hasLanguageChanged =
+            !string.Equals(
                 currentLanguageCode,
                 normalizedLanguageCode,
-                StringComparison.Ordinal))
-        {
-            ApplyLanguageResources(currentLanguageCode);
-            return;
-        }
+                StringComparison.Ordinal);
 
-        currentLanguageCode = normalizedLanguageCode;
-        LanguagePreferenceStore.SaveLanguageCode(currentLanguageCode);
-        ApplyLanguageResources(currentLanguageCode);
-        LanguageChanged?.Invoke(null, EventArgs.Empty);
+        currentLanguageCode =
+            normalizedLanguageCode;
+
+        persistLanguage(
+            currentLanguageCode);
+
+        ApplyLanguageResources(
+            currentLanguageCode);
+
+        if (hasLanguageChanged)
+        {
+            LanguageChanged?.Invoke(
+                null,
+                EventArgs.Empty);
+        }
     }
 
     /// <summary>
