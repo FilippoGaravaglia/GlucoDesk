@@ -11,6 +11,7 @@ using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Models;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
+using GlucoDesk.Desktop.Localization;
 using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Settings;
@@ -450,6 +451,170 @@ public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
             option.ValueMgDl == chartMaximumMgDl);
 
         Assert.Equal(expectedMgDlDisplayName, selectedMgDlChartOption.DisplayName);
+    }
+
+
+    [Fact]
+    public async Task SaveCommand_ShouldRejectZeroConsecutiveReadings()
+    {
+        var settingsService =
+            new FakeApplicationSettingsService();
+
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            [new FakeMetadataProvider(
+                CgmProviderKind.Mock,
+                "Mock")]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        viewModel
+            .GlucoseAlertRequiredConsecutiveReadingsText =
+            "0";
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.Equal(
+            "Settings validation failed",
+            viewModel.StatusMessage);
+        Assert.Equal(
+            "Consecutive readings required must be between 1 and 5.",
+            viewModel.ErrorMessage);
+        Assert.Null(settingsService.SavedSettings);
+    }
+
+    [Fact]
+    public async Task SaveCommand_ShouldRejectInvertedTargetRange()
+    {
+        var settingsService =
+            new FakeApplicationSettingsService();
+
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            [new FakeMetadataProvider(
+                CgmProviderKind.Mock,
+                "Mock")]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        viewModel.TargetLowMgDlText = "180";
+        viewModel.TargetHighMgDlText = "70";
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.Equal(
+            "Target high must be greater than target low.",
+            viewModel.ErrorMessage);
+        Assert.Null(settingsService.SavedSettings);
+    }
+
+    [Fact]
+    public async Task SaveCommand_ShouldRejectZeroRefreshInterval()
+    {
+        var settingsService =
+            new FakeApplicationSettingsService();
+
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            [new FakeMetadataProvider(
+                CgmProviderKind.Mock,
+                "Mock")]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        viewModel.DashboardRefreshIntervalSecondsText =
+            "0";
+
+        await viewModel.SaveCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasError);
+        Assert.Equal(
+            "Refresh interval must be a positive integer.",
+            viewModel.ErrorMessage);
+        Assert.Null(settingsService.SavedSettings);
+    }
+
+    [Fact]
+    public async Task SaveCommand_ShouldShowItalianValidationMessages()
+    {
+        LocalizationManager.SetLanguageForCurrentProcess("it");
+
+        try
+        {
+            var settingsService =
+                new FakeApplicationSettingsService();
+
+            var viewModel = new SettingsViewModel(
+                settingsService,
+                [new FakeMetadataProvider(
+                    CgmProviderKind.Mock,
+                    "Mock")]);
+
+            await viewModel.LoadCommand.ExecuteAsync(null);
+
+            viewModel
+                .GlucoseAlertRequiredConsecutiveReadingsText =
+                "0";
+
+            await viewModel.SaveCommand.ExecuteAsync(null);
+
+            Assert.True(viewModel.HasError);
+            Assert.Equal(
+                "Validazione delle impostazioni non riuscita",
+                viewModel.StatusMessage);
+            Assert.Equal(
+                "Le letture consecutive richieste devono essere comprese tra 1 e 5.",
+                viewModel.ErrorMessage);
+            Assert.Equal(
+                "Le notifiche native sono opzionali e dipendono dai permessi di notifica di macOS.",
+                viewModel.NativeNotificationDiagnosticsText);
+            Assert.Null(settingsService.SavedSettings);
+        }
+        finally
+        {
+            LocalizationManager
+                .SetLanguageForCurrentProcess("en");
+        }
+    }
+
+
+    [Fact]
+    public async Task RefreshLocalizedText_ShouldTranslateReadyNativeTestStatus()
+    {
+        LocalizationManager.SetLanguageForCurrentProcess("it");
+
+        try
+        {
+            var viewModel = new SettingsViewModel(
+                new FakeApplicationSettingsService(),
+                [new FakeMetadataProvider(
+                    CgmProviderKind.Mock,
+                    "Mock")]);
+
+            await viewModel.LoadCommand.ExecuteAsync(null);
+
+            viewModel.NativeGlucoseNotificationsEnabled =
+                true;
+
+            Assert.Equal(
+                "È possibile inviare una notifica nativa sicura di test.",
+                viewModel.NativeGlucoseTestNotificationStatusText);
+
+            LocalizationManager.SetLanguageForCurrentProcess("en");
+
+            viewModel.RefreshLocalizedText();
+
+            Assert.Equal(
+                "A safe native test notification can be sent.",
+                viewModel.NativeGlucoseTestNotificationStatusText);
+        }
+        finally
+        {
+            LocalizationManager
+                .SetLanguageForCurrentProcess("en");
+        }
     }
 
     #region Helpers

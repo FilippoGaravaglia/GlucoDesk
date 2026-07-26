@@ -34,12 +34,12 @@ namespace GlucoDesk.Desktop.ViewModels.Settings;
 public sealed partial class SettingsViewModel : ViewModelBase
 {
     /// <summary>
-    /// Gets native notification diagnostics for the current runtime environment.
+    /// Gets localized native notification diagnostics for the current
+    /// runtime environment.
     /// </summary>
-    public string NativeNotificationDiagnosticsText { get; } =
-        NativeNotificationDiagnosticsProvider
-            .CreateDefault()
-            .GetSettingsText();
+    [ObservableProperty]
+    private string _nativeNotificationDiagnosticsText =
+        BuildNativeNotificationDiagnosticsText();
 
 
     private static readonly IReadOnlyList<CgmProviderKind> SupportedProviderKinds =
@@ -1079,6 +1079,21 @@ public sealed partial class SettingsViewModel : ViewModelBase
         StatusMessage =
             LocalizeKnownSettingsText(StatusMessage);
 
+        NativeNotificationDiagnosticsText =
+            BuildNativeNotificationDiagnosticsText();
+
+        NativeGlucoseTestNotificationStatusText =
+            LocalizeKnownNativeTestNotificationStatusText(
+                NativeGlucoseTestNotificationStatusText);
+
+        if (HasError &&
+            !string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            ErrorMessage =
+                LocalizeKnownSettingsValidationText(
+                    ErrorMessage);
+        }
+
         UpdateNativeGlucoseTestNotificationAvailability();
 
         if (!IsBackupBusy &&
@@ -1256,33 +1271,45 @@ public sealed partial class SettingsViewModel : ViewModelBase
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(NativeGlucoseTestNotificationStatusText) ||
-            NativeGlucoseTestNotificationStatusText.Contains("Enable ", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(
+                NativeGlucoseTestNotificationStatusText) ||
+            NativeGlucoseTestNotificationStatusText.Contains(
+                "Enable ",
+                StringComparison.OrdinalIgnoreCase) ||
+            NativeGlucoseTestNotificationStatusText.Contains(
+                "Abilita ",
+                StringComparison.OrdinalIgnoreCase))
         {
             NativeGlucoseTestNotificationStatusText =
-                "Send a safe test notification to verify OS permissions.";
+                T("SettingsTestNotificationReady");
         }
     }
 
     /// <summary>
-    /// Parses the glucose alert stability input.
+    /// Tries to parse and validate the required consecutive out-of-range
+    /// readings without silently normalizing invalid input.
     /// </summary>
-    /// <returns>The parsed and bounded required consecutive readings value.</returns>
-    private int ParseGlucoseAlertRequiredConsecutiveReadings()
+    /// <param name="requiredConsecutiveReadings">
+    /// The parsed number of readings.
+    /// </param>
+    /// <returns>
+    /// True when the value is between the supported minimum and maximum.
+    /// </returns>
+    private bool TryParseGlucoseAlertRequiredConsecutiveReadings(
+        out int requiredConsecutiveReadings)
     {
-        if (!int.TryParse(
+        return
+            int.TryParse(
                 GlucoseAlertRequiredConsecutiveReadingsText,
                 NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
-                out var requiredConsecutiveReadings))
-        {
-            return ApplicationSettings.DefaultGlucoseAlertRequiredConsecutiveReadings;
-        }
-
-        return Math.Clamp(
-            requiredConsecutiveReadings,
-            ApplicationSettings.MinimumGlucoseAlertRequiredConsecutiveReadings,
-            ApplicationSettings.MaximumGlucoseAlertRequiredConsecutiveReadings);
+                out requiredConsecutiveReadings) &&
+            requiredConsecutiveReadings >=
+                ApplicationSettings
+                    .MinimumGlucoseAlertRequiredConsecutiveReadings &&
+            requiredConsecutiveReadings <=
+                ApplicationSettings
+                    .MaximumGlucoseAlertRequiredConsecutiveReadings;
     }
 
     /// <summary>
@@ -1821,31 +1848,38 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         if (SelectedLiveProvider is null)
         {
-            validationMessage = "Select a live provider.";
+            validationMessage =
+                T("SettingsSelectLiveProviderValidation");
             return null;
         }
 
         if (!SelectedLiveProvider.IsAvailable)
         {
-            validationMessage = $"Live provider '{SelectedLiveProvider.DisplayName}' is not available. Configure it before selecting it.";
+            validationMessage = TF(
+                "SettingsLiveProviderUnavailableValidationFormat",
+                SelectedLiveProvider.DisplayName);
             return null;
         }
 
         if (SelectedHistoricalProvider is null)
         {
-            validationMessage = "Select a historical provider.";
+            validationMessage =
+                T("SettingsSelectHistoricalProviderValidation");
             return null;
         }
 
         if (!SelectedHistoricalProvider.IsAvailable)
         {
-            validationMessage = $"Historical provider '{SelectedHistoricalProvider.DisplayName}' is not available. Configure it before selecting it.";
+            validationMessage = TF(
+                "SettingsHistoricalProviderUnavailableValidationFormat",
+                SelectedHistoricalProvider.DisplayName);
             return null;
         }
 
         if (SelectedPreferredUnit is null)
         {
-            validationMessage = "Select a preferred glucose unit.";
+            validationMessage =
+                T("SettingsSelectPreferredUnitValidation");
             return null;
         }
 
@@ -1853,33 +1887,63 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         if (!TryParseTargetValueMgDl(TargetLowMgDlText, selectedUnit, out var targetLowMgDl))
         {
-            validationMessage = $"Target low must be a positive glucose value expressed in {FormatGlucoseUnitLabel(selectedUnit)}.";
+            validationMessage = TF(
+                "SettingsTargetLowPositiveValidationFormat",
+                FormatGlucoseUnitLabel(selectedUnit));
             return null;
         }
 
         if (!TryParseTargetValueMgDl(TargetHighMgDlText, selectedUnit, out var targetHighMgDl))
         {
-            validationMessage = $"Target high must be a positive glucose value expressed in {FormatGlucoseUnitLabel(selectedUnit)}.";
+            validationMessage = TF(
+                "SettingsTargetHighPositiveValidationFormat",
+                FormatGlucoseUnitLabel(selectedUnit));
             return null;
         }
 
-        if (!TryParsePositiveInteger(DashboardRefreshIntervalSecondsText, out var refreshIntervalSeconds))
+        if (targetHighMgDl <= targetLowMgDl)
         {
-            validationMessage = "Refresh interval must be a positive integer.";
+            validationMessage =
+                T("SettingsTargetRangeOrderValidation");
+
             return null;
         }
 
-        if (!TryParsePositiveInteger(GlucoseAlertRepeatIntervalMinutesText, out var alertRepeatIntervalMinutes))
+        if (!TryParsePositiveInteger(
+                DashboardRefreshIntervalSecondsText,
+                out var refreshIntervalSeconds))
         {
-            validationMessage = "Notification repeat interval must be a positive integer.";
+            validationMessage =
+                T("SettingsRefreshIntervalPositiveValidation");
+            return null;
+        }
+
+        if (!TryParsePositiveInteger(
+                GlucoseAlertRepeatIntervalMinutesText,
+                out var alertRepeatIntervalMinutes))
+        {
+            validationMessage =
+                T("SettingsRepeatIntervalPositiveValidation");
+
+            return null;
+        }
+
+        if (!TryParseGlucoseAlertRequiredConsecutiveReadings(
+                out var glucoseAlertRequiredConsecutiveReadings))
+        {
+            validationMessage = TF(
+                "SettingsConsecutiveReadingsRangeValidationFormat",
+                ApplicationSettings
+                    .MinimumGlucoseAlertRequiredConsecutiveReadings,
+                ApplicationSettings
+                    .MaximumGlucoseAlertRequiredConsecutiveReadings);
+
             return null;
         }
 
         try
         {
-            var glucoseAlertRequiredConsecutiveReadings = ParseGlucoseAlertRequiredConsecutiveReadings();
-
-        return new ApplicationSettings(
+            return new ApplicationSettings(
                 activeLiveProvider: SelectedLiveProvider.Kind,
                 historicalProvider: SelectedHistoricalProvider.Kind,
                 preferredUnit: SelectedPreferredUnit.Unit,
@@ -1895,9 +1959,11 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 glucoseAlertRepeatInterval: TimeSpan.FromMinutes(alertRepeatIntervalMinutes),
                 glucoseAlertRequiredConsecutiveReadings: glucoseAlertRequiredConsecutiveReadings);
         }
-        catch (ArgumentException exception)
+        catch (ArgumentException)
         {
-            validationMessage = exception.Message;
+            validationMessage =
+                T("SettingsInvalidValuesValidation");
+
             return null;
         }
     }
@@ -2218,6 +2284,89 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private static bool IsOfficialDexcomProviderKind(CgmProviderKind kind)
     {
         return kind is CgmProviderKind.DexcomSandbox or CgmProviderKind.DexcomOfficial;
+    }
+
+    /// <summary>
+    /// Builds localized diagnostics for native notifications while preserving
+    /// unknown platform-specific diagnostic messages.
+    /// </summary>
+    private static string BuildNativeNotificationDiagnosticsText()
+    {
+        var diagnosticsText =
+            NativeNotificationDiagnosticsProvider
+                .CreateDefault()
+                .GetSettingsText();
+
+        return diagnosticsText switch
+        {
+            "Native notifications are optional and depend on macOS notification permissions." or
+            "Le notifiche native sono opzionali e dipendono dai permessi di notifica di macOS." =>
+                T("SettingsNativeNotificationsDescription"),
+
+            _ => diagnosticsText
+        };
+    }
+
+    /// <summary>
+    /// Localizes a native test-notification status that may already be
+    /// visible when the application language changes.
+    /// </summary>
+    private static string LocalizeKnownNativeTestNotificationStatusText(
+        string value)
+    {
+        return value switch
+        {
+            "A safe native test notification can be sent." or
+            "È possibile inviare una notifica nativa sicura di test." =>
+                T("SettingsTestNotificationReady"),
+
+            "Enable native OS notifications to send a safe test notification." or
+            "Abilita le notifiche native OS per inviare una notifica sicura di test." =>
+                T("SettingsEnableNativeForTest"),
+
+            "Enable glucose awareness and native OS notifications before sending a test notification." or
+            "Abilita gli avvisi di consapevolezza glicemica e le notifiche native OS prima di inviare una notifica di test." =>
+                T("SettingsEnableAwarenessAndNativeForTest"),
+
+            "Enable glucose awareness notifications to send a safe test notification." or
+            "Abilita gli avvisi di consapevolezza glicemica per inviare una notifica sicura di test." =>
+                T("SettingsEnableAwarenessForTest"),
+
+            "Sending test notification..." or
+            "Invio notifica di test..." =>
+                T("SettingsSendingTestNotification"),
+
+            "Test notification cancelled." or
+            "Notifica di test annullata." =>
+                T("SettingsTestNotificationCancelled"),
+
+            _ => value
+        };
+    }
+
+    /// <summary>
+    /// Localizes validation messages that may already be visible when the
+    /// user changes the application language.
+    /// </summary>
+    private static string LocalizeKnownSettingsValidationText(
+        string value)
+    {
+        return value switch
+        {
+            "Refresh interval must be a positive integer." or
+            "L’intervallo di aggiornamento deve essere un numero intero positivo." =>
+                T("SettingsRefreshIntervalPositiveValidation"),
+
+            "Notification repeat interval must be a positive integer." or
+            "L’intervallo di ripetizione delle notifiche deve essere un numero intero positivo." =>
+                T("SettingsRepeatIntervalPositiveValidation"),
+
+            "Target high must be greater than target low." or
+            "Il target alto deve essere maggiore del target basso." =>
+                T("SettingsTargetRangeOrderValidation"),
+
+            _ => value
+        };
     }
 
     private static string LocalizeKnownSettingsText(string value)
