@@ -224,6 +224,32 @@ public sealed class DiaryViewModelTests : EnglishLocalizationTestBase
     }
 
     [Fact]
+    public async Task ExportCommand_ShouldUseConfiguredHistoricalProvider()
+    {
+        // Arrange
+        var excelService = new FakeExcelExportService();
+
+        var settingsService = new FakeApplicationSettingsService
+        {
+            Settings = new ApplicationSettings(
+                historicalProvider: CgmProviderKind.DexcomShare)
+        };
+
+        var viewModel = CreateViewModel(
+            excelService: excelService,
+            settingsService: settingsService);
+
+        // Act
+        await viewModel.ExportCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.NotNull(excelService.LastRequest);
+        Assert.Equal(
+            CgmProviderKind.DexcomShare,
+            excelService.LastRequest.DiaryRequest.ProviderKind);
+    }
+
+    [Fact]
     public async Task ExportCommand_ShouldShowError_WhenSaveFails()
     {
         // Arrange
@@ -292,6 +318,124 @@ public sealed class DiaryViewModelTests : EnglishLocalizationTestBase
         Assert.Equal("Coverage unavailable", viewModel.PreviewCoverageText);
     }
 
+    [Fact]
+    public async Task RefreshPreviewCommand_ShouldUseExactlyThirtyLocalDates()
+    {
+        // Arrange
+        var diaryService = new FakeGlycemicDiaryService
+        {
+            ShouldFail = true
+        };
+
+        var nowUtc = new DateTimeOffset(
+            2026,
+            7,
+            25,
+            20,
+            30,
+            0,
+            TimeSpan.Zero);
+
+        var viewModel = CreateViewModel(
+            diaryService: diaryService,
+            timeProvider: new FixedTimeProvider(nowUtc));
+
+        viewModel.SelectedPeriodPreset =
+            viewModel.PeriodPresets.Single(
+                preset =>
+                    preset.Kind ==
+                    DiaryExportPeriodPresetKind.LastThirtyDays);
+
+        // Act
+        await viewModel.RefreshPreviewCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.NotNull(diaryService.LastRequest);
+
+        var request = diaryService.LastRequest;
+
+        var localStart =
+            TimeZoneInfo.ConvertTime(
+                request.PeriodStartsAt,
+                TimeZoneInfo.Local);
+
+        var localEnd =
+            TimeZoneInfo.ConvertTime(
+                request.PeriodEndsAt,
+                TimeZoneInfo.Local);
+
+        Assert.Equal(
+            localEnd.Date.AddDays(-29),
+            localStart.Date);
+
+        Assert.Equal(
+            TimeSpan.Zero,
+            localStart.TimeOfDay);
+
+        Assert.Equal(
+            CgmProviderKind.Mock,
+            request.ProviderKind);
+    }
+
+    [Fact]
+    public async Task RefreshPreviewCommand_ShouldUseExactlyFourteenLocalDates()
+    {
+        // Arrange
+        var diaryService = new FakeGlycemicDiaryService
+        {
+            ShouldFail = true
+        };
+
+        var nowUtc = new DateTimeOffset(
+            2026,
+            7,
+            25,
+            20,
+            30,
+            0,
+            TimeSpan.Zero);
+
+        var viewModel = CreateViewModel(
+            diaryService: diaryService,
+            timeProvider: new FixedTimeProvider(nowUtc));
+
+        viewModel.SelectedPeriodPreset =
+            viewModel.PeriodPresets.Single(
+                preset =>
+                    preset.Kind ==
+                    DiaryExportPeriodPresetKind.LastFourteenDays);
+
+        // Act
+        await viewModel.RefreshPreviewCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.NotNull(diaryService.LastRequest);
+
+        var request = diaryService.LastRequest;
+
+        var localStart =
+            TimeZoneInfo.ConvertTime(
+                request.PeriodStartsAt,
+                TimeZoneInfo.Local);
+
+        var localEnd =
+            TimeZoneInfo.ConvertTime(
+                request.PeriodEndsAt,
+                TimeZoneInfo.Local);
+
+        Assert.Equal(
+            localEnd.Date.AddDays(-13),
+            localStart.Date);
+
+        Assert.Equal(
+            TimeSpan.Zero,
+            localStart.TimeOfDay);
+
+        Assert.Equal(
+            CgmProviderKind.Mock,
+            request.ProviderKind);
+    }
+
     #region Helpers
 
     /// <summary>
@@ -302,13 +446,15 @@ public sealed class DiaryViewModelTests : EnglishLocalizationTestBase
     /// <param name="pdfService">The optional PDF export service.</param>
     /// <param name="saveService">The optional file save service.</param>
     /// <param name="settingsService">The optional settings service.</param>
+    /// <param name="timeProvider">The optional time provider used to make period calculations deterministic in tests.</param>
     /// <returns>The diary view model.</returns>
     private static DiaryViewModel CreateViewModel(
         IGlycemicDiaryService? diaryService = null,
         FakeExcelExportService? excelService = null,
         FakePdfExportService? pdfService = null,
         FakeFileSaveService? saveService = null,
-        IApplicationSettingsService? settingsService = null)
+        IApplicationSettingsService? settingsService = null,
+        TimeProvider? timeProvider = null)
     {
         return new DiaryViewModel(
             diaryService ?? new FakeGlycemicDiaryService(),
@@ -316,12 +462,29 @@ public sealed class DiaryViewModelTests : EnglishLocalizationTestBase
             pdfService ?? new FakePdfExportService(),
             saveService ?? new FakeFileSaveService(),
             settingsService ?? new FakeApplicationSettingsService(),
-            TimeProvider.System);
+            timeProvider ?? TimeProvider.System);
+    }
+
+    private sealed class FixedTimeProvider : TimeProvider
+    {
+        private readonly DateTimeOffset _utcNow;
+
+        public FixedTimeProvider(DateTimeOffset utcNow)
+        {
+            _utcNow = utcNow.ToUniversalTime();
+        }
+
+        public override DateTimeOffset GetUtcNow()
+        {
+            return _utcNow;
+        }
     }
 
     private sealed class FakeGlycemicDiaryService : IGlycemicDiaryService
     {
         public bool ShouldFail { get; init; }
+
+        public GlycemicDiaryRequest? LastRequest { get; private set; }
 
         /// <inheritdoc />
         public Task<Result<GlycemicDiaryReport>> CreateDiaryAsync(
@@ -330,6 +493,8 @@ public sealed class DiaryViewModelTests : EnglishLocalizationTestBase
         {
             ArgumentNullException.ThrowIfNull(request);
             cancellationToken.ThrowIfCancellationRequested();
+
+            LastRequest = request;
 
             if (ShouldFail)
             {

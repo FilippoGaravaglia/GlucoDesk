@@ -39,6 +39,8 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
     private readonly IGlucoseHistoryService _historyService;
     private readonly IApplicationSettingsService _settingsService;
     private readonly IDesktopPresencePrivacyModeStore _privacyModeStore;
+    private readonly ILocalBackupLanguagePreferenceService
+        _languagePreferenceService;
 
     /// <summary>
     /// Initializes the portable backup service.
@@ -46,15 +48,18 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
     public LocalDataBackupService(
         IGlucoseHistoryService historyService,
         IApplicationSettingsService settingsService,
-        IDesktopPresencePrivacyModeStore privacyModeStore)
+        IDesktopPresencePrivacyModeStore privacyModeStore,
+        ILocalBackupLanguagePreferenceService languagePreferenceService)
     {
         ArgumentNullException.ThrowIfNull(historyService);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(privacyModeStore);
+        ArgumentNullException.ThrowIfNull(languagePreferenceService);
 
         _historyService = historyService;
         _settingsService = settingsService;
         _privacyModeStore = privacyModeStore;
+        _languagePreferenceService = languagePreferenceService;
     }
 
     /// <inheritdoc />
@@ -118,7 +123,7 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
             var preferences = new BackupPreferencesDocument
             {
                 LanguageCode =
-                    LocalizationManager.CurrentLanguageCode,
+                    _languagePreferenceService.CurrentLanguageCode,
                 DesktopPrivacyModeEnabled =
                     _privacyModeStore.Load()
             };
@@ -279,7 +284,7 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
             }
 
             var languageImported =
-                TryImportLanguagePreference(
+                _languagePreferenceService.TryApplyAndPersist(
                     preferences.LanguageCode);
 
             _privacyModeStore.Save(
@@ -408,35 +413,6 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
         return value
             ?? throw new InvalidDataException(
                 $"Required backup entry '{entryName}' is empty.");
-    }
-
-    private static bool TryImportLanguagePreference(
-        string? languageCode)
-    {
-        if (string.IsNullOrWhiteSpace(languageCode))
-        {
-            return false;
-        }
-
-        var supportedLanguage =
-            TranslationCatalog.SupportedLanguages.FirstOrDefault(
-                language => string.Equals(
-                    language.Code,
-                    languageCode,
-                    StringComparison.OrdinalIgnoreCase));
-
-        if (supportedLanguage is null)
-        {
-            return false;
-        }
-
-        LanguagePreferenceStore.SaveLanguageCode(
-            supportedLanguage.Code);
-
-        LocalizationManager.SetLanguage(
-            supportedLanguage.Code);
-
-        return true;
     }
 
     private static JsonSerializerOptions CreateSerializerOptions()

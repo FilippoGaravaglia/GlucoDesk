@@ -52,7 +52,7 @@ public sealed class GlycemicDiaryWeeklyReviewServiceTests
         var review = service.CreateReview(current, previous);
 
         // Assert
-        Assert.Equal("Weekly review: time in range improved", review.Headline);
+        Assert.Equal("Period comparison: time in range improved", review.Headline);
         Assert.False(review.RequiresCaution);
 
         var tirChange = Assert.Single(
@@ -94,7 +94,7 @@ public sealed class GlycemicDiaryWeeklyReviewServiceTests
         var review = service.CreateReview(current, previous);
 
         // Assert
-        Assert.Equal("Weekly review: data quality needs attention", review.Headline);
+        Assert.Equal("Period comparison: data quality needs attention", review.Headline);
         Assert.True(review.RequiresCaution);
         Assert.Contains("comparisons should be interpreted carefully", review.SummaryText);
         Assert.Contains("Current history reliability", review.CurrentHistoryReliabilityText);
@@ -135,7 +135,10 @@ public sealed class GlycemicDiaryWeeklyReviewServiceTests
             dailyEntries:
             [
                 CreateDailyEntryWithDinner(new DateOnly(2026, 6, 8), 190m, 170m, 210m),
-                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 9), 205m, 180m, 230m)
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 9), 205m, 180m, 230m),
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 10), 205m, 180m, 230m),
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 11), 205m, 180m, 230m),
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 12), 205m, 180m, 230m),
             ]);
 
         // Act
@@ -182,7 +185,7 @@ public sealed class GlycemicDiaryWeeklyReviewServiceTests
         var review = service.CreateReview(current, previous);
 
         // Assert
-        Assert.Equal("Weekly review: no local readings available", review.Headline);
+        Assert.Equal("Period comparison: no local readings available", review.Headline);
         Assert.Contains("no local readings", review.SummaryText);
     }
 
@@ -216,17 +219,31 @@ public sealed class GlycemicDiaryWeeklyReviewServiceTests
         var review = service.CreateReview(current, previous);
 
         // Assert
-        Assert.Equal("Weekly review: comparison limited by missing previous data", review.Headline);
-        Assert.Contains("previous equivalent period has no local readings", review.SummaryText);
-        Assert.Contains("Current local history reliability is Poor", review.SummaryText);
+        Assert.Equal(
+            "Period comparison unavailable: previous data missing",
+            review.Headline);
 
-        var averageChange = Assert.Single(
-            review.Changes,
-            change => change.Kind == GlycemicDiaryReviewMetricKind.AverageGlucose);
+        Assert.Contains(
+            "previous equivalent period has no local readings",
+            review.SummaryText);
 
-        Assert.Equal(GlycemicDiaryReviewChangeDirection.NewlyAvailable, averageChange.Direction);
-        Assert.Contains("no comparable previous-period value", averageChange.Description);
-        Assert.Equal("129 mg/dL", averageChange.CurrentValueText);
+        Assert.Contains(
+            "Current local history reliability is Poor",
+            review.SummaryText);
+
+        Assert.Empty(review.Changes);
+
+        Assert.Contains(
+            "Current-period readings: 96.",
+            review.Highlights);
+
+        Assert.Contains(
+            "Current-period data coverage: 40%.",
+            review.Highlights);
+
+        Assert.Contains(
+            "A previous-period comparison is not available.",
+            review.Highlights);
     }
 
     [Fact]

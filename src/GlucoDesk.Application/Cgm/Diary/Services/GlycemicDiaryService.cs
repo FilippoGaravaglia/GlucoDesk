@@ -63,7 +63,8 @@ public sealed class GlycemicDiaryService : IGlycemicDiaryService
         var readings = NormalizeReadings(
             historyResult.Value.Readings,
             request.PeriodStartsAt,
-            request.PeriodEndsAt);
+            request.PeriodEndsAt,
+            request.ProviderKind);
 
         var overallContinuityResult = _continuityService.AnalyzeWindow(
             readings,
@@ -102,14 +103,17 @@ public sealed class GlycemicDiaryService : IGlycemicDiaryService
     /// <param name="readings">The readings to normalize.</param>
     /// <param name="periodStartsAt">The diary period start timestamp.</param>
     /// <param name="periodEndsAt">The diary period end timestamp.</param>
+    /// <param name="providerKind">The CGM provider whose readings must be included.</param>
     /// <returns>The normalized readings.</returns>
     private static IReadOnlyList<GlucoseReading> NormalizeReadings(
         IReadOnlyCollection<GlucoseReading> readings,
         DateTimeOffset periodStartsAt,
-        DateTimeOffset periodEndsAt)
+        DateTimeOffset periodEndsAt,
+        GlucoDesk.Core.Glucose.Enums.CgmProviderKind providerKind)
     {
         return readings
             .Where(reading =>
+                reading.Provider == providerKind &&
                 reading.Timestamp.ToUniversalTime() >= periodStartsAt.ToUniversalTime() &&
                 reading.Timestamp.ToUniversalTime() <= periodEndsAt.ToUniversalTime())
             .GroupBy(reading => reading.Timestamp.ToUniversalTime().Ticks)

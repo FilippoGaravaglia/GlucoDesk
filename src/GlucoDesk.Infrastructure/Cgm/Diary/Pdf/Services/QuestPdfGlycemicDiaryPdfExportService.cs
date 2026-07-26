@@ -120,7 +120,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         }
 
         var report = diaryResult.Value;
-        var weeklyReviewResult = await CreateWeeklyReviewAsync(report, cancellationToken)
+        var weeklyReviewResult = await CreateWeeklyReviewAsync(
+            report,
+            request.DiaryRequest.ProviderKind,
+            cancellationToken)
             .ConfigureAwait(false);
 
         QuestPDF.Settings.License = LicenseType.Community;
@@ -461,8 +464,29 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                             completenessScore.CoverageText));
                 WriteMetric(table, "Readings", report.ReadingsCount.ToString(CultureInfo.InvariantCulture));
                 WriteMetric(table, "Detected gaps", completenessScore.DetectedGapCount.ToString(CultureInfo.InvariantCulture));
-                WriteMetric(table, "Incomplete days", report.IncompleteDaysCount.ToString(CultureInfo.InvariantCulture));
-                WriteMetric(table, "Empty days", report.EmptyDaysCount.ToString(CultureInfo.InvariantCulture));
+                WriteMetric(
+                    table,
+                    "Complete days",
+                    report.CompleteDaysCount.ToString(
+                        CultureInfo.InvariantCulture));
+
+                WriteMetric(
+                    table,
+                    "Partial days",
+                    report.PartialDaysCount.ToString(
+                        CultureInfo.InvariantCulture));
+
+                WriteMetric(
+                    table,
+                    "In-progress days",
+                    report.InProgressDaysCount.ToString(
+                        CultureInfo.InvariantCulture));
+
+                WriteMetric(
+                    table,
+                    "Empty days",
+                    report.EmptyDaysCount.ToString(
+                        CultureInfo.InvariantCulture));
             });
         });
     }
@@ -687,16 +711,19 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     /// Creates a weekly review for the exported diary report.
     /// </summary>
     /// <param name="report">The diary report.</param>
+    /// <param name="providerKind">The CGM provider used by the exported diary.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The weekly review generation result.</returns>
     private Task<Result<GlycemicDiaryWeeklyReview>> CreateWeeklyReviewAsync(
         GlycemicDiaryReport report,
+        GlucoDesk.Core.Glucose.Enums.CgmProviderKind providerKind,
         CancellationToken cancellationToken)
     {
         return _weeklyReviewGenerationService.GenerateAsync(
             new GlycemicDiaryWeeklyReviewRequest(
                 report.PeriodStartsAt,
-                report.PeriodEndsAt),
+                report.PeriodEndsAt,
+                providerKind),
             cancellationToken);
     }
 
@@ -728,6 +755,9 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
     {
         var analysis = _patternAnalysisService.Analyze(report);
         var patterns = analysis.Patterns
+            .Where(pattern =>
+                pattern.Kind !=
+                GlycemicDiaryPatternKind.LimitedDataCoverage)
             .OrderByDescending(GetPatternSeverityRank)
             .ThenBy(pattern => pattern.Kind)
             .Take(5)
@@ -736,7 +766,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
         var patternSummaryText =
             GlycemicDiaryExportLocalizer.FormatPatternSummary(
                 patterns.Length,
-                analysis.Patterns.Count);
+                patterns.Length);
 
         container.Element(Card).Column(column =>
         {
@@ -1084,10 +1114,9 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                         var isAlternate = rowIndex % 2 != 0;
                         var dayStatusColor = day.IsDataComplete ? SuccessText : WarningText;
                         var dayStatusText =
-                            GlycemicDiaryExportLocalizer.Translate(
-                                day.IsDataComplete
-                                    ? "Complete"
-                                    : "Partial");
+                            GlycemicDiaryExportLocalizer.GetDailyDataStatus(
+                                day,
+                                report);
 
                         CompletenessBodyCell(table.Cell(), isAlternate).Text(
                             GlycemicDiaryExportLocalizer.FormatDate(day.Date));
@@ -1097,7 +1126,10 @@ public sealed class QuestPdfGlycemicDiaryPdfExportService : IGlycemicDiaryPdfExp
                             .SemiBold()
                             .FontColor(dayStatusColor);
 
-                        CompletenessBodyCell(table.Cell(), isAlternate).Text(day.GapCount.ToString(CultureInfo.InvariantCulture));
+                        CompletenessBodyCell(table.Cell(), isAlternate)
+                            .Text(
+                                GlycemicDiaryExportLocalizer
+                                    .FormatDailyGapCount(day));
 
                         rowIndex++;
                     }

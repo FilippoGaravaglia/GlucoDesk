@@ -161,7 +161,12 @@ internal static class DesktopServiceProviderBuilder
         services.AddTransient<FeatureTourViewModel>();
         services.AddTransient<FeatureTourWindow>();
         services.AddSingleton<IDiaryExportFileSaveService, AvaloniaDiaryExportFileSaveService>();
-        services.AddScoped<ILocalDataBackupService, LocalDataBackupService>();
+        services.AddSingleton<
+            ILocalBackupLanguagePreferenceService,
+            LocalBackupLanguagePreferenceService>();
+        services.AddScoped<
+            ILocalDataBackupService,
+            LocalDataBackupService>();
         services.AddSingleton<ILocalDataBackupFileService, AvaloniaLocalDataBackupFileService>();
     }
 

@@ -1,3 +1,5 @@
+using GlucoDesk.Core.Glucose.Enums;
+
 namespace GlucoDesk.Application.Cgm.Diary.Requests;
 
 /// <summary>
@@ -10,9 +12,11 @@ public sealed record GlycemicDiaryRequest
     /// </summary>
     /// <param name="periodStartsAt">The diary period start timestamp.</param>
     /// <param name="periodEndsAt">The diary period end timestamp.</param>
+    /// <param name="providerKind">The CGM provider whose history must be used.</param>
     public GlycemicDiaryRequest(
         DateTimeOffset periodStartsAt,
-        DateTimeOffset periodEndsAt)
+        DateTimeOffset periodEndsAt,
+        CgmProviderKind providerKind)
     {
         if (periodEndsAt <= periodStartsAt)
         {
@@ -22,8 +26,17 @@ public sealed record GlycemicDiaryRequest
                 "Diary period end timestamp must be greater than start timestamp.");
         }
 
+        if (providerKind == CgmProviderKind.Unknown ||
+            !Enum.IsDefined(providerKind))
+        {
+            throw new ArgumentException(
+                "Diary provider kind must be specified.",
+                nameof(providerKind));
+        }
+
         PeriodStartsAt = periodStartsAt;
         PeriodEndsAt = periodEndsAt;
+        ProviderKind = providerKind;
     }
 
     /// <summary>
@@ -35,4 +48,9 @@ public sealed record GlycemicDiaryRequest
     /// Gets the diary period end timestamp.
     /// </summary>
     public DateTimeOffset PeriodEndsAt { get; }
+
+    /// <summary>
+    /// Gets the CGM provider whose readings must be included.
+    /// </summary>
+    public CgmProviderKind ProviderKind { get; }
 }

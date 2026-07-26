@@ -1,5 +1,6 @@
 using GlucoDesk.Application.Cgm.Diary.Exports.Requests;
 using GlucoDesk.Application.Cgm.Diary.Requests;
+using GlucoDesk.Core.Glucose.Enums;
 
 namespace GlucoDesk.Application.Tests.Cgm.Diary.Exports.Requests;
 
@@ -22,7 +23,8 @@ public sealed class GlycemicDiaryExportRequestLanguageTests
                 0,
                 0,
                 0,
-                TimeSpan.Zero));
+                TimeSpan.Zero),
+            CgmProviderKind.Mock);
 
     [Theory]
     [InlineData("it", "it")]

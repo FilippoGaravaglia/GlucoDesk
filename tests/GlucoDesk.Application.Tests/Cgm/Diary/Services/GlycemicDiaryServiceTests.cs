@@ -36,7 +36,7 @@ public sealed class GlycemicDiaryServiceTests
 
         // Act
         var result = await service.CreateDiaryAsync(
-            new GlycemicDiaryRequest(periodStartsAt, periodEndsAt),
+            new GlycemicDiaryRequest(periodStartsAt, periodEndsAt, CgmProviderKind.Mock),
             CancellationToken.None);
 
         // Assert
@@ -84,7 +84,7 @@ public sealed class GlycemicDiaryServiceTests
 
         // Act
         var result = await service.CreateDiaryAsync(
-            new GlycemicDiaryRequest(periodStartsAt, periodEndsAt),
+            new GlycemicDiaryRequest(periodStartsAt, periodEndsAt, CgmProviderKind.Mock),
             CancellationToken.None);
 
         // Assert
@@ -112,7 +112,7 @@ public sealed class GlycemicDiaryServiceTests
 
         // Act
         var result = await service.CreateDiaryAsync(
-            new GlycemicDiaryRequest(periodStartsAt, periodEndsAt),
+            new GlycemicDiaryRequest(periodStartsAt, periodEndsAt, CgmProviderKind.Mock),
             CancellationToken.None);
 
         // Assert
@@ -137,7 +137,7 @@ public sealed class GlycemicDiaryServiceTests
 
         // Act
         var result = await service.CreateDiaryAsync(
-            new GlycemicDiaryRequest(periodStartsAt, periodEndsAt),
+            new GlycemicDiaryRequest(periodStartsAt, periodEndsAt, CgmProviderKind.Mock),
             CancellationToken.None);
 
         // Assert
@@ -145,6 +145,113 @@ public sealed class GlycemicDiaryServiceTests
         Assert.Equal(2, result.Value.DailyEntries.Count);
         Assert.Contains(result.Value.DailyEntries, day => day.Date == new DateOnly(2026, 6, 19));
         Assert.Contains(result.Value.DailyEntries, day => day.Date == new DateOnly(2026, 6, 20));
+    }
+
+    [Fact]
+    public async Task CreateDiaryAsync_ShouldIncludeOnlyRequestedProvider()
+    {
+        // Arrange
+        var periodStartsAt = new DateTimeOffset(
+            2026,
+            7,
+            24,
+            0,
+            0,
+            0,
+            TimeSpan.Zero);
+
+        var periodEndsAt = periodStartsAt
+            .AddDays(1)
+            .AddTicks(-1);
+
+        var readings = new[]
+        {
+            CreateReading(
+                periodStartsAt.AddHours(8),
+                110m,
+                CgmProviderKind.Mock),
+
+            CreateReading(
+                periodStartsAt.AddHours(8).AddMinutes(5),
+                120m,
+                CgmProviderKind.Mock),
+
+            CreateReading(
+                periodStartsAt.AddHours(8).AddMinutes(3),
+                150m,
+                CgmProviderKind.DexcomShare),
+
+            CreateReading(
+                periodStartsAt.AddHours(8).AddMinutes(8),
+                160m,
+                CgmProviderKind.DexcomShare)
+        };
+
+        var service = CreateService(readings);
+
+        // Act
+        var result = await service.CreateDiaryAsync(
+            new GlycemicDiaryRequest(
+                periodStartsAt,
+                periodEndsAt,
+                CgmProviderKind.DexcomShare),
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value.ReadingsCount);
+        Assert.Equal(155m, result.Value.AverageMgDl);
+
+        var day = Assert.Single(result.Value.DailyEntries);
+
+        Assert.Equal(2, day.ReadingsCount);
+        Assert.Equal(155m, day.AverageMgDl);
+    }
+
+    [Fact]
+    public async Task CreateDiaryAsync_ShouldSupportMockProviderExplicitly()
+    {
+        // Arrange
+        var periodStartsAt = new DateTimeOffset(
+            2026,
+            7,
+            24,
+            0,
+            0,
+            0,
+            TimeSpan.Zero);
+
+        var periodEndsAt = periodStartsAt
+            .AddDays(1)
+            .AddTicks(-1);
+
+        var readings = new[]
+        {
+            CreateReading(
+                periodStartsAt.AddHours(8),
+                100m,
+                CgmProviderKind.Mock),
+
+            CreateReading(
+                periodStartsAt.AddHours(8).AddMinutes(3),
+                180m,
+                CgmProviderKind.DexcomShare)
+        };
+
+        var service = CreateService(readings);
+
+        // Act
+        var result = await service.CreateDiaryAsync(
+            new GlycemicDiaryRequest(
+                periodStartsAt,
+                periodEndsAt,
+                CgmProviderKind.Mock),
+            CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value.ReadingsCount);
+        Assert.Equal(100m, result.Value.AverageMgDl);
     }
 
     #region Helpers
@@ -206,16 +313,18 @@ public sealed class GlycemicDiaryServiceTests
     /// </summary>
     /// <param name="timestamp">The reading timestamp.</param>
     /// <param name="valueMgDl">The glucose value in mg/dL.</param>
+    /// <param name="provider">The reading provider.</param>
     /// <returns>The glucose reading.</returns>
     private static GlucoseReading CreateReading(
         DateTimeOffset timestamp,
-        decimal valueMgDl)
+        decimal valueMgDl,
+        CgmProviderKind provider = CgmProviderKind.Mock)
     {
         return new GlucoseReading(
             timestamp,
             new GlucoseValue(valueMgDl, GlucoseUnit.MgDl),
             TrendDirection.Flat,
-            CgmProviderKind.Mock,
+            provider,
             GlucoseDataFreshness.NearRealTime);
     }
 

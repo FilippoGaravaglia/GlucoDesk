@@ -17,8 +17,8 @@ public sealed class GlycemicDiaryPatternAnalysisService : IGlycemicDiaryPatternA
     private const decimal VariableRangeThresholdMgDl = 80m;
     private const decimal StableRangeThresholdMgDl = 45m;
     private const decimal StableTimeInRangeThreshold = 85m;
-    private const int MinimumSupportingDays = 2;
-    private const int MinimumStableSupportingDays = 3;
+    private const int MinimumSupportingDays = 5;
+    private const int MinimumStableSupportingDays = 7;
 
     private readonly IGlucoseHistoryCompletenessScoringService _completenessScoringService;
 
@@ -80,7 +80,8 @@ public sealed class GlycemicDiaryPatternAnalysisService : IGlycemicDiaryPatternA
             GlycemicDiaryPatternSeverity.Caution,
             "Limited local history coverage",
             $"Local history coverage is {completenessScore.CoverageText}. Detected patterns should be interpreted carefully.",
-            report.IncompleteDaysCount));
+            report.DailyEntries.Count(
+                day => day.HasData)));
     }
 
     /// <summary>

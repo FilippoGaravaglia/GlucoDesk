@@ -24,7 +24,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryExcelExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt)),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock)),
             CancellationToken.None);
 
         // Assert
@@ -44,7 +44,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryExcelExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt)),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock)),
             CancellationToken.None);
 
         // Assert
@@ -59,7 +59,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
 
         Assert.Contains("Overview", worksheetNames);
         Assert.Contains("Export metadata", worksheetNames);
-        Assert.Contains("Weekly review", worksheetNames);
+        Assert.Contains("Period comparison worksheet", worksheetNames);
         Assert.Contains("Patterns", worksheetNames);
         Assert.Contains("Daily diary", worksheetNames);
         Assert.Contains("Time blocks", worksheetNames);
@@ -76,7 +76,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryExcelExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock),
                 preferredUnit: GlucoseUnit.MgDl),
             CancellationToken.None);
 
@@ -104,7 +104,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
     }
 
     [Fact]
-    public async Task ExportAsync_ShouldWriteWeeklyReviewWorksheet()
+    public async Task ExportAsync_ShouldWritePeriodComparisonWorksheet()
     {
         // Arrange
         var report = CreateReport();
@@ -113,7 +113,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryExcelExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock),
                 preferredUnit: GlucoseUnit.MgDl),
             CancellationToken.None);
 
@@ -123,7 +123,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         using var stream = new MemoryStream(result.Value.Content);
         using var workbook = new XLWorkbook(stream);
 
-        var worksheet = workbook.Worksheet("Weekly review");
+        var worksheet = workbook.Worksheet("Period comparison worksheet");
 
         Assert.Equal("Weekly review", worksheet.Cell("A1").GetString());
         Assert.False(string.IsNullOrWhiteSpace(worksheet.Cell("A2").GetString()));
@@ -143,7 +143,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryExcelExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock),
                 preferredUnit: GlucoseUnit.MgDl),
             CancellationToken.None);
 
@@ -180,7 +180,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryExcelExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock),
                 preferredUnit: GlucoseUnit.MmolL),
             CancellationToken.None);
 
@@ -234,7 +234,7 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryExcelExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock),
                 "my-diary"),
             CancellationToken.None);
 
@@ -257,7 +257,8 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportServiceTests
             new GlycemicDiaryExcelExportRequest(
                 new GlycemicDiaryRequest(
                     new DateTimeOffset(2026, 6, 19, 0, 0, 0, TimeSpan.Zero),
-                    new DateTimeOffset(2026, 6, 19, 23, 59, 59, TimeSpan.Zero))),
+                    new DateTimeOffset(2026, 6, 19, 23, 59, 59, TimeSpan.Zero),
+                    CgmProviderKind.Mock)),
             CancellationToken.None);
 
         // Assert

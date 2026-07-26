@@ -42,7 +42,8 @@ public sealed class GlycemicDiaryWeeklyReviewGenerationService : IGlycemicDiaryW
             .CreateDiaryAsync(
                 new GlycemicDiaryRequest(
                     request.CurrentPeriodStartsAt,
-                    request.CurrentPeriodEndsAt),
+                    request.CurrentPeriodEndsAt,
+                    request.ProviderKind),
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -57,7 +58,8 @@ public sealed class GlycemicDiaryWeeklyReviewGenerationService : IGlycemicDiaryW
             .CreateDiaryAsync(
                 new GlycemicDiaryRequest(
                     previousPeriod.StartsAt,
-                    previousPeriod.EndsAt),
+                    previousPeriod.EndsAt,
+                    request.ProviderKind),
                 cancellationToken)
             .ConfigureAwait(false);
 
