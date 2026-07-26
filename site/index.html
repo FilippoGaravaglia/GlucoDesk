@@ -119,6 +119,7 @@
         <a href="#experience" data-i18n="navExperience">Experience</a>
         <a href="#features" data-i18n="navFeatures">Features</a>
         <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
+        <a href="#founder" data-i18n="navFounder">Built by</a>
         <a href="#download" data-i18n="navDownload">Download</a>
       </nav>
 
@@ -147,7 +148,7 @@
           class="github-button"
           href="https://github.com/FilippoGaravaglia/GlucoDesk"
           target="_blank"
-          rel="noreferrer">
+          rel="noopener noreferrer">
           <svg
             viewBox="0 0 24 24"
             width="18"
@@ -181,6 +182,7 @@
       <a href="#experience" data-i18n="navExperience">Experience</a>
       <a href="#features" data-i18n="navFeatures">Features</a>
       <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
+      <a href="#founder" data-i18n="navFounder">Built by</a>
       <a href="#download" data-i18n="navDownload">Download</a>
     </nav>
   </header>
@@ -237,7 +239,7 @@
               class="secondary-cta"
               href="https://github.com/FilippoGaravaglia/GlucoDesk"
               target="_blank"
-              rel="noreferrer">
+              rel="noopener noreferrer">
               <span data-i18n="heroSecondaryAction">
                 View on GitHub
               </span>
@@ -1000,43 +1002,101 @@
     </section>
 
 
-    <section class="section founder-section" id="story">
+        <section
+      class="section founder-section"
+      id="founder"
+      aria-labelledby="founder-title">
       <div class="site-shell">
-        <div class="founder-card reveal">
-          <div class="founder-mark" aria-hidden="true">
-            <span>G</span>
-          </div>
+        <article class="founder-card reveal">
+          <div class="founder-identity">
+            <div class="founder-photo-frame">
+              <img
+                class="founder-photo"
+                src="assets/images/founder/filippo-garavaglia.jpg"
+                alt="Filippo Garavaglia, creator of GlucoDesk"
+                width="360"
+                height="360"
+                loading="lazy"
+                decoding="async"
+                data-founder-image>
+            </div>
 
-          <div class="founder-copy">
-            <span class="section-kicker" data-i18n="founderKicker">
-              The story behind GlucoDesk
-            </span>
+            <div class="founder-person">
+              <span
+                class="section-kicker"
+                data-i18n="founderKicker">
+                Built independently
+              </span>
 
-            <h2 data-i18n="founderTitle">
-              Built because I needed it.
-            </h2>
+              <h2
+                id="founder-title"
+                data-i18n="founderTitle">
+                I built GlucoDesk to keep glucose in sight, without putting it at the center of your day.
+              </h2>
 
-            <p data-i18n="founderDescription">
-              Living with Type 1 diabetes already requires enough attention.
-              I created GlucoDesk to make glucose awareness feel simpler and
-              less intrusive during everyday work.
-            </p>
+              <p
+                class="founder-description"
+                data-i18n="founderDescription">
+                Living with type 1 diabetes already requires enough attention. I created GlucoDesk to make glucose monitoring simpler, more discreet and less intrusive throughout the working day.
+              </p>
 
-            <div class="founder-signature">
-              <div class="founder-avatar" aria-hidden="true">FG</div>
-              <div>
+              <div class="founder-name-block">
                 <strong>Filippo Garavaglia</strong>
+
                 <span data-i18n="founderRole">
-                  Developer living with Type 1 diabetes
+                  Software Engineer · Creator of GlucoDesk
                 </span>
               </div>
+
+              <nav
+                class="founder-links"
+                data-i18n-aria-label="founderLinksLabel"
+                aria-label="Author profiles">
+                <a
+                  class="founder-link founder-link-primary"
+                  href="https://www.linkedin.com/in/filippo-garavaglia"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false">
+                    <path
+                      d="M6.5 8.25H3.25V20H6.5V8.25ZM4.88 3A1.88 1.88 0 1 0 4.88 6.75 1.88 1.88 0 0 0 4.88 3ZM20.75 13.27C20.75 9.73 18.86 8.08 16.34 8.08C14.31 8.08 13.4 9.2 12.89 9.98V8.25H9.64V20H12.89V14.18C12.89 12.65 13.18 11.17 15.08 11.17C16.95 11.17 16.97 12.92 16.97 14.28V20H20.22L20.75 13.27Z"/>
+                  </svg>
+
+                  <span data-i18n="founderLinkedIn">
+                    LinkedIn profile
+                  </span>
+                </a>
+
+                <a
+                  class="founder-link"
+                  href="https://github.com/FilippoGaravaglia"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false">
+                    <path
+                      d="M12 2C6.48 2 2 6.58 2 12.23C2 16.75 4.87 20.58 8.84 21.93C9.34 22.03 9.52 21.71 9.52 21.44C9.52 21.2 9.51 20.4 9.51 19.55C6.73 20.17 6.14 18.34 6.14 18.34C5.68 17.13 5 16.81 5 16.81C4.07 16.16 5.07 16.18 5.07 16.18C6.1 16.26 6.64 17.27 6.64 17.27C7.55 18.87 9.03 18.41 9.61 18.14C9.7 17.46 9.97 17 10.26 16.74C8.04 16.48 5.7 15.6 5.7 11.68C5.7 10.56 6.09 9.65 6.73 8.93C6.63 8.67 6.28 7.63 6.83 6.22C6.83 6.22 7.67 5.95 9.58 7.27C10.38 7.04 11.23 6.92 12.08 6.92C12.93 6.92 13.78 7.04 14.58 7.27C16.49 5.95 17.33 6.22 17.33 6.22C17.88 7.63 17.53 8.67 17.43 8.93C18.07 9.65 18.46 10.56 18.46 11.68C18.46 15.61 16.11 16.47 13.88 16.73C14.24 17.05 14.56 17.68 14.56 18.64C14.56 20.02 14.55 21.13 14.55 21.44C14.55 21.72 14.73 22.04 15.24 21.93C19.2 20.57 22.07 16.74 22.07 12.23C22.07 6.58 17.59 2 12 2Z"/>
+                  </svg>
+
+                  <span data-i18n="founderGitHub">
+                    GitHub profile
+                  </span>
+                </a>
+              </nav>
             </div>
           </div>
 
-          <blockquote data-i18n="founderQuote">
-            One less thing to interrupt your day.
+          <blockquote
+            class="founder-quote"
+            data-i18n="founderQuote">
+            Glucose stays visible. Your day stays at the center.
           </blockquote>
-        </div>
+        </article>
       </div>
     </section>
 
@@ -1202,7 +1262,7 @@
             <a
               href="https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.3.0-preview"
               target="_blank"
-              rel="noreferrer">
+              rel="noopener noreferrer">
               <span data-i18n="releaseNotes">
                 Read release notes
               </span>
@@ -1270,6 +1330,7 @@
           <strong data-i18n="footerProduct">Product</strong>
           <a href="#features" data-i18n="navFeatures">Features</a>
           <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
+          <a href="#founder" data-i18n="navFounder">Built by</a>
           <a href="#download" data-i18n="navDownload">Download</a>
         </div>
 
@@ -1278,20 +1339,20 @@
           <a
             href="https://github.com/FilippoGaravaglia/GlucoDesk"
             target="_blank"
-            rel="noreferrer">
+            rel="noopener noreferrer">
             GitHub
           </a>
           <a
             href="https://github.com/FilippoGaravaglia/GlucoDesk/releases"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             data-i18n="footerReleases">
             Releases
           </a>
           <a
             href="https://github.com/FilippoGaravaglia/GlucoDesk/blob/main/LICENSE"
             target="_blank"
-            rel="noreferrer">
+            rel="noopener noreferrer">
             MIT License
           </a>
         </div>
