@@ -94,7 +94,10 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
 
         using var workbook = new XLWorkbook();
 
-        var weeklyReviewResult = await CreateWeeklyReviewAsync(diaryResult.Value, cancellationToken)
+        var weeklyReviewResult = await CreateWeeklyReviewAsync(
+            diaryResult.Value,
+            request.DiaryRequest.ProviderKind,
+            cancellationToken)
             .ConfigureAwait(false);
 
         CreateOverviewWorksheet(workbook, diaryResult.Value, request.PreferredUnit);
@@ -162,22 +165,26 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("B11").Value = ToNullableDouble(report.OverallContinuity.DataCoveragePercentage);
         worksheet.Cell("A12").Value = GlycemicDiaryExportLocalizer.Translate("Detected gaps");
         worksheet.Cell("B12").Value = report.OverallContinuity.Gaps.Count;
-        worksheet.Cell("A13").Value = GlycemicDiaryExportLocalizer.Translate("Incomplete days");
-        worksheet.Cell("B13").Value = report.IncompleteDaysCount;
-        worksheet.Cell("A14").Value = GlycemicDiaryExportLocalizer.Translate("Empty days");
-        worksheet.Cell("B14").Value = report.EmptyDaysCount;
-        worksheet.Cell("A15").Value = GlycemicDiaryExportLocalizer.Translate("History reliability");
-        worksheet.Cell("B15").Value =
+        worksheet.Cell("A13").Value = GlycemicDiaryExportLocalizer.Translate("Complete days");
+        worksheet.Cell("B13").Value = report.CompleteDaysCount;
+        worksheet.Cell("A14").Value = GlycemicDiaryExportLocalizer.Translate("Partial days");
+        worksheet.Cell("B14").Value = report.PartialDaysCount;
+        worksheet.Cell("A15").Value = GlycemicDiaryExportLocalizer.Translate("In-progress days");
+        worksheet.Cell("B15").Value = report.InProgressDaysCount;
+        worksheet.Cell("A16").Value = GlycemicDiaryExportLocalizer.Translate("Empty days");
+        worksheet.Cell("B16").Value = report.EmptyDaysCount;
+        worksheet.Cell("A17").Value = GlycemicDiaryExportLocalizer.Translate("History reliability");
+        worksheet.Cell("B17").Value =
             $"{GlycemicDiaryExportLocalizer.Translate(completenessScore.StatusText)} · " +
             GlycemicDiaryExportLocalizer.Translate(completenessScore.CoverageText);
-        worksheet.Cell("A16").Value = GlycemicDiaryExportLocalizer.Translate("Reliability details");
-        worksheet.Cell("B16").Value = GlycemicDiaryExportLocalizer.Translate(completenessScore.DetailText);
-        worksheet.Cell("A17").Value = GlycemicDiaryExportLocalizer.Translate("Glucose story");
-        worksheet.Cell("B17").Value =
+        worksheet.Cell("A18").Value = GlycemicDiaryExportLocalizer.Translate("Reliability details");
+        worksheet.Cell("B18").Value = GlycemicDiaryExportLocalizer.Translate(completenessScore.DetailText);
+        worksheet.Cell("A19").Value = GlycemicDiaryExportLocalizer.Translate("Glucose story");
+        worksheet.Cell("B19").Value =
             $"{GlycemicDiaryExportLocalizer.Translate(story.Headline)}: " +
             GlycemicDiaryExportLocalizer.Translate(story.SummaryText);
-        worksheet.Cell("A19").Value = GlycemicDiaryExportLocalizer.Translate("Safety notice");
-        worksheet.Cell("B19").Value =
+        worksheet.Cell("A21").Value = GlycemicDiaryExportLocalizer.Translate("Safety notice");
+        worksheet.Cell("B21").Value =
             GlycemicDiaryExportLocalizer.Translate(
                 _options.SafetyDisclaimer);
 
@@ -186,15 +193,15 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("A2").Style.Font.Bold = true;
         worksheet.Cell("A2").Style.Font.FontSize = 14;
 
-        worksheet.Range("A4:A19").Style.Font.Bold = true;
-        worksheet.Range("A4:B17").Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        worksheet.Range("A4:B17").Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+        worksheet.Range("A4:A21").Style.Font.Bold = true;
+        worksheet.Range("A4:B19").Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        worksheet.Range("A4:B19").Style.Border.InsideBorder = XLBorderStyleValues.Thin;
         worksheet.Range("B7:B9").Style.NumberFormat.Format = GetGlucoseNumberFormat(preferredUnit);
         worksheet.Column("A").Width = 24;
         worksheet.Column("B").Width = 42;
-        worksheet.Cell("B16").Style.Alignment.WrapText = true;
-        worksheet.Cell("B17").Style.Alignment.WrapText = true;
+        worksheet.Cell("B18").Style.Alignment.WrapText = true;
         worksheet.Cell("B19").Style.Alignment.WrapText = true;
+        worksheet.Cell("B21").Style.Alignment.WrapText = true;
         worksheet.SheetView.FreezeRows(3);
     }
 
@@ -333,7 +340,9 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     private static void CreateWeeklyReviewUnavailableWorksheet(
         XLWorkbook workbook)
     {
-        var worksheet = workbook.Worksheets.Add(GlycemicDiaryExportLocalizer.Translate("Weekly review"));
+        var worksheet = workbook.Worksheets.Add(
+            GlycemicDiaryExportLocalizer.Translate(
+                "Period comparison worksheet"));
 
         worksheet.Cell("A1").Value = GlycemicDiaryExportLocalizer.Translate("Weekly review");
         worksheet.Cell("A2").Value = GlycemicDiaryExportLocalizer.Translate("Weekly review unavailable");
@@ -361,7 +370,9 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         XLWorkbook workbook,
         GlycemicDiaryWeeklyReview weeklyReview)
     {
-        var worksheet = workbook.Worksheets.Add(GlycemicDiaryExportLocalizer.Translate("Weekly review"));
+        var worksheet = workbook.Worksheets.Add(
+            GlycemicDiaryExportLocalizer.Translate(
+                "Period comparison worksheet"));
 
         worksheet.Cell("A1").Value = GlycemicDiaryExportLocalizer.Translate("Weekly review");
         worksheet.Cell("A2").Value = GlycemicDiaryExportLocalizer.Translate(weeklyReview.Headline);
@@ -383,21 +394,29 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         worksheet.Cell("A4").Style.Font.FontColor = XLColor.Gray;
         worksheet.Cell("A5").Style.Font.FontColor = XLColor.Gray;
 
-        worksheet.Cell("A6").Value = GlycemicDiaryExportLocalizer.Translate("Metric");
-        worksheet.Cell("B6").Value = GlycemicDiaryExportLocalizer.Translate("Previous");
-        worksheet.Cell("C6").Value = GlycemicDiaryExportLocalizer.Translate("Current");
-        worksheet.Cell("D6").Value = GlycemicDiaryExportLocalizer.Translate("Delta");
-        worksheet.Cell("E6").Value = GlycemicDiaryExportLocalizer.Translate("Direction");
-        worksheet.Cell("F6").Value = GlycemicDiaryExportLocalizer.Translate("Severity");
-        worksheet.Cell("G6").Value = GlycemicDiaryExportLocalizer.Translate("Description");
+        var row = 6;
 
-        var header = worksheet.Range("A6:G6");
-        header.Style.Font.Bold = true;
-        header.Style.Fill.BackgroundColor = XLColor.FromHtml("#EAF4FF");
-        header.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        header.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+        if (weeklyReview.Changes.Count > 0)
+        {
+            worksheet.Cell("A6").Value = GlycemicDiaryExportLocalizer.Translate("Metric");
+            worksheet.Cell("B6").Value = GlycemicDiaryExportLocalizer.Translate("Previous");
+            worksheet.Cell("C6").Value = GlycemicDiaryExportLocalizer.Translate("Current");
+            worksheet.Cell("D6").Value = GlycemicDiaryExportLocalizer.Translate("Delta");
+            worksheet.Cell("E6").Value = GlycemicDiaryExportLocalizer.Translate("Direction");
+            worksheet.Cell("F6").Value = GlycemicDiaryExportLocalizer.Translate("Severity");
+            worksheet.Cell("G6").Value = GlycemicDiaryExportLocalizer.Translate("Description");
 
-        var row = 7;
+            var header = worksheet.Range("A6:G6");
+            header.Style.Font.Bold = true;
+            header.Style.Fill.BackgroundColor =
+                XLColor.FromHtml("#EAF4FF");
+            header.Style.Border.OutsideBorder =
+                XLBorderStyleValues.Thin;
+            header.Style.Border.InsideBorder =
+                XLBorderStyleValues.Thin;
+
+            row = 7;
+        }
 
         foreach (var change in weeklyReview.Changes)
         {
@@ -435,8 +454,18 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
             }
         }
 
-        worksheet.Range(6, 1, Math.Max(row - 1, 6), 7).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-        worksheet.Range(6, 1, Math.Max(row - 1, 6), 7).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+        if (weeklyReview.Changes.Count > 0)
+        {
+            worksheet
+                .Range(6, 1, Math.Max(row - 1, 6), 7)
+                .Style.Border.OutsideBorder =
+                XLBorderStyleValues.Thin;
+
+            worksheet
+                .Range(6, 1, Math.Max(row - 1, 6), 7)
+                .Style.Border.InsideBorder =
+                XLBorderStyleValues.Thin;
+        }
 
         worksheet.Column("A").Width = 24;
         worksheet.Column("B").Width = 18;
@@ -453,16 +482,19 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     /// Creates a weekly review for the exported diary report.
     /// </summary>
     /// <param name="report">The diary report.</param>
+    /// <param name="providerKind">The CGM provider used by the exported diary.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The weekly review generation result.</returns>
     private Task<Result<GlycemicDiaryWeeklyReview>> CreateWeeklyReviewAsync(
         GlycemicDiaryReport report,
+        GlucoDesk.Core.Glucose.Enums.CgmProviderKind providerKind,
         CancellationToken cancellationToken)
     {
         return _weeklyReviewGenerationService.GenerateAsync(
             new GlycemicDiaryWeeklyReviewRequest(
                 report.PeriodStartsAt,
-                report.PeriodEndsAt),
+                report.PeriodEndsAt,
+                providerKind),
             cancellationToken);
     }
 
@@ -477,6 +509,17 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
     {
         var worksheet = workbook.Worksheets.Add(GlycemicDiaryExportLocalizer.Translate("Patterns"));
         var analysis = _patternAnalysisService.Analyze(report);
+        var clinicalPatterns = analysis.Patterns
+            .Where(pattern =>
+                pattern.Kind !=
+                GlycemicDiaryPatternKind.LimitedDataCoverage)
+            .ToArray();
+
+        var dataQualityNotices = analysis.Patterns
+            .Where(pattern =>
+                pattern.Kind ==
+                GlycemicDiaryPatternKind.LimitedDataCoverage)
+            .ToArray();
 
         worksheet.Cell("A1").Value = GlycemicDiaryExportLocalizer.Translate("Local patterns");
         worksheet.Cell("A2").Value = GlycemicDiaryExportLocalizer.Translate("Recurring local glucose tendencies detected from diary time blocks.");
@@ -494,20 +537,42 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
         header.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
         header.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
-        if (!analysis.HasPatterns)
-        {
-            worksheet.Cell("A5").Value = GlycemicDiaryExportLocalizer.Translate("No recurring local patterns detected.");
-            worksheet.Range("A5:F5").Merge();
-            worksheet.Cell("A5").Style.Font.Italic = true;
-            worksheet.Cell("A5").Style.Font.FontColor = XLColor.Gray;
-            worksheet.Columns().AdjustToContents();
-
-            return;
-        }
-
         var row = 5;
 
-        foreach (var pattern in analysis.Patterns.OrderByDescending(GetPatternSeverityRank).ThenBy(pattern => pattern.Kind))
+        foreach (var notice in dataQualityNotices)
+        {
+            worksheet.Cell(row, 1).Value =
+                GlycemicDiaryExportLocalizer.Translate(
+                    notice.Severity.ToString());
+            worksheet.Cell(row, 2).Value =
+                GlycemicDiaryExportLocalizer.Translate(
+                    "Data-quality notice");
+            worksheet.Cell(row, 3).Value =
+                GlycemicDiaryExportLocalizer.Translate("Overall");
+            worksheet.Cell(row, 4).Value = string.Empty;
+            worksheet.Cell(row, 5).Value =
+                GlycemicDiaryExportLocalizer.Translate(notice.Title);
+            worksheet.Cell(row, 6).Value =
+                GlycemicDiaryExportLocalizer.Translate(
+                    notice.Description);
+            row++;
+        }
+
+        if (clinicalPatterns.Length == 0)
+        {
+            worksheet.Cell(row, 1).Value =
+                GlycemicDiaryExportLocalizer.Translate(
+                    "No recurring local patterns detected.");
+            worksheet.Range(row, 1, row, 6).Merge();
+            worksheet.Cell(row, 1).Style.Font.Italic = true;
+            worksheet.Cell(row, 1).Style.Font.FontColor =
+                XLColor.Gray;
+            row++;
+        }
+
+        foreach (var pattern in clinicalPatterns
+                     .OrderByDescending(GetPatternSeverityRank)
+                     .ThenBy(pattern => pattern.Kind))
         {
             worksheet.Cell(row, 1).Value = GlycemicDiaryExportLocalizer.Translate(pattern.Severity.ToString());
             worksheet.Cell(row, 2).Value = GlycemicDiaryExportLocalizer.Translate(pattern.Kind.ToString());
@@ -595,9 +660,11 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
             worksheet.Cell(row, 6).Value = ToNullableDouble(day.TimeInRangePercentage);
             worksheet.Cell(row, 7).Value = ToNullableDouble(day.DataCoveragePercentage);
             worksheet.Cell(row, 8).Value =
-                GlycemicDiaryExportLocalizer.Translate(
-                    day.IsDataComplete ? "Complete" : "Partial");
-            worksheet.Cell(row, 9).Value = day.GapCount;
+                GlycemicDiaryExportLocalizer.GetDailyDataStatus(
+                    day,
+                    report);
+            worksheet.Cell(row, 9).Value =
+                GlycemicDiaryExportLocalizer.FormatDailyGapCount(day);
             worksheet.Cell(row, 10).Value = ToNullableGlucoseDouble(GetBlockValue(day, "Breakfast"), preferredUnit);
             worksheet.Cell(row, 11).Value = ToNullableGlucoseDouble(GetBlockValue(day, "Lunch"), preferredUnit);
             worksheet.Cell(row, 12).Value = ToNullableGlucoseDouble(GetBlockValue(day, "Dinner"), preferredUnit);
@@ -714,9 +781,11 @@ public sealed class ClosedXmlGlycemicDiaryExcelExportService : IGlycemicDiaryExc
             worksheet.Cell(row, 1).Value = day.Date.ToDateTime(TimeOnly.MinValue);
             worksheet.Cell(row, 2).Value = ToNullableDouble(day.DataCoveragePercentage);
             worksheet.Cell(row, 3).Value =
-                GlycemicDiaryExportLocalizer.Translate(
-                    day.IsDataComplete ? "Complete" : "Partial");
-            worksheet.Cell(row, 4).Value = day.GapCount;
+                GlycemicDiaryExportLocalizer.GetDailyDataStatus(
+                    day,
+                    report);
+            worksheet.Cell(row, 4).Value =
+                GlycemicDiaryExportLocalizer.FormatDailyGapCount(day);
             worksheet.Cell(row, 5).Value = day.ReadingsCount;
 
             row++;

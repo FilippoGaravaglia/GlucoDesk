@@ -1,3 +1,5 @@
+using GlucoDesk.Core.Glucose.Enums;
+
 namespace GlucoDesk.Application.Cgm.Diary.Reviews.Requests;
 
 /// <summary>
@@ -10,11 +12,13 @@ public sealed record GlycemicDiaryWeeklyReviewRequest
     /// </summary>
     /// <param name="currentPeriodStartsAt">The current period start timestamp.</param>
     /// <param name="currentPeriodEndsAt">The current period end timestamp.</param>
+    /// <param name="providerKind">The CGM provider used for both comparison periods.</param>
     /// <param name="previousPeriodStartsAt">The optional previous period start timestamp.</param>
     /// <param name="previousPeriodEndsAt">The optional previous period end timestamp.</param>
     public GlycemicDiaryWeeklyReviewRequest(
         DateTimeOffset currentPeriodStartsAt,
         DateTimeOffset currentPeriodEndsAt,
+        CgmProviderKind providerKind,
         DateTimeOffset? previousPeriodStartsAt = null,
         DateTimeOffset? previousPeriodEndsAt = null)
     {
@@ -24,6 +28,14 @@ public sealed record GlycemicDiaryWeeklyReviewRequest
                 nameof(currentPeriodEndsAt),
                 currentPeriodEndsAt,
                 "Current period end timestamp must be greater than start timestamp.");
+        }
+
+        if (providerKind == CgmProviderKind.Unknown ||
+            !Enum.IsDefined(providerKind))
+        {
+            throw new ArgumentException(
+                "Weekly review provider kind must be specified.",
+                nameof(providerKind));
         }
 
         if (previousPeriodStartsAt.HasValue != previousPeriodEndsAt.HasValue)
@@ -44,6 +56,7 @@ public sealed record GlycemicDiaryWeeklyReviewRequest
 
         CurrentPeriodStartsAt = currentPeriodStartsAt;
         CurrentPeriodEndsAt = currentPeriodEndsAt;
+        ProviderKind = providerKind;
         PreviousPeriodStartsAt = previousPeriodStartsAt;
         PreviousPeriodEndsAt = previousPeriodEndsAt;
     }
@@ -57,6 +70,11 @@ public sealed record GlycemicDiaryWeeklyReviewRequest
     /// Gets the current period end timestamp.
     /// </summary>
     public DateTimeOffset CurrentPeriodEndsAt { get; }
+
+    /// <summary>
+    /// Gets the CGM provider used for both comparison periods.
+    /// </summary>
+    public CgmProviderKind ProviderKind { get; }
 
     /// <summary>
     /// Gets the optional previous period start timestamp.

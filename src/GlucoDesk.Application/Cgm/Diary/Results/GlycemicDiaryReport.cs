@@ -106,12 +106,65 @@ public sealed record GlycemicDiaryReport
     public IReadOnlyCollection<GlycemicDiaryDailyEntry> DailyEntries { get; }
 
     /// <summary>
-    /// Gets the number of days with incomplete data.
+    /// Gets the number of days containing data that is not complete.
+    /// Days without readings are counted separately by
+    /// <see cref="EmptyDaysCount"/>.
     /// </summary>
-    public int IncompleteDaysCount => DailyEntries.Count(day => !day.IsDataComplete);
+    public int IncompleteDaysCount =>
+        DailyEntries.Count(day =>
+            day.HasData &&
+            !day.IsDataComplete);
+
+    /// <summary>
+    /// Gets the number of days containing incomplete data, excluding the
+    /// final calendar day when that day was still in progress.
+    /// </summary>
+    public int PartialDaysCount =>
+        DailyEntries.Count(day =>
+            day.HasData &&
+            !day.IsDataComplete &&
+            !IsFinalDayInProgress(day));
+
+    /// <summary>
+    /// Gets the number of final calendar days that were still in progress
+    /// when the exported period ended.
+    /// </summary>
+    public int InProgressDaysCount =>
+        DailyEntries.Count(IsFinalDayInProgress);
+
+    /// <summary>
+    /// Gets the number of days with complete local data.
+    /// </summary>
+    public int CompleteDaysCount =>
+        DailyEntries.Count(day =>
+            day.HasData &&
+            day.IsDataComplete);
 
     /// <summary>
     /// Gets the number of days without data.
     /// </summary>
-    public int EmptyDaysCount => DailyEntries.Count(day => !day.HasData);
+    public int EmptyDaysCount =>
+        DailyEntries.Count(day => !day.HasData);
+
+    /// <summary>
+    /// Determines whether the supplied entry is the final local calendar day
+    /// while that day was still in progress.
+    /// </summary>
+    private bool IsFinalDayInProgress(
+        GlycemicDiaryDailyEntry day)
+    {
+        if (!day.HasData)
+        {
+            return false;
+        }
+
+        var localPeriodEnd =
+            PeriodEndsAt.LocalDateTime;
+
+        return
+            day.Date ==
+            DateOnly.FromDateTime(localPeriodEnd) &&
+            TimeOnly.FromDateTime(localPeriodEnd) <
+            new TimeOnly(23, 59, 0);
+    }
 }

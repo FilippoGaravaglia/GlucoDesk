@@ -9,8 +9,8 @@ using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
 using GlucoDesk.Desktop.DataBackup.Services;
+using GlucoDesk.Desktop.DataBackup.Services.Abstractions;
 using GlucoDesk.Desktop.DesktopPresence.Services.Abstractions;
-using GlucoDesk.Desktop.Localization;
 
 namespace GlucoDesk.Desktop.Tests.DataBackup.Services;
 
@@ -50,7 +50,8 @@ public sealed class LocalDataBackupServiceTests
         var service = new LocalDataBackupService(
             historyService,
             settingsService,
-            privacyStore);
+            privacyStore,
+            new FakeLanguagePreferenceService("en"));
 
         var result = await service.ExportAsync(
             CancellationToken.None);
@@ -95,8 +96,6 @@ public sealed class LocalDataBackupServiceTests
     [Fact]
     public async Task ImportAsync_ShouldMergeHistoryAndRestorePreferences()
     {
-        LocalizationManager.SetLanguageForCurrentProcess("en");
-
         var exportHistoryService = new FakeHistoryService
         {
             Readings =
@@ -130,13 +129,17 @@ public sealed class LocalDataBackupServiceTests
             targetLowMgDl: 75,
             targetHighMgDl: 170);
 
+        var exportLanguagePreferenceService =
+            new FakeLanguagePreferenceService("en");
+
         var exportService = new LocalDataBackupService(
             exportHistoryService,
             new FakeSettingsService(exportSettings),
             new FakePrivacyModeStore
             {
                 Value = true
-            });
+            },
+            exportLanguagePreferenceService);
 
         var exportResult = await exportService.ExportAsync(
             CancellationToken.None);
@@ -162,10 +165,14 @@ public sealed class LocalDataBackupServiceTests
         var importPrivacyStore =
             new FakePrivacyModeStore();
 
+        var importLanguagePreferenceService =
+            new FakeLanguagePreferenceService("it");
+
         var importService = new LocalDataBackupService(
             importHistoryService,
             importSettingsService,
-            importPrivacyStore);
+            importPrivacyStore,
+            importLanguagePreferenceService);
 
         await using var backupStream =
             new MemoryStream(
@@ -199,6 +206,17 @@ public sealed class LocalDataBackupServiceTests
         Assert.True(
             importResult.Value.PrivacyPreferenceImported);
 
+        Assert.True(
+            importResult.Value.LanguageImported);
+
+        Assert.Equal(
+            "en",
+            importLanguagePreferenceService.CurrentLanguageCode);
+
+        Assert.Equal(
+            ["en"],
+            importLanguagePreferenceService.ImportedLanguageCodes);
+
         Assert.NotNull(
             importSettingsService.SavedSettings);
 
@@ -225,7 +243,8 @@ public sealed class LocalDataBackupServiceTests
             new FakeHistoryService(),
             new FakeSettingsService(
                 ApplicationSettings.Default),
-            new FakePrivacyModeStore());
+            new FakePrivacyModeStore(),
+            new FakeLanguagePreferenceService("en"));
 
         await using var stream =
             new MemoryStream(
@@ -249,7 +268,8 @@ public sealed class LocalDataBackupServiceTests
             new FakeHistoryService(),
             new FakeSettingsService(
                 ApplicationSettings.Default),
-            new FakePrivacyModeStore());
+            new FakePrivacyModeStore(),
+            new FakeLanguagePreferenceService("en"));
 
         await using var stream =
             new WriteOnlyStream();
@@ -390,6 +410,41 @@ public sealed class LocalDataBackupServiceTests
 
             return Task.FromResult(
                 Result.Success());
+        }
+    }
+
+    private sealed class FakeLanguagePreferenceService :
+        ILocalBackupLanguagePreferenceService
+    {
+        public FakeLanguagePreferenceService(
+            string currentLanguageCode)
+        {
+            CurrentLanguageCode = currentLanguageCode;
+        }
+
+        public string CurrentLanguageCode
+        {
+            get;
+            private set;
+        }
+
+        public IReadOnlyList<string> ImportedLanguageCodes =>
+            _importedLanguageCodes;
+
+        private readonly List<string> _importedLanguageCodes = [];
+
+        public bool TryApplyAndPersist(string? languageCode)
+        {
+            if (string.IsNullOrWhiteSpace(languageCode) ||
+                languageCode is not ("en" or "it"))
+            {
+                return false;
+            }
+
+            CurrentLanguageCode = languageCode;
+            _importedLanguageCodes.Add(languageCode);
+
+            return true;
         }
     }
 

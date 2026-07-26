@@ -1,6 +1,7 @@
 using GlucoDesk.Application.Cgm.Diary.Enums;
 using GlucoDesk.Application.Cgm.Diary.Exports.Requests;
 using GlucoDesk.Application.Cgm.Diary.Requests;
+using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Continuity.Results;
@@ -24,7 +25,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryPdfExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt)),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock)),
             CancellationToken.None);
 
         // Assert
@@ -44,7 +45,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryPdfExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt)),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock)),
             CancellationToken.None);
 
         // Assert
@@ -68,7 +69,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryPdfExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt)),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock)),
             CancellationToken.None);
 
         // Assert
@@ -97,7 +98,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryPdfExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock),
                 "my-diary"),
             CancellationToken.None);
 
@@ -116,7 +117,7 @@ public sealed class QuestPdfGlycemicDiaryPdfExportServiceTests
         // Act
         var result = await service.ExportAsync(
             new GlycemicDiaryPdfExportRequest(
-                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt),
+                new GlycemicDiaryRequest(report.PeriodStartsAt, report.PeriodEndsAt, CgmProviderKind.Mock),
                 "my-diary.pdf"),
             CancellationToken.None);
 
@@ -139,7 +140,8 @@ public sealed class QuestPdfGlycemicDiaryPdfExportServiceTests
             new GlycemicDiaryPdfExportRequest(
                 new GlycemicDiaryRequest(
                     new DateTimeOffset(2026, 6, 19, 0, 0, 0, TimeSpan.Zero),
-                    new DateTimeOffset(2026, 6, 19, 23, 59, 59, TimeSpan.Zero))),
+                    new DateTimeOffset(2026, 6, 19, 23, 59, 59, TimeSpan.Zero),
+                    CgmProviderKind.Mock)),
             CancellationToken.None);
 
         // Assert

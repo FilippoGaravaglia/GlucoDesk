@@ -53,7 +53,10 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
             [
                 CreateDailyEntryWithDinner(new DateOnly(2026, 6, 1), 190m, 170m, 210m),
                 CreateDailyEntryWithDinner(new DateOnly(2026, 6, 2), 205m, 180m, 230m),
-                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 3), 145m, 120m, 160m)
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 3), 205m, 180m, 230m),
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 4), 205m, 180m, 230m),
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 5), 205m, 180m, 230m),
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 3), 145m, 120m, 160m),
             ]);
 
         // Act
@@ -67,7 +70,7 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
         Assert.Equal(GlycemicDiaryPatternSeverity.Caution, pattern.Severity);
         Assert.Equal(GlycemicDiaryTimeBlockKind.Dinner, pattern.TimeBlockKind);
         Assert.Equal("Dinner", pattern.TimeBlockLabel);
-        Assert.Equal(2, pattern.SupportingDaysCount);
+        Assert.Equal(5, pattern.SupportingDaysCount);
     }
 
     [Fact]
@@ -82,7 +85,10 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
             [
                 CreateDailyEntryWithBreakfast(new DateOnly(2026, 6, 1), 65m, 62m, 90m),
                 CreateDailyEntryWithBreakfast(new DateOnly(2026, 6, 2), 68m, 60m, 88m),
-                CreateDailyEntryWithBreakfast(new DateOnly(2026, 6, 3), 110m, 90m, 130m)
+                CreateDailyEntryWithBreakfast(new DateOnly(2026, 6, 3), 68m, 60m, 88m),
+                CreateDailyEntryWithBreakfast(new DateOnly(2026, 6, 4), 68m, 60m, 88m),
+                CreateDailyEntryWithBreakfast(new DateOnly(2026, 6, 5), 68m, 60m, 88m),
+                CreateDailyEntryWithBreakfast(new DateOnly(2026, 6, 3), 110m, 90m, 130m),
             ]);
 
         // Act
@@ -95,7 +101,7 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
 
         Assert.Equal(GlycemicDiaryPatternSeverity.Important, pattern.Severity);
         Assert.Equal(GlycemicDiaryTimeBlockKind.Breakfast, pattern.TimeBlockKind);
-        Assert.Equal(2, pattern.SupportingDaysCount);
+        Assert.Equal(5, pattern.SupportingDaysCount);
     }
 
     [Fact]
@@ -110,7 +116,10 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
             [
                 CreateDailyEntryWithLunch(new DateOnly(2026, 6, 1), 140m, 90m, 190m),
                 CreateDailyEntryWithLunch(new DateOnly(2026, 6, 2), 150m, 95m, 200m),
-                CreateDailyEntryWithLunch(new DateOnly(2026, 6, 3), 130m, 120m, 150m)
+                CreateDailyEntryWithLunch(new DateOnly(2026, 6, 3), 150m, 95m, 200m),
+                CreateDailyEntryWithLunch(new DateOnly(2026, 6, 4), 150m, 95m, 200m),
+                CreateDailyEntryWithLunch(new DateOnly(2026, 6, 5), 150m, 95m, 200m),
+                CreateDailyEntryWithLunch(new DateOnly(2026, 6, 3), 130m, 120m, 150m),
             ]);
 
         // Act
@@ -123,7 +132,7 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
 
         Assert.Equal(GlycemicDiaryPatternSeverity.Caution, pattern.Severity);
         Assert.Equal(GlycemicDiaryTimeBlockKind.Lunch, pattern.TimeBlockKind);
-        Assert.Equal(2, pattern.SupportingDaysCount);
+        Assert.Equal(5, pattern.SupportingDaysCount);
     }
 
     [Fact]
@@ -138,7 +147,11 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
             [
                 CreateDailyEntryWithBedtime(new DateOnly(2026, 6, 1), 120m, 110m, 135m),
                 CreateDailyEntryWithBedtime(new DateOnly(2026, 6, 2), 125m, 115m, 140m),
-                CreateDailyEntryWithBedtime(new DateOnly(2026, 6, 3), 118m, 108m, 132m)
+                CreateDailyEntryWithBedtime(new DateOnly(2026, 6, 3), 118m, 108m, 132m),
+                CreateDailyEntryWithBedtime(new DateOnly(2026, 6, 4), 118m, 108m, 132m),
+                CreateDailyEntryWithBedtime(new DateOnly(2026, 6, 5), 118m, 108m, 132m),
+                CreateDailyEntryWithBedtime(new DateOnly(2026, 6, 6), 118m, 108m, 132m),
+                CreateDailyEntryWithBedtime(new DateOnly(2026, 6, 7), 118m, 108m, 132m),
             ]);
 
         // Act
@@ -151,7 +164,7 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
 
         Assert.Equal(GlycemicDiaryPatternSeverity.Info, pattern.Severity);
         Assert.Equal(GlycemicDiaryTimeBlockKind.Bedtime, pattern.TimeBlockKind);
-        Assert.Equal(3, pattern.SupportingDaysCount);
+        Assert.Equal(7, pattern.SupportingDaysCount);
         Assert.True(analysis.HasPatterns);
         Assert.Equal(1, analysis.TimeBlockPatternsCount);
     }
@@ -167,7 +180,7 @@ public sealed class GlycemicDiaryPatternAnalysisServiceTests
             dailyEntries:
             [
                 CreateDailyEntryWithDinner(new DateOnly(2026, 6, 1), 120m, 110m, 140m),
-                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 2), 150m, 140m, 165m)
+                CreateDailyEntryWithDinner(new DateOnly(2026, 6, 2), 150m, 140m, 165m),
             ]);
 
         // Act

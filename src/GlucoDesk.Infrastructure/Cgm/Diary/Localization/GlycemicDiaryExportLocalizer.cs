@@ -33,12 +33,21 @@ public static class GlycemicDiaryExportLocalizer
             ["Local-first glucose summary"] = "Riepilogo glicemico local-first",
             ["Overview"] = "Riepilogo",
             ["Glucose story"] = "Storia glicemica",
-            ["Weekly review"] = "Revisione settimanale",
+            ["Weekly review"] = "Confronto con il periodo precedente",
+            ["Period comparison worksheet"] = "Confronto precedente",
             ["Local patterns"] = "Pattern locali",
             ["Patterns"] = "Pattern",
             ["Daily diary"] = "Diario giornaliero",
             ["Time blocks"] = "Fasce orarie",
             ["Data completeness"] = "Completezza dei dati",
+            ["Poor"] = "Scarsa",
+            ["Glucose story limited by data gaps"] =
+                "Storia glicemica limitata dai dati mancanti",
+            ["Limited local history coverage"] =
+                "Copertura limitata dello storico locale",
+            ["Local history has limited coverage. Summary quality is low."] =
+                "Lo storico locale ha una copertura limitata. La qualità del riepilogo è bassa.",
+
             ["Export metadata"] = "Metadati esportazione",
             ["Safety notice"] = "Avviso di sicurezza",
 
@@ -48,7 +57,7 @@ public static class GlycemicDiaryExportLocalizer
             ["Human-readable interpretation of the selected diary period."] =
                 "Interpretazione leggibile del periodo selezionato del diario.",
             ["Comparison with the previous equivalent period."] =
-                "Confronto con il periodo equivalente precedente.",
+                "Confronto con il periodo precedente equivalente.",
             ["Recurring local glucose tendencies detected from diary time blocks."] =
                 "Tendenze glicemiche locali ricorrenti rilevate nelle fasce orarie del diario.",
             ["Daily glucose summaries and key time-block values shown in mg/dL."] =
@@ -105,10 +114,10 @@ public static class GlycemicDiaryExportLocalizer
             ["Coverage"] = "Copertura",
             ["Coverage %"] = "Copertura %",
             ["Status"] = "Stato",
-            ["Gaps"] = "Intervalli mancanti",
-            ["Gap count"] = "Numero intervalli mancanti",
-            ["Detected gaps"] = "Intervalli mancanti rilevati",
-            ["Incomplete days"] = "Giorni incompleti",
+            ["Gaps"] = "Gap giornalieri",
+            ["Gap count"] = "Numero gap giornalieri",
+            ["Detected gaps"] = "Gap continui complessivi",
+            ["Incomplete days"] = "Giorni parziali",
             ["Empty days"] = "Giorni senza dati",
             ["Detected patterns"] = "Pattern rilevati",
             ["History reliability"] = "Affidabilità dello storico",
@@ -116,6 +125,12 @@ public static class GlycemicDiaryExportLocalizer
             ["Complete data"] = "Dati completi",
             ["Complete"] = "Completo",
             ["Partial"] = "Parziale",
+            ["In progress"] = "In corso",
+            ["Not applicable"] = "Non applicabile",
+            ["Complete days"] = "Giorni completi",
+            ["Partial days"] = "Giorni parziali",
+            ["In-progress days"] = "Giorni in corso",
+            ["Data-quality notice"] = "Avviso sulla qualità dei dati",
             ["Incomplete"] = "Incompleto",
             ["No data"] = "Nessun dato",
             ["Has data"] = "Dati presenti",
@@ -181,27 +196,27 @@ public static class GlycemicDiaryExportLocalizer
             ["No local glucose data"] = "Nessun dato glicemico locale",
             ["Interpret with caution"] = "Interpretare con cautela",
             ["Weekly review unavailable"] =
-                "Revisione settimanale non disponibile",
-            ["Weekly review: no local readings available"] =
-                "Revisione settimanale: nessuna lettura locale disponibile",
-            ["Weekly review: comparison limited by missing previous data"] =
-                "Revisione settimanale: confronto limitato dai dati precedenti mancanti",
-            ["Weekly review: data quality needs attention"] =
-                "Revisione settimanale: la qualità dei dati richiede attenzione",
-            ["Weekly review: time in range improved"] =
-                "Revisione settimanale: il tempo nel range è migliorato",
-            ["Weekly review: time in range decreased"] =
-                "Revisione settimanale: il tempo nel range è diminuito",
-            ["Weekly review: new local patterns detected"] =
-                "Revisione settimanale: rilevati nuovi pattern locali",
-            ["Weekly review: mostly stable period"] =
-                "Revisione settimanale: periodo prevalentemente stabile",
+                "Confronto con il periodo precedente non disponibile",
+            ["Period comparison: no local readings available"] =
+                "Confronto del periodo: nessuna lettura locale disponibile",
+            ["Period comparison unavailable: previous data missing"] =
+                "Confronto non disponibile: mancano dati nel periodo precedente",
+            ["Period comparison: data quality needs attention"] =
+                "Confronto del periodo: la qualità dei dati richiede attenzione",
+            ["Period comparison: time in range improved"] =
+                "Confronto del periodo: il tempo nel range è migliorato",
+            ["Period comparison: time in range decreased"] =
+                "Confronto del periodo: il tempo nel range è diminuito",
+            ["Period comparison: new local patterns detected"] =
+                "Confronto del periodo: rilevati nuovi pattern locali",
+            ["Period comparison: mostly stable period"] =
+                "Confronto del periodo: periodo prevalentemente stabile",
             ["The current period looks broadly similar to the previous one."] =
                 "Il periodo corrente appare complessivamente simile al precedente.",
             ["The current period has no local readings, so no meaningful comparison can be generated."] =
                 "Il periodo corrente non contiene letture locali, pertanto non è possibile generare un confronto significativo.",
-            ["The previous equivalent period has no local readings, so this review cannot produce a true week-over-week comparison. The current period is summarized on its own."] =
-                "Il periodo equivalente precedente non contiene letture locali, pertanto non è possibile effettuare un confronto reale tra periodi. Il periodo corrente viene riepilogato singolarmente.",
+            ["The previous equivalent period has no local readings, so this review cannot produce a true comparison with the previous equivalent period. The current period is summarized on its own."] =
+                "Il periodo equivalente precedente non contiene letture locali, pertanto non è possibile effettuare un confronto reale. Il periodo corrente viene riepilogato singolarmente.",
             ["The weekly comparison could not be generated for this export. The diary data is still available."] =
                 "Non è stato possibile generare il confronto settimanale. I dati del diario restano disponibili.",
             ["The weekly comparison could not be generated for this export. The diary data below is still available."] =
@@ -211,6 +226,8 @@ public static class GlycemicDiaryExportLocalizer
             ["No recurring local patterns were detected for the selected period."] =
                 "Nel periodo selezionato non sono stati rilevati pattern locali ricorrenti.",
             ["None detected"] = "Nessuno rilevato",
+            ["A previous-period comparison is not available."] =
+                "Il confronto con il periodo precedente non è disponibile.",
 
             // Footer and safety.
             ["Generated by GlucoDesk"] = "Generato da GlucoDesk",
@@ -547,7 +564,22 @@ public static class GlycemicDiaryExportLocalizer
 
         match = Regex.Match(
             text,
-            @"^History reliability: (?<status>[^·]+) · (?<coverage>\d+(?:\.\d+)?%)\. (?<detail>.+)$",
+            @"^The selected period has (?<coverage>\d+(?:[.,]\d+)?%) local history coverage\. Interpret averages, time-in-range, and daily summaries carefully\.$",
+            RegexOptions.CultureInvariant);
+
+        if (match.Success)
+        {
+            translatedText =
+                $"Il periodo selezionato ha una copertura dello storico locale pari al " +
+                $"{LocalizeNumericTokens(match.Groups["coverage"].Value)}. " +
+                "Interpreta con cautela la glicemia media, il tempo nel range e i riepiloghi giornalieri.";
+
+            return true;
+        }
+
+        match = Regex.Match(
+            text,
+            @"^History reliability: (?<status>[^·]+) · (?<coverage>\d+(?:[.,]\d+)?%)\. (?<detail>.+)$",
             RegexOptions.CultureInvariant);
 
         if (match.Success)
@@ -590,7 +622,64 @@ public static class GlycemicDiaryExportLocalizer
 
         var match = Regex.Match(
             text,
-            @"^Current history reliability: (?<status>[^·]+) · (?<coverage>\d+(?:\.\d+)?%)\. (?<detail>.+)$",
+            @"^The previous equivalent period has no local readings, so this review cannot produce a true comparison with the previous equivalent period\. The current period is summarized on its own\. Current local history reliability is (?<status>[^·]+) · (?<coverage>\d+(?:[.,]\d+)?%), so values should be interpreted carefully\.$",
+            RegexOptions.CultureInvariant);
+
+        if (match.Success)
+        {
+            translatedText =
+                "Il periodo equivalente precedente non contiene letture locali, " +
+                "pertanto non è possibile effettuare un confronto reale. " +
+                "Il periodo corrente viene riepilogato singolarmente. " +
+                "L’affidabilità dello storico locale corrente è " +
+                $"{Translate(match.Groups["status"].Value.Trim())} · " +
+                $"{LocalizeNumericTokens(match.Groups["coverage"].Value)}; " +
+                "i valori devono essere interpretati con cautela.";
+
+            return true;
+        }
+
+        match = Regex.Match(
+            text,
+            @"^Current-period readings: (?<value>\d+)\.$",
+            RegexOptions.CultureInvariant);
+
+        if (match.Success)
+        {
+            translatedText =
+                $"Letture del periodo corrente: {match.Groups["value"].Value}.";
+            return true;
+        }
+
+        match = Regex.Match(
+            text,
+            @"^Current-period data coverage: (?<value>\d+(?:[.,]\d+)?%)\.$",
+            RegexOptions.CultureInvariant);
+
+        if (match.Success)
+        {
+            translatedText =
+                $"Copertura dei dati del periodo corrente: " +
+                $"{LocalizeNumericTokens(match.Groups["value"].Value)}.";
+            return true;
+        }
+
+        match = Regex.Match(
+            text,
+            @"^Current-period clinical patterns: (?<value>\d+)\.$",
+            RegexOptions.CultureInvariant);
+
+        if (match.Success)
+        {
+            translatedText =
+                $"Pattern glicemici del periodo corrente: " +
+                $"{match.Groups["value"].Value}.";
+            return true;
+        }
+
+        match = Regex.Match(
+            text,
+            @"^Current history reliability: (?<status>[^·]+) · (?<coverage>\d+(?:[.,]\d+)?%)\. (?<detail>.+)$",
             RegexOptions.CultureInvariant);
 
         if (match.Success)
@@ -713,6 +802,67 @@ public static class GlycemicDiaryExportLocalizer
 
         translatedText = string.Empty;
         return false;
+    }
+
+    /// <summary>
+    /// Gets the presentation status for one diary day.
+    /// </summary>
+    public static string GetDailyDataStatus(
+        GlucoDesk.Application.Cgm.Diary.Results.GlycemicDiaryDailyEntry day,
+        GlucoDesk.Application.Cgm.Diary.Results.GlycemicDiaryReport report)
+    {
+        ArgumentNullException.ThrowIfNull(day);
+        ArgumentNullException.ThrowIfNull(report);
+
+        if (!day.HasData)
+        {
+            return Translate("No data");
+        }
+
+        if (IsFinalDayStillInProgress(day, report))
+        {
+            return Translate("In progress");
+        }
+
+        return Translate(
+            day.IsDataComplete
+                ? "Complete"
+                : "Partial");
+    }
+
+    /// <summary>
+    /// Formats the daily gap value without representing an entirely empty day
+    /// as one ordinary internal gap.
+    /// </summary>
+    public static string FormatDailyGapCount(
+        GlucoDesk.Application.Cgm.Diary.Results.GlycemicDiaryDailyEntry day)
+    {
+        ArgumentNullException.ThrowIfNull(day);
+
+        return day.HasData
+            ? day.GapCount.ToString(CultureInfo.InvariantCulture)
+            : "—";
+    }
+
+    /// <summary>
+    /// Determines whether the final exported date represents a day that was
+    /// still in progress at the export period end.
+    /// </summary>
+    public static bool IsFinalDayStillInProgress(
+        GlucoDesk.Application.Cgm.Diary.Results.GlycemicDiaryDailyEntry day,
+        GlucoDesk.Application.Cgm.Diary.Results.GlycemicDiaryReport report)
+    {
+        var periodEndLocalDate =
+            DateOnly.FromDateTime(
+                report.PeriodEndsAt.LocalDateTime);
+
+        var endOfDisplayedDay =
+            new TimeOnly(23, 59, 0);
+
+        return day.Date == periodEndLocalDate &&
+               TimeOnly.FromDateTime(
+                   report.PeriodEndsAt.LocalDateTime) <
+               endOfDisplayedDay;
     }
 
     /// <summary>

@@ -13,6 +13,7 @@ using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Diary.Enums;
 using GlucoDesk.Desktop.ViewModels.Diary.Options;
 using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Core.Glucose.Enums;
 
 namespace GlucoDesk.Desktop.ViewModels.Diary;
 
@@ -472,8 +473,18 @@ public sealed class DiaryViewModel : ViewModelBase, IDisposable
 
         try
         {
+            var settingsResult = await _settingsService
+                .GetSettingsAsync(CancellationToken.None);
+
+            if (settingsResult.IsFailure)
+            {
+                SetPreviewError(settingsResult.Error.Message);
+                return;
+            }
+
             var previewResult = await _diaryService.CreateDiaryAsync(
-                CreateDiaryRequest(),
+                CreateDiaryRequest(
+                    settingsResult.Value.HistoricalProvider),
                 CancellationToken.None);
 
             if (previewResult.IsFailure)
@@ -573,15 +584,16 @@ public sealed class DiaryViewModel : ViewModelBase, IDisposable
         CancellationToken cancellationToken)
     {
         var settingsResult = await _settingsService
-            .GetSettingsAsync(cancellationToken)
-            .ConfigureAwait(false);
+            .GetSettingsAsync(cancellationToken);
 
         if (settingsResult.IsFailure)
         {
             return Result<GlycemicDiaryExportFile>.Failure(settingsResult.Error);
         }
 
-        var diaryRequest = CreateDiaryRequest();
+        var diaryRequest = CreateDiaryRequest(
+            settingsResult.Value.HistoricalProvider);
+
         var preferredUnit = settingsResult.Value.PreferredUnit;
 
         return SelectedFormat.Kind switch
@@ -613,20 +625,24 @@ public sealed class DiaryViewModel : ViewModelBase, IDisposable
     /// <summary>
     /// Creates the diary request from the selected period preset.
     /// </summary>
+    /// <param name="providerKind">The configured historical CGM provider.</param>
     /// <returns>The diary request.</returns>
-    private GlycemicDiaryRequest CreateDiaryRequest()
+    private GlycemicDiaryRequest CreateDiaryRequest(
+        CgmProviderKind providerKind)
     {
         var now = _timeProvider.GetLocalNow();
 
         var (startsAt, endsAt) = SelectedPeriodPreset.Kind switch
         {
-            DiaryExportPeriodPresetKind.LastFourteenDays => (
-                now.AddDays(-14),
-                now),
+            DiaryExportPeriodPresetKind.LastFourteenDays =>
+                CreateRollingDayRange(
+                    now,
+                    dayCount: 14),
 
-            DiaryExportPeriodPresetKind.LastThirtyDays => (
-                now.AddDays(-30),
-                now),
+            DiaryExportPeriodPresetKind.LastThirtyDays =>
+                CreateRollingDayRange(
+                    now,
+                    dayCount: 30),
 
             DiaryExportPeriodPresetKind.CurrentMonth => (
                 new DateTimeOffset(
@@ -644,7 +660,53 @@ public sealed class DiaryViewModel : ViewModelBase, IDisposable
             _ => throw new InvalidOperationException("Unsupported diary export period.")
         };
 
-        return new GlycemicDiaryRequest(startsAt, endsAt);
+        return new GlycemicDiaryRequest(
+            startsAt,
+            endsAt,
+            providerKind);
+    }
+
+    /// <summary>
+    /// Creates a rolling local-date range that includes today and exactly the
+    /// requested number of calendar dates.
+    /// </summary>
+    /// <param name="now">The current local timestamp.</param>
+    /// <param name="dayCount">The number of local dates to include.</param>
+    /// <returns>The rolling local-date range.</returns>
+    private static (
+        DateTimeOffset StartsAt,
+        DateTimeOffset EndsAt)
+        CreateRollingDayRange(
+            DateTimeOffset now,
+            int dayCount)
+    {
+        if (dayCount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(dayCount),
+                dayCount,
+                "Day count must be greater than zero.");
+        }
+
+        var startLocalDateTime = new DateTime(
+            now.Year,
+            now.Month,
+            now.Day,
+            0,
+            0,
+            0,
+            DateTimeKind.Unspecified)
+            .AddDays(-(dayCount - 1));
+
+        var startOffset =
+            TimeZoneInfo.Local.GetUtcOffset(
+                startLocalDateTime);
+
+        return (
+            new DateTimeOffset(
+                startLocalDateTime,
+                startOffset),
+            now);
     }
 
     /// <summary>
@@ -684,11 +746,14 @@ public sealed class DiaryViewModel : ViewModelBase, IDisposable
         HasPreviewError = false;
         HasPreviewWarning = !hasReadings || !hasGoodCoverage;
 
-        PreviewCoverageText = $"Data coverage {FormatPreviewPercentage(coverage)}";
+        PreviewCoverageText = TF(
+            "DiaryCoverageFormat",
+            FormatPreviewPercentage(coverage));
 
         if (!hasReadings)
         {
-            PreviewStatusTitle = "No local data found";
+            PreviewStatusTitle = T(
+                "DiaryNoLocalReadingsTitle");
             PreviewStatusText = T("DiaryNoLocalReadingsDescription");
         }
         else if (hasGoodCoverage)
@@ -702,12 +767,46 @@ public sealed class DiaryViewModel : ViewModelBase, IDisposable
             PreviewStatusText = T("DiaryPartialHistoryDescription");
         }
 
-        PreviewDetailsText = TF(
-            "DiaryPreviewDetailsFormat",
-            report.ReadingsCount,
-            report.IncompleteDaysCount,
-            report.EmptyDaysCount,
-            report.OverallContinuity.Gaps.Count);
+        PreviewDetailsText =
+            BuildPreviewDetailsText(report);
+    }
+
+    /// <summary>
+    /// Builds a localized and semantically precise preview of the diary
+    /// data-completeness counters.
+    /// </summary>
+    /// <param name="report">The generated diary preview report.</param>
+    /// <returns>The localized preview details.</returns>
+    private string BuildPreviewDetailsText(
+        GlycemicDiaryReport report)
+    {
+        return string.Join(
+            " · ",
+            TF(
+                report.ReadingsCount == 1
+                    ? "DiaryPreviewReadingSingularFormat"
+                    : "DiaryPreviewReadingPluralFormat",
+                report.ReadingsCount),
+            TF(
+                report.PartialDaysCount == 1
+                    ? "DiaryPreviewPartialDaySingularFormat"
+                    : "DiaryPreviewPartialDayPluralFormat",
+                report.PartialDaysCount),
+            TF(
+                report.InProgressDaysCount == 1
+                    ? "DiaryPreviewInProgressDaySingularFormat"
+                    : "DiaryPreviewInProgressDayPluralFormat",
+                report.InProgressDaysCount),
+            TF(
+                report.EmptyDaysCount == 1
+                    ? "DiaryPreviewEmptyDaySingularFormat"
+                    : "DiaryPreviewEmptyDayPluralFormat",
+                report.EmptyDaysCount),
+            TF(
+                report.OverallContinuity.Gaps.Count == 1
+                    ? "DiaryPreviewGapSingularFormat"
+                    : "DiaryPreviewGapPluralFormat",
+                report.OverallContinuity.Gaps.Count));
     }
 
     /// <summary>

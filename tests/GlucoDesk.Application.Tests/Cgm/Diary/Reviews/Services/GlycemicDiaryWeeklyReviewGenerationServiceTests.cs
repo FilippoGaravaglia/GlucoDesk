@@ -7,6 +7,7 @@ using GlucoDesk.Application.Cgm.Diary.Reviews.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Services.Abstractions;
 using GlucoDesk.Application.Cgm.History.Continuity.Results;
 using GlucoDesk.Application.Common.Results;
+using GlucoDesk.Core.Glucose.Enums;
 
 namespace GlucoDesk.Application.Tests.Cgm.Diary.Reviews.Services;
 
@@ -39,7 +40,8 @@ public sealed class GlycemicDiaryWeeklyReviewGenerationServiceTests
         var result = await service.GenerateAsync(
             new GlycemicDiaryWeeklyReviewRequest(
                 currentStartsAt,
-                currentEndsAt),
+                currentEndsAt,
+                CgmProviderKind.DexcomShare),
             CancellationToken.None);
 
         // Assert
@@ -48,8 +50,14 @@ public sealed class GlycemicDiaryWeeklyReviewGenerationServiceTests
 
         Assert.Equal(currentStartsAt, diaryService.Requests[0].PeriodStartsAt);
         Assert.Equal(currentEndsAt, diaryService.Requests[0].PeriodEndsAt);
+        Assert.Equal(
+            CgmProviderKind.DexcomShare,
+            diaryService.Requests[0].ProviderKind);
         Assert.Equal(expectedPreviousStartsAt, diaryService.Requests[1].PeriodStartsAt);
         Assert.Equal(expectedPreviousEndsAt, diaryService.Requests[1].PeriodEndsAt);
+        Assert.Equal(
+            CgmProviderKind.DexcomShare,
+            diaryService.Requests[1].ProviderKind);
 
         Assert.Same(currentReport, weeklyReviewService.CapturedCurrentReport);
         Assert.Same(previousReport, weeklyReviewService.CapturedPreviousReport);
@@ -80,6 +88,7 @@ public sealed class GlycemicDiaryWeeklyReviewGenerationServiceTests
             new GlycemicDiaryWeeklyReviewRequest(
                 currentStartsAt,
                 currentEndsAt,
+                CgmProviderKind.DexcomShare,
                 previousStartsAt,
                 previousEndsAt),
             CancellationToken.None);

@@ -1,3 +1,4 @@
+using GlucoDesk.Application.Cgm.Diary.Patterns.Enums;
 using GlucoDesk.Application.Cgm.Diary.Patterns.Services.Abstractions;
 using GlucoDesk.Application.Cgm.Diary.Results;
 using GlucoDesk.Application.Cgm.Diary.Reviews.Enums;
@@ -48,13 +49,24 @@ public sealed class GlycemicDiaryWeeklyReviewService : IGlycemicDiaryWeeklyRevie
         var currentPatterns = _patternAnalysisService.Analyze(currentReport);
         var previousPatterns = _patternAnalysisService.Analyze(previousReport);
 
-        var changes = BuildChanges(
-            currentReport,
-            previousReport,
-            currentCompleteness,
-            previousCompleteness,
-            currentPatterns.Patterns.Count,
-            previousPatterns.Patterns.Count);
+        var hasComparablePreviousPeriod =
+            previousReport.ReadingsCount > 0;
+
+        var currentClinicalPatternCount =
+            CountClinicalPatterns(currentPatterns.Patterns);
+
+        var previousClinicalPatternCount =
+            CountClinicalPatterns(previousPatterns.Patterns);
+
+        var changes = hasComparablePreviousPeriod
+            ? BuildChanges(
+                currentReport,
+                previousReport,
+                currentCompleteness,
+                previousCompleteness,
+                currentClinicalPatternCount,
+                previousClinicalPatternCount)
+            : [];
 
         return new GlycemicDiaryWeeklyReview(
             previousReport.PeriodStartsAt,
@@ -65,10 +77,48 @@ public sealed class GlycemicDiaryWeeklyReviewService : IGlycemicDiaryWeeklyRevie
             BuildSummary(currentReport, previousReport, currentCompleteness, changes),
             BuildHistoryReliabilityText(currentCompleteness),
             changes,
-            BuildHighlights(changes));
+            hasComparablePreviousPeriod
+                ? BuildHighlights(changes)
+                : BuildCurrentPeriodHighlights(
+                    currentReport,
+                    currentCompleteness,
+                    currentClinicalPatternCount));
     }
 
     #region Helpers
+
+    /// <summary>
+    /// Counts only actual glycemic patterns. Data-quality notices do not
+    /// represent glucose behavior and must not affect comparison metrics.
+    /// </summary>
+    private static int CountClinicalPatterns(
+        IReadOnlyCollection<
+            GlucoDesk.Application.Cgm.Diary.Patterns.Results.GlycemicDiaryPattern>
+            patterns)
+    {
+        return patterns.Count(pattern =>
+            pattern.Kind !=
+            GlycemicDiaryPatternKind.LimitedDataCoverage);
+    }
+
+    /// <summary>
+    /// Builds non-comparative highlights when the previous equivalent period
+    /// does not contain readings.
+    /// </summary>
+    private static IReadOnlyCollection<string>
+        BuildCurrentPeriodHighlights(
+            GlycemicDiaryReport currentReport,
+            GlucoseHistoryCompletenessScore currentCompleteness,
+            int clinicalPatternCount)
+    {
+        return
+        [
+            $"Current-period readings: {currentReport.ReadingsCount}.",
+            $"Current-period data coverage: {currentCompleteness.CoverageText}.",
+            $"Current-period clinical patterns: {clinicalPatternCount}.",
+            "A previous-period comparison is not available."
+        ];
+    }
 
     /// <summary>
     /// Builds all metric changes for the review.
@@ -301,39 +351,39 @@ public sealed class GlycemicDiaryWeeklyReviewService : IGlycemicDiaryWeeklyRevie
     {
         if (currentReport.ReadingsCount == 0)
         {
-            return "Weekly review: no local readings available";
+            return "Period comparison: no local readings available";
         }
 
         if (previousReport.ReadingsCount == 0)
         {
-            return "Weekly review: comparison limited by missing previous data";
+            return "Period comparison unavailable: previous data missing";
         }
 
         if (currentCompleteness.RequiresCaution)
         {
-            return "Weekly review: data quality needs attention";
+            return "Period comparison: data quality needs attention";
         }
 
         var tirChange = FindChange(changes, GlycemicDiaryReviewMetricKind.TimeInRange);
 
         if (tirChange.Direction == GlycemicDiaryReviewChangeDirection.Increased)
         {
-            return "Weekly review: time in range improved";
+            return "Period comparison: time in range improved";
         }
 
         if (tirChange.Direction == GlycemicDiaryReviewChangeDirection.Decreased)
         {
-            return "Weekly review: time in range decreased";
+            return "Period comparison: time in range decreased";
         }
 
         var patternChange = FindChange(changes, GlycemicDiaryReviewMetricKind.PatternCount);
 
         if (patternChange.Direction == GlycemicDiaryReviewChangeDirection.Increased)
         {
-            return "Weekly review: new local patterns detected";
+            return "Period comparison: new local patterns detected";
         }
 
-        return "Weekly review: mostly stable period";
+        return "Period comparison: mostly stable period";
     }
 
     /// <summary>
@@ -357,7 +407,7 @@ public sealed class GlycemicDiaryWeeklyReviewService : IGlycemicDiaryWeeklyRevie
 
         if (previousReport.ReadingsCount == 0)
         {
-            var comparisonSummary = "The previous equivalent period has no local readings, so this review cannot produce a true week-over-week comparison. The current period is summarized on its own.";
+            var comparisonSummary = "The previous equivalent period has no local readings, so this review cannot produce a true comparison with the previous equivalent period. The current period is summarized on its own.";
 
             if (currentCompleteness.RequiresCaution)
             {
