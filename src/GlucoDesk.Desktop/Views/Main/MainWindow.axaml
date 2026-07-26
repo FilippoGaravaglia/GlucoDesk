@@ -61,33 +61,113 @@
           </StackPanel>
 
           <StackPanel Spacing="10">
-            <Button Content="{DynamicResource NavDashboard}"
-                    Classes="nav-button"
+            <!--
+              Navigation icons are native Avalonia vector geometries.
+              They remain sharp at every display scale and inherit the
+              foreground of the parent button, including its active state.
+            -->
+            <Button Classes="nav-button nav-dashboard"
                     Classes.accent="{Binding IsDashboardSelected}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
-                    Command="{Binding ShowDashboardCommand}" />
+                    Command="{Binding ShowDashboardCommand}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="11"
+                          VerticalAlignment="Center">
+                <Border Classes="nav-icon-shell dashboard-icon-shell">
+                  <PathIcon Classes="nav-icon dashboard-icon"
+                            Width="17"
+                            Height="17"
+                            RenderTransformOrigin="50%,50%"
+                            Data="M3,3 H9 V9 H3 Z M11,3 H17 V7 H11 Z M11,9 H17 V17 H11 Z M3,11 H9 V17 H3 Z">
+                    <PathIcon.RenderTransform>
+                      <ScaleTransform ScaleX="1"
+                                      ScaleY="1" />
+                    </PathIcon.RenderTransform>
+                  </PathIcon>
+                </Border>
 
-            <Button Content="{DynamicResource NavDiary}"
-                    Classes="nav-button"
+                <TextBlock Text="{DynamicResource NavDashboard}"
+                           VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+
+            <Button Classes="nav-button nav-diary"
                     Classes.accent="{Binding IsDiarySelected}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
-                    Command="{Binding ShowDiaryCommand}" />
+                    Command="{Binding ShowDiaryCommand}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="11"
+                          VerticalAlignment="Center">
+                <Border Classes="nav-icon-shell diary-icon-shell">
+                  <PathIcon Classes="nav-icon diary-icon"
+                            Width="17"
+                            Height="17"
+                            RenderTransformOrigin="50%,50%"
+                            Data="M5,2 H15 A2,2 0 0 1 17,4 V18 H5 A2,2 0 0 1 3,16 V4 A2,2 0 0 1 5,2 Z M6,6 H14 V8 H6 Z M6,10 H10 V12 H6 Z M11,10 H14 V12 H11 Z M6,14 H9 V16 H6 Z M10,14 H14 V16 H10 Z">
+                    <PathIcon.RenderTransform>
+                      <TranslateTransform X="0"
+                                          Y="0" />
+                    </PathIcon.RenderTransform>
+                  </PathIcon>
+                </Border>
 
-            <Button Content="{DynamicResource NavAccount}"
-                    Classes="nav-button"
+                <TextBlock Text="{DynamicResource NavDiary}"
+                           VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+
+            <Button Classes="nav-button nav-account"
                     Classes.accent="{Binding IsAccountSelected}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
-                    Command="{Binding ShowAccountCommand}" />
+                    Command="{Binding ShowAccountCommand}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="11"
+                          VerticalAlignment="Center">
+                <Border Classes="nav-icon-shell account-icon-shell">
+                  <PathIcon Classes="nav-icon account-icon"
+                            Width="17"
+                            Height="17"
+                            RenderTransformOrigin="50%,50%"
+                            Data="M10,2 A4,4 0 1 1 10,10 A4,4 0 0 1 10,2 Z M3,18 C3.4,13.8 6.1,11.5 10,11.5 C13.9,11.5 16.6,13.8 17,18 Z">
+                    <PathIcon.RenderTransform>
+                      <ScaleTransform ScaleX="1"
+                                      ScaleY="1" />
+                    </PathIcon.RenderTransform>
+                  </PathIcon>
+                </Border>
 
-            <Button Content="{DynamicResource NavSettings}"
-                    Classes="nav-button"
+                <TextBlock Text="{DynamicResource NavAccount}"
+                           VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+
+            <Button Classes="nav-button nav-settings"
                     Classes.accent="{Binding IsSettingsSelected}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
-                    Command="{Binding ShowSettingsCommand}" />
+                    Command="{Binding ShowSettingsCommand}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="11"
+                          VerticalAlignment="Center">
+                <Border Classes="nav-icon-shell settings-icon-shell">
+                  <PathIcon Classes="nav-icon settings-icon"
+                            Width="18"
+                            Height="18"
+                            RenderTransformOrigin="50%,50%"
+                            Data="M8.4,2 H11.6 L12.1,4.1 C12.7,4.3 13.2,4.6 13.7,4.9 L15.8,4.3 L17.7,6.9 L16.4,8.7 C16.5,9.1 16.5,9.6 16.5,10 C16.5,10.4 16.5,10.9 16.4,11.3 L17.7,13.1 L15.8,15.7 L13.7,15.1 C13.2,15.4 12.7,15.7 12.1,15.9 L11.6,18 H8.4 L7.9,15.9 C7.3,15.7 6.8,15.4 6.3,15.1 L4.2,15.7 L2.3,13.1 L3.6,11.3 C3.5,10.9 3.5,10.4 3.5,10 C3.5,9.6 3.5,9.1 3.6,8.7 L2.3,6.9 L4.2,4.3 L6.3,4.9 C6.8,4.6 7.3,4.3 7.9,4.1 Z M10,7 A3,3 0 1 0 10,13 A3,3 0 0 0 10,7 Z">
+                    <PathIcon.RenderTransform>
+                      <RotateTransform Angle="0" />
+                    </PathIcon.RenderTransform>
+                  </PathIcon>
+                </Border>
+
+                <TextBlock Text="{DynamicResource NavSettings}"
+                           VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </StackPanel>
         </StackPanel>
 
