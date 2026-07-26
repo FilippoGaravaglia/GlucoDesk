@@ -94,7 +94,7 @@ public sealed class LocalDataBackupServiceTests
     }
 
     [Fact]
-    public async Task ImportAsync_ShouldMergeHistoryAndRestorePreferences()
+    public async Task ImportAsync_ShouldMergeHistoryAndPreserveLocalLanguageAndProviders()
     {
         var exportHistoryService = new FakeHistoryService
         {
@@ -125,9 +125,16 @@ public sealed class LocalDataBackupServiceTests
         };
 
         var exportSettings = new ApplicationSettings(
-            preferredUnit: GlucoseUnit.MmolL,
-            targetLowMgDl: 75,
-            targetHighMgDl: 170);
+            activeLiveProvider:
+                CgmProviderKind.Mock,
+            historicalProvider:
+                CgmProviderKind.Mock,
+            preferredUnit:
+                GlucoseUnit.MmolL,
+            targetLowMgDl:
+                75,
+            targetHighMgDl:
+                170);
 
         var exportLanguagePreferenceService =
             new FakeLanguagePreferenceService("en");
@@ -160,7 +167,17 @@ public sealed class LocalDataBackupServiceTests
 
         var importSettingsService =
             new FakeSettingsService(
-                ApplicationSettings.Default);
+                new ApplicationSettings(
+                    activeLiveProvider:
+                        CgmProviderKind.DexcomShare,
+                    historicalProvider:
+                        CgmProviderKind.DexcomShare,
+                    preferredUnit:
+                        GlucoseUnit.MgDl,
+                    targetLowMgDl:
+                        70,
+                    targetHighMgDl:
+                        180));
 
         var importPrivacyStore =
             new FakePrivacyModeStore();
@@ -206,25 +223,48 @@ public sealed class LocalDataBackupServiceTests
         Assert.True(
             importResult.Value.PrivacyPreferenceImported);
 
-        Assert.True(
+        Assert.False(
             importResult.Value.LanguageImported);
 
         Assert.Equal(
-            "en",
+            "it",
             importLanguagePreferenceService.CurrentLanguageCode);
 
-        Assert.Equal(
-            ["en"],
+        Assert.Empty(
             importLanguagePreferenceService.ImportedLanguageCodes);
 
         Assert.NotNull(
             importSettingsService.SavedSettings);
 
         Assert.Equal(
+            CgmProviderKind.DexcomShare,
+            importSettingsService
+                .SavedSettings!
+                .ActiveLiveProvider);
+
+        Assert.Equal(
+            CgmProviderKind.DexcomShare,
+            importSettingsService
+                .SavedSettings!
+                .HistoricalProvider);
+
+        Assert.Equal(
             GlucoseUnit.MmolL,
             importSettingsService
                 .SavedSettings!
                 .PreferredUnit);
+
+        Assert.Equal(
+            75,
+            importSettingsService
+                .SavedSettings!
+                .TargetLowMgDl);
+
+        Assert.Equal(
+            170,
+            importSettingsService
+                .SavedSettings!
+                .TargetHighMgDl);
 
         Assert.True(
             importPrivacyStore.Value);

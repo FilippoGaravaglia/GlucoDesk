@@ -249,6 +249,18 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
                         cancellationToken)
                     .ConfigureAwait(false);
 
+            var currentSettingsResult = await _settingsService
+                .GetSettingsAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (currentSettingsResult.IsFailure)
+            {
+                return Result<LocalDataImportResult>.Failure(
+                    new Error(
+                        "LocalBackup.SettingsReadFailed",
+                        currentSettingsResult.Error.Message));
+            }
+
             var readings = history
                 .Select(document => document.ToReading())
                 .ToArray();
@@ -267,7 +279,10 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
                         historySaveResult.Error.Message));
             }
 
-            var importedSettings = settings.ToSettings();
+            var importedSettings =
+                settings.ToSettingsPreservingProviders(
+                    currentSettingsResult.Value.ActiveLiveProvider,
+                    currentSettingsResult.Value.HistoricalProvider);
 
             var settingsSaveResult = await _settingsService
                 .SaveSettingsAsync(
@@ -283,10 +298,13 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
                         settingsSaveResult.Error.Message));
             }
 
-            var languageImported =
-                _languagePreferenceService.TryApplyAndPersist(
-                    preferences.LanguageCode);
-
+            // The language belongs to the current desktop installation.
+            // A portable backup must not unexpectedly change the active UI
+            // language or persist another computer's language preference.
+            //
+            // Provider selections are also preserved from the current
+            // installation because their credentials live in platform secure
+            // storage and are intentionally excluded from the backup.
             _privacyModeStore.Save(
                 preferences.DesktopPrivacyModeEnabled);
 
@@ -297,7 +315,7 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
                     historySaveResult.Value.DuplicateReadingsCount,
                     historySaveResult.Value.StoredReadingsCount,
                     SettingsImported: true,
-                    LanguageImported: languageImported,
+                    LanguageImported: false,
                     PrivacyPreferenceImported: true));
         }
         catch (OperationCanceledException)
@@ -578,13 +596,15 @@ public sealed class LocalDataBackupService : ILocalDataBackupService
             };
         }
 
-        public ApplicationSettings ToSettings()
+        public ApplicationSettings ToSettingsPreservingProviders(
+            CgmProviderKind currentActiveLiveProvider,
+            CgmProviderKind currentHistoricalProvider)
         {
             return new ApplicationSettings(
                 activeLiveProvider:
-                    ActiveLiveProvider,
+                    currentActiveLiveProvider,
                 historicalProvider:
-                    HistoricalProvider,
+                    currentHistoricalProvider,
                 preferredUnit:
                     PreferredUnit,
                 targetLowMgDl:

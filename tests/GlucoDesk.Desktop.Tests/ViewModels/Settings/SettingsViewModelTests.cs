@@ -107,6 +107,71 @@ public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
         Assert.Equal(CgmProviderKind.Mock, viewModel.SelectedHistoricalProvider?.Kind);
     }
 
+
+    [Fact]
+    public async Task LoadCommand_ShouldRebindSelectedProviders_WhenProviderOptionsAreRebuilt()
+    {
+        var settings = new ApplicationSettings(
+            activeLiveProvider:
+                CgmProviderKind.DexcomShare,
+            historicalProvider:
+                CgmProviderKind.DexcomShare,
+            preferredUnit:
+                GlucoseUnit.MgDl,
+            targetLowMgDl:
+                70,
+            targetHighMgDl:
+                180);
+
+        var viewModel = new SettingsViewModel(
+            new FakeApplicationSettingsService(
+                Result<ApplicationSettings>.Success(
+                    settings)),
+            [
+                new FakeMetadataProvider(
+                    CgmProviderKind.Mock,
+                    "Mock"),
+                new FakeMetadataProvider(
+                    CgmProviderKind.DexcomShare,
+                    "Dexcom Share")
+            ]);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        var firstLiveSelection =
+            viewModel.SelectedLiveProvider;
+
+        var firstHistoricalSelection =
+            viewModel.SelectedHistoricalProvider;
+
+        Assert.NotNull(firstLiveSelection);
+        Assert.NotNull(firstHistoricalSelection);
+
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        var currentDexcomOption =
+            viewModel.ProviderOptions.Single(
+                option =>
+                    option.Kind ==
+                    CgmProviderKind.DexcomShare);
+
+        Assert.Same(
+            currentDexcomOption,
+            viewModel.SelectedLiveProvider);
+
+        Assert.Same(
+            currentDexcomOption,
+            viewModel.SelectedHistoricalProvider);
+
+        Assert.NotSame(
+            firstLiveSelection,
+            viewModel.SelectedLiveProvider);
+
+        Assert.NotSame(
+            firstHistoricalSelection,
+            viewModel.SelectedHistoricalProvider);
+    }
+
     [Fact]
     public async Task SaveCommand_ShouldPersistSettings_WhenFormIsValid()
     {

@@ -1552,8 +1552,10 @@ public sealed partial class SettingsViewModel : ViewModelBase
         var selectedUnit = NormalizeDisplayUnit(settings.PreferredUnit);
         var selectedChartMaximumMgDl = NormalizeChartMaximumMgDl(settings.ChartMaximumMgDl);
 
-        SelectedLiveProvider = liveProvider;
-        SelectedHistoricalProvider = historicalProvider;
+        RebindSelectedProviderOptions(
+            liveProvider,
+            historicalProvider);
+
         SelectedChartMaximumMgDl = selectedChartMaximumMgDl;
         SelectedPreferredUnit = FindPreferredUnitOption(selectedUnit);
         UpdateTargetRangeUnitPresentation(selectedUnit);
@@ -1575,6 +1577,42 @@ public sealed partial class SettingsViewModel : ViewModelBase
         UpdateNativeGlucoseTestNotificationAvailability();
 
         return usedProviderFallback;
+    }
+
+    /// <summary>
+    /// Rebinds the selected providers to the exact option instances contained
+    /// in the current ProviderOptions collection.
+    ///
+    /// Provider options are rebuilt whenever runtime availability is refreshed.
+    /// ProviderSelectionItem uses value equality, so assigning an equivalent
+    /// newly-created option through the generated observable setter may be
+    /// ignored. In that situation the ComboBox ItemsSource contains new
+    /// instances while SelectedItem still references an item from the previous
+    /// collection, causing the visual selection to appear empty.
+    /// </summary>
+    /// <param name="liveProvider">
+    /// The live-provider option from the current ProviderOptions collection.
+    /// </param>
+    /// <param name="historicalProvider">
+    /// The historical-provider option from the current ProviderOptions
+    /// collection.
+    /// </param>
+    private void RebindSelectedProviderOptions(
+        ProviderSelectionItem liveProvider,
+        ProviderSelectionItem historicalProvider)
+    {
+        ArgumentNullException.ThrowIfNull(liveProvider);
+        ArgumentNullException.ThrowIfNull(historicalProvider);
+
+        // Clear the generated properties first so the observable setters
+        // cannot suppress the update because ProviderSelectionItem uses
+        // value equality. This also detaches the ComboBox selection from
+        // instances belonging to the previous ProviderOptions collection.
+        SelectedLiveProvider = null;
+        SelectedHistoricalProvider = null;
+
+        SelectedLiveProvider = liveProvider;
+        SelectedHistoricalProvider = historicalProvider;
     }
 
     /// <summary>
