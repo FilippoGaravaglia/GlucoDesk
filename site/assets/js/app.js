@@ -11,6 +11,7 @@ const translations = {
     navExperience: "Experience",
     navFeatures: "Features",
     navPrivacy: "Privacy",
+    navFounder: "Built by",
     navDownload: "Download",
 
     heroEyebrow: "Free preview · macOS & Windows",
@@ -134,13 +135,13 @@ const translations = {
     privacyChipOpen: "Open source",
 
     founderKicker: "The story behind GlucoDesk",
-    founderTitle: "Built because I needed it.",
-    founderDescription:
-      "Living with Type 1 diabetes already requires enough attention. " +
-      "I created GlucoDesk to make glucose awareness feel simpler and " +
-      "less intrusive during everyday work.",
-    founderRole: "Developer living with Type 1 diabetes",
-    founderQuote: "One less thing to interrupt your day.",
+    founderTitle: "I built GlucoDesk to keep glucose in sight, without putting it at the center of your day.",
+    founderDescription: "Living with type 1 diabetes already requires enough attention. I created GlucoDesk to make glucose monitoring simpler, more discreet and less intrusive throughout the working day.",
+    founderRole: "Software Engineer · Creator of GlucoDesk",
+    founderLinkedIn: "LinkedIn profile",
+    founderGitHub: "GitHub profile",
+    founderLinksLabel: "Author profiles",
+    founderQuote: "Glucose stays visible. Your day stays at the center.",
 
     downloadKicker: "v0.3.0-preview",
     downloadTitle: "Bring GlucoDesk to your desktop.",
@@ -178,6 +179,7 @@ const translations = {
     navExperience: "Esperienza",
     navFeatures: "Funzionalità",
     navPrivacy: "Privacy",
+    navFounder: "Autore",
     navDownload: "Download",
 
     heroEyebrow: "Preview gratuita · macOS e Windows",
@@ -301,13 +303,13 @@ const translations = {
     privacyChipOpen: "Open source",
 
     founderKicker: "La storia dietro GlucoDesk",
-    founderTitle: "Creato perché ne avevo bisogno.",
-    founderDescription:
-      "Vivere con il diabete tipo 1 richiede già abbastanza attenzione. " +
-      "Ho creato GlucoDesk per rendere il controllo della glicemia più " +
-      "semplice e meno invasivo durante il lavoro quotidiano.",
-    founderRole: "Sviluppatore e persona con diabete tipo 1",
-    founderQuote: "Una cosa in meno a interrompere la tua giornata.",
+    founderTitle: "Ho creato GlucoDesk per tenere la glicemia in vista, senza metterla al centro della giornata.",
+    founderDescription: "Vivere con il diabete di tipo 1 richiede già abbastanza attenzione. Ho creato GlucoDesk per rendere il controllo della glicemia più semplice, discreto e meno invasivo durante la giornata lavorativa.",
+    founderRole: "Software Engineer · Creatore di GlucoDesk",
+    founderLinkedIn: "Profilo LinkedIn",
+    founderGitHub: "Profilo GitHub",
+    founderLinksLabel: "Profili dell’autore",
+    founderQuote: "La glicemia resta visibile. La tua giornata resta al centro.",
 
     downloadKicker: "v0.3.0-preview",
     downloadTitle: "Porta GlucoDesk sul tuo desktop.",
