@@ -1080,8 +1080,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
             LocalizeKnownSettingsText(StatusMessage);
 
         NativeNotificationDiagnosticsText =
-            LocalizeNativeNotificationDiagnosticsText(
-                BuildNativeNotificationDiagnosticsText());
+            BuildNativeNotificationDiagnosticsText();
 
         NativeGlucoseTestNotificationStatusText =
             LocalizeKnownNativeTestNotificationStatusText(
@@ -2326,9 +2325,12 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Builds localized diagnostics for native notifications while preserving
-    /// unknown platform-specific diagnostic messages.
+    /// Builds stable native-notification diagnostics localized for the
+    /// currently active application language.
     /// </summary>
+    /// <returns>
+    /// A localized capability description suitable for the Settings UI.
+    /// </returns>
     private static string BuildNativeNotificationDiagnosticsText()
     {
         var diagnosticsText =
@@ -2336,20 +2338,10 @@ public sealed partial class SettingsViewModel : ViewModelBase
                 .CreateDefault()
                 .GetSettingsText();
 
-        return diagnosticsText switch
-        {
-            "Native notifications are optional and depend on macOS notification permissions." or
-            "Le notifiche native sono opzionali e dipendono dai permessi di notifica di macOS." =>
-                T("SettingsNativeNotificationsDescription"),
-
-            _ => diagnosticsText
-        };
+        return LocalizeNativeNotificationDiagnosticsText(
+            diagnosticsText);
     }
 
-    /// <summary>
-    /// Localizes a native test-notification status that may already be
-    /// visible when the application language changes.
-    /// </summary>
     /// <summary>
     /// Converts platform-specific native-notification diagnostics into stable,
     /// localized UI text.
