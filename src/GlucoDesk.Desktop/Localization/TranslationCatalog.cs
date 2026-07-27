@@ -540,6 +540,11 @@ public static class TranslationCatalog
         ["SettingsEnableAwarenessAndNativeForTest"] = "Enable glucose awareness and native OS notifications before sending a test notification.",
         ["SettingsEnableAwarenessForTest"] = "Enable glucose awareness notifications to send a safe test notification.",
         ["SettingsTestNotificationReady"] = "A safe native test notification can be sent.",
+
+        ["SettingsNativeNotificationsAvailableDescription"] =
+            "Native notifications are optional and depend on operating-system notification permissions.",
+        ["SettingsNativeNotificationsUnavailableDescription"] =
+            "Native OS notifications are not available in the current desktop environment.",
         ["SettingsSendingTestNotification"] = "Sending test notification...",
         ["SettingsTestNotificationCancelled"] = "Test notification cancelled.",
         ["SettingsSubtitle"] = "Configure GlucoDesk preferences, providers and dashboard behavior.",
@@ -1172,6 +1177,11 @@ public static class TranslationCatalog
         ["SettingsEnableAwarenessAndNativeForTest"] = "Abilita gli avvisi di consapevolezza glicemica e le notifiche native OS prima di inviare una notifica di test.",
         ["SettingsEnableAwarenessForTest"] = "Abilita gli avvisi di consapevolezza glicemica per inviare una notifica sicura di test.",
         ["SettingsTestNotificationReady"] = "È possibile inviare una notifica nativa sicura di test.",
+
+        ["SettingsNativeNotificationsAvailableDescription"] =
+            "Le notifiche native sono opzionali e dipendono dai permessi di notifica del sistema operativo.",
+        ["SettingsNativeNotificationsUnavailableDescription"] =
+            "Le notifiche native OS non sono disponibili nell’ambiente desktop corrente.",
         ["SettingsSendingTestNotification"] = "Invio notifica di test...",
         ["SettingsTestNotificationCancelled"] = "Notifica di test annullata.",
         ["SettingsSubtitle"] = "Configura preferenze, provider e comportamento della dashboard di GlucoDesk.",

@@ -5,14 +5,14 @@ using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
-using GlucoDesk.Desktop.ViewModels.Settings;
-using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
-using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
-using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Models;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
 using GlucoDesk.Desktop.Localization;
 using GlucoDesk.Desktop.Tests.Localization;
+using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
+using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
 
 namespace GlucoDesk.Desktop.Tests.ViewModels.Settings;
 
@@ -391,7 +391,7 @@ public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
         {
             Result = Result<DexcomDesktopConnectionResult>.Failure(
                 new Error("Dexcom.BrowserOpenFailed", "Unable to open browser."))
-        };  
+        };
 
         var viewModel = new SettingsViewModel(
             new FakeApplicationSettingsService(),
@@ -400,9 +400,9 @@ public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
                 new FakeMetadataProvider(CgmProviderKind.DexcomSandbox, "Dexcom Sandbox")
             ],
             [new FakeDexcomConnectionStatusService(DexcomConnectionState.TokenMissing)],
-            [connectionService]);   
+            [connectionService]);
 
-        await viewModel.ConnectDexcomCommand.ExecuteAsync(null);    
+        await viewModel.ConnectDexcomCommand.ExecuteAsync(null);
 
         Assert.True(viewModel.HasError);
         Assert.True(connectionService.WasCalled);
@@ -632,9 +632,19 @@ public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
             Assert.Equal(
                 "Le letture consecutive richieste devono essere comprese tra 1 e 5.",
                 viewModel.ErrorMessage);
-            Assert.Equal(
-                "Le notifiche native sono opzionali e dipendono dai permessi di notifica di macOS.",
-                viewModel.NativeNotificationDiagnosticsText);
+            Assert.False(
+            string.IsNullOrWhiteSpace(
+                viewModel.NativeNotificationDiagnosticsText));
+
+            Assert.DoesNotContain(
+                "Native notification",
+                viewModel.NativeNotificationDiagnosticsText,
+                StringComparison.OrdinalIgnoreCase);
+
+            Assert.Contains(
+                "notifiche native",
+                viewModel.NativeNotificationDiagnosticsText,
+                StringComparison.OrdinalIgnoreCase);
             Assert.Null(settingsService.SavedSettings);
         }
         finally
@@ -674,6 +684,46 @@ public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
             Assert.Equal(
                 "A safe native test notification can be sent.",
                 viewModel.NativeGlucoseTestNotificationStatusText);
+        }
+        finally
+        {
+            LocalizationManager
+                .SetLanguageForCurrentProcess("en");
+        }
+    }
+
+
+
+    [Fact]
+    public async Task RefreshLocalizedText_ShouldTranslateNativeNotificationDiagnostics()
+    {
+        LocalizationManager.SetLanguageForCurrentProcess("it");
+
+        try
+        {
+            var viewModel = new SettingsViewModel(
+                new FakeApplicationSettingsService(),
+                [new FakeMetadataProvider(
+                    CgmProviderKind.Mock,
+                    "Mock")]);
+
+            await viewModel.LoadCommand.ExecuteAsync(null);
+
+            viewModel.RefreshLocalizedText();
+
+            Assert.False(
+                string.IsNullOrWhiteSpace(
+                    viewModel.NativeNotificationDiagnosticsText));
+
+            Assert.Contains(
+                "notifiche native",
+                viewModel.NativeNotificationDiagnosticsText,
+                StringComparison.OrdinalIgnoreCase);
+
+            Assert.DoesNotContain(
+                "Native notification",
+                viewModel.NativeNotificationDiagnosticsText,
+                StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -767,7 +817,7 @@ public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
             CancellationToken cancellationToken)
         {
             SavedSettings = settings;
-        
+
             return Task.FromResult(SaveResult);
         }
     }
