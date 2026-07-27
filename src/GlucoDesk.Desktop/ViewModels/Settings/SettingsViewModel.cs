@@ -10,21 +10,21 @@ using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.ValueObjects;
-using GlucoDesk.Desktop.GlucoseAlerts.Services;
+using GlucoDesk.Desktop.AboutSupport.Enums;
+using GlucoDesk.Desktop.AboutSupport.Services.Abstractions;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Nightscout.Services;
 using GlucoDesk.Desktop.Bootstrap.Providers.Connection.Services;
+using GlucoDesk.Desktop.DataBackup.Services.Abstractions;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Diagnostics;
+using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
+using GlucoDesk.Desktop.GlucoseAlerts.Services;
+using GlucoDesk.Desktop.Localization;
 using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Settings.Providers;
 using GlucoDesk.Desktop.ViewModels.Settings.Selections;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Enums;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Models;
 using GlucoDesk.Infrastructure.Cgm.Dexcom.Connection.Services;
-using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Diagnostics;
-using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
-using GlucoDesk.Desktop.Localization;
-using GlucoDesk.Desktop.AboutSupport.Enums;
-using GlucoDesk.Desktop.AboutSupport.Services.Abstractions;
-using GlucoDesk.Desktop.DataBackup.Services.Abstractions;
 
 namespace GlucoDesk.Desktop.ViewModels.Settings;
 
@@ -663,7 +663,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
             AboutSupportLinkKind.SourceCode,
             cancellationToken);
     }
-/// <summary>
+    /// <summary>
     /// Opens the public GlucoDesk issue-reporting workflow.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -1080,7 +1080,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
             LocalizeKnownSettingsText(StatusMessage);
 
         NativeNotificationDiagnosticsText =
-            BuildNativeNotificationDiagnosticsText();
+            LocalizeNativeNotificationDiagnosticsText(
+                BuildNativeNotificationDiagnosticsText());
 
         NativeGlucoseTestNotificationStatusText =
             LocalizeKnownNativeTestNotificationStatusText(
@@ -2349,6 +2350,48 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// Localizes a native test-notification status that may already be
     /// visible when the application language changes.
     /// </summary>
+    /// <summary>
+    /// Converts platform-specific native-notification diagnostics into stable,
+    /// localized UI text.
+    /// </summary>
+    /// <param name="value">
+    /// The diagnostic text returned by the current desktop backend.
+    /// </param>
+    /// <returns>
+    /// A localized capability description suitable for the Settings UI.
+    /// </returns>
+    private static string LocalizeNativeNotificationDiagnosticsText(
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return T(
+                "SettingsNativeNotificationsUnavailableDescription");
+        }
+
+        var normalized = value.Trim();
+
+        var isUnavailable =
+            normalized.Contains(
+                "not available",
+                StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains(
+                "unavailable",
+                StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains(
+                "non sono disponibili",
+                StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains(
+                "non disponibile",
+                StringComparison.OrdinalIgnoreCase);
+
+        return isUnavailable
+            ? T(
+                "SettingsNativeNotificationsUnavailableDescription")
+            : T(
+                "SettingsNativeNotificationsAvailableDescription");
+    }
+
     private static string LocalizeKnownNativeTestNotificationStatusText(
         string value)
     {
