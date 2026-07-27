@@ -732,6 +732,59 @@ public sealed class SettingsViewModelTests : EnglishLocalizationTestBase
         }
     }
 
+
+
+    [Fact]
+    public async Task SaveCommand_ShouldKeepNativeDiagnosticsLocalizedInItalian()
+    {
+        LocalizationManager.SetLanguageForCurrentProcess("it");
+
+        try
+        {
+            var settingsService =
+                new FakeApplicationSettingsService();
+
+            var viewModel = new SettingsViewModel(
+                settingsService,
+                [new FakeMetadataProvider(
+                    CgmProviderKind.Mock,
+                    "Mock")]);
+
+            await viewModel.LoadCommand.ExecuteAsync(null);
+
+            Assert.Contains(
+                "notifiche native",
+                viewModel.NativeNotificationDiagnosticsText,
+                StringComparison.OrdinalIgnoreCase);
+
+            Assert.DoesNotContain(
+                "Native notification",
+                viewModel.NativeNotificationDiagnosticsText,
+                StringComparison.OrdinalIgnoreCase);
+
+            viewModel
+                .GlucoseAlertRequiredConsecutiveReadingsText =
+                "0";
+
+            await viewModel.SaveCommand.ExecuteAsync(null);
+
+            Assert.Contains(
+                "notifiche native",
+                viewModel.NativeNotificationDiagnosticsText,
+                StringComparison.OrdinalIgnoreCase);
+
+            Assert.DoesNotContain(
+                "Native notification",
+                viewModel.NativeNotificationDiagnosticsText,
+                StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            LocalizationManager
+                .SetLanguageForCurrentProcess("en");
+        }
+    }
+
     #region Helpers
 
     private sealed class FakeDexcomDesktopConnectionService : IDexcomDesktopConnectionService
