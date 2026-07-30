@@ -1,5 +1,43 @@
 "use strict";
 
+/**
+ * Prevents Safari and other browsers from restoring an arbitrary scroll
+ * position after a normal page reload.
+ *
+ * Explicit anchor navigation is preserved, so links such as #features,
+ * #privacy and #download continue to open at the requested section.
+ */
+const resetInitialScrollPosition = () => {
+  if (window.location.hash) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "auto",
+      });
+    });
+  });
+};
+
+if ("scrollRestoration" in window.history) {
+  window.history.scrollRestoration = "manual";
+}
+
+window.addEventListener(
+  "pageshow",
+  resetInitialScrollPosition,
+);
+
+window.addEventListener(
+  "load",
+  resetInitialScrollPosition,
+  { once: true },
+);
+
 const translations = {
   en: {
     skipToContent: "Skip to content",

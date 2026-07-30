@@ -2960,6 +2960,7 @@ a {
   object-fit: cover;
   object-position: center 30%;
   transform: rotate(1.5deg);
+  transform-origin: center;
 }
 
 #founder .founder-person {
@@ -3216,3 +3217,53 @@ a {
 }
 
 /* === GlucoDesk founder final layout: end === */
+
+/* Preserve the native aspect ratio of GlucoDesk product screenshots. */
+img[src*="/screenshots/"],
+img[src*="/demo/language-onboarding"] {
+  height: auto;
+  object-fit: contain;
+}
+
+/* Founder portrait: straight outer outline with a tilted blue frame and photo. */
+#founder .founder-photo-frame {
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+  transform: none;
+  border: 1px solid rgba(105, 190, 255, 0.28);
+  border-radius: 32px;
+}
+
+#founder .founder-photo-frame::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  z-index: -1;
+  border-radius: 30px;
+  background: linear-gradient(
+    135deg,
+    rgba(92, 218, 255, 0.95),
+    rgba(91, 103, 255, 0.92)
+  );
+  transform: rotate(-3deg);
+  transform-origin: center;
+  box-shadow:
+    0 20px 45px rgba(18, 136, 255, 0.22),
+    0 0 0 1px rgba(117, 210, 255, 0.2);
+}
+
+#founder .founder-photo {
+  display: block;
+  position: relative;
+  z-index: 1;
+  width: calc(100% - 30px);
+  height: calc(100% - 30px);
+  margin: 15px;
+  object-fit: cover;
+  object-position: center 30%;
+  border-radius: 26px;
+  transform: none;
+  transform-origin: center;
+  box-shadow: 0 16px 34px rgba(0, 25, 60, 0.3);
+}
