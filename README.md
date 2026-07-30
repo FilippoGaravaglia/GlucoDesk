@@ -36,6 +36,10 @@
   ·
   <a href="#multilingual-experience"><strong>Multilingual experience</strong></a>
   ·
+  <a href="#guided-onboarding-and-feature-tour"><strong>Onboarding & feature tour</strong></a>
+  ·
+  <a href="#architecture-overview"><strong>Architecture</strong></a>
+  ·
   <a href="#safety-disclaimer"><strong>Safety disclaimer</strong></a>
 </p>
 
@@ -62,6 +66,7 @@
 * [What is GlucoDesk?](#what-is-glucodesk)
 * [GlucoDesk in action](#glucodesk-in-action)
 * [Multilingual experience](#multilingual-experience)
+* [Guided onboarding and feature tour](#guided-onboarding-and-feature-tour)
 * [Preview release status](#preview-release-status)
 * [Installation preview](#installation-preview)
 * [Key features](#key-features)
@@ -96,11 +101,16 @@ GlucoDesk focuses on:
 * readable glycemic diary export;
 * configurable display preferences;
 * complete English and Italian localization;
-* first-launch language onboarding with persistent local preference;
-* glucose awareness notifications;
+* a guided first-run stepper and a reusable feature tour;
+* persistent first-launch language and onboarding state;
+* in-app and native glucose awareness notifications;
+* configurable notification intervals, cooldown, consecutive-reading rules, snooze and anti-spam behavior;
 * secure local credential storage where supported by the operating system;
 * privacy-conscious local storage;
-* a quiet desktop presence through macOS menu bar and Windows tray companion flows.
+* local backup and restore with versioned ZIP manifests and reading deduplication;
+* a quiet desktop presence through macOS menu bar and Windows tray companion flows;
+* a responsive desktop layout with animated navigation icons;
+* an About and Support area with project, version, website and feedback links.
 
 The goal is simple:
 
@@ -179,6 +189,38 @@ Language preferences remain local to the device and can be changed at any time f
 
 ---
 
+## Guided onboarding and feature tour
+
+GlucoDesk includes a first-run experience that introduces the product before the user reaches the main workspace.
+
+The onboarding flow is implemented as a guided stepper rather than a single static page. It covers:
+
+* language selection;
+* the local-first privacy model;
+* provider and account setup expectations;
+* the live Dashboard;
+* desktop presence through the macOS menu bar or Windows system tray;
+* privacy mode;
+* glucose awareness notifications;
+* local history and continuity;
+* glycemic diary export;
+* the safety boundary between awareness software and approved medical devices.
+
+The onboarding state is stored locally and is skipped automatically after completion.
+
+The application also includes a reusable feature tour that can be opened again after first launch. The tour:
+
+* uses localized English and Italian content;
+* presents the main product areas with dedicated illustrations;
+* does not reset provider, history or account state;
+* remains separate from the persisted first-run completion flag;
+* helps existing users review newly introduced capabilities after an update.
+
+Both flows are designed to remain extensible as new product areas are added.
+
+
+---
+
 ## Preview release status
 
 GlucoDesk is currently distributed as **v0.3.0-preview**.
@@ -186,16 +228,19 @@ GlucoDesk is currently distributed as **v0.3.0-preview**.
 This preview focuses on turning GlucoDesk into a complete desktop product loop:
 
 ```text
-Choose a preferred language on first launch
+Choose a preferred language
+→ complete the guided onboarding stepper
 → connect an optional CGM data source
-→ show glucose awareness on desktop
+→ show glucose awareness on the desktop
 → keep local history updated
-→ reduce local history gaps
+→ detect continuity gaps and backfill where the provider allows it
 → notify calmly when glucose is outside the configured range
-→ analyze recent glucose windows
-→ export a readable glycemic diary
-→ keep preferences consistent across app and exports
-→ package the app for macOS and Windows installation flows
+→ review recent windows, completeness and recurring patterns
+→ export a readable PDF or Excel glycemic diary
+→ back up and restore portable local data safely
+→ keep language, provider and display preferences consistent
+→ access support and project information from inside the app
+→ package and validate the app for macOS and Windows
 ```
 
 ### Supported preview platforms
@@ -707,6 +752,105 @@ The current preview includes improved settings handling for:
 * privacy-conscious notification wording;
 * consistent unit conversion across the app and exported files.
 
+
+### Guided first-run experience
+
+The first launch is intentionally structured and does not drop the user directly into an unconfigured dashboard.
+
+The onboarding stepper:
+
+* starts with language selection;
+* explains the local-first model;
+* introduces providers, history, notifications and privacy mode;
+* presents the diary and export workflow;
+* records completion locally;
+* is fully localized in English and Italian;
+* is covered by persistence and localization tests.
+
+A separate feature tour can be reopened later without resetting application state.
+
+### Local backup and restore
+
+GlucoDesk can export portable local data to a versioned ZIP archive and safely import it again.
+
+The backup workflow includes:
+
+* a versioned manifest;
+* application preferences that are safe to move between installations;
+* local glucose history;
+* validation of archive structure and supported versions;
+* merge and deduplication of imported glucose readings;
+* protection against malformed or unsupported archives;
+* clear success and error feedback;
+* preservation of the currently active language;
+* preservation of secure credentials and machine-specific local state;
+* provider-selection refresh after restore.
+
+Credentials are intentionally excluded from portable backup archives.
+
+This design allows history and selected preferences to be moved without turning the backup into a credential export.
+
+### History continuity and completeness
+
+Local history is not treated as complete merely because readings exist.
+
+GlucoDesk models and reports continuity explicitly through:
+
+* startup and resume synchronization;
+* provider backfill capability detection;
+* gap detection;
+* backfill where supported;
+* reading deduplication;
+* complete, partial, in-progress and empty-period states;
+* daily and reporting-window data completeness;
+* export warnings when local history is incomplete.
+
+This prevents charts, statistics and diary reports from silently presenting incomplete local data as authoritative.
+
+### Daily and weekly review
+
+The diary and insight pipeline includes more than a raw list of CGM readings.
+
+It can produce:
+
+* daily summaries;
+* key time-block summaries;
+* 14-day and 30-day rolling windows;
+* previous-period comparisons;
+* weekly “what changed?” style review;
+* recurring pattern summaries;
+* reliability thresholds before reporting patterns;
+* transparent completeness information.
+
+The goal is to surface useful context without overwhelming users with every individual CGM sample.
+
+### About and support
+
+GlucoDesk includes an in-app About and Support area with:
+
+* current application version;
+* product and preview status;
+* official website;
+* GitHub repository;
+* support and feedback links;
+* open-source and license information;
+* safety disclaimer.
+
+### Desktop interaction and visual polish
+
+The desktop shell includes production-oriented interaction details such as:
+
+* animated vector sidebar icons;
+* clear selected, hover and focus states;
+* responsive layouts for smaller windows;
+* stable runtime language switching;
+* consistent status and validation feedback;
+* single-instance behavior;
+* macOS application menu naming;
+* system tray and menu bar actions for opening, privacy mode and quitting;
+* privacy-safe presence-panel rendering.
+
+
 ---
 
 ## Privacy model
@@ -844,7 +988,48 @@ The `artifacts/` directory is ignored by Git.
 
 ## Architecture overview
 
-GlucoDesk follows a layered .NET architecture.
+GlucoDesk follows a layered architecture with explicit dependency direction and platform-specific behavior isolated behind abstractions.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           GlucoDesk.Desktop                                 │
+│  Avalonia views · ViewModels · navigation · localization · dialogs         │
+│  onboarding · feature tour · tray/menu bar · privacy mode · notifications  │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │ calls
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         GlucoDesk.Application                               │
+│  use-case orchestration · sync workflows · diary/export coordination       │
+│  settings flows · notification rules · history continuity · completeness   │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │ depends on domain contracts
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            GlucoDesk.Core                                   │
+│  domain models · glucose readings · ranges · provider contracts            │
+│  settings models · results/errors · policies and shared business rules      │
+└─────────────────────────────────▲───────────────────────────────────────────┘
+                                  │ implements abstractions
+                                  │
+┌─────────────────────────────────┴───────────────────────────────────────────┐
+│                       GlucoDesk.Infrastructure                              │
+│  provider adapters · local history store · secure credential storage       │
+│  background sync · PDF/Excel exporters · platform helpers · notifications  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+The dependency rule is:
+
+```text
+Desktop ───────► Application ───────► Core
+Infrastructure ─────────────────────► Core
+Desktop composition root wires Application abstractions to Infrastructure.
+```
+
+`Core` does not reference UI, file-system, operating-system or provider implementation details.
+
+### Repository structure
 
 ```text
 GlucoDesk.slnx
@@ -860,64 +1045,142 @@ GlucoDesk.slnx
 │   └── GlucoDesk.Desktop.Tests
 ├── docs
 ├── scripts
+├── site
 └── Directory.Build.props
 ```
 
 ### GlucoDesk.Core
 
-Contains core domain concepts and shared glucose models.
+The core project owns stable domain concepts and contracts.
 
-This layer is independent from infrastructure, UI, file system and provider implementation details.
+Typical responsibilities include:
+
+* normalized glucose readings;
+* glucose units and target ranges;
+* provider abstractions;
+* settings models;
+* result and error types;
+* domain policies and validation rules;
+* data-completeness concepts.
+
+The core layer is intentionally independent from Avalonia, local files, secure stores and concrete CGM services.
 
 ### GlucoDesk.Application
 
-Contains application behavior, orchestration and abstractions.
+The application project coordinates use cases and keeps orchestration outside the UI.
 
-This layer coordinates use cases such as:
+Typical responsibilities include:
 
-* reading current glucose data;
-* handling provider metadata;
-* managing local history workflows;
-* coordinating history continuity;
-* preparing diary export data;
-* exposing application-level results to the desktop UI.
+* retrieving current glucose;
+* selecting live and historical providers;
+* synchronizing and normalizing readings;
+* startup and resume backfill;
+* gap detection and continuity workflows;
+* diary generation;
+* weekly review and recurring-pattern analysis;
+* notification eligibility, cooldown and anti-spam rules;
+* settings management;
+* backup and restore orchestration;
+* export coordination;
+* completeness evaluation.
+
+Application code consumes interfaces rather than concrete provider or storage implementations.
 
 ### GlucoDesk.Infrastructure
 
-Contains technical implementations.
+The infrastructure project contains technical adapters.
 
-This layer handles:
+Typical responsibilities include:
 
-* CGM provider integrations;
-* local storage;
-* platform-aware local data paths;
-* secure credential storage integration points;
-* background sync infrastructure;
-* history persistence;
-* diary export generation;
-* platform-specific integrations.
+* Mock, Nightscout, Dexcom Share and Dexcom historical provider implementations;
+* local glucose-history persistence;
+* application settings persistence;
+* macOS Keychain and Windows Credential Manager integration points;
+* platform-aware data locations;
+* background synchronization support;
+* PDF diary generation;
+* Excel diary generation;
+* native notification implementations and diagnostics;
+* macOS notification helper integration;
+* packaging-related platform helpers.
+
+Infrastructure can change without forcing domain or UI code to depend on provider-specific details.
 
 ### GlucoDesk.Desktop
 
-Contains the Avalonia desktop application.
+The desktop project is the Avalonia presentation layer and composition root.
 
-This layer handles:
+Typical responsibilities include:
 
-* desktop UI;
-* first-launch language onboarding;
-* localization resources and runtime language switching;
-* view models;
-* dependency injection composition;
-* dashboard rendering;
-* account configuration;
-* settings screens;
-* glucose awareness notifications;
-* diary export user flow;
-* macOS menu bar integration;
-* Windows tray integration;
-* desktop file save dialogs.
+* views and ViewModels;
+* navigation;
+* dependency-injection composition;
+* runtime localization;
+* first-run onboarding stepper;
+* reusable feature tour;
+* Dashboard, Diary, Account and Settings screens;
+* backup and restore dialogs;
+* About and Support;
+* macOS menu bar and Windows system tray;
+* presence panel;
+* privacy mode;
+* in-app banners;
+* native-notification test flow;
+* file-save dialogs;
+* single-instance behavior.
 
-The desktop layer should remain focused on presentation and composition, while application and infrastructure behavior stay in dedicated layers.
+The desktop layer should translate user actions into application use cases rather than directly owning provider, storage or export logic.
+
+### Runtime data flow
+
+```text
+CGM provider
+    │
+    ▼
+Provider adapter
+    │  fetch + normalize
+    ▼
+Application synchronization workflow
+    │
+    ├──────────────► local history store
+    │                    │
+    │                    ├──► Dashboard chart and insights
+    │                    ├──► continuity and completeness evaluation
+    │                    ├──► diary / weekly review / pattern analysis
+    │                    └──► PDF and Excel exports
+    │
+    └──────────────► notification policy
+                         │
+                         ├──► in-app awareness banner
+                         └──► native desktop notification
+```
+
+### Backup and credential boundary
+
+Portable backup and secure credentials intentionally follow separate paths:
+
+```text
+Portable ZIP backup
+├── supported application preferences
+├── local glucose history
+└── versioned manifest
+
+Secure operating-system store
+└── provider credentials
+```
+
+Importing a backup must not overwrite credentials, the active language or machine-specific state.
+
+### Cross-cutting concerns
+
+Cross-cutting behavior is handled consistently across the layers:
+
+* **Localization** — shared English/Italian catalog, runtime switching and key-parity tests;
+* **Privacy** — local-first storage, privacy mode and privacy-safe notifications;
+* **Reliability** — result models, validation, diagnostics and explicit completeness states;
+* **Platform isolation** — macOS and Windows implementations remain behind abstractions;
+* **Testability** — provider, storage, notification and settings behavior can be replaced by fakes in tests;
+* **Release engineering** — deterministic scripts, checksums and CI validation support preview artifacts.
 
 ---
 
@@ -933,7 +1196,10 @@ Current quality practices include:
 * platform-aware local storage paths;
 * automated tests across core, application, infrastructure and desktop layers;
 * translation-key parity tests across supported languages;
-* first-launch onboarding and language-preference persistence tests;
+* first-launch stepper, feature-tour and language-preference persistence tests;
+* backup export/import validation and deduplication tests;
+* history continuity, completeness and diary-window tests;
+* cross-platform notification localization tests;
 * shared build configuration through `Directory.Build.props`;
 * nullable reference types enabled;
 * warnings treated as errors;
@@ -960,6 +1226,15 @@ dotnet test -c Release
 
 The current test suite covers core, application, infrastructure and desktop behavior.
 
+The latest validated `main` build completed with:
+
+```text
+1180 tests
+0 failures
+```
+
+Because the suite evolves with the product, release notes should always report the test count produced from the exact commit used to generate the published artifacts.
+
 ---
 
 ## Known limitations
@@ -978,6 +1253,7 @@ Current limitations:
 * Windows may show a Microsoft Defender SmartScreen warning on first launch;
 * Linux runtime support is not available yet;
 * the interface currently supports English and Italian only;
+* backup archives intentionally exclude credentials;
 * auto-update is not available yet;
 * provider runtime behavior may depend on platform, region and account configuration;
 * local history completeness depends on sync availability and app runtime;
@@ -991,21 +1267,23 @@ Current limitations:
 Planned improvements include:
 
 * signed and notarized macOS packages;
-* Windows code signing;
-* stronger release automation;
+* Windows code signing and store-distribution evaluation;
+* stronger release automation and artifact provenance;
 * additional interface languages;
 * localized installation and release documentation;
 * accessibility and keyboard-navigation refinements;
-* improved dashboard empty states;
-* improved dashboard error states;
-* richer diary and data-completeness reporting;
-* additional statistics views;
+* richer daily glucose story and weekly “what changed?” review;
+* stronger local pattern engine with contextual time blocks;
+* local glucose memory and search;
+* context tagging;
+* doctor-ready diary improvements;
+* more robust historical continuity and provider backfill;
+* ambient desktop presence refinements;
 * macOS widget exploration;
-* Linux packaging and runtime support;
-* platform-specific secure credential storage hardening;
-* additional provider abstraction hardening;
-* improved local history continuity and backfill behavior;
-* auto-update exploration.
+* Windows tray and native-notification hardening;
+* Linux packaging and runtime evaluation;
+* auto-update exploration;
+* optional compact-device companion experiments.
 
 ---
 
@@ -1052,3 +1330,11 @@ For release notes, see:
 ```text
 docs/release-notes/glucose-awareness-notifications-preview.md
 ```
+
+The repository also contains implementation and validation scripts for:
+
+* macOS and Windows preview packaging;
+* installable ZIP generation;
+* checksum creation and verification;
+* website validation;
+* release-readiness checks.
