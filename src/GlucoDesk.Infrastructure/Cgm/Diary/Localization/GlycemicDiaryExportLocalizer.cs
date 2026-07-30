@@ -47,6 +47,20 @@ public static class GlycemicDiaryExportLocalizer
                 "Copertura limitata dello storico locale",
             ["Local history has limited coverage. Summary quality is low."] =
                 "Lo storico locale ha una copertura limitata. La qualità del riepilogo è bassa.",
+            ["No local glucose history available"] =
+                "Nessuno storico glicemico locale disponibile",
+            ["No local glucose readings are available for the selected period."] =
+                "Nel periodo selezionato non sono disponibili letture glicemiche locali.",
+            ["Stable glucose period"] =
+                "Periodo glicemico stabile",
+            ["Glucose period summary"] =
+                "Riepilogo del periodo glicemico",
+            ["Partial local history"] =
+                "Storico locale parziale",
+            ["The previous equivalent period has no local readings, so this review cannot produce a true week-over-week comparison."] =
+                "Il periodo equivalente precedente non contiene letture locali, pertanto non è possibile effettuare un reale confronto con il periodo precedente.",
+            ["The current period is summarized on its own."] =
+                "Il periodo corrente viene riepilogato singolarmente.",
 
             ["Export metadata"] = "Metadati esportazione",
             ["Safety notice"] = "Avviso di sicurezza",
@@ -68,6 +82,8 @@ public static class GlycemicDiaryExportLocalizer
                 "Lo storico locale è quasi completo, ma potrebbero essere presenti piccoli intervalli o letture mancanti.",
             ["Local history is incomplete. Some values and detected patterns should be interpreted carefully."] =
                 "Lo storico locale è incompleto. Alcuni valori e pattern rilevati devono essere interpretati con cautela.",
+            ["Local history is partially complete. Interpret summaries with caution."] =
+                "Lo storico locale è parzialmente completo. Interpreta i riepiloghi con cautela.",
             ["Local history is too limited for reliable interpretation."] =
                 "Lo storico locale è troppo limitato per un’interpretazione affidabile.",
             ["Days marked as partial may contain missing CGM history and should be interpreted carefully."] =
@@ -602,27 +618,20 @@ public static class GlycemicDiaryExportLocalizer
         out string translatedText)
     {
         /*
-         * Review summaries may contain multiple independently generated
-         * sentences. Split only on a completed parenthesized delta, avoiding
-         * decimal separators such as 93.62%.
+         * Try the generated multi-sentence missing-previous-period summary
+         * before splitting review text into independent metric sentences.
+         *
+         * Both wording variants below have been emitted by released builds:
+         *
+         * - true comparison with the previous equivalent period
+         * - true week-over-week comparison
+         *
+         * Matching the complete template first prevents a partially
+         * translated Italian export.
          */
-        var sentences = Regex.Split(
-            text,
-            @"(?<=\)\.)\s+(?=[A-Z])",
-            RegexOptions.CultureInvariant);
-
-        if (sentences.Length > 1)
-        {
-            translatedText = string.Join(
-                " ",
-                sentences.Select(sentence => Translate(sentence.Trim())));
-
-            return true;
-        }
-
         var match = Regex.Match(
             text,
-            @"^The previous equivalent period has no local readings, so this review cannot produce a true comparison with the previous equivalent period\. The current period is summarized on its own\. Current local history reliability is (?<status>[^·]+) · (?<coverage>\d+(?:[.,]\d+)?%), so values should be interpreted carefully\.$",
+            @"^The previous equivalent period has no local readings, so this review cannot produce a true (?:comparison with the previous equivalent period|week-over-week comparison)\. The current period is summarized on its own\. Current local history reliability is (?<status>[^·]+) · (?<coverage>\d+(?:[.,]\d+)?%), so (?:values|comparisons) should be interpreted carefully\.$",
             RegexOptions.CultureInvariant);
 
         if (match.Success)
@@ -635,6 +644,25 @@ public static class GlycemicDiaryExportLocalizer
                 $"{Translate(match.Groups["status"].Value.Trim())} · " +
                 $"{LocalizeNumericTokens(match.Groups["coverage"].Value)}; " +
                 "i valori devono essere interpretati con cautela.";
+
+            return true;
+        }
+
+        /*
+         * Review summaries containing metric deltas are generated as multiple
+         * sentences. Translate each complete generated sentence only after
+         * the special composite templates above have been evaluated.
+         */
+        var sentences = Regex.Split(
+            text,
+            @"(?<=\)\.)\s+(?=[A-Z])",
+            RegexOptions.CultureInvariant);
+
+        if (sentences.Length > 1)
+        {
+            translatedText = string.Join(
+                " ",
+                sentences.Select(sentence => Translate(sentence.Trim())));
 
             return true;
         }
@@ -679,7 +707,7 @@ public static class GlycemicDiaryExportLocalizer
 
         match = Regex.Match(
             text,
-            @"^Current history reliability: (?<status>[^·]+) · (?<coverage>\d+(?:[.,]\d+)?%)\. (?<detail>.+)$",
+            @"^Current(?: local)? history reliability: (?<status>[^·]+) · (?<coverage>\d+(?:[.,]\d+)?%)\. (?<detail>.+)$",
             RegexOptions.CultureInvariant);
 
         if (match.Success)
@@ -689,6 +717,30 @@ public static class GlycemicDiaryExportLocalizer
                 $"{Translate(match.Groups["status"].Value.Trim())} · " +
                 $"{LocalizeNumericTokens(match.Groups["coverage"].Value)}. " +
                 Translate(match.Groups["detail"].Value.Trim());
+
+            return true;
+        }
+
+        match = Regex.Match(
+            text,
+            @"^Current local history reliability is (?<status>[^·]+) · (?<coverage>\d+(?:[.,]\d+)?%), so (?<subject>values|comparisons) should be interpreted carefully\.$",
+            RegexOptions.CultureInvariant);
+
+        if (match.Success)
+        {
+            var subject =
+                string.Equals(
+                    match.Groups["subject"].Value,
+                    "comparisons",
+                    StringComparison.Ordinal)
+                    ? "i confronti devono essere interpretati con cautela"
+                    : "i valori devono essere interpretati con cautela";
+
+            translatedText =
+                $"L’affidabilità dello storico locale corrente è " +
+                $"{Translate(match.Groups["status"].Value.Trim())} · " +
+                $"{LocalizeNumericTokens(match.Groups["coverage"].Value)}; " +
+                $"{subject}.";
 
             return true;
         }
@@ -852,17 +904,10 @@ public static class GlycemicDiaryExportLocalizer
         GlucoDesk.Application.Cgm.Diary.Results.GlycemicDiaryDailyEntry day,
         GlucoDesk.Application.Cgm.Diary.Results.GlycemicDiaryReport report)
     {
-        var periodEndLocalDate =
-            DateOnly.FromDateTime(
-                report.PeriodEndsAt.LocalDateTime);
+        ArgumentNullException.ThrowIfNull(day);
+        ArgumentNullException.ThrowIfNull(report);
 
-        var endOfDisplayedDay =
-            new TimeOnly(23, 59, 0);
-
-        return day.Date == periodEndLocalDate &&
-               TimeOnly.FromDateTime(
-                   report.PeriodEndsAt.LocalDateTime) <
-               endOfDisplayedDay;
+        return report.IsDayInProgress(day);
     }
 
     /// <summary>
