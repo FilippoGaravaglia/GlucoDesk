@@ -1,10 +1,13 @@
 using GlucoDesk.Desktop.DesktopPresence.Enums;
 using GlucoDesk.Desktop.DesktopPresence.Formatters;
 using GlucoDesk.Desktop.DesktopPresence.Models;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.DesktopPresence.Formatters;
 
+[Collection(LocalizationStateCollection.Name)]
 public sealed class DesktopPresenceTextFormatterTests
+    : EnglishLocalizationTestBase
 {
     private readonly DesktopPresenceTextFormatter _formatter = new();
 

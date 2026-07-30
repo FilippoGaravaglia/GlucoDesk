@@ -123,14 +123,14 @@ public sealed record GlycemicDiaryReport
         DailyEntries.Count(day =>
             day.HasData &&
             !day.IsDataComplete &&
-            !IsFinalDayInProgress(day));
+            !IsDayInProgress(day));
 
     /// <summary>
     /// Gets the number of final calendar days that were still in progress
     /// when the exported period ended.
     /// </summary>
     public int InProgressDaysCount =>
-        DailyEntries.Count(IsFinalDayInProgress);
+        DailyEntries.Count(IsDayInProgress);
 
     /// <summary>
     /// Gets the number of days with complete local data.
@@ -138,7 +138,8 @@ public sealed record GlycemicDiaryReport
     public int CompleteDaysCount =>
         DailyEntries.Count(day =>
             day.HasData &&
-            day.IsDataComplete);
+            day.IsDataComplete &&
+            !IsDayInProgress(day));
 
     /// <summary>
     /// Gets the number of days without data.
@@ -167,4 +168,41 @@ public sealed record GlycemicDiaryReport
             TimeOnly.FromDateTime(localPeriodEnd) <
             new TimeOnly(23, 59, 0);
     }
+
+
+    /// <summary>
+    /// Gets whether a diary day represents the final exported day while that
+    /// day is still in progress.
+    /// </summary>
+    /// <param name="day">The diary day to classify.</param>
+    /// <returns>
+    /// <c>true</c> when the day is the final day of a period ending before the
+    /// end of that local day and contains data; otherwise, <c>false</c>.
+    /// </returns>
+    public bool IsDayInProgress(
+        GlycemicDiaryDailyEntry day)
+    {
+        ArgumentNullException.ThrowIfNull(day);
+
+        if (!day.HasData)
+        {
+            return false;
+        }
+
+        var periodEndLocalDate =
+            DateOnly.FromDateTime(
+                PeriodEndsAt.LocalDateTime);
+
+        if (day.Date != periodEndLocalDate)
+        {
+            return false;
+        }
+
+        var periodEndLocalTime =
+            TimeOnly.FromDateTime(
+                PeriodEndsAt.LocalDateTime);
+
+        return periodEndLocalTime < new TimeOnly(23, 59, 0);
+    }
+
 }

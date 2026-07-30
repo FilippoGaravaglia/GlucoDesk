@@ -131,6 +131,44 @@ public sealed class GlycemicDiaryExportFinalConsistencyTests
             report.EmptyDaysCount);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ReportDayCounts_ShouldClassifyActiveFinalDayOnlyAsInProgress(
+        bool isDataComplete)
+    {
+        var day = CreateDay(
+            date: new DateOnly(2026, 7, 30),
+            readingsCount: 120,
+            isDataComplete: isDataComplete);
+
+        var report = CreateReport(
+            new DateTimeOffset(
+                2026,
+                7,
+                30,
+                21,
+                30,
+                0,
+                TimeSpan.FromHours(2)),
+            [day]);
+
+        Assert.True(report.IsDayInProgress(day));
+
+        Assert.Equal(0, report.CompleteDaysCount);
+        Assert.Equal(0, report.PartialDaysCount);
+        Assert.Equal(1, report.InProgressDaysCount);
+        Assert.Equal(0, report.EmptyDaysCount);
+
+        Assert.Equal(
+            report.DailyEntries.Count,
+            report.CompleteDaysCount +
+            report.PartialDaysCount +
+            report.InProgressDaysCount +
+            report.EmptyDaysCount);
+    }
+
+
     private static GlycemicDiaryDailyEntry CreateDay(
         DateOnly date,
         int readingsCount,

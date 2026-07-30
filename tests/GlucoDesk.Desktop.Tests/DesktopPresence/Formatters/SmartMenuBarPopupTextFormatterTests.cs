@@ -1,9 +1,12 @@
 using GlucoDesk.Desktop.DesktopPresence.Formatters;
 using GlucoDesk.Desktop.DesktopPresence.Models;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.DesktopPresence.Formatters;
 
+[Collection(LocalizationStateCollection.Name)]
 public sealed class SmartMenuBarPopupTextFormatterTests
+    : EnglishLocalizationTestBase
 {
     [Fact]
     public void Format_ShouldExposeAmbientSummaryInPopupDetails()
@@ -21,8 +24,15 @@ public sealed class SmartMenuBarPopupTextFormatterTests
 
         var text = formatter.Format(state);
 
-        Assert.Contains("123 mg/dL", text.MenuHeader, StringComparison.Ordinal);
-        Assert.Contains("Stable and in range.", text.Tooltip, StringComparison.Ordinal);
+        Assert.Contains(
+            "123 mg/dL",
+            text.MenuHeader,
+            StringComparison.Ordinal);
+
+        Assert.Contains(
+            "Stable and in range.",
+            text.Tooltip,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -41,7 +51,13 @@ public sealed class SmartMenuBarPopupTextFormatterTests
 
         var text = formatter.Format(state);
 
-        Assert.Equal("Glucose hidden", text.MenuHeader);
-        Assert.DoesNotContain("123 mg/dL", text.Tooltip, StringComparison.Ordinal);
+        Assert.Equal(
+            "Glucose hidden",
+            text.MenuHeader);
+
+        Assert.DoesNotContain(
+            "123 mg/dL",
+            text.Tooltip,
+            StringComparison.Ordinal);
     }
 }
