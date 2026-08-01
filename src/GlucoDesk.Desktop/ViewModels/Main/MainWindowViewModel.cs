@@ -5,6 +5,7 @@ using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
 using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
 using GlucoDesk.Desktop.ViewModels.Common;
+using GlucoDesk.Desktop.ViewModels.CarbGuide;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Settings;
@@ -29,6 +30,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     private bool _isDiarySelected;
 
     [ObservableProperty]
+    private bool _isCarbGuideSelected;
+
+    [ObservableProperty]
     private bool _isAccountSelected;
 
     [ObservableProperty]
@@ -42,6 +46,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// <param name="settings">The settings view model.</param>
     /// <param name="backgroundSyncStatus">The background sync status view model.</param>
     /// <param name="diary">The diary view model.</param>
+    /// <param name="carbGuide">The carbohydrate guide view model.</param>
     /// <param name="historyContinuitySyncStatus">The history continuity synchronization status ViewModel.</param>
     public MainWindowViewModel(
         DashboardViewModel dashboard,
@@ -49,6 +54,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         SettingsViewModel settings,
         BackgroundSyncStatusViewModel backgroundSyncStatus,
         DiaryViewModel diary,
+        CarbGuideViewModel carbGuide,
         DesktopHistoryContinuitySyncStatusViewModel historyContinuitySyncStatus)
     {
         ArgumentNullException.ThrowIfNull(dashboard);
@@ -56,6 +62,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(backgroundSyncStatus);
         ArgumentNullException.ThrowIfNull(diary);
+        ArgumentNullException.ThrowIfNull(carbGuide);
         ArgumentNullException.ThrowIfNull(historyContinuitySyncStatus);
 
         Dashboard = dashboard;
@@ -63,6 +70,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         Settings = settings;
         BackgroundSyncStatus = backgroundSyncStatus;
         Diary = diary;
+        CarbGuide = carbGuide;
         HistoryContinuitySyncStatus = historyContinuitySyncStatus;
 
         BackgroundSyncStatus.PropertyChanged += OnBackgroundSyncStatusPropertyChanged;
@@ -95,6 +103,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// Gets the diary view model.
     /// </summary>
     public DiaryViewModel Diary { get; }
+
+    /// <summary>
+    /// Gets the carbohydrate guide view model.
+    /// </summary>
+    public CarbGuideViewModel CarbGuide { get; }
 
     /// <summary>
     /// Gets the history continuity synchronization status ViewModel.
@@ -136,6 +149,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         LocalizationManager.LanguageChanged -= OnLanguageChanged;
 
+        CarbGuide.Dispose();
+
         _isDisposed = true;
     }
 
@@ -155,6 +170,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     private void ShowDiary()
     {
         SelectSection(Diary);
+    }
+
+    /// <summary>
+    /// Selects the carbohydrate guide section.
+    /// </summary>
+    [RelayCommand]
+    private void ShowCarbGuide()
+    {
+        SelectSection(CarbGuide);
     }
 
     /// <summary>
@@ -223,6 +247,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         CurrentContent = selectedContent;
         IsDashboardSelected = ReferenceEquals(selectedContent, Dashboard);
         IsDiarySelected = ReferenceEquals(selectedContent, Diary);
+        IsCarbGuideSelected = ReferenceEquals(selectedContent, CarbGuide);
         IsAccountSelected = ReferenceEquals(selectedContent, Account);
         IsSettingsSelected = ReferenceEquals(selectedContent, Settings);
     }

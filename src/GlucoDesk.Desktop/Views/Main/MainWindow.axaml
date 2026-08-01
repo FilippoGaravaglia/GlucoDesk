@@ -4,6 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:accountViews="clr-namespace:GlucoDesk.Desktop.Views.Account"
     xmlns:accountViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Account"
+    xmlns:carbGuideViews="clr-namespace:GlucoDesk.Desktop.Views.CarbGuide"
+    xmlns:carbGuideViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.CarbGuide"
     xmlns:dashboardViews="clr-namespace:GlucoDesk.Desktop.Views.Dashboard"
     xmlns:dashboardViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Dashboard"
     xmlns:diaryViews="clr-namespace:GlucoDesk.Desktop.Views.Diary"
@@ -24,6 +26,10 @@
 
     <DataTemplate DataType="{x:Type diaryViewModels:DiaryViewModel}">
       <diaryViews:DiaryView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type carbGuideViewModels:CarbGuideViewModel}">
+      <carbGuideViews:CarbGuideView />
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type accountViewModels:AccountViewModel}">
@@ -114,6 +120,27 @@
                 </Border>
 
                 <TextBlock Text="{DynamicResource NavDiary}"
+                           VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+
+            <Button Classes="nav-button nav-carb-guide"
+                    Classes.accent="{Binding IsCarbGuideSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Command="{Binding ShowCarbGuideCommand}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="11"
+                          VerticalAlignment="Center">
+                <Border Classes="nav-icon-shell carb-guide-icon-shell">
+                  <PathIcon Classes="nav-icon carb-guide-icon"
+                            Width="18"
+                            Height="18"
+                            RenderTransformOrigin="50%,50%"
+                            Data="M4,3 H16 A2,2 0 0 1 18,5 V15 A2,2 0 0 1 16,17 H4 A2,2 0 0 1 2,15 V5 A2,2 0 0 1 4,3 Z M6,7 A2,2 0 1 0 6,11 A2,2 0 0 0 6,7 Z M10,6 H15 V8 H10 Z M10,10 H15 V12 H10 Z M5,14 H15 V15 H5 Z" />
+                </Border>
+
+                <TextBlock Text="{DynamicResource NavCarbGuide}"
                            VerticalAlignment="Center" />
               </StackPanel>
             </Button>

@@ -28,6 +28,7 @@ using GlucoDesk.Desktop.Diary.Results;
 using GlucoDesk.Desktop.Diary.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
+using GlucoDesk.Desktop.ViewModels.CarbGuide;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Diary;
@@ -118,6 +119,7 @@ public sealed class MainWindowViewModelTests : EnglishLocalizationTestBase
             new SettingsViewModel(settingsService),
             CreateBackgroundSyncStatusViewModel(),
             CreateDiaryViewModel(settingsService),
+            new CarbGuideViewModel(),
             CreateHistoryContinuitySyncStatusViewModel());
     }
 
