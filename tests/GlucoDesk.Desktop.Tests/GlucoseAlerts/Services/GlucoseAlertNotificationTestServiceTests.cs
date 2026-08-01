@@ -1,10 +1,13 @@
 using GlucoDesk.Desktop.GlucoseAlerts.Models;
 using GlucoDesk.Desktop.GlucoseAlerts.Notifications.Results;
 using GlucoDesk.Desktop.GlucoseAlerts.Services;
+using GlucoDesk.Desktop.Tests.Localization;
 
 namespace GlucoDesk.Desktop.Tests.GlucoseAlerts.Services;
 
-public sealed class GlucoseAlertNotificationTestServiceTests
+[Collection(LocalizationStateCollection.Name)]
+public sealed class GlucoseAlertNotificationTestServiceTests :
+    EnglishLocalizationTestBase
 {
     [Xunit.Fact]
     public async Task SendTestNotificationAsync_WhenNativeNotificationSucceeds_ShouldReturnUnknownDeliveryResult()

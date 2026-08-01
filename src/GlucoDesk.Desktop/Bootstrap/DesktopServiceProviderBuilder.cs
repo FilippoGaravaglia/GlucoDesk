@@ -16,6 +16,7 @@ using GlucoDesk.Desktop.DataBackup.Services;
 using GlucoDesk.Desktop.DataBackup.Services.Abstractions;
 using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
+using GlucoDesk.Desktop.ViewModels.CarbGuide;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Diary;
@@ -151,6 +152,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddTransient<MainWindow>();
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
+        services.AddTransient<CarbGuideViewModel>();
         services.AddTransient<DiaryViewModel>();
         services.AddTransient<AccountViewModel>();
         services.AddTransient<SettingsViewModel>();

@@ -1,0 +1,401 @@
+<UserControl
+    x:Class="GlucoDesk.Desktop.Views.CarbGuide.CarbGuideView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:GlucoDesk.Desktop.ViewModels.CarbGuide"
+    xmlns:converters="clr-namespace:GlucoDesk.Desktop.Converters">
+
+  <UserControl.Resources>
+    <converters:AvaloniaAssetUriToBitmapConverter
+        x:Key="AvaloniaAssetUriToBitmapConverter" />
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+
+    <Style Selector="Border.carb-hero">
+      <Setter Property="CornerRadius" Value="28" />
+      <Setter Property="Padding" Value="28" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush"
+              Value="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+      <Setter Property="Background"
+              Value="{StaticResource GlucoDesk.Brush.AccentPale}" />
+    </Style>
+
+    <Style Selector="Button.carb-category">
+      <Setter Property="Padding" Value="14,9" />
+      <Setter Property="CornerRadius" Value="999" />
+      <Setter Property="Background"
+              Value="{StaticResource GlucoDesk.Brush.SurfaceSoft}" />
+      <Setter Property="BorderBrush"
+              Value="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Foreground"
+              Value="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+    </Style>
+
+    <Style Selector="Button.carb-category:pointerover">
+      <Setter Property="BorderBrush"
+              Value="{StaticResource GlucoDesk.Brush.Accent}" />
+      <Setter Property="Foreground"
+              Value="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+    </Style>
+
+    <Style Selector="Button.carb-category.selected">
+      <Setter Property="Background"
+              Value="{StaticResource GlucoDesk.Brush.Accent}" />
+      <Setter Property="BorderBrush"
+              Value="{StaticResource GlucoDesk.Brush.Accent}" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <Style Selector="Border.food-card">
+      <Setter Property="Width" Value="390" />
+      <Setter Property="MinHeight" Value="400" />
+      <Setter Property="CornerRadius" Value="26" />
+      <Setter Property="Padding" Value="20" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush"
+              Value="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+      <Setter Property="Background"
+              Value="{StaticResource GlucoDesk.Brush.Surface}" />
+    </Style>
+
+    <Style Selector="Border.food-card:pointerover">
+      <Setter Property="BorderBrush"
+              Value="{StaticResource GlucoDesk.Brush.Accent}" />
+    </Style>
+
+    <Style Selector="Border.food-visual">
+      <Setter Property="Height" Value="168" />
+      <Setter Property="CornerRadius" Value="22" />
+      <Setter Property="Background"
+              Value="{StaticResource GlucoDesk.Brush.AccentPale}" />
+    </Style>
+
+    <Style Selector="Border.portion-card">
+      <Setter Property="Padding" Value="12" />
+      <Setter Property="CornerRadius" Value="16" />
+      <Setter Property="Background"
+              Value="{StaticResource GlucoDesk.Brush.SurfaceSoft}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush"
+              Value="{StaticResource GlucoDesk.Brush.BorderSoft}" />
+    </Style>
+
+  </UserControl.Styles>
+
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+
+    <StackPanel Margin="32"
+                Spacing="24">
+
+      <Border Classes="carb-hero">
+        <Grid ColumnDefinitions="*,Auto"
+              ColumnSpacing="28">
+
+          <StackPanel Spacing="10"
+                      MaxWidth="720"
+                      HorizontalAlignment="Left">
+            <Border HorizontalAlignment="Left"
+                    Padding="11,6"
+                    CornerRadius="999"
+                    Background="{StaticResource GlucoDesk.Brush.Surface}">
+              <TextBlock Text="{DynamicResource CarbGuideLocalReferenceBadge}"
+                         FontSize="12"
+                         FontWeight="SemiBold"
+                         Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+            </Border>
+
+            <TextBlock Text="{DynamicResource CarbGuideTitle}"
+                       FontSize="30"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Left"
+                       TextAlignment="Left"
+                       Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+            <TextBlock Text="{DynamicResource CarbGuideSubtitle}"
+                       FontSize="15"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+          </StackPanel>
+
+          <Border Grid.Column="1"
+                  Width="122"
+                  Height="122"
+                  CornerRadius="61"
+                  Background="{StaticResource GlucoDesk.Brush.Surface}"
+                  BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                  BorderThickness="1">
+            <Grid>
+              <Ellipse Width="76"
+                       Height="76"
+                       Fill="{StaticResource GlucoDesk.Brush.AccentPale}"
+                       Stroke="{StaticResource GlucoDesk.Brush.Accent}"
+                       StrokeThickness="2" />
+
+              <PathIcon Width="39"
+                        Height="39"
+                        Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}"
+                        Data="M5,4 H15 V6 H12 V9 H15 V11 H12 V16 H8 V11 H5 V9 H8 V6 H5 Z M4,17 H16 V19 H4 Z" />
+            </Grid>
+          </Border>
+
+        </Grid>
+      </Border>
+
+      <Grid ColumnDefinitions="*,Auto"
+            ColumnSpacing="16">
+
+        <TextBox PlaceholderText="{DynamicResource CarbGuideSearchPlaceholder}"
+                 Text="{Binding SearchText,
+                                Mode=TwoWay,
+                                UpdateSourceTrigger=PropertyChanged}"
+                 Height="46"
+                 CornerRadius="16"
+                 Padding="16,0"
+                 VerticalContentAlignment="Center"
+                 HorizontalContentAlignment="Left" />
+
+        <Border Grid.Column="1"
+                Padding="16,10"
+                CornerRadius="16"
+                Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
+                BorderThickness="1"
+                BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}">
+          <TextBlock Text="{Binding ResultCountText}"
+                     VerticalAlignment="Center"
+                     Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+        </Border>
+
+      </Grid>
+
+      <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                    VerticalScrollBarVisibility="Disabled"
+                    AllowAutoHide="True">
+        <ItemsControl ItemsSource="{Binding Categories}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal"
+                          Spacing="10" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:CarbGuideCategoryOptionViewModel">
+              <Button Classes="carb-category"
+                      Classes.selected="{Binding IsSelected}"
+                      Command="{Binding
+                          $parent[UserControl].DataContext.SelectCategoryCommand}"
+                      CommandParameter="{Binding}">
+                <TextBlock Text="{Binding DisplayName}"
+                           FontWeight="SemiBold" />
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <ItemsControl ItemsSource="{Binding Foods}"
+                    IsVisible="{Binding HasVisibleFoods}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal"
+                       HorizontalAlignment="Left" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+
+        <ItemsControl.ItemContainerTheme>
+          <ControlTheme TargetType="ContentPresenter">
+            <Setter Property="Margin" Value="0,0,18,18" />
+          </ControlTheme>
+        </ItemsControl.ItemContainerTheme>
+
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:CarbGuideFoodCardViewModel">
+
+            <Border Classes="food-card">
+              <Grid RowDefinitions="Auto,Auto,Auto,*,Auto"
+                    RowSpacing="15">
+
+                <Border Classes="food-visual"
+                        ClipToBounds="True">
+                  <Grid>
+                    <Grid HorizontalAlignment="Center"
+                          VerticalAlignment="Center">
+                      <Ellipse Width="96"
+                               Height="96"
+                               Fill="{StaticResource GlucoDesk.Brush.Surface}"
+                               Stroke="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                               StrokeThickness="1" />
+
+                      <TextBlock Text="{Binding VisualSymbol}"
+                                 FontSize="31"
+                                 FontWeight="SemiBold"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+                    </Grid>
+
+                    <Image Source="{Binding ImageAssetPath,
+                                    Converter={StaticResource AvaloniaAssetUriToBitmapConverter}}"
+                           Stretch="UniformToFill"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Stretch" />
+
+                    <Border HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="12"
+                            Padding="9,5"
+                            CornerRadius="999"
+                            Background="{StaticResource GlucoDesk.Brush.Surface}"
+                            BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                            BorderThickness="1">
+                      <TextBlock Text="{Binding CategoryName}"
+                                 FontSize="11"
+                                 FontWeight="SemiBold"
+                                 Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+                    </Border>
+                  </Grid>
+                </Border>
+
+                <TextBlock Grid.Row="1"
+                           Text="{Binding Name}"
+                           FontSize="19"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+                <TextBlock Grid.Row="2"
+                           Text="{DynamicResource CarbGuideChoosePortion}"
+                           FontSize="13"
+                           Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+
+                <ItemsControl Grid.Row="3"
+                              ItemsSource="{Binding Portions}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel Spacing="8" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:CarbGuidePortionViewModel">
+                      <Border Classes="portion-card">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="12">
+
+                          <Border Width="34"
+                                  Height="34"
+                                  CornerRadius="17"
+                                  Background="{StaticResource GlucoDesk.Brush.AccentPale}">
+                            <Ellipse Width="14"
+                                     Height="14"
+                                     Fill="{StaticResource GlucoDesk.Brush.Accent}"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center" />
+                          </Border>
+
+                          <StackPanel Grid.Column="1"
+                                      Spacing="1"
+                                      VerticalAlignment="Center">
+                            <TextBlock Text="{Binding WeightText}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+                            <TextBlock Text="{DynamicResource CarbGuidePortion}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+                          </StackPanel>
+
+                          <StackPanel Grid.Column="2"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center">
+                            <TextBlock Text="{Binding CarbohydratesText}"
+                                       FontSize="17"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Right"
+                                       Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+
+                            <TextBlock Text="{DynamicResource CarbGuideCarbohydratesShort}"
+                                       FontSize="11"
+                                       HorizontalAlignment="Right"
+                                       Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+                          </StackPanel>
+
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="4"
+                        Padding="11"
+                        CornerRadius="13"
+                        Background="{StaticResource GlucoDesk.Brush.IndigoSoft}"
+                        IsVisible="{Binding HasReferenceNote}">
+                  <TextBlock Text="{Binding ReferenceNote}"
+                             FontSize="11"
+                             TextWrapping="Wrap"
+                             Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+                </Border>
+
+              </Grid>
+            </Border>
+
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Border IsVisible="{Binding !HasVisibleFoods}"
+              Padding="36"
+              CornerRadius="24"
+              Background="{StaticResource GlucoDesk.Brush.Surface}"
+              BorderThickness="1"
+              BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}">
+        <StackPanel Spacing="8"
+                    HorizontalAlignment="Center">
+          <TextBlock Text="{DynamicResource CarbGuideNoResultsTitle}"
+                     FontSize="18"
+                     FontWeight="SemiBold"
+                     HorizontalAlignment="Center" />
+
+          <TextBlock Text="{DynamicResource CarbGuideNoResultsDescription}"
+                     TextWrapping="Wrap"
+                     TextAlignment="Center"
+                     Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+        </StackPanel>
+      </Border>
+
+      <Border Padding="20"
+              CornerRadius="20"
+              Background="{StaticResource GlucoDesk.Brush.IndigoSoft}"
+              BorderThickness="1"
+              BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}">
+        <Grid ColumnDefinitions="Auto,*"
+              ColumnSpacing="14">
+
+          <Border Width="10"
+                  Height="10"
+                  CornerRadius="5"
+                  Margin="0,5,0,0"
+                  Background="{StaticResource GlucoDesk.Brush.Indigo}" />
+
+          <StackPanel Grid.Column="1"
+                      Spacing="5">
+            <TextBlock Text="{DynamicResource CarbGuideSafetyTitle}"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource GlucoDesk.Brush.Indigo}" />
+
+            <TextBlock Text="{DynamicResource CarbGuideSafetyDescription}"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+          </StackPanel>
+
+        </Grid>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
