@@ -3267,3 +3267,348 @@ img[src*="/demo/language-onboarding"] {
   transform-origin: center;
   box-shadow: 0 16px 34px rgba(0, 25, 60, 0.3);
 }
+
+/* ==========================================================================
+   Visual carbohydrate guide showcase
+   ========================================================================== */
+
+.carb-guide-section {
+  position: relative;
+  overflow: hidden;
+  color: #f8fbff;
+  background:
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(53, 206, 255, 0.17),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 88% 82%,
+      rgba(81, 88, 255, 0.18),
+      transparent 34rem
+    ),
+    #061426;
+}
+
+.carb-guide-section::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      rgba(92, 203, 255, 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(92, 203, 255, 0.035) 1px,
+      transparent 1px
+    );
+  background-size: 72px 72px;
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent,
+      black 18%,
+      black 82%,
+      transparent
+    );
+}
+
+.carb-guide-showcase {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    minmax(18rem, 0.72fr)
+    minmax(0, 1.28fr);
+  gap: clamp(3rem, 6vw, 6rem);
+  align-items: center;
+  padding:
+    clamp(2rem, 5vw, 4.75rem);
+  border:
+    1px solid
+    rgba(118, 208, 255, 0.18);
+  border-radius:
+    clamp(1.8rem, 4vw, 3rem);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(13, 39, 70, 0.96),
+      rgba(8, 24, 48, 0.96)
+    );
+  box-shadow:
+    0 2.5rem 7rem
+      rgba(0, 7, 25, 0.38),
+    inset 0 1px
+      rgba(255, 255, 255, 0.045);
+}
+
+.carb-guide-copy {
+  min-width: 0;
+}
+
+.carb-guide-copy .section-kicker {
+  color: #6bdcff;
+}
+
+.carb-guide-copy h2 {
+  max-width: 12ch;
+  margin:
+    1rem 0
+    1.35rem;
+  color: #f8fbff;
+  font-size:
+    clamp(2.8rem, 5.1vw, 5.25rem);
+  line-height: 0.97;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.carb-guide-copy > p {
+  max-width: 42rem;
+  color:
+    rgba(220, 235, 251, 0.78);
+  font-size:
+    clamp(1rem, 1.45vw, 1.18rem);
+  line-height: 1.75;
+}
+
+.carb-guide-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.42rem 0.78rem;
+  border:
+    1px solid
+    rgba(100, 220, 255, 0.34);
+  border-radius: 999px;
+  color: #06182b;
+  background:
+    linear-gradient(
+      135deg,
+      #8cecff,
+      #55c9ff
+    );
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  box-shadow:
+    0 0.8rem 2rem
+    rgba(28, 179, 241, 0.18);
+}
+
+.carb-guide-stats {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 2rem;
+}
+
+.carb-guide-stats div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border:
+    1px solid
+    rgba(123, 208, 255, 0.16);
+  border-radius: 1rem;
+  background:
+    rgba(11, 39, 70, 0.68);
+}
+
+.carb-guide-stats strong {
+  color: #ffffff;
+  font-size:
+    clamp(1.3rem, 2vw, 1.8rem);
+  line-height: 1;
+}
+
+.carb-guide-stats span {
+  color:
+    rgba(206, 229, 247, 0.67);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.carb-guide-points {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1.6rem;
+}
+
+.carb-guide-points div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.carb-guide-points span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #8ce8ff;
+  background:
+    rgba(68, 196, 244, 0.1);
+  font-size: 0.67rem;
+  font-weight: 850;
+}
+
+.carb-guide-points p {
+  margin: 0;
+  color:
+    rgba(224, 238, 251, 0.78);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.carb-guide-media {
+  min-width: 0;
+}
+
+.carb-guide-window {
+  overflow: hidden;
+  border:
+    1px solid
+    rgba(133, 213, 255, 0.22);
+  border-radius:
+    clamp(1.2rem, 3vw, 2rem);
+  background: #eaf6ff;
+  box-shadow:
+    0 2.2rem 5.5rem
+      rgba(0, 6, 23, 0.38),
+    0 0 0 0.6rem
+      rgba(59, 183, 236, 0.045);
+  transform:
+    perspective(1100px)
+    rotateY(-2.5deg)
+    rotateX(1deg);
+  transform-origin: center;
+}
+
+.carb-guide-window .window-bar {
+  color:
+    rgba(231, 244, 255, 0.88);
+  background:
+    linear-gradient(
+      90deg,
+      #0c294a,
+      #0b203d
+    );
+}
+
+.carb-guide-window img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.carb-guide-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color:
+    rgba(213, 237, 253, 0.74);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.carb-guide-live > span:first-child {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 50%;
+  background: #44d79b;
+  box-shadow:
+    0 0 0 0.24rem
+    rgba(68, 215, 155, 0.12);
+}
+
+@media (max-width: 1050px) {
+  .carb-guide-showcase {
+    grid-template-columns: 1fr;
+  }
+
+  .carb-guide-copy h2 {
+    max-width: 15ch;
+  }
+
+  .carb-guide-window {
+    transform: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .carb-guide-showcase {
+    padding:
+      1.4rem
+      1.1rem
+      1.2rem;
+    border-radius: 1.6rem;
+  }
+
+  .carb-guide-copy h2 {
+    font-size:
+      clamp(2.45rem, 12vw, 3.6rem);
+  }
+
+  .carb-guide-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .carb-guide-points p {
+    font-size: 0.84rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carb-guide-window {
+    transform: none;
+  }
+}
+
+/* Final Carb Guide showcase refinements */
+
+.carb-guide-showcase {
+  grid-template-columns:
+    minmax(20rem, 0.62fr)
+    minmax(0, 1.38fr);
+}
+
+.carb-guide-copy h2 {
+  max-width: 11ch;
+  font-size:
+    clamp(2.65rem, 4.4vw, 4.7rem);
+}
+
+.carb-guide-media {
+  width: 100%;
+}
+
+.carb-guide-window {
+  width: 100%;
+}
+
+@media (max-width: 1050px) {
+  .carb-guide-showcase {
+    grid-template-columns: 1fr;
+  }
+
+  .carb-guide-copy h2 {
+    max-width: 15ch;
+  }
+}
+
+/* Carb guide hero: improve top bar title contrast */
+.carb-guide-showcase .window-title {
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 1px 10px rgba(7, 24, 46, 0.35);
+}
+
+.carb-guide-showcase .window-bar {
+  color: rgba(255, 255, 255, 0.96);
+}

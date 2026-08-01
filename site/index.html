@@ -10,7 +10,7 @@
 
   <meta
     name="description"
-    content="Keep your glucose visible while you work. GlucoDesk brings live readings, local history, privacy controls and clear diary exports to macOS and Windows.">
+    content="Keep your glucose visible while you work. GlucoDesk brings live readings, local history, a visual carbohydrate guide, privacy controls and clear diary exports to macOS and Windows.">
 
   <meta name="theme-color" content="#071426">
   <meta name="color-scheme" content="dark light">
@@ -28,7 +28,7 @@
     content="GlucoDesk — Your glucose, always in sight">
   <meta
     property="og:description"
-    content="Keep your glucose visible while you work, with live desktop context, local history and privacy-first controls.">
+    content="Keep your glucose visible while you work, with live desktop context, local history and a visual carbohydrate guide.">
   <meta
     property="og:url"
     content="https://glucodesk.com/">
@@ -47,7 +47,7 @@
     content="GlucoDesk — Your glucose, always in sight">
   <meta
     name="twitter:description"
-    content="Keep your glucose visible while you work, directly from your desktop.">
+    content="Live glucose context, local history and carbohydrate awareness directly from your desktop.">
   <meta
     name="twitter:image"
     content="https://glucodesk.com/assets/images/glucodesk-social-preview.png">
@@ -71,7 +71,7 @@
     "applicationCategory": "HealthApplication",
     "operatingSystem": "macOS, Windows",
     "softwareVersion": "0.3.0-preview",
-    "description": "Keep your glucose visible while you work with live desktop context, local history, privacy controls and clear diary exports.",
+    "description": "Keep your glucose visible while you work with live desktop context, local history, a visual carbohydrate guide, privacy controls and clear diary exports.",
     "url": "https://glucodesk.com/",
     "downloadUrl": "https://github.com/FilippoGaravaglia/GlucoDesk/releases/tag/v0.3.0-preview",
     "license": "https://opensource.org/license/mit",
@@ -118,6 +118,7 @@
       <nav class="desktop-nav" aria-label="Primary navigation">
         <a href="#experience" data-i18n="navExperience">Experience</a>
         <a href="#features" data-i18n="navFeatures">Features</a>
+        <a href="#carb-guide" data-i18n="navCarbGuide">Carb guide</a>
         <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
         <a href="#founder" data-i18n="navFounder">Built by</a>
         <a href="#download" data-i18n="navDownload">Download</a>
@@ -181,6 +182,7 @@
       data-mobile-nav>
       <a href="#experience" data-i18n="navExperience">Experience</a>
       <a href="#features" data-i18n="navFeatures">Features</a>
+      <a href="#carb-guide" data-i18n="navCarbGuide">Carb guide</a>
       <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
       <a href="#founder" data-i18n="navFounder">Built by</a>
       <a href="#download" data-i18n="navDownload">Download</a>
@@ -748,6 +750,113 @@
       </div>
     </section>
 
+    <section class="section carb-guide-section" id="carb-guide">
+      <div class="site-shell">
+        <div class="carb-guide-showcase reveal">
+          <div class="carb-guide-copy">
+            <div class="carb-guide-badge">
+              <span data-i18n="carbGuideBadge">
+                New · 82 foods · Local-first
+              </span>
+            </div>
+
+            <span class="section-kicker" data-i18n="carbGuideKicker">
+              Visual carbohydrate guide
+            </span>
+
+            <h2 data-i18n="carbGuideTitle">
+              Understand common portions without leaving your desktop.
+            </h2>
+
+            <p data-i18n="carbGuideDescription">
+              Search common foods in English or Italian, compare familiar
+              portions and see their indicative carbohydrate values in one
+              fast, visual reference.
+            </p>
+
+            <div class="carb-guide-stats">
+              <div>
+                <strong>82</strong>
+                <span data-i18n="carbGuideStatFoods">foods</span>
+              </div>
+
+              <div>
+                <strong>12</strong>
+                <span data-i18n="carbGuideStatCategories">categories</span>
+              </div>
+
+              <div>
+                <strong>EN · IT</strong>
+                <span data-i18n="carbGuideStatLanguages">
+                  bilingual search
+                </span>
+              </div>
+
+              <div>
+                <strong>100%</strong>
+                <span data-i18n="carbGuideStatLocal">
+                  local reference
+                </span>
+              </div>
+            </div>
+
+            <div class="carb-guide-points">
+              <div>
+                <span aria-hidden="true">01</span>
+                <p data-i18n="carbGuidePointSearch">
+                  Find foods instantly by name.
+                </p>
+              </div>
+
+              <div>
+                <span aria-hidden="true">02</span>
+                <p data-i18n="carbGuidePointPortions">
+                  Compare real-world reference portions.
+                </p>
+              </div>
+
+              <div>
+                <span aria-hidden="true">03</span>
+                <p data-i18n="carbGuidePointPrivacy">
+                  Use the guide locally, without sending data anywhere.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="carb-guide-media">
+            <div class="carb-guide-window">
+              <div class="window-bar">
+                <div class="window-controls" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+                <span class="window-title" data-i18n="carbGuideWindowTitle">
+                  Carbohydrate guide
+                </span>
+
+                <span class="carb-guide-live">
+                  <span></span>
+                  <span data-i18n="carbGuideLocalLabel">Local</span>
+                </span>
+              </div>
+
+              <img
+                src="assets/images/screenshots/carb-guide.webp"
+                alt="GlucoDesk visual carbohydrate guide"
+                data-i18n-alt="carbGuideImageAlt"
+                loading="lazy"
+                decoding="async"
+                width="1800"
+                height="795">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="section gallery-section">
       <div class="site-shell">
         <div class="section-heading centered reveal">
@@ -792,6 +901,18 @@
             tabindex="-1"
             data-i18n="galleryDiary">
             Diary
+          </button>
+
+          <button
+            class="gallery-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-gallery-tab="carb-guide"
+            aria-controls="gallery-panel"
+            tabindex="-1"
+            data-i18n="galleryCarbGuide">
+            Carb guide
           </button>
 
           <button
@@ -1343,6 +1464,7 @@
         <div>
           <strong data-i18n="footerProduct">Product</strong>
           <a href="#features" data-i18n="navFeatures">Features</a>
+          <a href="#carb-guide" data-i18n="navCarbGuide">Carb guide</a>
           <a href="#privacy" data-i18n="navPrivacy">Privacy</a>
           <a href="#founder" data-i18n="navFounder">Built by</a>
           <a href="#download" data-i18n="navDownload">Download</a>

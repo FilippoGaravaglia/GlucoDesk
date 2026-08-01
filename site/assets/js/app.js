@@ -48,6 +48,7 @@ const translations = {
 
     navExperience: "Experience",
     navFeatures: "Features",
+    navCarbGuide: "Carb guide",
     navPrivacy: "Privacy",
     navFounder: "Built by",
     navDownload: "Download",
@@ -129,6 +130,28 @@ const translations = {
       "Weekly comparisons and recurring time-of-day patterns help turn " +
       "your local readings into context that is easier to understand.",
 
+    carbGuideBadge: "New · 82 foods · Local-first",
+    carbGuideKicker: "Visual carbohydrate guide",
+    carbGuideTitle:
+      "Understand common portions without leaving your desktop.",
+    carbGuideDescription:
+      "Search common foods in English or Italian, compare familiar " +
+      "portions and see their indicative carbohydrate values in one " +
+      "fast, visual reference.",
+    carbGuideStatFoods: "foods",
+    carbGuideStatCategories: "categories",
+    carbGuideStatLanguages: "bilingual search",
+    carbGuideStatLocal: "local reference",
+    carbGuidePointSearch: "Find foods instantly by name.",
+    carbGuidePointPortions:
+      "Compare real-world reference portions.",
+    carbGuidePointPrivacy:
+      "Use the guide locally, without sending data anywhere.",
+    carbGuideWindowTitle: "Carbohydrate guide",
+    carbGuideLocalLabel: "Local",
+    carbGuideImageAlt:
+      "GlucoDesk visual carbohydrate guide with food categories and portions",
+
     galleryKicker: "Designed as a real desktop product",
     galleryTitle: "A clear and consistent experience on every screen.",
     galleryDescription:
@@ -136,6 +159,7 @@ const translations = {
       "across the dashboard, diary, settings and account screens.",
     galleryDashboard: "Dashboard",
     galleryDiary: "Diary",
+    galleryCarbGuide: "Carb guide",
     gallerySettings: "Settings",
     galleryAccount: "Account",
 
@@ -216,6 +240,7 @@ const translations = {
 
     navExperience: "Esperienza",
     navFeatures: "Funzionalità",
+    navCarbGuide: "Conta carboidrati",
     navPrivacy: "Privacy",
     navFounder: "Autore",
     navDownload: "Download",
@@ -297,6 +322,28 @@ const translations = {
       "I confronti settimanali e i pattern ricorrenti per fascia oraria " +
       "trasformano le letture locali in un contesto più comprensibile.",
 
+    carbGuideBadge: "Novità · 82 alimenti · Local-first",
+    carbGuideKicker: "Guida visiva ai carboidrati",
+    carbGuideTitle:
+      "Confronta le porzioni comuni senza lasciare il desktop.",
+    carbGuideDescription:
+      "Cerca alimenti comuni in italiano o inglese, confronta porzioni " +
+      "familiari e consulta i valori indicativi di carboidrati in un " +
+      "riferimento rapido e visuale.",
+    carbGuideStatFoods: "alimenti",
+    carbGuideStatCategories: "categorie",
+    carbGuideStatLanguages: "ricerca bilingue",
+    carbGuideStatLocal: "riferimento locale",
+    carbGuidePointSearch: "Trova subito gli alimenti per nome.",
+    carbGuidePointPortions:
+      "Confronta porzioni di riferimento reali.",
+    carbGuidePointPrivacy:
+      "Consulta la guida localmente, senza inviare dati.",
+    carbGuideWindowTitle: "Guida ai carboidrati",
+    carbGuideLocalLabel: "Locale",
+    carbGuideImageAlt:
+      "Guida visiva ai carboidrati di GlucoDesk con categorie e porzioni",
+
     galleryKicker: "Progettato come un vero prodotto desktop",
     galleryTitle: "Un'esperienza chiara e coerente in ogni schermata.",
     galleryDescription:
@@ -304,6 +351,7 @@ const translations = {
       "in dashboard, diario, impostazioni e account.",
     galleryDashboard: "Dashboard",
     galleryDiary: "Diario",
+    galleryCarbGuide: "Conta carboidrati",
     gallerySettings: "Impostazioni",
     galleryAccount: "Account",
 
@@ -397,6 +445,17 @@ const galleryItems = {
     alt: {
       en: "GlucoDesk glycemic diary screenshot",
       it: "Schermata del diario glicemico di GlucoDesk"
+    }
+  },
+  "carb-guide": {
+    src: "assets/images/screenshots/carb-guide.webp",
+    title: {
+      en: "Carbohydrate guide",
+      it: "Guida ai carboidrati"
+    },
+    alt: {
+      en: "GlucoDesk visual carbohydrate guide screenshot",
+      it: "Schermata della guida visiva ai carboidrati di GlucoDesk"
     }
   },
   settings: {
@@ -500,6 +559,17 @@ const updateLanguage = (language) => {
       }
     });
 
+  document
+    .querySelectorAll("[data-i18n-alt]")
+    .forEach((element) => {
+      const key = element.dataset.i18nAlt;
+      const value = translations[language][key];
+
+      if (value) {
+        element.setAttribute("alt", value);
+      }
+    });
+
   document.querySelectorAll("[data-language-button]").forEach((button) => {
     const isActive = button.dataset.languageButton === language;
 
@@ -518,16 +588,16 @@ const updateLanguage = (language) => {
           title: "GlucoDesk — La tua glicemia, sempre in vista",
           description:
             "Tieni la glicemia visibile mentre lavori. GlucoDesk porta " +
-            "letture live, storico locale, privacy ed esportazioni chiare " +
-            "su macOS e Windows.",
+            "letture live, storico locale, una guida visiva ai carboidrati, " +
+            "privacy ed esportazioni chiare su macOS e Windows.",
           locale: "it_IT"
         }
       : {
           title: "GlucoDesk — Your glucose, always in sight",
           description:
             "Keep your glucose visible while you work. GlucoDesk brings " +
-            "live readings, local history, privacy controls and clear " +
-            "diary exports to macOS and Windows.",
+            "live readings, local history, a visual carbohydrate guide, " +
+            "privacy controls and clear diary exports to macOS and Windows.",
           locale: "en_US"
         };
 
