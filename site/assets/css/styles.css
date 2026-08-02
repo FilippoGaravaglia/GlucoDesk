@@ -3612,3 +3612,19 @@ img[src*="/demo/language-onboarding"] {
 .carb-guide-showcase .window-bar {
   color: rgba(255, 255, 255, 0.96);
 }
+
+/* Supported public download targets: Apple Silicon and Windows x64 */
+.download-grid {
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+}
+
+.download-card:last-child {
+  grid-column: auto;
+}
+
+@media (max-width: 760px) {
+  .download-grid {
+    grid-template-columns: 1fr;
+  }
+}
