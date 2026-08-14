@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10" />
   <img src="https://img.shields.io/badge/Avalonia-UI-0B8CE9" alt="Avalonia UI" />
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license" />
+  <img src="https://img.shields.io/badge/license-MPL--2.0-green" alt="MPL 2.0 license" />
   <img src="https://img.shields.io/badge/status-v0.3.0--preview-blue" alt="v0.3.0 preview" />
   <img src="https://img.shields.io/badge/macOS-DMG--preview-00AEEF" alt="macOS DMG preview" />
   <img src="https://img.shields.io/badge/Windows-installer--preview-0078D4" alt="Windows installer preview" />
@@ -458,7 +458,7 @@ The Windows installer:
 * does not require administrator privileges;
 * adds Start Menu shortcuts;
 * can optionally create a desktop shortcut;
-* includes the MIT license page;
+* includes the Mozilla Public License 2.0 page;
 * includes a safety notice page before installation;
 * supports standard Windows uninstall.
 
@@ -1303,7 +1303,7 @@ For therapy decisions, always use approved medical devices, official medical app
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the Mozilla Public License 2.0.
 
 See [LICENSE](LICENSE) for details.
 

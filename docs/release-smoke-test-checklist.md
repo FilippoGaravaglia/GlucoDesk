@@ -137,7 +137,7 @@ Manual Windows setup smoke test:
 
 - [ ] Previous GlucoDesk installation is removed, if present.
 - [ ] Setup installer launches.
-- [ ] MIT license page is shown.
+- [ ] Mozilla Public License 2.0 page is shown.
 - [ ] Safety notice page is shown.
 - [ ] App installs without administrator privileges.
 - [ ] Start Menu shortcut is created.
