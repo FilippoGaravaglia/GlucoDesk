@@ -111,7 +111,7 @@ $releaseNotesLines = @(
     "- does not require administrator privileges;",
     "- adds Start Menu shortcuts;",
     "- can optionally create a desktop shortcut;",
-    "- includes the MIT license page;",
+    "- includes the Mozilla Public License 2.0 page;",
     "- includes a safety notice page before installation;",
     "- supports standard Windows uninstall.",
     "",
