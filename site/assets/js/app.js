@@ -1,12 +1,297 @@
 "use strict";
 
-/**
- * Prevents Safari and other browsers from restoring an arbitrary scroll
- * position after a normal page reload.
- *
- * Explicit anchor navigation is preserved, so links such as #features,
- * #privacy and #download continue to open at the requested section.
- */
+const translations = {
+  en: {
+    skipToContent: "Skip to content",
+    brandHomeLabel: "GlucoDesk home",
+    openNavigationLabel: "Open navigation",
+    closeNavigationLabel: "Close navigation",
+
+    navProduct: "Product",
+    navPrivacy: "Privacy",
+    navFounder: "Built by",
+    navDownload: "Download",
+
+    heroBadge: "Free · Open source · macOS & Windows",
+    heroTitleOne: "Your glucose.",
+    heroTitleTwo: "Always in sight.",
+    heroDescription:
+      "A private desktop companion for CGM users. Keep the information " +
+      "that matters visible while you work, without constantly reaching " +
+      "for another device.",
+    heroPrimaryAction: "Download GlucoDesk",
+    heroSecondaryAction: "View on GitHub",
+
+    trustLocal: "Local-first",
+    trustIndependent: "Independent",
+    trustFree: "Free",
+
+    heroImageAlt:
+      "GlucoDesk dashboard showing current glucose, trend and recent history",
+    heroGlucoseStatus: "In range",
+    heroGlucoseUpdated: "Updated now",
+
+    valueKicker: "Built for everyday use",
+    valueTitle: "Glucose awareness without leaving your work.",
+    valueDescription:
+      "GlucoDesk brings live context, local history and useful insights " +
+      "into one calm desktop experience.",
+
+    valueLiveTitle: "At a glance",
+    valueLiveDescription:
+      "See your latest reading, trend and glucose context immediately " +
+      "from the desktop.",
+
+    valueHistoryTitle: "Understand your history",
+    valueHistoryDescription:
+      "Review local history, recurring patterns and daily summaries " +
+      "without sending data to a GlucoDesk cloud.",
+
+    valuePrivacyTitle: "Stay private",
+    valuePrivacyDescription:
+      "Hide glucose values when you share your screen and keep your " +
+      "information under your control.",
+
+    dashboardKicker: "Live dashboard",
+    dashboardTitle: "The context you need. Nothing more.",
+    dashboardDescription:
+      "Current glucose, trend, target range, recent history, statistics " +
+      "and data completeness are presented in one focused view.",
+    dashboardPointOne: "Current reading and trend",
+    dashboardPointTwo: "Recent glucose history",
+    dashboardPointThree: "Local statistics and completeness",
+    dashboardImageAlt: "GlucoDesk dashboard",
+
+    presenceKicker: "Desktop presence",
+    presenceTitle: "One glance can be enough.",
+    presenceDescription:
+      "GlucoDesk lives quietly in the macOS menu bar or Windows system " +
+      "tray, so your glucose can stay visible without interrupting what " +
+      "you are doing.",
+    presenceImageAlt:
+      "GlucoDesk glucose states in the desktop menu bar",
+
+    diaryKicker: "History & diary",
+    diaryTitle: "Turn readings into useful context.",
+    diaryDescription:
+      "Review your local history and create clear PDF and Excel diaries " +
+      "with summaries, time blocks, recurring patterns and data completeness.",
+    diaryPointOne: "Daily summaries",
+    diaryPointTwo: "PDF and Excel exports",
+    diaryPointThree: "Patterns and period comparisons",
+    diaryImageAlt: "GlucoDesk glycemic diary",
+
+    privacyKicker: "Local-first by design",
+    privacyTitle: "Your glucose data stays with you.",
+    privacyDescription:
+      "GlucoDesk does not require a GlucoDesk cloud for your glucose " +
+      "history. Cached readings, settings and local insights remain on " +
+      "your computer.",
+
+    privacyLocalTitle: "Local history",
+    privacyLocalDescription:
+      "Readings and analysis remain on your device.",
+
+    privacyCredentialsTitle: "Protected credentials",
+    privacyCredentialsDescription:
+      "Secure operating-system storage is used where supported.",
+
+    privacyModeTitle: "Privacy mode",
+    privacyModeDescription:
+      "Hide glucose values instantly during calls or presentations.",
+
+    privacyOpenTitle: "Open source",
+    privacyOpenDescription:
+      "The code is public and available for inspection.",
+
+    founderKicker: "The story behind GlucoDesk",
+    founderTitle: "Built from a real everyday need.",
+    founderDescription:
+      "Living with type 1 diabetes already requires enough attention. " +
+      "I built GlucoDesk to make glucose monitoring simpler, more " +
+      "discreet and less intrusive throughout the working day.",
+    founderRole: "Software Engineer · Creator of GlucoDesk",
+    founderLinkedIn: "LinkedIn profile",
+    founderGitHub: "GitHub profile",
+    founderLinksLabel: "Author profiles",
+    founderImageAlt:
+      "Filippo Garavaglia, creator of GlucoDesk",
+
+    openSourceKicker: "Independent and open",
+    openSourceTitle: "Built in public. Free to use.",
+    openSourceDescription:
+      "GlucoDesk is an independent open-source project designed to " +
+      "complement official CGM applications, not replace them.",
+    openSourceAction: "Explore the project",
+
+    downloadKicker: "v0.3.0-preview",
+    downloadTitle: "Bring GlucoDesk to your desktop.",
+    downloadDescription:
+      "GlucoDesk is currently available as a free preview for Apple " +
+      "Silicon Macs and Windows x64.",
+    downloadNow: "Download preview",
+    downloadNote:
+      "Current builds are unsigned preview releases distributed through " +
+      "the official GlucoDesk GitHub repository.",
+
+    safetyLabel: "Important",
+    safetyTitle: "A companion, not a medical device.",
+    safetyDescription:
+      "GlucoDesk is not intended for treatment decisions, insulin dosing, " +
+      "emergency alerts, diagnosis or as a replacement for approved " +
+      "diabetes applications, CGM systems or medical devices.",
+
+    footerDescription: "Your glucose, always in sight.",
+    footerIndependent: "Independent open-source project"
+  },
+
+  it: {
+    skipToContent: "Vai al contenuto",
+    brandHomeLabel: "Homepage GlucoDesk",
+    openNavigationLabel: "Apri navigazione",
+    closeNavigationLabel: "Chiudi navigazione",
+
+    navProduct: "Prodotto",
+    navPrivacy: "Privacy",
+    navFounder: "Chi l'ha creato",
+    navDownload: "Download",
+
+    heroBadge: "Gratis · Open source · macOS e Windows",
+    heroTitleOne: "La tua glicemia.",
+    heroTitleTwo: "Sempre in vista.",
+    heroDescription:
+      "Un companion desktop privato per utenti CGM. Tieni visibili le " +
+      "informazioni che contano mentre lavori, senza dover controllare " +
+      "continuamente un altro dispositivo.",
+    heroPrimaryAction: "Scarica GlucoDesk",
+    heroSecondaryAction: "Guarda su GitHub",
+
+    trustLocal: "Local-first",
+    trustIndependent: "Indipendente",
+    trustFree: "Gratis",
+
+    heroImageAlt:
+      "Dashboard GlucoDesk con glicemia attuale, trend e storico recente",
+    heroGlucoseStatus: "Nel range",
+    heroGlucoseUpdated: "Aggiornata ora",
+
+    valueKicker: "Pensato per l'uso quotidiano",
+    valueTitle: "Il tuo contesto glicemico, senza interrompere il lavoro.",
+    valueDescription:
+      "GlucoDesk riunisce contesto live, storico locale e informazioni " +
+      "utili in un'esperienza desktop semplice e discreta.",
+
+    valueLiveTitle: "A colpo d'occhio",
+    valueLiveDescription:
+      "Visualizza subito ultima lettura, trend e contesto glicemico " +
+      "direttamente dal desktop.",
+
+    valueHistoryTitle: "Comprendi il tuo storico",
+    valueHistoryDescription:
+      "Consulta storico locale, pattern ricorrenti e riepiloghi giornalieri " +
+      "senza inviare dati a un cloud GlucoDesk.",
+
+    valuePrivacyTitle: "Mantieni la privacy",
+    valuePrivacyDescription:
+      "Nascondi i valori glicemici quando condividi lo schermo e mantieni " +
+      "le tue informazioni sotto il tuo controllo.",
+
+    dashboardKicker: "Dashboard live",
+    dashboardTitle: "Il contesto che ti serve. Niente di più.",
+    dashboardDescription:
+      "Glicemia attuale, trend, range target, storico recente, statistiche " +
+      "e completezza dei dati sono raccolti in un'unica vista.",
+    dashboardPointOne: "Lettura attuale e trend",
+    dashboardPointTwo: "Storico glicemico recente",
+    dashboardPointThree: "Statistiche locali e completezza",
+    dashboardImageAlt: "Dashboard di GlucoDesk",
+
+    presenceKicker: "Presenza desktop",
+    presenceTitle: "Può bastare uno sguardo.",
+    presenceDescription:
+      "GlucoDesk rimane discretamente nella barra menu di macOS o nella " +
+      "system tray di Windows, così la glicemia resta visibile senza " +
+      "interrompere ciò che stai facendo.",
+    presenceImageAlt:
+      "Stati glicemici GlucoDesk nella barra menu del desktop",
+
+    diaryKicker: "Storico e diario",
+    diaryTitle: "Trasforma le letture in contesto utile.",
+    diaryDescription:
+      "Consulta lo storico locale e crea diari PDF ed Excel chiari con " +
+      "riepiloghi, fasce orarie, pattern ricorrenti e completezza dei dati.",
+    diaryPointOne: "Riepiloghi giornalieri",
+    diaryPointTwo: "Esportazioni PDF ed Excel",
+    diaryPointThree: "Pattern e confronti tra periodi",
+    diaryImageAlt: "Diario glicemico di GlucoDesk",
+
+    privacyKicker: "Local-first per scelta",
+    privacyTitle: "I tuoi dati glicemici restano con te.",
+    privacyDescription:
+      "GlucoDesk non richiede un cloud GlucoDesk per il tuo storico " +
+      "glicemico. Letture in cache, impostazioni e informazioni locali " +
+      "rimangono sul tuo computer.",
+
+    privacyLocalTitle: "Storico locale",
+    privacyLocalDescription:
+      "Letture e analisi rimangono sul tuo dispositivo.",
+
+    privacyCredentialsTitle: "Credenziali protette",
+    privacyCredentialsDescription:
+      "Dove supportato viene usato l'archivio sicuro del sistema operativo.",
+
+    privacyModeTitle: "Modalità privacy",
+    privacyModeDescription:
+      "Nascondi subito i valori durante chiamate o presentazioni.",
+
+    privacyOpenTitle: "Open source",
+    privacyOpenDescription:
+      "Il codice è pubblico e disponibile per essere consultato.",
+
+    founderKicker: "La storia dietro GlucoDesk",
+    founderTitle: "Nato da un'esigenza quotidiana reale.",
+    founderDescription:
+      "Vivere con il diabete di tipo 1 richiede già abbastanza attenzione. " +
+      "Ho creato GlucoDesk per rendere il controllo della glicemia più " +
+      "semplice, discreto e meno invasivo durante la giornata lavorativa.",
+    founderRole: "Software Engineer · Creatore di GlucoDesk",
+    founderLinkedIn: "Profilo LinkedIn",
+    founderGitHub: "Profilo GitHub",
+    founderLinksLabel: "Profili dell'autore",
+    founderImageAlt:
+      "Filippo Garavaglia, creatore di GlucoDesk",
+
+    openSourceKicker: "Indipendente e aperto",
+    openSourceTitle: "Open source. Indipendente. Gratuito.",
+    openSourceDescription:
+      "GlucoDesk è un progetto open source indipendente pensato per " +
+      "affiancare le applicazioni CGM ufficiali, non per sostituirle.",
+    openSourceAction: "Esplora il progetto",
+
+    downloadKicker: "v0.3.0-preview",
+    downloadTitle: "Porta GlucoDesk sul tuo desktop.",
+    downloadDescription:
+      "GlucoDesk è attualmente disponibile come preview gratuita per " +
+      "Mac Apple Silicon e Windows x64.",
+    downloadNow: "Scarica la preview",
+    downloadNote:
+      "Le build attuali sono preview non firmate distribuite attraverso " +
+      "il repository GitHub ufficiale di GlucoDesk.",
+
+    safetyLabel: "Importante",
+    safetyTitle: "Un companion, non un dispositivo medico.",
+    safetyDescription:
+      "GlucoDesk non è destinato a decisioni terapeutiche, dosaggio " +
+      "dell'insulina, avvisi di emergenza, diagnosi o a sostituire " +
+      "applicazioni per il diabete, sistemi CGM o dispositivi medici approvati.",
+
+    footerDescription: "La tua glicemia, sempre in vista.",
+    footerIndependent: "Progetto open source indipendente"
+  }
+};
+
+let currentLanguage = "en";
+
 const resetInitialScrollPosition = () => {
   if (window.location.hash) {
     return;
@@ -17,517 +302,56 @@ const resetInitialScrollPosition = () => {
       window.scrollTo({
         top: 0,
         left: 0,
-        behavior: "auto",
+        behavior: "auto"
       });
     });
   });
 };
 
-if ("scrollRestoration" in window.history) {
-  window.history.scrollRestoration = "manual";
-}
+const updatePageMetadata = (language) => {
+  const metadata =
+    language === "it"
+      ? {
+          title: "GlucoDesk — La tua glicemia, sempre in vista",
+          description:
+            "GlucoDesk è un companion desktop gratuito e local-first " +
+            "per utenti CGM, disponibile su macOS e Windows.",
+          locale: "it_IT"
+        }
+      : {
+          title: "GlucoDesk — Your glucose, always in sight",
+          description:
+            "GlucoDesk is a free, local-first desktop companion for CGM " +
+            "users, available on macOS and Windows.",
+          locale: "en_US"
+        };
 
-window.addEventListener(
-  "pageshow",
-  resetInitialScrollPosition,
-);
+  document.title = metadata.title;
 
-window.addEventListener(
-  "load",
-  resetInitialScrollPosition,
-  { once: true },
-);
+  document
+    .querySelector('meta[name="description"]')
+    ?.setAttribute("content", metadata.description);
 
-const translations = {
-  en: {
-    skipToContent: "Skip to content",
-    brandHomeLabel: "GlucoDesk home",
-    openNavigationLabel: "Open navigation",
-    closeNavigationLabel: "Close navigation",
-    galleryTabsLabel: "GlucoDesk screens",
+  document
+    .querySelector('meta[property="og:title"]')
+    ?.setAttribute("content", metadata.title);
 
-    navExperience: "Experience",
-    navFeatures: "Features",
-    navCarbGuide: "Carb guide",
-    navPrivacy: "Privacy",
-    navFounder: "Built by",
-    navDownload: "Download",
+  document
+    .querySelector('meta[property="og:description"]')
+    ?.setAttribute("content", metadata.description);
 
-    heroEyebrow: "Free preview · macOS & Windows",
-    heroTitleLineOne: "Your glucose.",
-    heroTitleLineTwo: "Always in sight.",
-    heroDescription:
-      "Keep your glucose visible while you work, without constantly " +
-      "checking another device. GlucoDesk brings live readings, local " +
-      "history and clear insights directly to your desktop.",
-    heroPrimaryAction: "Download GlucoDesk",
-    heroSecondaryAction: "View on GitHub",
-    trustLocal: "Your data stays local",
-    trustPlatforms: "macOS & Windows",
-    trustOpenSource: "Free and open source",
-    statusHigh: "High",
-    statusPrivacy: "Privacy mode",
-    statusHidden: "Hidden",
-    liveData: "Live data",
-    heroFooter: "Less checking. More focus on your day.",
+  document
+    .querySelector('meta[property="og:locale"]')
+    ?.setAttribute("content", metadata.locale);
 
-    experienceKicker: "Always within reach",
-    experienceTitle: "See what matters without stopping what you are doing.",
-    experienceDescription:
-      "GlucoDesk stays quietly on your desktop and gives you useful " +
-      "glucose context without making every reading feel like an interruption.",
+  document
+    .querySelector('meta[name="twitter:title"]')
+    ?.setAttribute("content", metadata.title);
 
-    presenceKicker: "Desktop presence",
-    presenceTitle: "One icon. Immediate context.",
-    presenceDescription:
-      "The GlucoDesk icon changes with your glucose range, so you can " +
-      "understand the current situation from the macOS menu bar or " +
-      "Windows system tray at a glance.",
-
-    stateInRange: "In range",
-    stateInRangeDescription: "Calm green feedback",
-    stateHigh: "High",
-    stateHighDescription: "Clear yellow feedback",
-    stateLow: "Low",
-    stateLowDescription: "Clear red feedback",
-    statePrivacy: "Privacy",
-    statePrivacyDescription: "Values safely hidden",
-
-    popoverCaption: "Glucose on your desktop",
-    latestGlucose: "Latest glucose",
-    updatedNow: "Updated now",
-    openDashboard: "Open dashboard",
-
-    featuresKicker: "Everything in one place",
-    featuresTitle: "From the latest reading to a clearer picture.",
-    featuresDescription:
-      "See what is happening now, review your local history and export " +
-      "a clear diary from one focused desktop experience.",
-
-    dashboardKicker: "Live dashboard",
-    dashboardTitle: "Your current context, without the noise.",
-    dashboardDescription:
-      "See your latest reading, trend, target range, recent chart, " +
-      "statistics and data completeness in one clear view.",
-
-    notificationsKicker: "Useful, not intrusive",
-    notificationsTitle: "Notifications that respect your attention.",
-    notificationsDescription:
-      "Choose when to be notified. Cooldowns, snooze and privacy-aware " +
-      "messages help reduce repeated or unnecessary alerts.",
-    notificationPreview:
-      "Glucose is above your configured range.",
-
-    diaryKicker: "Glycemic diary",
-    diaryTitle: "A history that is easier to understand.",
-    diaryDescription:
-      "Export clear PDF and Excel diaries with daily summaries, time " +
-      "blocks, weekly comparisons, recurring patterns and data completeness.",
-
-    patternsKicker: "Local insights",
-    patternsTitle: "See what changed over time.",
-    patternsDescription:
-      "Weekly comparisons and recurring time-of-day patterns help turn " +
-      "your local readings into context that is easier to understand.",
-
-    carbGuideBadge: "New · 82 foods · Local-first",
-    carbGuideKicker: "Visual carbohydrate guide",
-    carbGuideTitle:
-      "Understand common portions without leaving your desktop.",
-    carbGuideDescription:
-      "Search common foods in English or Italian, compare familiar " +
-      "portions and see their indicative carbohydrate values in one " +
-      "fast, visual reference.",
-    carbGuideStatFoods: "foods",
-    carbGuideStatCategories: "categories",
-    carbGuideStatLanguages: "bilingual search",
-    carbGuideStatLocal: "local reference",
-    carbGuidePointSearch: "Find foods instantly by name.",
-    carbGuidePointPortions:
-      "Compare real-world reference portions.",
-    carbGuidePointPrivacy:
-      "Use the guide locally, without sending data anywhere.",
-    carbGuideWindowTitle: "Carbohydrate guide",
-    carbGuideLocalLabel: "Local",
-    carbGuideImageAlt:
-      "GlucoDesk visual carbohydrate guide with food categories and portions",
-
-    galleryKicker: "Designed as a real desktop product",
-    galleryTitle: "A clear and consistent experience on every screen.",
-    galleryDescription:
-      "A simple visual hierarchy keeps your glucose information readable " +
-      "across the dashboard, diary, settings and account screens.",
-    galleryDashboard: "Dashboard",
-    galleryDiary: "Diary",
-    galleryCarbGuide: "Carb guide",
-    gallerySettings: "Settings",
-    galleryAccount: "Account",
-
-    languageKicker: "English and Italian",
-    languageTitle: "Use GlucoDesk in your language.",
-    languageDescription:
-      "Choose your language at first launch or change it later. The " +
-      "dashboard, settings, notifications, menus and diary exports follow it.",
-    languagePointOne: "Switch language at any time",
-    languagePointTwo: "Dates and numbers shown correctly",
-    languagePointThree: "PDF and Excel exports in your language",
-
-    privacyKicker: "Local-first by design",
-    privacyTitle: "Your glucose data stays on your computer.",
-    privacyDescription:
-      "GlucoDesk does not upload your glucose history or credentials to " +
-      "a GlucoDesk cloud. Settings, cached readings and insights are " +
-      "handled locally on your computer.",
-    privacyLocalTitle: "Local history",
-    privacyLocalDescription:
-      "Your readings and analysis remain on your device.",
-    privacyCredentialsTitle: "Protected credentials",
-    privacyCredentialsDescription:
-      "Secure operating-system storage is used where supported.",
-    privacyScreenTitle: "Screen-sharing privacy",
-    privacyScreenDescription:
-      "Hide glucose values instantly during calls or presentations.",
-    privacyOpenTitle: "Open source",
-    privacyOpenDescription:
-      "The code is public and available for inspection.",
-    privacyVisualHidden: "Hidden",
-    privacyVisualEnabled: "Privacy mode enabled",
-    privacyChipLocal: "Local data",
-    privacyChipCloud: "No GlucoDesk cloud",
-    privacyChipOpen: "Open source",
-
-    founderKicker: "The story behind GlucoDesk",
-    founderTitle: "I built GlucoDesk to keep glucose in sight, without putting it at the center of your day.",
-    founderDescription: "Living with type 1 diabetes already requires enough attention. I created GlucoDesk to make glucose monitoring simpler, more discreet and less intrusive throughout the working day.",
-    founderRole: "Software Engineer · Creator of GlucoDesk",
-    founderLinkedIn: "LinkedIn profile",
-    founderGitHub: "GitHub profile",
-    founderLinksLabel: "Author profiles",
-    founderQuote: "Glucose stays visible. Your day stays at the center.",
-
-    downloadKicker: "v0.3.0-preview",
-    downloadTitle: "Bring GlucoDesk to your desktop.",
-    downloadDescription:
-      "Choose the package made for your computer. The preview is free, " +
-      "open source and available from the official GlucoDesk GitHub release.",
-    downloadStatus: "Downloads available",
-    downloadNow: "Download preview",
-    downloadFooter:
-      "GlucoDesk is currently distributed as a free, unsigned preview. " +
-      "Follow the release instructions for installation details and verify " +
-      "that the package comes from the official GitHub release.",
-    releaseNotes: "Installation and release notes",
-
-    safetyTitle: "A companion, not a medical device",
-    safetyDescription:
-      "GlucoDesk must not be used for treatment decisions, insulin " +
-      "dosing, emergency alerts, diagnosis or as a replacement for " +
-      "approved diabetes applications, CGM systems or medical devices.",
-
-    footerDescription:
-      "Your glucose, always in sight. Free, local-first and open source.",
-    footerProduct: "Product",
-    footerProject: "Project",
-    footerReleases: "Releases"
-  },
-
-  it: {
-    skipToContent: "Vai al contenuto",
-    brandHomeLabel: "Homepage GlucoDesk",
-    openNavigationLabel: "Apri navigazione",
-    closeNavigationLabel: "Chiudi navigazione",
-    galleryTabsLabel: "Schermate di GlucoDesk",
-
-    navExperience: "Esperienza",
-    navFeatures: "Funzionalità",
-    navCarbGuide: "Conta carboidrati",
-    navPrivacy: "Privacy",
-    navFounder: "Autore",
-    navDownload: "Download",
-
-    heroEyebrow: "Preview gratuita · macOS e Windows",
-    heroTitleLineOne: "La tua glicemia.",
-    heroTitleLineTwo: "Sempre in vista.",
-    heroDescription:
-      "Tieni la glicemia visibile mentre lavori, senza dover controllare " +
-      "continuamente un altro dispositivo. GlucoDesk porta letture live, " +
-      "storico e informazioni chiare direttamente sul desktop.",
-    heroPrimaryAction: "Scarica GlucoDesk",
-    heroSecondaryAction: "Guarda su GitHub",
-    trustLocal: "I tuoi dati restano locali",
-    trustPlatforms: "macOS e Windows",
-    trustOpenSource: "Gratis e open source",
-    statusHigh: "Alta",
-    statusPrivacy: "Modalità privacy",
-    statusHidden: "Nascosta",
-    liveData: "Dati live",
-    heroFooter: "Meno controlli. Più attenzione alla tua giornata.",
-
-    experienceKicker: "Sempre a portata di sguardo",
-    experienceTitle: "Vedi ciò che conta senza interrompere quello che fai.",
-    experienceDescription:
-      "GlucoDesk rimane discretamente sul desktop e ti mostra il contesto " +
-      "glicemico utile senza trasformare ogni lettura in un'interruzione.",
-
-    presenceKicker: "Presenza desktop",
-    presenceTitle: "Una sola icona. Contesto immediato.",
-    presenceDescription:
-      "L'icona di GlucoDesk cambia insieme alla tua fascia glicemica, " +
-      "così puoi capire la situazione con uno sguardo dalla barra menu " +
-      "di macOS o dalla system tray di Windows.",
-
-    stateInRange: "Nel range",
-    stateInRangeDescription: "Feedback verde e discreto",
-    stateHigh: "Alta",
-    stateHighDescription: "Feedback giallo chiaro",
-    stateLow: "Bassa",
-    stateLowDescription: "Feedback rosso chiaro",
-    statePrivacy: "Privacy",
-    statePrivacyDescription: "Valori nascosti in sicurezza",
-
-    popoverCaption: "La glicemia sul desktop",
-    latestGlucose: "Ultima glicemia",
-    updatedNow: "Aggiornata ora",
-    openDashboard: "Apri dashboard",
-
-    featuresKicker: "Tutto in un unico posto",
-    featuresTitle: "Dall'ultima lettura a un quadro più chiaro.",
-    featuresDescription:
-      "Controlla cosa sta accadendo, consulta lo storico locale ed esporta " +
-      "un diario chiaro da un'unica esperienza desktop.",
-
-    dashboardKicker: "Dashboard live",
-    dashboardTitle: "Il contesto attuale, senza rumore.",
-    dashboardDescription:
-      "Visualizza ultima lettura, trend, range target, grafico recente, " +
-      "statistiche e completezza dei dati in una schermata chiara.",
-
-    notificationsKicker: "Utili, non invadenti",
-    notificationsTitle: "Notifiche che rispettano la tua attenzione.",
-    notificationsDescription:
-      "Scegli quando riceverle. Cooldown, posticipo e testi rispettosi " +
-      "della privacy aiutano a ridurre avvisi ripetuti o non necessari.",
-    notificationPreview:
-      "La glicemia è sopra il range configurato.",
-
-    diaryKicker: "Diario glicemico",
-    diaryTitle: "Uno storico più semplice da capire.",
-    diaryDescription:
-      "Esporta diari PDF ed Excel chiari con riepiloghi giornalieri, " +
-      "fasce orarie, confronti settimanali, pattern e completezza dati.",
-
-    patternsKicker: "Informazioni locali",
-    patternsTitle: "Scopri cosa è cambiato nel tempo.",
-    patternsDescription:
-      "I confronti settimanali e i pattern ricorrenti per fascia oraria " +
-      "trasformano le letture locali in un contesto più comprensibile.",
-
-    carbGuideBadge: "Novità · 82 alimenti · Local-first",
-    carbGuideKicker: "Guida visiva ai carboidrati",
-    carbGuideTitle:
-      "Confronta le porzioni comuni senza lasciare il desktop.",
-    carbGuideDescription:
-      "Cerca alimenti comuni in italiano o inglese, confronta porzioni " +
-      "familiari e consulta i valori indicativi di carboidrati in un " +
-      "riferimento rapido e visuale.",
-    carbGuideStatFoods: "alimenti",
-    carbGuideStatCategories: "categorie",
-    carbGuideStatLanguages: "ricerca bilingue",
-    carbGuideStatLocal: "riferimento locale",
-    carbGuidePointSearch: "Trova subito gli alimenti per nome.",
-    carbGuidePointPortions:
-      "Confronta porzioni di riferimento reali.",
-    carbGuidePointPrivacy:
-      "Consulta la guida localmente, senza inviare dati.",
-    carbGuideWindowTitle: "Guida ai carboidrati",
-    carbGuideLocalLabel: "Locale",
-    carbGuideImageAlt:
-      "Guida visiva ai carboidrati di GlucoDesk con categorie e porzioni",
-
-    galleryKicker: "Progettato come un vero prodotto desktop",
-    galleryTitle: "Un'esperienza chiara e coerente in ogni schermata.",
-    galleryDescription:
-      "Una gerarchia visiva semplice mantiene leggibili le informazioni " +
-      "in dashboard, diario, impostazioni e account.",
-    galleryDashboard: "Dashboard",
-    galleryDiary: "Diario",
-    galleryCarbGuide: "Conta carboidrati",
-    gallerySettings: "Impostazioni",
-    galleryAccount: "Account",
-
-    languageKicker: "Italiano e inglese",
-    languageTitle: "Usa GlucoDesk nella tua lingua.",
-    languageDescription:
-      "Scegli la lingua al primo avvio o cambiala in seguito. Dashboard, " +
-      "impostazioni, notifiche, menu ed esportazioni seguiranno la scelta.",
-    languagePointOne: "Cambia lingua in qualsiasi momento",
-    languagePointTwo: "Date e numeri mostrati correttamente",
-    languagePointThree: "Esportazioni PDF ed Excel nella tua lingua",
-
-    privacyKicker: "Local-first per scelta",
-    privacyTitle: "I tuoi dati glicemici restano sul computer.",
-    privacyDescription:
-      "GlucoDesk non carica lo storico glicemico o le credenziali su un " +
-      "cloud GlucoDesk. Impostazioni, letture in cache e informazioni " +
-      "vengono gestite localmente sul tuo computer.",
-    privacyLocalTitle: "Storico locale",
-    privacyLocalDescription:
-      "Letture e analisi rimangono sul tuo dispositivo.",
-    privacyCredentialsTitle: "Credenziali protette",
-    privacyCredentialsDescription:
-      "Dove supportato, viene usato l'archivio sicuro del sistema operativo.",
-    privacyScreenTitle: "Privacy durante la condivisione",
-    privacyScreenDescription:
-      "Nascondi subito i valori durante chiamate o presentazioni.",
-    privacyOpenTitle: "Open source",
-    privacyOpenDescription:
-      "Il codice è pubblico e può essere consultato.",
-    privacyVisualHidden: "Nascosta",
-    privacyVisualEnabled: "Modalità privacy attiva",
-    privacyChipLocal: "Dati locali",
-    privacyChipCloud: "Nessun cloud GlucoDesk",
-    privacyChipOpen: "Open source",
-
-    founderKicker: "La storia dietro GlucoDesk",
-    founderTitle: "Ho creato GlucoDesk per tenere la glicemia in vista, senza metterla al centro della giornata.",
-    founderDescription: "Vivere con il diabete di tipo 1 richiede già abbastanza attenzione. Ho creato GlucoDesk per rendere il controllo della glicemia più semplice, discreto e meno invasivo durante la giornata lavorativa.",
-    founderRole: "Software Engineer · Creatore di GlucoDesk",
-    founderLinkedIn: "Profilo LinkedIn",
-    founderGitHub: "Profilo GitHub",
-    founderLinksLabel: "Profili dell’autore",
-    founderQuote: "La glicemia resta visibile. La tua giornata resta al centro.",
-
-    downloadKicker: "v0.3.0-preview",
-    downloadTitle: "Porta GlucoDesk sul tuo desktop.",
-    downloadDescription:
-      "Scegli il pacchetto adatto al tuo computer. La preview è gratuita, " +
-      "open source e disponibile dalla release GitHub ufficiale di GlucoDesk.",
-    downloadStatus: "Download disponibili",
-    downloadNow: "Scarica la preview",
-    downloadFooter:
-      "GlucoDesk è attualmente distribuito come preview gratuita e non " +
-      "firmata. Segui le istruzioni della release e verifica che il pacchetto " +
-      "provenga dalla release GitHub ufficiale.",
-    releaseNotes: "Installazione e note di rilascio",
-
-    safetyTitle: "Un companion, non un dispositivo medico",
-    safetyDescription:
-      "GlucoDesk non deve essere usato per decisioni terapeutiche, " +
-      "dosaggio dell'insulina, avvisi di emergenza, diagnosi o come " +
-      "sostituto di applicazioni, sistemi CGM o dispositivi medici approvati.",
-
-    footerDescription:
-      "La tua glicemia, sempre in vista. Gratis, local-first e open source.",
-    footerProduct: "Prodotto",
-    footerProject: "Progetto",
-    footerReleases: "Release"
-  }
+  document
+    .querySelector('meta[name="twitter:description"]')
+    ?.setAttribute("content", metadata.description);
 };
-
-const galleryItems = {
-  dashboard: {
-    src: "assets/images/screenshots/dashboard.png",
-    title: {
-      en: "Dashboard",
-      it: "Dashboard"
-    },
-    alt: {
-      en: "GlucoDesk dashboard screenshot",
-      it: "Schermata della dashboard di GlucoDesk"
-    }
-  },
-  diary: {
-    src: "assets/images/screenshots/diary.png",
-    title: {
-      en: "Glycemic diary",
-      it: "Diario glicemico"
-    },
-    alt: {
-      en: "GlucoDesk glycemic diary screenshot",
-      it: "Schermata del diario glicemico di GlucoDesk"
-    }
-  },
-  "carb-guide": {
-    src: "assets/images/screenshots/carb-guide.webp",
-    title: {
-      en: "Carbohydrate guide",
-      it: "Guida ai carboidrati"
-    },
-    alt: {
-      en: "GlucoDesk visual carbohydrate guide screenshot",
-      it: "Schermata della guida visiva ai carboidrati di GlucoDesk"
-    }
-  },
-  settings: {
-    src: "assets/images/screenshots/settings.png",
-    title: {
-      en: "Settings",
-      it: "Impostazioni"
-    },
-    alt: {
-      en: "GlucoDesk settings screenshot",
-      it: "Schermata delle impostazioni di GlucoDesk"
-    }
-  },
-  account: {
-    src: "assets/images/screenshots/account.png",
-    title: {
-      en: "Account",
-      it: "Account"
-    },
-    alt: {
-      en: "GlucoDesk account screenshot",
-      it: "Schermata account di GlucoDesk"
-    }
-  }
-};
-
-const stateItems = {
-  "in-range": {
-    icon: "assets/icons/tray-in-range.png",
-    value: "112",
-    trend: "→",
-    color: "#22c55e",
-    label: {
-      en: "In range",
-      it: "Nel range"
-    }
-  },
-  high: {
-    icon: "assets/icons/tray-high.png",
-    value: "192",
-    trend: "↗",
-    color: "#f59e0b",
-    label: {
-      en: "High",
-      it: "Alta"
-    }
-  },
-  low: {
-    icon: "assets/icons/tray-low.png",
-    value: "64",
-    trend: "↘",
-    color: "#ef4444",
-    label: {
-      en: "Low",
-      it: "Bassa"
-    }
-  },
-  privacy: {
-    icon: "assets/icons/tray-privacy.png",
-    value: "•••",
-    trend: "—",
-    color: "#3b82f6",
-    label: {
-      en: "Privacy mode",
-      it: "Modalità privacy"
-    }
-  }
-};
-
-let currentLanguage = "en";
-let currentGalleryItem = "dashboard";
-let currentPresenceState = "in-range";
 
 const updateLanguage = (language) => {
   if (!translations[language]) {
@@ -537,13 +361,12 @@ const updateLanguage = (language) => {
   currentLanguage = language;
 
   document.documentElement.lang = language;
-  document.documentElement.dataset.language = language;
 
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     const key = element.dataset.i18n;
     const value = translations[language][key];
 
-    if (value) {
+    if (value !== undefined) {
       element.textContent = value;
     }
   });
@@ -554,21 +377,19 @@ const updateLanguage = (language) => {
       const key = element.dataset.i18nAriaLabel;
       const value = translations[language][key];
 
-      if (value) {
+      if (value !== undefined) {
         element.setAttribute("aria-label", value);
       }
     });
 
-  document
-    .querySelectorAll("[data-i18n-alt]")
-    .forEach((element) => {
-      const key = element.dataset.i18nAlt;
-      const value = translations[language][key];
+  document.querySelectorAll("[data-i18n-alt]").forEach((element) => {
+    const key = element.dataset.i18nAlt;
+    const value = translations[language][key];
 
-      if (value) {
-        element.setAttribute("alt", value);
-      }
-    });
+    if (value !== undefined) {
+      element.setAttribute("alt", value);
+    }
+  });
 
   document.querySelectorAll("[data-language-button]").forEach((button) => {
     const isActive = button.dataset.languageButton === language;
@@ -577,153 +398,158 @@ const updateLanguage = (language) => {
     button.setAttribute("aria-pressed", String(isActive));
   });
 
-  updateGallery(currentGalleryItem);
-  updatePresenceState(currentPresenceState);
+  updatePageMetadata(language);
 
-  localStorage.setItem("glucodesk-site-language", language);
-
-  const pageMetadata =
-    language === "it"
-      ? {
-          title: "GlucoDesk — La tua glicemia, sempre in vista",
-          description:
-            "Tieni la glicemia visibile mentre lavori. GlucoDesk porta " +
-            "letture live, storico locale, una guida visiva ai carboidrati, " +
-            "privacy ed esportazioni chiare su macOS e Windows.",
-          locale: "it_IT"
-        }
-      : {
-          title: "GlucoDesk — Your glucose, always in sight",
-          description:
-            "Keep your glucose visible while you work. GlucoDesk brings " +
-            "live readings, local history, a visual carbohydrate guide, " +
-            "privacy controls and clear diary exports to macOS and Windows.",
-          locale: "en_US"
-        };
-
-  document.title = pageMetadata.title;
-
-  const description = document.querySelector('meta[name="description"]');
-  const ogTitle = document.querySelector('meta[property="og:title"]');
-  const ogDescription =
-    document.querySelector('meta[property="og:description"]');
-  const ogLocale = document.querySelector('meta[property="og:locale"]');
-  const twitterTitle =
-    document.querySelector('meta[name="twitter:title"]');
-  const twitterDescription =
-    document.querySelector('meta[name="twitter:description"]');
-
-  description?.setAttribute("content", pageMetadata.description);
-  ogTitle?.setAttribute("content", pageMetadata.title);
-  ogDescription?.setAttribute("content", pageMetadata.description);
-  ogLocale?.setAttribute("content", pageMetadata.locale);
-  twitterTitle?.setAttribute("content", pageMetadata.title);
-  twitterDescription?.setAttribute(
-    "content",
-    pageMetadata.description
+  localStorage.setItem(
+    "glucodesk-site-language",
+    language
   );
 };
 
-const updateGallery = (itemKey, animate = false) => {
-  const item = galleryItems[itemKey];
+const setupLanguage = () => {
+  const storedLanguage =
+    localStorage.getItem("glucodesk-site-language");
 
-  if (!item) {
-    return;
-  }
+  const browserLanguage =
+    navigator.language?.toLowerCase().startsWith("it")
+      ? "it"
+      : "en";
 
-  currentGalleryItem = itemKey;
+  const initialLanguage =
+    storedLanguage === "en" || storedLanguage === "it"
+      ? storedLanguage
+      : browserLanguage;
 
-  const image = document.querySelector("[data-gallery-image]");
-  const title = document.querySelector("[data-gallery-title]");
-  const windowElement = document.querySelector(".gallery-window");
+  updateLanguage(initialLanguage);
 
-  const applyItem = () => {
-    if (image) {
-      image.src = item.src;
-      image.alt = item.alt[currentLanguage];
-    }
-
-    if (title) {
-      title.textContent = item.title[currentLanguage];
-    }
-
-    windowElement?.classList.remove("is-switching");
-  };
-
-  if (
-    animate &&
-    windowElement &&
-    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  ) {
-    windowElement.classList.add("is-switching");
-    window.setTimeout(applyItem, 150);
-  } else {
-    applyItem();
-  }
-
-  document.querySelectorAll("[data-gallery-tab]").forEach((button) => {
-    const isActive = button.dataset.galleryTab === itemKey;
-
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-selected", String(isActive));
-    button.setAttribute("tabindex", isActive ? "0" : "-1");
+  document.querySelectorAll("[data-language-button]").forEach((button) => {
+    button.addEventListener("click", () => {
+      updateLanguage(button.dataset.languageButton);
+    });
   });
 };
 
-const updatePresenceState = (stateKey) => {
-  const state = stateItems[stateKey];
+const setupHeader = () => {
+  const header = document.querySelector("[data-header]");
 
-  if (!state) {
+  if (!header) {
     return;
   }
 
-  currentPresenceState = stateKey;
+  const updateHeader = () => {
+    header.classList.toggle(
+      "is-scrolled",
+      window.scrollY > 16
+    );
+  };
 
-  const demo = document.querySelector("[data-presence-demo]");
-  const icon = document.querySelector("[data-state-icon]");
-  const value = document.querySelector("[data-state-value]");
-  const trend = document.querySelector("[data-state-trend]");
-  const label = document.querySelector("[data-state-label]");
-  const dot = document.querySelector("[data-state-dot]");
+  updateHeader();
 
-  if (demo) {
-    demo.dataset.presenceDemo = stateKey;
+  window.addEventListener(
+    "scroll",
+    updateHeader,
+    { passive: true }
+  );
+};
+
+const setupMobileNavigation = () => {
+  const button =
+    document.querySelector("[data-mobile-menu-button]");
+
+  const navigation =
+    document.querySelector("[data-mobile-nav]");
+
+  if (!button || !navigation) {
+    return;
   }
 
-  if (icon) {
-    icon.src = state.icon;
-  }
+  const closeNavigation = ({
+    restoreFocus = false
+  } = {}) => {
+    navigation.classList.remove("is-open");
+    button.setAttribute("aria-expanded", "false");
 
-  if (value) {
-    value.textContent = state.value;
-  }
+    button.setAttribute(
+      "aria-label",
+      translations[currentLanguage].openNavigationLabel
+    );
 
-  if (trend) {
-    trend.textContent = state.trend;
-    trend.style.color = state.color;
-  }
+    document.body.classList.remove("is-menu-open");
 
-  if (label) {
-    label.textContent = state.label[currentLanguage];
-  }
+    if (restoreFocus) {
+      button.focus();
+    }
+  };
 
-  if (dot) {
-    dot.style.backgroundColor = state.color;
-  }
+  button.addEventListener("click", () => {
+    const shouldOpen =
+      !navigation.classList.contains("is-open");
 
-  document.querySelectorAll("[data-state]").forEach((button) => {
-    const isActive = button.dataset.state === stateKey;
+    navigation.classList.toggle(
+      "is-open",
+      shouldOpen
+    );
 
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-pressed", String(isActive));
+    button.setAttribute(
+      "aria-expanded",
+      String(shouldOpen)
+    );
+
+    button.setAttribute(
+      "aria-label",
+      shouldOpen
+        ? translations[currentLanguage].closeNavigationLabel
+        : translations[currentLanguage].openNavigationLabel
+    );
+
+    document.body.classList.toggle(
+      "is-menu-open",
+      shouldOpen
+    );
+  });
+
+  navigation.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      closeNavigation();
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Escape" &&
+      navigation.classList.contains("is-open")
+    ) {
+      closeNavigation({
+        restoreFocus: true
+      });
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (
+      navigation.classList.contains("is-open") &&
+      !navigation.contains(event.target) &&
+      !button.contains(event.target)
+    ) {
+      closeNavigation();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 1000) {
+      closeNavigation();
+    }
   });
 };
 
 const setupRevealAnimations = () => {
-  const elements = document.querySelectorAll(".reveal");
+  const elements =
+    document.querySelectorAll(".reveal");
 
   if (
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches ||
     !("IntersectionObserver" in window)
   ) {
     elements.forEach((element) => {
@@ -745,8 +571,8 @@ const setupRevealAnimations = () => {
       });
     },
     {
-      threshold: 0.13,
-      rootMargin: "0px 0px -40px"
+      threshold: 0.1,
+      rootMargin: "0px 0px -30px"
     }
   );
 
@@ -755,195 +581,32 @@ const setupRevealAnimations = () => {
   });
 };
 
-const setupHeader = () => {
-  const header = document.querySelector("[data-header]");
-
-  const update = () => {
-    header?.classList.toggle("is-scrolled", window.scrollY > 18);
-  };
-
-  update();
-
-  window.addEventListener("scroll", update, {
-    passive: true
-  });
-};
-
-const setupMobileNavigation = () => {
-  const button = document.querySelector("[data-mobile-menu-button]");
-  const navigation = document.querySelector("[data-mobile-nav]");
-
-  if (!button || !navigation) {
-    return;
-  }
-
-  const close = ({ restoreFocus = false } = {}) => {
-    navigation.classList.remove("is-open");
-    button.setAttribute("aria-expanded", "false");
-    button.setAttribute(
-      "aria-label",
-      translations[currentLanguage].openNavigationLabel
-    );
-    document.body.classList.remove("is-menu-open");
-
-    if (restoreFocus) {
-      button.focus();
-    }
-  };
-
-  button.addEventListener("click", () => {
-    const willOpen = !navigation.classList.contains("is-open");
-
-    navigation.classList.toggle("is-open", willOpen);
-    button.setAttribute("aria-expanded", String(willOpen));
-    button.setAttribute(
-      "aria-label",
-      willOpen
-        ? translations[currentLanguage].closeNavigationLabel
-        : translations[currentLanguage].openNavigationLabel
-    );
-    document.body.classList.toggle("is-menu-open", willOpen);
-
-    if (willOpen) {
-      navigation.querySelector("a")?.focus();
-    }
-  });
-
-  navigation.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => close());
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (
-      event.key === "Escape" &&
-      navigation.classList.contains("is-open")
-    ) {
-      close({ restoreFocus: true });
-    }
-  });
-
-  document.addEventListener("click", (event) => {
-    if (
-      navigation.classList.contains("is-open") &&
-      !navigation.contains(event.target) &&
-      !button.contains(event.target)
-    ) {
-      close();
-    }
-  });
-
-  window.addEventListener("resize", () => {
-    if (window.innerWidth > 1100) {
-      close();
-    }
-  });
-};
-
-const setupCursorGlow = () => {
-  const glow = document.querySelector(".cursor-glow");
-
-  if (
-    !glow ||
-    window.matchMedia("(pointer: coarse)").matches ||
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  ) {
-    return;
-  }
-
-  window.addEventListener(
-    "pointermove",
-    (event) => {
-      glow.style.left = `${event.clientX}px`;
-      glow.style.top = `${event.clientY}px`;
-    },
-    {
-      passive: true
-    }
-  );
-};
-
-const setupGallery = () => {
-  const tabs = Array.from(
-    document.querySelectorAll("[data-gallery-tab]")
-  );
-
-  tabs.forEach((button, index) => {
-    button.addEventListener("click", () => {
-      updateGallery(button.dataset.galleryTab, true);
-    });
-
-    button.addEventListener("keydown", (event) => {
-      let nextIndex = index;
-
-      if (event.key === "ArrowRight") {
-        nextIndex = (index + 1) % tabs.length;
-      } else if (event.key === "ArrowLeft") {
-        nextIndex = (index - 1 + tabs.length) % tabs.length;
-      } else if (event.key === "Home") {
-        nextIndex = 0;
-      } else if (event.key === "End") {
-        nextIndex = tabs.length - 1;
-      } else {
-        return;
-      }
-
-      event.preventDefault();
-
-      const nextTab = tabs[nextIndex];
-      nextTab.focus();
-      updateGallery(nextTab.dataset.galleryTab, true);
-    });
-  });
-};
-
-const setupPresenceStates = () => {
-  document.querySelectorAll("[data-state]").forEach((button) => {
-    button.setAttribute(
-      "aria-pressed",
-      String(button.classList.contains("is-active"))
-    );
-
-    button.addEventListener("click", () => {
-      updatePresenceState(button.dataset.state);
-    });
-  });
-};
-
-const setupLanguage = () => {
-  document.querySelectorAll("[data-language-button]").forEach((button) => {
-    button.addEventListener("click", () => {
-      updateLanguage(button.dataset.languageButton);
-    });
-  });
-
-  const storedLanguage =
-    localStorage.getItem("glucodesk-site-language");
-
-  const browserLanguage =
-    navigator.language?.toLowerCase().startsWith("it")
-      ? "it"
-      : "en";
-
-  updateLanguage(
-    storedLanguage === "it" || storedLanguage === "en"
-      ? storedLanguage
-      : browserLanguage
-  );
-};
-
-const setupYear = () => {
+const setupCurrentYear = () => {
   document.querySelectorAll("[data-current-year]").forEach((element) => {
-    element.textContent = String(new Date().getFullYear());
+    element.textContent =
+      String(new Date().getFullYear());
   });
 };
+
+if ("scrollRestoration" in window.history) {
+  window.history.scrollRestoration = "manual";
+}
+
+window.addEventListener(
+  "pageshow",
+  resetInitialScrollPosition
+);
+
+window.addEventListener(
+  "load",
+  resetInitialScrollPosition,
+  { once: true }
+);
 
 document.addEventListener("DOMContentLoaded", () => {
-  setupYear();
+  setupCurrentYear();
   setupLanguage();
-  setupGallery();
-  setupPresenceStates();
-  setupRevealAnimations();
   setupHeader();
   setupMobileNavigation();
-  setupCursorGlow();
+  setupRevealAnimations();
 });
