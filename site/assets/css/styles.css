@@ -3676,3 +3676,365 @@ section {
     padding-left: 0;
   }
 }
+
+/* ==================================================
+   HERO FINAL PRODUCT POLISH
+   Product-first depth without changing page structure
+   ================================================== */
+
+.hero-product {
+  position: relative;
+  isolation: isolate;
+
+  width: min(100%, 1080px);
+  max-width: 1080px;
+
+  margin-top: 48px;
+  margin-inline: auto;
+
+  padding: 14px;
+
+  border: 1px solid rgba(121, 198, 247, 0.10);
+  border-radius: 34px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.028),
+      rgba(255, 255, 255, 0.008)
+    );
+
+  box-shadow:
+    0 22px 55px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+/* Concentrated light underneath the actual product. */
+.hero-product::before {
+  content: "";
+
+  position: absolute;
+  z-index: -2;
+
+  right: 8%;
+  bottom: -56px;
+  left: 8%;
+
+  height: 150px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(54, 177, 248, 0.34) 0%,
+      rgba(44, 137, 198, 0.13) 42%,
+      transparent 72%
+    );
+
+  filter: blur(52px);
+  opacity: 0.82;
+
+  pointer-events: none;
+}
+
+/* Very subtle ambient light behind the upper part. */
+.hero-product::after {
+  content: "";
+
+  position: absolute;
+  z-index: -3;
+
+  top: -10%;
+  right: 7%;
+  left: 7%;
+
+  height: 72%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(68, 178, 247, 0.075),
+      transparent 68%
+    );
+
+  filter: blur(48px);
+
+  pointer-events: none;
+}
+
+.product-frame {
+  position: relative;
+  z-index: 1;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(145, 211, 251, 0.19);
+  border-radius: 24px;
+
+  background: #0a1724;
+
+  box-shadow:
+    0 42px 100px rgba(0, 0, 0, 0.42),
+    0 16px 42px rgba(0, 0, 0, 0.26),
+    0 0 70px rgba(58, 166, 235, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  transform:
+    perspective(1800px)
+    rotateX(1.25deg)
+    scale(0.975);
+
+  transform-origin: center top;
+
+  transition:
+    transform 420ms var(--ease),
+    box-shadow 420ms ease,
+    border-color 420ms ease;
+}
+
+.product-frame:hover {
+  border-color: rgba(145, 211, 251, 0.26);
+
+  box-shadow:
+    0 48px 115px rgba(0, 0, 0, 0.46),
+    0 18px 48px rgba(0, 0, 0, 0.29),
+    0 0 85px rgba(58, 166, 235, 0.075),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+
+  transform:
+    perspective(1800px)
+    rotateX(0.45deg)
+    translateY(-3px)
+    scale(0.982);
+}
+
+.product-frame-bar {
+  height: 46px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.038),
+      rgba(255, 255, 255, 0.018)
+    );
+
+  border-bottom-color: rgba(255, 255, 255, 0.075);
+}
+
+.product-frame > img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  transform: none;
+}
+
+/* --------------------------------------------------
+   Floating current-glucose card
+-------------------------------------------------- */
+
+.hero-glucose-card {
+  z-index: 5;
+
+  top: -30px;
+  right: 35px;
+
+  width: 185px;
+
+  padding: 16px 17px 15px;
+
+  border: 1px solid rgba(135, 208, 250, 0.20);
+  border-radius: 19px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(23, 46, 70, 0.97),
+      rgba(8, 23, 39, 0.95)
+    );
+
+  box-shadow:
+    0 26px 62px rgba(0, 0, 0, 0.43),
+    0 8px 24px rgba(0, 0, 0, 0.23),
+    0 0 42px rgba(64, 178, 246, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.065);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  transform: rotate(1deg);
+}
+
+.hero-glucose-reading strong {
+  font-size: 2.15rem;
+}
+
+.hero-glucose-reading > span {
+  color: #56dc91;
+}
+
+/* --------------------------------------------------
+   Floating local-sync card
+-------------------------------------------------- */
+
+.hero-sync-card {
+  z-index: 5;
+
+  bottom: 28px;
+  left: -22px;
+
+  min-width: 178px;
+
+  padding: 12px 14px;
+
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 39, 59, 0.97),
+      rgba(7, 20, 34, 0.95)
+    );
+
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.40),
+    0 0 38px rgba(69, 212, 131, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  transform: rotate(-0.8deg);
+}
+
+.hero-sync-icon {
+  width: 29px;
+  height: 29px;
+
+  border-radius: 9px;
+
+  box-shadow:
+    0 0 18px rgba(82, 220, 141, 0.14);
+}
+
+/* --------------------------------------------------
+   Desktop proportions
+-------------------------------------------------- */
+
+@media (min-width: 1200px) {
+  .hero-product {
+    width: min(100%, 1060px);
+  }
+}
+
+/* --------------------------------------------------
+   Tablet
+-------------------------------------------------- */
+
+@media (max-width: 1000px) {
+  .hero-product {
+    width: min(100%, 920px);
+
+    padding: 11px;
+
+    border-radius: 27px;
+  }
+
+  .product-frame {
+    transform:
+      perspective(1500px)
+      rotateX(0.8deg)
+      scale(0.985);
+  }
+
+  .hero-glucose-card {
+    top: -26px;
+    right: 20px;
+  }
+
+  .hero-sync-card {
+    bottom: 20px;
+    left: 5px;
+  }
+}
+
+/* --------------------------------------------------
+   Mobile: clarity before decoration
+-------------------------------------------------- */
+
+@media (max-width: 760px) {
+  .hero-product {
+    width: 100%;
+
+    margin-top: 44px;
+    padding: 7px;
+
+    border-radius: 20px;
+  }
+
+  .product-frame {
+    border-radius: 16px;
+
+    transform: none;
+  }
+
+  .product-frame:hover {
+    transform: none;
+  }
+
+  .hero-glucose-card {
+    top: -25px;
+    right: 7px;
+
+    width: 146px;
+
+    padding: 12px 13px;
+
+    border-radius: 15px;
+
+    transform: rotate(0.7deg);
+  }
+
+  .hero-glucose-reading strong {
+    font-size: 1.75rem;
+  }
+
+  .hero-sync-card {
+    bottom: 9px;
+    left: 6px;
+
+    min-width: 150px;
+
+    padding: 9px 10px;
+
+    transform: rotate(-0.5deg);
+  }
+}
+
+@media (max-width: 430px) {
+  .hero-product {
+    padding: 5px;
+  }
+
+  .hero-sync-card {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------
+   Reduced motion
+-------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .product-frame,
+  .product-frame:hover,
+  .hero-glucose-card,
+  .hero-sync-card {
+    transform: none;
+  }
+}
