@@ -8,6 +8,7 @@ const translations = {
     closeNavigationLabel: "Close navigation",
 
     navProduct: "Product",
+    navCarbGuide: "Carb guide",
     navPrivacy: "Privacy",
     navFounder: "Built by",
     navDownload: "Download",
@@ -70,6 +71,32 @@ const translations = {
       "you are doing.",
     presenceImageAlt:
       "GlucoDesk glucose states in the desktop menu bar",
+
+    carbGuideKicker: "Visual carbohydrate guide",
+    carbGuideTitle: "Carb counting, made a little easier.",
+    carbGuideDescription:
+      "Estimating carbohydrates from everyday portions is not always " +
+      "simple. GlucoDesk includes a visual food guide with common foods, " +
+      "reference portions and indicative carbohydrate values, available " +
+      "locally on your desktop.",
+    carbGuideFoodTitle: "Common foods",
+    carbGuideFoodDescription:
+      "Browse familiar foods in a clear visual catalogue.",
+    carbGuidePortionTitle: "Reference portions",
+    carbGuidePortionDescription:
+      "Compare practical portions instead of relying only on abstract " +
+      "nutritional tables.",
+    carbGuideLocalTitle: "Local and quick",
+    carbGuideLocalDescription:
+      "Search the guide directly from GlucoDesk without sending your " +
+      "glucose data anywhere.",
+    carbGuideNote:
+      "Carbohydrate values are indicative references only and are not " +
+      "intended for insulin dosing or treatment decisions.",
+    carbGuideWindowTitle: "Carbohydrate guide",
+    carbGuideImageAlt:
+      "GlucoDesk visual carbohydrate guide with food categories and " +
+      "reference portions",
 
     diaryKicker: "History & diary",
     diaryTitle: "Turn readings into useful context.",
@@ -152,6 +179,7 @@ const translations = {
     closeNavigationLabel: "Chiudi navigazione",
 
     navProduct: "Prodotto",
+    navCarbGuide: "Guida carboidrati",
     navPrivacy: "Privacy",
     navFounder: "Chi l'ha creato",
     navDownload: "Download",
@@ -214,6 +242,32 @@ const translations = {
       "interrompere ciò che stai facendo.",
     presenceImageAlt:
       "Stati glicemici GlucoDesk nella barra menu del desktop",
+
+    carbGuideKicker: "Guida visiva ai carboidrati",
+    carbGuideTitle: "Contare i carboidrati, un po' più semplicemente.",
+    carbGuideDescription:
+      "Stimare i carboidrati delle porzioni quotidiane non è sempre " +
+      "semplice. GlucoDesk include una guida visiva con alimenti comuni, " +
+      "porzioni di riferimento e valori indicativi di carboidrati, " +
+      "disponibile direttamente sul desktop.",
+    carbGuideFoodTitle: "Alimenti comuni",
+    carbGuideFoodDescription:
+      "Consulta alimenti familiari in un catalogo chiaro e visuale.",
+    carbGuidePortionTitle: "Porzioni di riferimento",
+    carbGuidePortionDescription:
+      "Confronta porzioni pratiche senza affidarti soltanto a tabelle " +
+      "nutrizionali astratte.",
+    carbGuideLocalTitle: "Locale e veloce",
+    carbGuideLocalDescription:
+      "Consulta la guida direttamente da GlucoDesk senza inviare i tuoi " +
+      "dati glicemici altrove.",
+    carbGuideNote:
+      "I valori dei carboidrati sono riferimenti indicativi e non sono " +
+      "destinati al dosaggio dell'insulina o a decisioni terapeutiche.",
+    carbGuideWindowTitle: "Guida ai carboidrati",
+    carbGuideImageAlt:
+      "Guida visiva ai carboidrati di GlucoDesk con categorie di alimenti " +
+      "e porzioni di riferimento",
 
     diaryKicker: "Storico e diario",
     diaryTitle: "Trasforma le letture in contesto utile.",
