@@ -78,8 +78,10 @@ verify_dmg_install_layout() {
     error_message="DMG does not contain Applications symlink"
   elif [[ "$(readlink "$mount_dir/Applications")" != "/Applications" ]]; then
     error_message="DMG Applications symlink does not point to /Applications"
-  elif [[ ! -f "$mount_dir/README.txt" ]]; then
-    error_message="DMG does not contain README.txt"
+  elif [[ ! -f "$mount_dir/GUIDA-INSTALLAZIONE-IT.txt" ]]; then
+    error_message="DMG does not contain GUIDA-INSTALLAZIONE-IT.txt"
+  elif [[ ! -f "$mount_dir/INSTALLATION-GUIDE-EN.txt" ]]; then
+    error_message="DMG does not contain INSTALLATION-GUIDE-EN.txt"
   elif [[ ! -f "$mount_dir/SAFETY-NOTICE.txt" ]]; then
     error_message="DMG does not contain SAFETY-NOTICE.txt"
   fi
@@ -124,7 +126,8 @@ ARTIFACT_ROOT="$ROOT_DIR/artifacts/macos/$VERSION/$RID"
 STAGING_DIR="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}"
 APP_BUNDLE="$STAGING_DIR/${APP_NAME}.app"
 INFO_PLIST="$APP_BUNDLE/Contents/Info.plist"
-README_PATH="$STAGING_DIR/README.txt"
+INSTALL_GUIDE_IT_PATH="$STAGING_DIR/GUIDA-INSTALLAZIONE-IT.txt"
+INSTALL_GUIDE_EN_PATH="$STAGING_DIR/INSTALLATION-GUIDE-EN.txt"
 SAFETY_NOTICE_PATH="$STAGING_DIR/SAFETY-NOTICE.txt"
 ZIP_PATH="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}.zip"
 DMG_PATH="$ARTIFACT_ROOT/${APP_NAME}-${VERSION}-${RID}.dmg"
@@ -151,7 +154,8 @@ fi
 verify_file "$ZIP_PATH" "zip archive"
 verify_file "$DMG_PATH" "dmg archive"
 verify_file "$CHECKSUMS_PATH" "checksums file"
-verify_file "$README_PATH" "release README"
+verify_file "$INSTALL_GUIDE_IT_PATH" "Italian installation guide"
+verify_file "$INSTALL_GUIDE_EN_PATH" "English installation guide"
 verify_file "$SAFETY_NOTICE_PATH" "safety notice"
 
 grep -q "$(basename "$ZIP_PATH")" "$CHECKSUMS_PATH" || fail "checksums file does not reference zip archive"
