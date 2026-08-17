@@ -177,6 +177,24 @@ const translations = {
       "Confirm with your password or Touch ID, then open GlucoDesk again.",
     macInstallGuideOnce:
       "This approval is normally required only the first time.",
+    windowsInstallGuideAction: "Installation guide",
+    windowsInstallGuideTitle: "Installing GlucoDesk on Windows",
+    windowsInstallGuideIntro:
+      "This preview is not yet digitally code-signed, so Microsoft Defender " +
+      "SmartScreen may show a warning when you run the installer.",
+    windowsInstallStepOne:
+      "Extract the downloaded ZIP.",
+    windowsInstallStepTwo:
+      "Run the included GlucoDesk setup.exe file.",
+    windowsInstallStepThree:
+      "If Windows shows \"Windows protected your PC\", click More info.",
+    windowsInstallStepFour:
+      "Verify that the file is the GlucoDesk installer, then click Run anyway.",
+    windowsInstallStepFive:
+      "Follow the installation wizard and launch GlucoDesk from the Start Menu.",
+    windowsInstallGuideSafety:
+      "Only continue if you downloaded GlucoDesk from the official website " +
+      "or GitHub repository.",
     downloadNote:
       "Current builds are unsigned preview releases distributed through " +
       "the official GlucoDesk GitHub repository.",
@@ -370,6 +388,26 @@ const translations = {
       "GlucoDesk.",
     macInstallGuideOnce:
       "Questa autorizzazione è normalmente necessaria solo al primo avvio.",
+    windowsInstallGuideAction: "Guida installazione",
+    windowsInstallGuideTitle: "Installare GlucoDesk su Windows",
+    windowsInstallGuideIntro:
+      "Questa preview non è ancora firmata digitalmente, quindi Microsoft " +
+      "Defender SmartScreen potrebbe mostrare un avviso quando avvii l'installer.",
+    windowsInstallStepOne:
+      "Estrai lo ZIP scaricato.",
+    windowsInstallStepTwo:
+      "Avvia il file setup.exe di GlucoDesk incluso nel pacchetto.",
+    windowsInstallStepThree:
+      "Se Windows mostra \"Windows ha protetto il PC\", fai clic su " +
+      "Ulteriori informazioni.",
+    windowsInstallStepFour:
+      "Verifica che il file sia l'installer di GlucoDesk, quindi fai clic " +
+      "su Esegui comunque.",
+    windowsInstallStepFive:
+      "Segui la procedura guidata e avvia GlucoDesk dal menu Start.",
+    windowsInstallGuideSafety:
+      "Continua solo se hai scaricato GlucoDesk dal sito ufficiale o dal " +
+      "repository GitHub ufficiale.",
     downloadNote:
       "Le build attuali sono preview non firmate distribuite attraverso " +
       "il repository GitHub ufficiale di GlucoDesk.",

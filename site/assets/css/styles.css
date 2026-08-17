@@ -4214,97 +4214,235 @@ section {
   }
 }
 
-/* --- macOS installation guide centering fix --- */
-.download-card .installation-guide {
+/* ==================================================
+   DOWNLOAD GUIDES - FINAL LAYOUT
+   ================================================== */
+
+/*
+ * Cards normally keep independent heights:
+ * opening one guide must not stretch the other card.
+ */
+.download-grid {
+  align-items: start;
+}
+
+.download-card {
+  align-self: start;
+}
+
+/*
+ * Keep Download + Installation guide on one line.
+ *
+ * The download link floats on the left and the details
+ * trigger naturally sits alongside it.
+ */
+.download-actions {
+  display: flow-root;
   width: 100%;
 }
 
-.download-card .installation-guide > summary {
-  width: fit-content;
+.download-actions > .download-link {
+  float: left;
+  margin-right: 18px;
 }
 
-.download-card .installation-guide-panel {
-  width: min(100%, 360px);
-  margin: 14px auto 0;
-  box-sizing: border-box;
-}
-
-@media (max-width: 720px) {
-  .download-card .installation-guide-panel {
-    width: 100%;
-  }
-}
-
-/* --- installation guide: keep trigger left, center opened panel --- */
-.download-card .installation-guide {
+.download-card .installation-guide,
+.download-card .installation-guide[open] {
+  display: block;
   width: 100%;
+  position: static;
 }
 
-.download-card .installation-guide > summary {
+.download-card .installation-guide > summary,
+.download-card .installation-guide[open] > summary {
   display: inline-flex;
+  align-items: center;
+
   width: auto;
   margin: 0;
+
+  white-space: nowrap;
 }
 
+/*
+ * The guide panel clears the action row and is centered
+ * inside its own platform card.
+ */
 .download-card .installation-guide-panel {
+  clear: both;
+
   width: min(100%, 320px);
-  margin: 14px auto 0;
+  min-height: 395px;
+
+  margin: 16px auto 0;
   box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
 }
 
+/*
+ * Keep the final note at the bottom so macOS and Windows
+ * panels have a consistent visual structure.
+ */
+.download-card .installation-guide-once {
+  margin-top: auto;
+}
+
+/*
+ * Only when BOTH guides are open do we normalize the
+ * height of the two platform cards.
+ */
+.download-grid:has(
+  .download-card:first-child .installation-guide[open]
+):has(
+  .download-card:last-child .installation-guide[open]
+) {
+  align-items: stretch;
+}
+
+.download-grid:has(
+  .download-card:first-child .installation-guide[open]
+):has(
+  .download-card:last-child .installation-guide[open]
+) .download-card {
+  align-self: stretch;
+}
+
+/* Mobile */
 @media (max-width: 720px) {
+  .download-actions > .download-link {
+    float: none;
+
+    margin-right: 0;
+    margin-bottom: 11px;
+  }
+
+  .download-card .installation-guide > summary,
+  .download-card .installation-guide[open] > summary {
+    display: inline-flex;
+  }
+
   .download-card .installation-guide-panel {
     width: 100%;
+    min-height: 0;
+
+    margin-top: 14px;
   }
 }
 
 /* ==================================================
-   macOS download actions - final alignment
+   DOWNLOAD ACTIONS - CLEAN FINAL ALIGNMENT
    ================================================== */
 
-.download-card .download-actions {
+.download-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 18px;
+
+  width: 100%;
 }
 
-/* Keep Download + Installation guide on the same row */
-.download-card .installation-guide {
+.download-actions > .download-link {
+  flex: 0 0 auto;
+
+  white-space: nowrap;
+  margin: 0;
+}
+
+.download-card .installation-guide,
+.download-card .installation-guide[open] {
+  flex: 0 0 auto;
+
   width: auto;
   position: static;
 }
 
-.download-card .installation-guide > summary {
+.download-card .installation-guide > summary,
+.download-card .installation-guide[open] > summary {
   display: inline-flex;
   align-items: center;
+
   width: auto;
   margin: 0;
+
+  white-space: nowrap;
 }
 
-/* When opened, the panel occupies a new row */
+/*
+ * Once opened, only the panel moves to the next row.
+ * The trigger remains aligned with the download link.
+ */
 .download-card .installation-guide[open] {
-  width: 100%;
+  display: contents;
 }
 
-/* Center only the opened guide panel inside the macOS card */
 .download-card .installation-guide-panel {
+  flex: 0 0 100%;
+
   width: min(100%, 320px);
+  min-height: 0;
+
   margin: 14px auto 0;
+
   box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
 }
 
-/* Keep the trigger aligned with Download even when open */
-.download-card .installation-guide[open] > summary {
-  width: fit-content;
+/*
+ * Keep the note naturally at the bottom without
+ * forcing both panels to the same height.
+ */
+.download-card .installation-guide-once {
+  margin-top: 14px;
+}
+
+/*
+ * Platform cards stay independent when only one
+ * installation guide is open.
+ */
+.download-grid {
+  align-items: start;
+}
+
+.download-card {
+  align-self: start;
+}
+
+/*
+ * If both guides are open, normalize only the outer
+ * platform cards, not the inner guide panels.
+ */
+.download-grid:has(
+  .download-card:first-child .installation-guide[open]
+):has(
+  .download-card:last-child .installation-guide[open]
+) {
+  align-items: stretch;
+}
+
+.download-grid:has(
+  .download-card:first-child .installation-guide[open]
+):has(
+  .download-card:last-child .installation-guide[open]
+) .download-card {
+  align-self: stretch;
 }
 
 @media (max-width: 720px) {
-  .download-card .download-actions {
-    gap: 10px 14px;
+  .download-actions {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 11px;
   }
 
   .download-card .installation-guide-panel {
     width: 100%;
+    margin-top: 4px;
   }
 }
+
