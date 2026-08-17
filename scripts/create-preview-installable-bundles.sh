@@ -71,59 +71,154 @@ copy_file "$WINDOWS_ARTIFACT_DIR/win-x64/GlucoDesk-$VERSION-win-x64-setup.exe" "
 copy_file "$WINDOWS_ARTIFACT_DIR/win-x64/GlucoDesk-$VERSION-win-x64-portable.zip" "$BUNDLE_DIR/windows-x64"
 copy_file "$WINDOWS_ARTIFACT_DIR/win-x64/GlucoDesk-$VERSION-win-x64-checksums.sha256" "$BUNDLE_DIR/windows-x64"
 
-cat > "$BUNDLE_DIR/macos-arm64/README.txt" <<README
-GlucoDesk macOS Apple Silicon preview package.
 
-Install:
-1. Open the DMG.
-2. Drag GlucoDesk.app into Applications.
-3. Launch GlucoDesk from Applications.
+write_macos_installation_guides() {
+  local destination_dir="$1"
+  local architecture_label="$2"
 
-First launch on macOS:
-This preview build may be unsigned or not notarized. On first launch, macOS may show a message saying that Apple cannot verify whether GlucoDesk contains malware.
+  cat > "$destination_dir/GUIDA-INSTALLAZIONE-IT.txt" <<README
+GLUCODESK — GUIDA ALL'INSTALLAZIONE SU macOS
+============================================
 
-If that happens:
-1. Click Done or close the warning dialog.
-2. Open System Settings.
-3. Go to Privacy & Security.
-4. Scroll to the Security section.
-5. Find the GlucoDesk warning.
-6. Click Open Anyway.
-7. Confirm with your password or Touch ID.
-8. Launch GlucoDesk again from Applications.
+Versione: $VERSION
+Architettura: $architecture_label
 
-This approval is normally required only the first time the app is opened.
+GlucoDesk è attualmente distribuito come versione preview e non è ancora
+firmato o notarizzato da Apple.
 
-Safety:
-GlucoDesk is not a medical device and must not be used for insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
+Per questo motivo macOS potrebbe bloccare l'applicazione al primo avvio.
+Questo comportamento è previsto per questa versione preview.
+
+INSTALLAZIONE
+-------------
+
+1. Apri il file DMG di GlucoDesk.
+
+2. Trascina GlucoDesk.app nella cartella Applicazioni.
+
+3. Apri la cartella Applicazioni e avvia GlucoDesk.
+
+PRIMO AVVIO — SE macOS BLOCCA L'APP
+-----------------------------------
+
+macOS potrebbe mostrare un messaggio indicando che Apple non può verificare
+GlucoDesk oppure che l'applicazione proviene da uno sviluppatore non
+identificato.
+
+Se questo accade:
+
+1. Chiudi il messaggio di avviso.
+
+2. Apri Impostazioni di Sistema.
+
+3. Vai su Privacy e sicurezza.
+
+4. Scorri fino alla sezione Sicurezza.
+
+5. Cerca il messaggio relativo a GlucoDesk.
+
+6. Fai clic su "Apri comunque".
+
+7. Conferma utilizzando la password del Mac o Touch ID, se richiesto.
+
+8. Apri nuovamente GlucoDesk dalla cartella Applicazioni.
+
+Questa autorizzazione è normalmente necessaria soltanto al primo avvio.
+
+DOWNLOAD UFFICIALE
+------------------
+
+Scarica GlucoDesk esclusivamente dal sito ufficiale:
+
+https://glucodesk.com/
+
+oppure dalla pagina GitHub ufficiale del progetto:
+
+https://github.com/FilippoGaravaglia/GlucoDesk/releases
+
+SICUREZZA
+---------
+
+GlucoDesk non è un dispositivo medico e non deve essere utilizzato per
+decisioni relative al dosaggio dell'insulina, trattamento, diagnosi,
+emergenze o altre decisioni mediche critiche.
 README
 
-cat > "$BUNDLE_DIR/macos-x64/README.txt" <<README
-GlucoDesk macOS Intel preview package.
+  cat > "$destination_dir/INSTALLATION-GUIDE-EN.txt" <<README
+GLUCODESK — macOS INSTALLATION GUIDE
+====================================
 
-Install:
-1. Open the DMG.
-2. Drag GlucoDesk.app into Applications.
-3. Launch GlucoDesk from Applications.
+Version: $VERSION
+Architecture: $architecture_label
 
-First launch on macOS:
-This preview build may be unsigned or not notarized. On first launch, macOS may show a message saying that Apple cannot verify whether GlucoDesk contains malware.
+GlucoDesk is currently distributed as a preview build and is not yet
+signed or notarized by Apple.
 
-If that happens:
-1. Click Done or close the warning dialog.
+Because of this, macOS may block the application the first time it is opened.
+This behavior is expected for this preview version.
+
+INSTALLATION
+------------
+
+1. Open the GlucoDesk DMG file.
+
+2. Drag GlucoDesk.app into the Applications folder.
+
+3. Open Applications and launch GlucoDesk.
+
+FIRST LAUNCH — IF macOS BLOCKS THE APP
+--------------------------------------
+
+macOS may display a message saying that Apple cannot verify GlucoDesk
+or that the application is from an unidentified developer.
+
+If this happens:
+
+1. Close the warning dialog.
+
 2. Open System Settings.
+
 3. Go to Privacy & Security.
-4. Scroll to the Security section.
-5. Find the GlucoDesk warning.
-6. Click Open Anyway.
-7. Confirm with your password or Touch ID.
+
+4. Scroll down to the Security section.
+
+5. Find the message referring to GlucoDesk.
+
+6. Click "Open Anyway".
+
+7. Confirm using your Mac password or Touch ID, if requested.
+
 8. Launch GlucoDesk again from Applications.
 
-This approval is normally required only the first time the app is opened.
+This approval is normally required only the first time the application
+is opened.
 
-Safety:
-GlucoDesk is not a medical device and must not be used for insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
+OFFICIAL DOWNLOAD
+-----------------
+
+Only download GlucoDesk from the official website:
+
+https://glucodesk.com/
+
+or from the official GlucoDesk GitHub Releases page:
+
+https://github.com/FilippoGaravaglia/GlucoDesk/releases
+
+SAFETY
+------
+
+GlucoDesk is not a medical device and must not be used for insulin dosing,
+treatment, diagnosis, emergency, or other safety-critical medical decisions.
 README
+}
+
+write_macos_installation_guides \
+  "$BUNDLE_DIR/macos-arm64" \
+  "Apple Silicon (arm64)"
+
+write_macos_installation_guides \
+  "$BUNDLE_DIR/macos-x64" \
+  "Intel (x64)"
 
 cat > "$BUNDLE_DIR/windows-x64/README.txt" <<README
 GlucoDesk Windows x64 preview package.
