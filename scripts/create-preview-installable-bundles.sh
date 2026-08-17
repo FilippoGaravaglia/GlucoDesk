@@ -220,33 +220,167 @@ write_macos_installation_guides \
   "$BUNDLE_DIR/macos-x64" \
   "Intel (x64)"
 
-cat > "$BUNDLE_DIR/windows-x64/README.txt" <<README
-GlucoDesk Windows x64 preview package.
+cat > "$BUNDLE_DIR/windows-x64/GUIDA-INSTALLAZIONE-IT.txt" <<README
+GLUCODESK — GUIDA ALL'INSTALLAZIONE SU WINDOWS
+==============================================
 
-Install:
-1. Run GlucoDesk-$VERSION-win-x64-setup.exe.
+Versione: $VERSION
+Architettura: Windows x64
+
+GlucoDesk è attualmente distribuito come versione preview e non è ancora
+firmato digitalmente.
+
+Per questo motivo Microsoft Defender SmartScreen potrebbe mostrare un avviso
+al primo avvio dell'installer.
+
+Questo comportamento è previsto per questa versione preview.
+
+INSTALLAZIONE
+-------------
+
+1. Apri il file:
+
+   GlucoDesk-$VERSION-win-x64-setup.exe
+
+2. Segui la procedura guidata di installazione.
+
+3. Al termine, avvia GlucoDesk dal menu Start.
+
+SE WINDOWS MOSTRA "WINDOWS HA PROTETTO IL PC"
+---------------------------------------------
+
+Microsoft Defender SmartScreen potrebbe bloccare inizialmente l'installer
+perché GlucoDesk non è ancora firmato digitalmente.
+
+Se questo accade:
+
+1. Verifica di aver scaricato GlucoDesk dal sito o repository ufficiale.
+
+2. Nella finestra "Windows ha protetto il PC", fai clic su:
+
+   "Ulteriori informazioni"
+
+3. Verifica che il file indicato sia:
+
+   GlucoDesk-$VERSION-win-x64-setup.exe
+
+4. Fai clic su:
+
+   "Esegui comunque"
+
+5. Completa normalmente l'installazione.
+
+MODALITÀ PORTABLE
+-----------------
+
+Il pacchetto contiene anche:
+
+GlucoDesk-$VERSION-win-x64-portable.zip
+
+Puoi estrarlo e avviare direttamente:
+
+GlucoDesk.Desktop.exe
+
+senza utilizzare l'installer.
+
+DOWNLOAD UFFICIALE
+------------------
+
+Scarica GlucoDesk esclusivamente dal sito ufficiale:
+
+https://glucodesk.com/
+
+oppure dalla pagina GitHub ufficiale del progetto:
+
+https://github.com/FilippoGaravaglia/GlucoDesk/releases
+
+SICUREZZA
+---------
+
+GlucoDesk non è un dispositivo medico e non deve essere utilizzato per
+decisioni relative al dosaggio dell'insulina, trattamento, diagnosi,
+emergenze o altre decisioni mediche critiche.
+README
+
+cat > "$BUNDLE_DIR/windows-x64/INSTALLATION-GUIDE-EN.txt" <<README
+GLUCODESK — WINDOWS INSTALLATION GUIDE
+======================================
+
+Version: $VERSION
+Architecture: Windows x64
+
+GlucoDesk is currently distributed as a preview build and is not yet
+digitally code-signed.
+
+Because of this, Microsoft Defender SmartScreen may display a warning when
+you first run the installer.
+
+This behavior is expected for this preview version.
+
+INSTALLATION
+------------
+
+1. Open:
+
+   GlucoDesk-$VERSION-win-x64-setup.exe
+
 2. Follow the installation wizard.
-3. Launch GlucoDesk from the Start Menu.
 
-Portable mode:
-You can also extract GlucoDesk-$VERSION-win-x64-portable.zip and run GlucoDesk.Desktop.exe.
+3. When installation is complete, launch GlucoDesk from the Start Menu.
 
-First launch on Windows:
-This preview build is not code-signed. Microsoft Defender SmartScreen may show a warning such as "Windows protected your PC" because the app is not yet recognized.
+IF WINDOWS SHOWS "WINDOWS PROTECTED YOUR PC"
+--------------------------------------------
 
-If that happens:
-1. Click More info.
-2. Verify that the app name is GlucoDesk-$VERSION-win-x64-setup.exe.
-3. Click Run anyway.
+Microsoft Defender SmartScreen may initially block the installer because
+GlucoDesk is not yet digitally code-signed.
 
-On Italian Windows, the buttons may appear as:
-1. Ulteriori informazioni.
-2. Esegui comunque.
+If this happens:
 
-Only continue if you downloaded GlucoDesk from the official GitHub Releases page.
+1. Make sure you downloaded GlucoDesk from the official website or repository.
 
-Safety:
-GlucoDesk is not a medical device and must not be used for insulin dosing, treatment, diagnosis, emergency, or safety-critical decisions.
+2. In the "Windows protected your PC" dialog, click:
+
+   "More info"
+
+3. Verify that the displayed file is:
+
+   GlucoDesk-$VERSION-win-x64-setup.exe
+
+4. Click:
+
+   "Run anyway"
+
+5. Complete the installation normally.
+
+PORTABLE MODE
+-------------
+
+The package also contains:
+
+GlucoDesk-$VERSION-win-x64-portable.zip
+
+You can extract it and run:
+
+GlucoDesk.Desktop.exe
+
+without using the installer.
+
+OFFICIAL DOWNLOAD
+-----------------
+
+Only download GlucoDesk from the official website:
+
+https://glucodesk.com/
+
+or from the official GlucoDesk GitHub Releases page:
+
+https://github.com/FilippoGaravaglia/GlucoDesk/releases
+
+SAFETY
+------
+
+GlucoDesk is not a medical device and must not be used for insulin dosing,
+treatment, diagnosis, emergency, or other safety-critical medical decisions.
 README
 
 info "Creating installable ZIP bundles"
