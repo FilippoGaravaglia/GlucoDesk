@@ -127,43 +127,160 @@ write_info_plist() {
 PLIST
 }
 
-write_release_readme() {
-  local readme_path="$1"
+write_installation_guides() {
+  local destination_dir="$1"
   local rid="$2"
+  local architecture_label
 
-  cat > "$readme_path" <<README
-GlucoDesk ${VERSION} (${rid})
+  case "$rid" in
+    osx-arm64)
+      architecture_label="Apple Silicon (arm64)"
+      ;;
+    osx-x64)
+      architecture_label="Intel (x64)"
+      ;;
+    *)
+      architecture_label="$rid"
+      ;;
+  esac
 
-This is a macOS preview build of GlucoDesk.
+  cat > "$destination_dir/GUIDA-INSTALLAZIONE-IT.txt" <<GUIDE_IT
+GLUCODESK — GUIDA ALL'INSTALLAZIONE SU macOS
+============================================
 
-Safety notice:
-GlucoDesk is not a medical device. It does not provide medical advice, treatment decisions, insulin dosing guidance, alarms, or emergency notifications. Always rely on approved CGM apps, pump systems, and healthcare professionals for medical decisions.
+Versione: ${VERSION}
+Architettura: ${architecture_label}
 
-Preview limitations:
-- local history may be incomplete;
-- export quality depends on available local readings;
-- provider behavior depends on configuration and external service availability;
-- this preview may be unsigned or not notarized depending on how it was built.
+GlucoDesk è attualmente distribuito come versione preview e non è ancora
+firmato o notarizzato da Apple.
 
-First launch on macOS:
-This preview build may be unsigned or not notarized. On first launch, macOS may show a message saying that Apple cannot verify whether GlucoDesk contains malware.
+Per questo motivo macOS potrebbe bloccare l'applicazione al primo avvio.
+Questo comportamento è previsto per questa versione preview.
 
-If that happens:
-1. Click "Done" or close the warning dialog.
+INSTALLAZIONE
+-------------
+
+1. Trascina GlucoDesk.app nella cartella Applicazioni utilizzando il
+   collegamento Applications presente in questa finestra.
+
+2. Apri la cartella Applicazioni.
+
+3. Avvia GlucoDesk.
+
+PRIMO AVVIO — SE macOS BLOCCA L'APP
+-----------------------------------
+
+macOS potrebbe mostrare un messaggio indicando che Apple non può verificare
+GlucoDesk oppure che l'applicazione proviene da uno sviluppatore non
+identificato.
+
+Se questo accade:
+
+1. Chiudi il messaggio di avviso.
+
+2. Apri Impostazioni di Sistema.
+
+3. Vai su Privacy e sicurezza.
+
+4. Scorri fino alla sezione Sicurezza.
+
+5. Cerca il messaggio relativo a GlucoDesk.
+
+6. Fai clic su "Apri comunque".
+
+7. Conferma utilizzando la password del Mac o Touch ID, se richiesto.
+
+8. Apri nuovamente GlucoDesk dalla cartella Applicazioni.
+
+Questa autorizzazione è normalmente necessaria soltanto al primo avvio.
+
+DOWNLOAD UFFICIALE
+------------------
+
+Scarica GlucoDesk esclusivamente dal sito ufficiale:
+
+https://glucodesk.com/
+
+oppure dalla pagina GitHub ufficiale:
+
+https://github.com/FilippoGaravaglia/GlucoDesk/releases
+
+SICUREZZA
+---------
+
+GlucoDesk non è un dispositivo medico e non deve essere utilizzato per
+decisioni relative al dosaggio dell'insulina, trattamento, diagnosi,
+emergenze o altre decisioni mediche critiche.
+GUIDE_IT
+
+  cat > "$destination_dir/INSTALLATION-GUIDE-EN.txt" <<GUIDE_EN
+GLUCODESK — macOS INSTALLATION GUIDE
+====================================
+
+Version: ${VERSION}
+Architecture: ${architecture_label}
+
+GlucoDesk is currently distributed as a preview build and is not yet
+signed or notarized by Apple.
+
+Because of this, macOS may block the application the first time it is opened.
+This behavior is expected for this preview version.
+
+INSTALLATION
+------------
+
+1. Drag GlucoDesk.app into the Applications folder using the Applications
+   shortcut shown in this window.
+
+2. Open the Applications folder.
+
+3. Launch GlucoDesk.
+
+FIRST LAUNCH — IF macOS BLOCKS THE APP
+--------------------------------------
+
+macOS may display a message saying that Apple cannot verify GlucoDesk
+or that the application is from an unidentified developer.
+
+If this happens:
+
+1. Close the warning dialog.
+
 2. Open System Settings.
+
 3. Go to Privacy & Security.
-4. Scroll to the Security section.
-5. Find the GlucoDesk warning.
+
+4. Scroll down to the Security section.
+
+5. Find the message referring to GlucoDesk.
+
 6. Click "Open Anyway".
-7. Confirm with your password or Touch ID.
+
+7. Confirm using your Mac password or Touch ID, if requested.
+
 8. Launch GlucoDesk again from Applications.
 
-This approval is normally required only the first time the app is opened.
+This approval is normally required only the first time the application
+is opened.
 
-Do not use terminal commands such as xattr as the primary installation path for users. The recommended preview flow is Applications plus Privacy & Security approval.
-README
+OFFICIAL DOWNLOAD
+-----------------
+
+Only download GlucoDesk from the official website:
+
+https://glucodesk.com/
+
+or from the official GitHub Releases page:
+
+https://github.com/FilippoGaravaglia/GlucoDesk/releases
+
+SAFETY
+------
+
+GlucoDesk is not a medical device and must not be used for insulin dosing,
+treatment, diagnosis, emergency, or other safety-critical medical decisions.
+GUIDE_EN
 }
-
 
 write_safety_notice() {
   local safety_notice_path="$1"
@@ -295,7 +412,7 @@ write_info_plist "$CONTENTS_DIR/Info.plist" "$SHORT_VERSION" "$BUNDLE_VERSION"
 
 info "building macOS native notification helper"
 "$ROOT_DIR/scripts/build-macos-notification-helper.sh" "$CONTENTS_DIR/Helpers"
-write_release_readme "$STAGING_DIR/README.txt" "$RID"
+write_installation_guides "$STAGING_DIR" "$RID"
 write_safety_notice "$STAGING_DIR/SAFETY-NOTICE.txt"
 
 if command -v codesign >/dev/null 2>&1; then
@@ -322,8 +439,11 @@ mkdir -p "$DMG_STAGING_DIR"
 
 ditto "$APP_BUNDLE" "$DMG_STAGING_DIR/${APP_NAME}.app"
 ln -s /Applications "$DMG_STAGING_DIR/Applications"
-cp "$STAGING_DIR/README.txt" "$DMG_STAGING_DIR/README.txt"
-cp "$STAGING_DIR/SAFETY-NOTICE.txt" "$DMG_STAGING_DIR/SAFETY-NOTICE.txt"
+cp "$STAGING_DIR/GUIDA-INSTALLAZIONE-IT.txt"   "$DMG_STAGING_DIR/GUIDA-INSTALLAZIONE-IT.txt"
+
+cp "$STAGING_DIR/INSTALLATION-GUIDE-EN.txt"   "$DMG_STAGING_DIR/INSTALLATION-GUIDE-EN.txt"
+
+cp "$STAGING_DIR/SAFETY-NOTICE.txt"   "$DMG_STAGING_DIR/SAFETY-NOTICE.txt"
 
 info "creating dmg archive"
 rm -f "$DMG_PATH"
