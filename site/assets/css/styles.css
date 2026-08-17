@@ -4038,3 +4038,273 @@ section {
     transform: none;
   }
 }
+
+/* -------------------------------------------------
+   macOS installation guide
+-------------------------------------------------- */
+
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+.installation-guide {
+  position: relative;
+}
+
+.installation-guide > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  width: max-content;
+
+  color: var(--text-muted);
+
+  font-size: 0.78rem;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  list-style: none;
+
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.installation-guide > summary::-webkit-details-marker {
+  display: none;
+}
+
+.installation-guide > summary::before {
+  content: "?";
+
+  width: 18px;
+  height: 18px;
+
+  display: inline-grid;
+  place-items: center;
+
+  border: 1px solid rgba(145, 210, 255, 0.22);
+  border-radius: 50%;
+
+  color: #91d2ff;
+  background: rgba(108, 193, 249, 0.055);
+
+  font-size: 0.66rem;
+  font-weight: 760;
+}
+
+.installation-guide > summary:hover {
+  color: #c7e8ff;
+}
+
+.installation-guide[open] > summary {
+  color: #b7dfff;
+}
+
+.installation-guide-panel {
+  width: min(420px, calc(100vw - 48px));
+
+  margin-top: 14px;
+  padding: 19px 20px 18px;
+
+  border: 1px solid rgba(126, 201, 248, 0.17);
+  border-radius: 17px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 38, 58, 0.98),
+      rgba(7, 20, 34, 0.99)
+    );
+
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.installation-guide-heading {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+
+  margin-bottom: 16px;
+}
+
+.installation-guide-icon {
+  width: 32px;
+  height: 32px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(139, 208, 250, 0.16);
+  border-radius: 10px;
+
+  color: #a9ddff;
+  background: rgba(99, 188, 244, 0.07);
+
+  font-size: 0.86rem;
+}
+
+.installation-guide-heading strong {
+  display: block;
+
+  margin: 1px 0 5px;
+
+  color: var(--text);
+
+  font-size: 0.84rem;
+  font-weight: 690;
+}
+
+.download-card .installation-guide-heading p {
+  margin: 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.installation-guide-steps {
+  margin: 0;
+  padding-left: 19px;
+
+  color: var(--text-soft);
+
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.installation-guide-steps li {
+  padding-left: 4px;
+}
+
+.installation-guide-steps li + li {
+  margin-top: 8px;
+}
+
+.download-card .installation-guide-once {
+  margin: 14px 0 0;
+  padding-top: 13px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+
+  color: #91a9bd;
+
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .download-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .installation-guide-panel {
+    width: min(100%, calc(100vw - 70px));
+  }
+}
+
+/* --- macOS installation guide centering fix --- */
+.download-card .installation-guide {
+  width: 100%;
+}
+
+.download-card .installation-guide > summary {
+  width: fit-content;
+}
+
+.download-card .installation-guide-panel {
+  width: min(100%, 360px);
+  margin: 14px auto 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  .download-card .installation-guide-panel {
+    width: 100%;
+  }
+}
+
+/* --- installation guide: keep trigger left, center opened panel --- */
+.download-card .installation-guide {
+  width: 100%;
+}
+
+.download-card .installation-guide > summary {
+  display: inline-flex;
+  width: auto;
+  margin: 0;
+}
+
+.download-card .installation-guide-panel {
+  width: min(100%, 320px);
+  margin: 14px auto 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  .download-card .installation-guide-panel {
+    width: 100%;
+  }
+}
+
+/* ==================================================
+   macOS download actions - final alignment
+   ================================================== */
+
+.download-card .download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+/* Keep Download + Installation guide on the same row */
+.download-card .installation-guide {
+  width: auto;
+  position: static;
+}
+
+.download-card .installation-guide > summary {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  margin: 0;
+}
+
+/* When opened, the panel occupies a new row */
+.download-card .installation-guide[open] {
+  width: 100%;
+}
+
+/* Center only the opened guide panel inside the macOS card */
+.download-card .installation-guide-panel {
+  width: min(100%, 320px);
+  margin: 14px auto 0;
+  box-sizing: border-box;
+}
+
+/* Keep the trigger aligned with Download even when open */
+.download-card .installation-guide[open] > summary {
+  width: fit-content;
+}
+
+@media (max-width: 720px) {
+  .download-card .download-actions {
+    gap: 10px 14px;
+  }
+
+  .download-card .installation-guide-panel {
+    width: 100%;
+  }
+}

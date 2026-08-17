@@ -157,6 +157,26 @@ const translations = {
       "GlucoDesk is currently available as a free preview for Apple " +
       "Silicon Macs and Windows x64.",
     downloadNow: "Download preview",
+    macInstallGuideAction: "Installation guide",
+    macInstallGuideTitle: "Installing GlucoDesk on macOS",
+    macInstallGuideIntro:
+      "This preview is not yet signed or notarized by Apple, so macOS may " +
+      "require one manual approval on first launch.",
+    macInstallStepOne:
+      "Extract the downloaded ZIP and open the included DMG.",
+    macInstallStepTwo:
+      "Drag GlucoDesk.app into the Applications folder.",
+    macInstallStepThree:
+      "Open GlucoDesk from Applications.",
+    macInstallStepFour:
+      "If macOS blocks the app, close the warning and open System Settings " +
+      "→ Privacy & Security.",
+    macInstallStepFive:
+      "Scroll to Security, find the GlucoDesk warning and choose Open Anyway.",
+    macInstallStepSix:
+      "Confirm with your password or Touch ID, then open GlucoDesk again.",
+    macInstallGuideOnce:
+      "This approval is normally required only the first time.",
     downloadNote:
       "Current builds are unsigned preview releases distributed through " +
       "the official GlucoDesk GitHub repository.",
@@ -328,6 +348,28 @@ const translations = {
       "GlucoDesk è attualmente disponibile come preview gratuita per " +
       "Mac Apple Silicon e Windows x64.",
     downloadNow: "Scarica la preview",
+    macInstallGuideAction: "Guida installazione",
+    macInstallGuideTitle: "Installare GlucoDesk su macOS",
+    macInstallGuideIntro:
+      "Questa preview non è ancora firmata o notarizzata da Apple, quindi " +
+      "macOS potrebbe richiedere un'autorizzazione manuale al primo avvio.",
+    macInstallStepOne:
+      "Estrai lo ZIP scaricato e apri il file DMG incluso.",
+    macInstallStepTwo:
+      "Trascina GlucoDesk.app nella cartella Applicazioni.",
+    macInstallStepThree:
+      "Apri GlucoDesk dalla cartella Applicazioni.",
+    macInstallStepFour:
+      "Se macOS blocca l'app, chiudi l'avviso e apri Impostazioni di Sistema " +
+      "→ Privacy e sicurezza.",
+    macInstallStepFive:
+      "Scorri fino a Sicurezza, trova l'avviso relativo a GlucoDesk e scegli " +
+      "Apri comunque.",
+    macInstallStepSix:
+      "Conferma con la password del Mac o Touch ID, quindi apri nuovamente " +
+      "GlucoDesk.",
+    macInstallGuideOnce:
+      "Questa autorizzazione è normalmente necessaria solo al primo avvio.",
     downloadNote:
       "Le build attuali sono preview non firmate distribuite attraverso " +
       "il repository GitHub ufficiale di GlucoDesk.",

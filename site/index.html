@@ -747,12 +747,72 @@
               <h3>Apple Silicon</h3>
               <p>For Macs with Apple silicon.</p>
 
-              <a
-                class="download-link"
-                href="https://github.com/FilippoGaravaglia/GlucoDesk/releases/download/v0.3.0-preview/GlucoDesk-0.3.0-preview-macos-arm64-installable.zip">
-                <span data-i18n="downloadNow">Download preview</span>
-                <span aria-hidden="true">↗</span>
-              </a>
+              <div class="download-actions">
+                <a
+                  class="download-link"
+                  href="https://github.com/FilippoGaravaglia/GlucoDesk/releases/download/v0.3.0-preview/GlucoDesk-0.3.0-preview-macos-arm64-installable.zip">
+                  <span data-i18n="downloadNow">Download preview</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+
+                <details class="installation-guide">
+                  <summary data-i18n="macInstallGuideAction">
+                    Installation guide
+                  </summary>
+
+                  <div class="installation-guide-panel">
+                    <div class="installation-guide-heading">
+                      <span class="installation-guide-icon" aria-hidden="true">⌘</span>
+
+                      <div>
+                        <strong data-i18n="macInstallGuideTitle">
+                          Installing GlucoDesk on macOS
+                        </strong>
+
+                        <p data-i18n="macInstallGuideIntro">
+                          This preview is not yet signed or notarized by Apple,
+                          so macOS may require one manual approval on first launch.
+                        </p>
+                      </div>
+                    </div>
+
+                    <ol class="installation-guide-steps">
+                      <li data-i18n="macInstallStepOne">
+                        Extract the downloaded ZIP and open the included DMG.
+                      </li>
+
+                      <li data-i18n="macInstallStepTwo">
+                        Drag GlucoDesk.app into the Applications folder.
+                      </li>
+
+                      <li data-i18n="macInstallStepThree">
+                        Open GlucoDesk from Applications.
+                      </li>
+
+                      <li data-i18n="macInstallStepFour">
+                        If macOS blocks the app, close the warning and open
+                        System Settings → Privacy &amp; Security.
+                      </li>
+
+                      <li data-i18n="macInstallStepFive">
+                        Scroll to Security, find the GlucoDesk warning and
+                        choose Open Anyway.
+                      </li>
+
+                      <li data-i18n="macInstallStepSix">
+                        Confirm with your password or Touch ID, then open
+                        GlucoDesk again.
+                      </li>
+                    </ol>
+
+                    <p
+                      class="installation-guide-once"
+                      data-i18n="macInstallGuideOnce">
+                      This approval is normally required only the first time.
+                    </p>
+                  </div>
+                </details>
+              </div>
             </div>
           </article>
 
