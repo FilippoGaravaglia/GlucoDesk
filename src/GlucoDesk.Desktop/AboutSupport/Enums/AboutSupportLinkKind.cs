@@ -14,8 +14,14 @@ public enum AboutSupportLinkKind
     /// The public GlucoDesk source repository.
     /// </summary>
     SourceCode = 1,
-/// <summary>
+
+    /// <summary>
     /// The GlucoDesk issue-reporting workflow.
     /// </summary>
-    ReportIssue = 2
+    ReportIssue = 2,
+
+    /// <summary>
+    /// The public GlucoDesk user-review form.
+    /// </summary>
+    LeaveReview = 3
 }

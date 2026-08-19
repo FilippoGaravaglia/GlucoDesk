@@ -677,6 +677,19 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Opens the public GlucoDesk user-review form.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    [RelayCommand]
+    private Task LeaveReviewAsync(
+        CancellationToken cancellationToken)
+    {
+        return OpenAboutSupportLinkAsync(
+            AboutSupportLinkKind.LeaveReview,
+            cancellationToken);
+    }
+
+    /// <summary>
     /// Creates a portable backup and lets the user choose where to save it.
     /// </summary>
     [RelayCommand]

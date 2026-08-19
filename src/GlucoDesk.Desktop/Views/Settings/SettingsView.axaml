@@ -716,7 +716,6 @@
 
                   <Border Grid.Column="0"
                           Grid.Row="1"
-                          Grid.ColumnSpan="2"
                           Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
                           BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
                           BorderThickness="1"
@@ -737,6 +736,31 @@
                       <Button Grid.Row="2"
                               Content="{DynamicResource AboutSupportReportIssueButton}"
                               Command="{Binding ReportIssueCommand}"
+                              IsEnabled="{Binding !IsAboutSupportBusy}"
+                              HorizontalAlignment="Left" />
+                    </Grid>
+                  </Border>
+
+                  <Border Grid.Column="1"
+                          Grid.Row="1"
+                          Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}"
+                          BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+                          BorderThickness="1"
+                          CornerRadius="16"
+                          Padding="16">
+                    <Grid RowDefinitions="Auto,*,Auto"
+                          RowSpacing="10">
+                      <TextBlock Grid.Row="0"
+                                 Text="{DynamicResource AboutSupportReviewTitle}"
+                                 FontWeight="SemiBold" />
+                      <TextBlock Grid.Row="1"
+                                 Text="{DynamicResource AboutSupportReviewDescription}"
+                                 Classes="secondary"
+                                 FontSize="13"
+                                 TextWrapping="Wrap" />
+                      <Button Grid.Row="2"
+                              Content="{DynamicResource AboutSupportReviewButton}"
+                              Command="{Binding LeaveReviewCommand}"
                               IsEnabled="{Binding !IsAboutSupportBusy}"
                               HorizontalAlignment="Left" />
                     </Grid>
