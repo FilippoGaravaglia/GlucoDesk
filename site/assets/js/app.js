@@ -10,6 +10,7 @@ const translations = {
     navProduct: "Product",
     navCarbGuide: "Carb guide",
     navPrivacy: "Privacy",
+    navReviews: "Reviews",
     navFounder: "Built by",
     navDownload: "Download",
 
@@ -143,6 +144,12 @@ const translations = {
     founderLinksLabel: "Author profiles",
     founderImageAlt:
       "Filippo Garavaglia, creator of GlucoDesk",
+    reviewsKicker: "User reviews",
+    reviewsTitle: "Trusted by people using it every day.",
+    reviewsDescription:
+      "Real experiences from people using GlucoDesk to keep glucose visible while they work.",
+    reviewsAction: "Leave a review",
+
 
     openSourceKicker: "Independent and open",
     openSourceTitle: "Built in public. Free to use.",
@@ -219,6 +226,7 @@ const translations = {
     navProduct: "Prodotto",
     navCarbGuide: "Guida carboidrati",
     navPrivacy: "Privacy",
+    navReviews: "Recensioni",
     navFounder: "Chi l'ha creato",
     navDownload: "Download",
 
@@ -352,6 +360,12 @@ const translations = {
     founderLinksLabel: "Profili dell'autore",
     founderImageAlt:
       "Filippo Garavaglia, creatore di GlucoDesk",
+    reviewsKicker: "Recensioni degli utenti",
+    reviewsTitle: "Scelto da chi lo usa ogni giorno.",
+    reviewsDescription:
+      "Esperienze di chi usa GlucoDesk per tenere la glicemia visibile mentre lavora.",
+    reviewsAction: "Lascia una recensione",
+
 
     openSourceKicker: "Indipendente e aperto",
     openSourceTitle: "Open source. Indipendente. Gratuito.",
@@ -744,3 +758,144 @@ document.addEventListener("DOMContentLoaded", () => {
   setupMobileNavigation();
   setupRevealAnimations();
 });
+
+// ------------------------------------------------------------
+// User reviews carousel
+// ------------------------------------------------------------
+
+function initializeReviewsCarousel() {
+  const carousel = document.querySelector("[data-reviews-carousel]");
+
+  if (!carousel) {
+    return;
+  }
+
+  const viewport = carousel.querySelector(".reviews-viewport");
+  const track = carousel.querySelector("[data-reviews-track]");
+  const previousButton = carousel.querySelector("[data-reviews-previous]");
+  const nextButton = carousel.querySelector("[data-reviews-next]");
+  const controls = carousel.querySelector("[data-reviews-controls]");
+  const position = carousel.querySelector("[data-reviews-position]");
+
+  if (
+    !viewport ||
+    !track ||
+    !previousButton ||
+    !nextButton ||
+    !controls ||
+    !position
+  ) {
+    return;
+  }
+
+  const getCards = () =>
+    Array.from(track.querySelectorAll(".review-card"));
+
+  const getVisibleCardCount = () => {
+    if (window.matchMedia("(max-width: 720px)").matches) {
+      return 1;
+    }
+
+    if (window.matchMedia("(max-width: 1080px)").matches) {
+      return 2;
+    }
+
+    return 3;
+  };
+
+  const getStep = () => {
+    const firstCard = getCards()[0];
+
+    if (!firstCard) {
+      return 0;
+    }
+
+    const styles = window.getComputedStyle(track);
+    const gap =
+      Number.parseFloat(styles.columnGap || styles.gap) || 0;
+
+    return firstCard.getBoundingClientRect().width + gap;
+  };
+
+  const updateControls = () => {
+    const cards = getCards();
+    const visibleCount = getVisibleCardCount();
+    const shouldShowControls = cards.length > visibleCount;
+
+    controls.hidden = !shouldShowControls;
+
+    if (!shouldShowControls) {
+      position.textContent = "";
+      return;
+    }
+
+    const step = getStep();
+
+    if (step <= 0) {
+      return;
+    }
+
+    const maxIndex = Math.max(
+      0,
+      cards.length - visibleCount
+    );
+
+    const activeIndex = Math.max(
+      0,
+      Math.min(
+        maxIndex,
+        Math.round(viewport.scrollLeft / step)
+      )
+    );
+
+    previousButton.disabled = activeIndex === 0;
+    nextButton.disabled = activeIndex >= maxIndex;
+
+    const firstVisible = activeIndex + 1;
+    const lastVisible = Math.min(
+      activeIndex + visibleCount,
+      cards.length
+    );
+
+    position.textContent =
+      `${firstVisible}–${lastVisible} / ${cards.length}`;
+  };
+
+  const scrollByCard = (direction) => {
+    const step = getStep();
+
+    if (step <= 0) {
+      return;
+    }
+
+    viewport.scrollBy({
+      left: direction * step,
+      behavior: "smooth"
+    });
+  };
+
+  previousButton.addEventListener(
+    "click",
+    () => scrollByCard(-1)
+  );
+
+  nextButton.addEventListener(
+    "click",
+    () => scrollByCard(1)
+  );
+
+  viewport.addEventListener(
+    "scroll",
+    () => requestAnimationFrame(updateControls),
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "resize",
+    () => requestAnimationFrame(updateControls)
+  );
+
+  updateControls();
+}
+
+initializeReviewsCarousel();
