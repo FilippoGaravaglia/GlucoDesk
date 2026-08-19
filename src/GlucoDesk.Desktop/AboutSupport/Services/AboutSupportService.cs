@@ -7,7 +7,7 @@ using GlucoDesk.Desktop.AboutSupport.Services.Abstractions;
 namespace GlucoDesk.Desktop.AboutSupport.Services;
 
 /// <summary>
-/// Provides immutable GlucoDesk product information and support navigation.
+/// Provides immutable GlucoDesk product information and trusted support navigation.
 /// </summary>
 public sealed class AboutSupportService :
     IAboutSupportService
@@ -17,10 +17,17 @@ public sealed class AboutSupportService :
 
     private static readonly Uri SourceCodeUri =
         new("https://github.com/FilippoGaravaglia/GlucoDesk");
-private static readonly Uri ReportIssueUri =
+
+    private static readonly Uri ReportIssueUri =
         new(
             "https://github.com/FilippoGaravaglia/"
             + "GlucoDesk/issues/new/choose");
+
+    // IMPORTANT:
+    // Replace this placeholder with the published GlucoDesk Tally review form
+    // before merging this feature into main.
+    private static readonly Uri LeaveReviewUri =
+        new("https://tally.so/r/pbY4B8");
 
     private readonly IApplicationVersionProvider
         _versionProvider;
@@ -88,8 +95,12 @@ private static readonly Uri ReportIssueUri =
 
             AboutSupportLinkKind.SourceCode =>
                 Result<Uri>.Success(SourceCodeUri),
-AboutSupportLinkKind.ReportIssue =>
+
+            AboutSupportLinkKind.ReportIssue =>
                 Result<Uri>.Success(ReportIssueUri),
+
+            AboutSupportLinkKind.LeaveReview =>
+                Result<Uri>.Success(LeaveReviewUri),
 
             _ => Result<Uri>.Failure(
                 new Error(
