@@ -4910,3 +4910,18 @@ section {
 #reviews {
   scroll-margin-top: 92px;
 }
+
+/* Review submission date */
+
+.review-date {
+  display: block;
+
+  margin-top: 1px;
+
+  color: var(--text-muted);
+
+  font-size: 0.62rem;
+  font-style: normal;
+  line-height: 1.35;
+  white-space: nowrap;
+}
