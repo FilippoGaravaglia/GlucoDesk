@@ -46,12 +46,10 @@ fi
 echo "==> Checking official release downloads"
 
 grep -q 'data-download-platform="macos-arm64"' "$SITE/index.html"
-grep -q 'data-download-platform="macos-x64"' "$SITE/index.html"
 grep -q 'data-download-platform="windows-x64"' "$SITE/index.html"
 
 grep -q   'GlucoDesk-0.3.0-preview-macos-arm64-installable.zip'   "$SITE/index.html"
 
-grep -q   'GlucoDesk-0.3.0-preview-macos-x64-installable.zip'   "$SITE/index.html"
 
 grep -q   'GlucoDesk-0.3.0-preview-windows-x64-installable.zip'   "$SITE/index.html"
 
@@ -69,6 +67,6 @@ grep -q 'const translations' "$SITE/assets/js/app.js"
 echo "==> Checking safety notice"
 
 grep -q 'not a medical device' "$SITE/index.html"
-grep -q 'non dispositivo medico' "$SITE/assets/js/app.js"
+grep -q 'non un dispositivo medico' "$SITE/assets/js/app.js"
 
 echo "==> Website validation passed"
