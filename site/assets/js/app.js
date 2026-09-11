@@ -13,6 +13,7 @@ const translations = {
     navReviews: "Reviews",
     navFounder: "Built by",
     navDownload: "Download",
+    navSupport: "Support",
 
     heroBadge: "Free · Open source · macOS & Windows",
     heroTitleOne: "Your glucose.",
@@ -207,6 +208,24 @@ const translations = {
       "the official GlucoDesk GitHub repository.",
 
     safetyLabel: "Important",
+    supportKicker: "Support the project",
+    supportTitle: "Help GlucoDesk keep growing.",
+    supportDescription:
+      "GlucoDesk is free and open source. If it makes your day a little " +
+      "easier and you would like to support its development, you can make " +
+      "a voluntary contribution.",
+    supportPrincipleFree: "GlucoDesk stays free and open source",
+    supportPrincipleOptional:
+      "Supporting the project is completely optional",
+    supportActionTitle: "Want to support GlucoDesk?",
+    supportActionDescription:
+      "Your contribution helps me keep improving, testing and maintaining " +
+      "the project.",
+    supportAction: "Support with PayPal",
+    supportNote:
+      "Voluntary support only. No GlucoDesk feature is locked behind a " +
+      "contribution.",
+
     safetyTitle: "A companion, not a medical device.",
     safetyDescription:
       "GlucoDesk is not intended for treatment decisions, insulin dosing, " +
@@ -229,6 +248,7 @@ const translations = {
     navReviews: "Recensioni",
     navFounder: "Chi l'ha creato",
     navDownload: "Download",
+    navSupport: "Sostieni",
 
     heroBadge: "Gratis · Open source · macOS e Windows",
     heroTitleOne: "La tua glicemia.",
@@ -427,6 +447,24 @@ const translations = {
       "il repository GitHub ufficiale di GlucoDesk.",
 
     safetyLabel: "Importante",
+    supportKicker: "Sostieni il progetto",
+    supportTitle: "Aiuta GlucoDesk a crescere.",
+    supportDescription:
+      "GlucoDesk è gratuito e open source. Se ti è utile nella vita " +
+      "quotidiana e vuoi sostenere il suo sviluppo, puoi contribuire " +
+      "liberamente al progetto.",
+    supportPrincipleFree: "GlucoDesk resterà gratuito e open source",
+    supportPrincipleOptional:
+      "Il supporto al progetto è completamente facoltativo",
+    supportActionTitle: "Vuoi sostenere GlucoDesk?",
+    supportActionDescription:
+      "Il tuo contributo mi aiuta a continuare a migliorare, testare e " +
+      "mantenere il progetto.",
+    supportAction: "Sostieni con PayPal",
+    supportNote:
+      "Supporto completamente volontario. Nessuna funzionalità di GlucoDesk " +
+      "è riservata a chi contribuisce.",
+
     safetyTitle: "Un companion, non un dispositivo medico.",
     safetyDescription:
       "GlucoDesk non è destinato a decisioni terapeutiche, dosaggio " +
