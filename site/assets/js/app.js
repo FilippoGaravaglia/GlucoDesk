@@ -150,6 +150,12 @@ const translations = {
     reviewsDescription:
       "Real experiences from people using GlucoDesk to keep glucose visible while they work.",
     reviewsAction: "Leave a review",
+    reviewSummaryHeading: "Community feedback",
+    reviewSummaryScale: "out of 5",
+    reviewSummaryCount: "7 ratings",
+    reviewSummaryAria: "Average rating: 4.9 out of 5",
+    reviewSummaryDistributionAria:
+      "Six 5-star ratings and one 4-star rating",
 
 
     openSourceKicker: "Independent and open",
@@ -385,6 +391,12 @@ const translations = {
     reviewsDescription:
       "Esperienze di chi usa GlucoDesk per tenere la glicemia visibile mentre lavora.",
     reviewsAction: "Lascia una recensione",
+    reviewSummaryHeading: "Il parere della community",
+    reviewSummaryScale: "su 5",
+    reviewSummaryCount: "7 valutazioni",
+    reviewSummaryAria: "Valutazione media: 4,9 su 5",
+    reviewSummaryDistributionAria:
+      "Sei valutazioni da 5 stelle e una da 4 stelle",
 
 
     openSourceKicker: "Indipendente e aperto",
