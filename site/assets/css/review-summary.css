@@ -1,0 +1,156 @@
+cat > site/assets/css/review-summary.css <<'EOF'
+/* GlucoDesk — Community rating summary */
+
+.review-summary {
+  margin-top: 28px;
+  padding: 22px;
+
+  border: 1px solid rgba(113, 195, 245, 0.18);
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(39, 92, 131, 0.22),
+      rgba(10, 29, 46, 0.66)
+    );
+
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.review-summary-heading {
+  display: block;
+  margin-bottom: 18px;
+
+  color: #83cfff;
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.review-summary-content {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.review-summary-ring {
+  width: 106px;
+  height: 106px;
+  flex: 0 0 106px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 8px;
+  border-radius: 50%;
+
+  background: conic-gradient(
+    #70c8ff 0% 85.714%,
+    #3b607c 85.714% 100%
+  );
+}
+
+.review-summary-ring-inner {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  background: #0b2032;
+}
+
+.review-summary-value {
+  color: #f5fbff;
+  font-size: 2rem;
+  font-weight: 750;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.review-summary-scale {
+  margin-top: 5px;
+
+  color: #a9c1d2;
+  font-size: 0.66rem;
+}
+
+.review-summary-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.review-summary-stars {
+  color: #ffc857;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.review-summary-count {
+  display: block;
+  margin: 7px 0 15px;
+
+  color: #aac0d1;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.review-summary-distribution {
+  display: grid;
+  gap: 10px;
+}
+
+.review-summary-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 9px;
+
+  color: #c5d9e8;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.review-summary-bar {
+  height: 6px;
+  overflow: hidden;
+
+  border-radius: 999px;
+  background: rgba(148, 188, 217, 0.14);
+}
+
+.review-summary-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #70c8ff;
+}
+
+.review-summary-bar-fill--four {
+  background: #759dbb;
+}
+
+@media (max-width: 480px) {
+  .review-summary {
+    padding: 18px;
+  }
+
+  .review-summary-content {
+    gap: 16px;
+  }
+
+  .review-summary-ring {
+    width: 88px;
+    height: 88px;
+    flex-basis: 88px;
+  }
+
+  .review-summary-value {
+    font-size: 1.7rem;
+  }
+}
