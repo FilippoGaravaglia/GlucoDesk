@@ -152,7 +152,7 @@ const translations = {
     reviewsAction: "Leave a review",
     reviewSummaryHeading: "Community feedback",
     reviewSummaryScale: "out of 5",
-    reviewSummaryCount: "7 ratings · 5 unique respondents",
+    reviewSummaryCount: "7 ratings",
     reviewSummaryAria: "Average rating: 4.9 out of 5",
     reviewSummaryDistributionAria:
       "Six 5-star ratings and one 4-star rating",
@@ -393,7 +393,7 @@ const translations = {
     reviewsAction: "Lascia una recensione",
     reviewSummaryHeading: "Il parere della community",
     reviewSummaryScale: "su 5",
-    reviewSummaryCount: "7 valutazioni · 5 rispondenti unici",
+    reviewSummaryCount: "7 valutazioni",
     reviewSummaryAria: "Valutazione media: 4,9 su 5",
     reviewSummaryDistributionAria:
       "Sei valutazioni da 5 stelle e una da 4 stelle",
