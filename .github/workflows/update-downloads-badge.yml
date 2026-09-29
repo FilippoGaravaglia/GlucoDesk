@@ -1,0 +1,57 @@
+name: Update downloads badge
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-downloads-badge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Calculate download total
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CURRENT_DOWNLOADS=$(gh api \
+            --paginate \
+            repos/${{ github.repository }}/releases \
+            --jq '[.[].assets[].download_count] | add // 0')
+
+          HISTORICAL_OFFSET=140
+          TOTAL=$((CURRENT_DOWNLOADS + HISTORICAL_OFFSET))
+
+          echo "Current GitHub downloads: $CURRENT_DOWNLOADS"
+          echo "Historical lost downloads: $HISTORICAL_OFFSET"
+          echo "Displayed total: $TOTAL"
+
+          cat > .github/downloads-badge.json <<JSON
+          {
+            "schemaVersion": 1,
+            "label": "release asset downloads",
+            "message": "$TOTAL",
+            "color": "blue"
+          }
+          JSON
+
+      - name: Commit badge update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .github/downloads-badge.json
+
+          if git diff --cached --quiet; then
+            echo "Badge already up to date."
+            exit 0
+          fi
+
+          git commit -m "chore: update downloads badge"
+          git push
