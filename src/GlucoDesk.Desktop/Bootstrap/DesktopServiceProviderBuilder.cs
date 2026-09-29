@@ -40,6 +40,7 @@ using GlucoDesk.Desktop.DesktopPresence.Services;
 using GlucoDesk.Desktop.DesktopPresence.Formatters;
 using GlucoDesk.Desktop.ViewModels.Onboarding;
 using GlucoDesk.Desktop.Views.Onboarding;
+using GlucoDesk.Desktop.Updates.DependencyInjection;
 using GlucoDesk.Desktop.Onboarding;
 namespace GlucoDesk.Desktop.Bootstrap;
 
@@ -72,6 +73,7 @@ internal static class DesktopServiceProviderBuilder
         services.AddDesktopShell();
         services.AddDesktopCommonServices();
         services.AddAboutAndSupport();
+        services.AddDesktopUpdateCenter();
 
         services.AddSingleton<IDesktopPresenceTextFormatter, DesktopPresenceTextFormatter>();
         services.AddSingleton<IDesktopPresenceDashboardTextFormatter, DesktopPresenceDashboardTextFormatter>();

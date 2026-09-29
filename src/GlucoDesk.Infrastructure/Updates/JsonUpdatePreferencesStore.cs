@@ -22,6 +22,24 @@ public sealed class JsonUpdatePreferencesStore :
     private readonly string _filePath;
 
     /// <summary>
+    /// Creates the default update-preferences store for the current user.
+    /// </summary>
+    /// <returns>The default preferences store.</returns>
+    public static JsonUpdatePreferencesStore CreateDefault()
+    {
+        var applicationDataPath =
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData);
+
+        var filePath = Path.Combine(
+            applicationDataPath,
+            "GlucoDesk",
+            "update-settings.json");
+
+        return new JsonUpdatePreferencesStore(filePath);
+    }
+
+    /// <summary>
     /// Initializes a new instance of the
     /// <see cref="JsonUpdatePreferencesStore"/> class.
     /// </summary>
