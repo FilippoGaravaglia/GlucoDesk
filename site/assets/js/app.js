@@ -14,6 +14,7 @@ const translations = {
     navFounder: "Built by",
     navDownload: "Download",
     navSupport: "Support",
+    navUpdates: "Updates",
 
     heroBadge: "Free · Open source · macOS & Windows",
     heroTitleOne: "Your glucose.",
@@ -255,6 +256,7 @@ const translations = {
     navFounder: "Chi l'ha creato",
     navDownload: "Download",
     navSupport: "Sostieni",
+    navUpdates: "Aggiornamenti",
 
     heroBadge: "Gratis · Open source · macOS e Windows",
     heroTitleOne: "La tua glicemia.",
