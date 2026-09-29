@@ -8,11 +8,15 @@ namespace GlucoDesk.Desktop.ViewModels.Updates;
 /// <summary>
 /// Exposes GlucoDesk update-center operations and state to the desktop UI.
 /// </summary>
-public sealed partial class UpdateCenterViewModel : ObservableObject
+public sealed partial class UpdateCenterViewModel :
+    ObservableObject,
+    IDisposable
 {
     private readonly IUpdateCoordinator _updateCoordinator;
     private readonly IUpdateService _updateService;
     private readonly UpdateCenterStore _store;
+
+    private bool _isDisposed;
 
     /// <summary>
     /// Initializes a new instance of the
@@ -99,7 +103,7 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
     /// <summary>
     /// Checks manually for a newer GlucoDesk version.
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanCheckNow))]
     private async Task CheckNowAsync(
         CancellationToken cancellationToken)
     {
@@ -114,6 +118,8 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanDownloadUpdate))]
     private void DownloadUpdate()
     {
+        ThrowIfDisposed();
+
         var release = Snapshot.LatestRelease;
 
         if (release is null)
@@ -131,6 +137,8 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
     private async Task DismissAsync(
         CancellationToken cancellationToken)
     {
+        ThrowIfDisposed();
+
         var release = Snapshot.LatestRelease;
 
         if (release is null)
@@ -142,14 +150,10 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
             release.Version,
             cancellationToken);
 
-        var refreshed = Snapshot with
+        _store.Snapshot = Snapshot with
         {
             ShouldShowDialog = false
         };
-
-        _store.Snapshot = refreshed;
-
-        NotifySnapshotProperties();
     }
 
     /// <summary>
@@ -158,9 +162,23 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
     public Task CheckOnStartupAsync(
         CancellationToken cancellationToken)
     {
+        ThrowIfDisposed();
+
         return ExecuteCheckAsync(
             UpdateCheckTrigger.Automatic,
             cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _store.PropertyChanged -= OnStorePropertyChanged;
+        _isDisposed = true;
     }
 
     #region Helpers
@@ -172,6 +190,13 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
         UpdateCheckTrigger trigger,
         CancellationToken cancellationToken)
     {
+        ThrowIfDisposed();
+
+        if (IsChecking)
+        {
+            return;
+        }
+
         _store.Snapshot = Snapshot with
         {
             State = UpdateCenterState.Checking,
@@ -179,15 +204,27 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
             ShouldShowDialog = false
         };
 
-        NotifySnapshotProperties();
+        try
+        {
+            var snapshot = await _updateCoordinator.CheckAsync(
+                trigger,
+                cancellationToken);
 
-        var snapshot = await _updateCoordinator.CheckAsync(
-            trigger,
-            cancellationToken);
+            _store.Snapshot = snapshot;
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+    }
 
-        _store.Snapshot = snapshot;
-
-        NotifySnapshotProperties();
+    /// <summary>
+    /// Determines whether a manual update check can be started.
+    /// </summary>
+    private bool CanCheckNow()
+    {
+        return !_isDisposed && !IsChecking;
     }
 
     /// <summary>
@@ -195,7 +232,8 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
     /// </summary>
     private bool CanDownloadUpdate()
     {
-        return Snapshot.State == UpdateCenterState.UpdateAvailable
+        return !_isDisposed
+               && Snapshot.State == UpdateCenterState.UpdateAvailable
                && Snapshot.LatestRelease is not null;
     }
 
@@ -204,7 +242,8 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
     /// </summary>
     private bool CanDismissUpdate()
     {
-        return Snapshot.State == UpdateCenterState.UpdateAvailable
+        return !_isDisposed
+               && Snapshot.State == UpdateCenterState.UpdateAvailable
                && Snapshot.LatestRelease is not null;
     }
 
@@ -225,9 +264,9 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
         OnPropertyChanged(nameof(LastSuccessfulCheckAt));
         OnPropertyChanged(nameof(ErrorMessage));
 
+        CheckNowCommand.NotifyCanExecuteChanged();
         DownloadUpdateCommand.NotifyCanExecuteChanged();
         DismissCommand.NotifyCanExecuteChanged();
-        CheckNowCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -241,6 +280,16 @@ public sealed partial class UpdateCenterViewModel : ObservableObject
         _ = eventArgs;
 
         NotifySnapshotProperties();
+    }
+
+    /// <summary>
+    /// Throws when the view model has already been disposed.
+    /// </summary>
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(
+            _isDisposed,
+            this);
     }
 
     #endregion
