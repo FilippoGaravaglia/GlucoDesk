@@ -1,7 +1,9 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Application.Updates;
 using GlucoDesk.Core.Updates;
+using GlucoDesk.Desktop.ViewModels.Common;
+using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.Updates.Presentation;
 
 namespace GlucoDesk.Desktop.ViewModels.Updates;
 
@@ -9,7 +11,7 @@ namespace GlucoDesk.Desktop.ViewModels.Updates;
 /// Exposes GlucoDesk update-center operations and state to the desktop UI.
 /// </summary>
 public sealed partial class UpdateCenterViewModel :
-    ObservableObject,
+    ViewModelBase,
     IDisposable
 {
     private readonly IUpdateCoordinator _updateCoordinator;
@@ -32,6 +34,7 @@ public sealed partial class UpdateCenterViewModel :
         _store = store;
 
         _store.PropertyChanged += OnStorePropertyChanged;
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
     }
 
     /// <summary>
@@ -65,6 +68,12 @@ public sealed partial class UpdateCenterViewModel :
         _store.HasError;
 
     /// <summary>
+    /// Gets the badge text displayed by the application navigation.
+    /// </summary>
+    public string? BadgeText =>
+        _store.BadgeText;
+
+    /// <summary>
     /// Gets the installed GlucoDesk version.
     /// </summary>
     public string CurrentVersion =>
@@ -77,10 +86,13 @@ public sealed partial class UpdateCenterViewModel :
         Snapshot.LatestRelease?.Version;
 
     /// <summary>
-    /// Gets the latest release notes.
+    /// Gets the localized user-facing release notes.
     /// </summary>
-    public string? ReleaseNotes =>
-        Snapshot.LatestRelease?.ReleaseNotes;
+    public string ReleaseNotes =>
+        ReleaseNotesPresenter.Format(
+            Snapshot.LatestRelease?.ReleaseNotes,
+            LocalizationManager.GetString(
+                "CarbGuideLanguageCode"));
 
     /// <summary>
     /// Gets the latest compatible asset name.
@@ -178,6 +190,8 @@ public sealed partial class UpdateCenterViewModel :
         }
 
         _store.PropertyChanged -= OnStorePropertyChanged;
+        LocalizationManager.LanguageChanged -= OnLanguageChanged;
+
         _isDisposed = true;
     }
 
@@ -257,6 +271,7 @@ public sealed partial class UpdateCenterViewModel :
         OnPropertyChanged(nameof(IsChecking));
         OnPropertyChanged(nameof(IsUpToDate));
         OnPropertyChanged(nameof(HasError));
+        OnPropertyChanged(nameof(BadgeText));
         OnPropertyChanged(nameof(CurrentVersion));
         OnPropertyChanged(nameof(LatestVersion));
         OnPropertyChanged(nameof(ReleaseNotes));
@@ -280,6 +295,19 @@ public sealed partial class UpdateCenterViewModel :
         _ = eventArgs;
 
         NotifySnapshotProperties();
+    }
+
+    /// <summary>
+    /// Refreshes localized release notes when the application language changes.
+    /// </summary>
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs eventArgs)
+    {
+        _ = sender;
+        _ = eventArgs;
+
+        OnPropertyChanged(nameof(ReleaseNotes));
     }
 
     /// <summary>

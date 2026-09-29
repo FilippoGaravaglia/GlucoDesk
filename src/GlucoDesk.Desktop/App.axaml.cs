@@ -369,6 +369,10 @@ public partial class App : Avalonia.Application
 
         _ = RunStartupHistoryContinuitySyncSafelyAsync(
             serviceProvider);
+
+        _ = CheckForUpdatesOnStartupSafelyAsync(
+            desktop,
+            serviceProvider);
     }
 
 
@@ -657,6 +661,65 @@ public partial class App : Avalonia.Application
                 "Unexpected error while running startup history continuity synchronization.");
         }
     }
+
+    /// <summary>
+    /// Checks for GlucoDesk updates after the main application window opens
+    /// without blocking desktop startup.
+    /// </summary>
+    /// <param name="desktop">The desktop application lifetime.</param>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task CheckForUpdatesOnStartupSafelyAsync(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(desktop);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        try
+        {
+            if (desktop.MainWindow?.DataContext
+                is not GlucoDesk.Desktop.ViewModels.Main.MainWindowViewModel
+                    viewModel)
+            {
+                return;
+            }
+
+            await viewModel.Updates
+                .CheckOnStartupAsync(CancellationToken.None);
+
+            if (!viewModel.Updates.Snapshot.ShouldShowDialog ||
+                !viewModel.Updates.HasUpdate)
+            {
+                return;
+            }
+
+            var mainWindow = desktop.MainWindow;
+
+            if (mainWindow is null)
+            {
+                return;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(
+                async () =>
+                {
+                    var dialog =
+                        new GlucoDesk.Desktop.Views.Updates.UpdateAvailableWindow(
+                            viewModel.Updates);
+
+                    await dialog.ShowDialog(mainWindow);
+                });
+        }
+        catch (Exception exception)
+        {
+            LogSafely(
+                serviceProvider,
+                exception,
+                "Unexpected error while checking for GlucoDesk updates.");
+        }
+    }
+
 
     /// <summary>
     /// Stops the desktop background sync lifecycle without breaking application shutdown.

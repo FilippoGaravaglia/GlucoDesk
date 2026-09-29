@@ -12,6 +12,8 @@
     xmlns:diaryViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Diary"
     xmlns:settingsViews="clr-namespace:GlucoDesk.Desktop.Views.Settings"
     xmlns:settingsViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Settings"
+    xmlns:updateViews="clr-namespace:GlucoDesk.Desktop.Views.Updates"
+    xmlns:updateViewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Updates"
     Title="GlucoDesk"
     Width="1280"
     Height="820"
@@ -38,6 +40,10 @@
 
     <DataTemplate DataType="{x:Type settingsViewModels:SettingsViewModel}">
       <settingsViews:SettingsView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type updateViewModels:UpdateCenterViewModel}">
+      <updateViews:UpdateCenterView />
     </DataTemplate>
   </Window.DataTemplates>
 
@@ -143,6 +149,45 @@
                 <TextBlock Text="{DynamicResource NavCarbGuide}"
                            VerticalAlignment="Center" />
               </StackPanel>
+            </Button>
+
+            <Button Classes="nav-button nav-updates"
+                    Classes.accent="{Binding IsUpdatesSelected}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Command="{Binding ShowUpdatesCommand}">
+              <Grid ColumnDefinitions="Auto,*,Auto"
+                    ColumnSpacing="11"
+                    VerticalAlignment="Center">
+
+                <Border Classes="nav-icon-shell updates-icon-shell">
+                  <PathIcon Classes="nav-icon updates-icon"
+                            Width="18"
+                            Height="18"
+                            Data="M10,2 A8,8 0 1 1 4.35,4.35 L2.5,4.5 L4.5,2.5 L4.65,4.35 A8,8 0 0 1 10,2 Z M9,6 H11 V11 H14 L10,15 L6,11 H9 Z" />
+                </Border>
+
+                <TextBlock Grid.Column="1"
+                           Text="{DynamicResource NavUpdates}"
+                           VerticalAlignment="Center" />
+
+                <Border Grid.Column="2"
+                        MinWidth="22"
+                        Height="22"
+                        Padding="6,0"
+                        CornerRadius="11"
+                        VerticalAlignment="Center"
+                        Background="{StaticResource GlucoDesk.Brush.Accent}"
+                        IsVisible="{Binding Updates.HasUpdate}">
+                  <TextBlock Text="{Binding Updates.BadgeText}"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             FontSize="11"
+                             FontWeight="Bold"
+                             Foreground="White" />
+                </Border>
+
+              </Grid>
             </Button>
 
             <Button Classes="nav-button nav-account"
