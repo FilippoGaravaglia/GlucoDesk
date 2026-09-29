@@ -16,9 +16,11 @@ using GlucoDesk.Application.Common.Errors;
 using GlucoDesk.Application.Common.Results;
 using GlucoDesk.Application.Settings.Abstractions;
 using GlucoDesk.Application.Settings.Models;
+using GlucoDesk.Application.Updates;
 using GlucoDesk.Core.Glucose.Enums;
 using GlucoDesk.Core.Glucose.Readings;
 using GlucoDesk.Core.Glucose.ValueObjects;
+using GlucoDesk.Core.Updates;
 using GlucoDesk.Desktop.BackgroundSync.Dispatching.Abstractions;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Results;
 using GlucoDesk.Desktop.Cgm.History.Continuity.Services.Abstractions;
@@ -34,6 +36,7 @@ using GlucoDesk.Desktop.ViewModels.Dashboard.Options;
 using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Main;
 using GlucoDesk.Desktop.ViewModels.Settings;
+using GlucoDesk.Desktop.ViewModels.Updates;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Clients;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Credentials;
 using GlucoDesk.Infrastructure.Cgm.DexcomShare.Options;
@@ -50,9 +53,24 @@ public sealed class MainWindowViewModelTests : EnglishLocalizationTestBase
         var viewModel = CreateViewModel();
 
         Assert.True(viewModel.IsDashboardSelected);
+        Assert.False(viewModel.IsUpdatesSelected);
         Assert.False(viewModel.IsAccountSelected);
         Assert.False(viewModel.IsSettingsSelected);
         Assert.Same(viewModel.Dashboard, viewModel.CurrentContent);
+    }
+
+    [Fact]
+    public void ShowUpdatesCommand_ShouldSelectUpdates()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.ShowUpdatesCommand.Execute(null);
+
+        Assert.False(viewModel.IsDashboardSelected);
+        Assert.True(viewModel.IsUpdatesSelected);
+        Assert.False(viewModel.IsAccountSelected);
+        Assert.False(viewModel.IsSettingsSelected);
+        Assert.Same(viewModel.Updates, viewModel.CurrentContent);
     }
 
     [Fact]
@@ -120,6 +138,7 @@ public sealed class MainWindowViewModelTests : EnglishLocalizationTestBase
             CreateBackgroundSyncStatusViewModel(),
             CreateDiaryViewModel(settingsService),
             new CarbGuideViewModel(),
+            CreateUpdateCenterViewModel(),
             CreateHistoryContinuitySyncStatusViewModel());
     }
 
@@ -149,6 +168,18 @@ public sealed class MainWindowViewModelTests : EnglishLocalizationTestBase
             new FakeDiaryExportFileSaveService(),
             settingsService,
             TimeProvider.System);
+    }
+
+    /// <summary>
+    /// Creates an update center view model for navigation tests.
+    /// </summary>
+    /// <returns>The update center view model.</returns>
+    private static UpdateCenterViewModel CreateUpdateCenterViewModel()
+    {
+        return new UpdateCenterViewModel(
+            new FakeUpdateCoordinator(),
+            new FakeUpdateService(),
+            new UpdateCenterStore());
     }
 
     /// <summary>
@@ -212,6 +243,86 @@ public sealed class MainWindowViewModelTests : EnglishLocalizationTestBase
     }
 
     #endregion
+
+    private sealed class FakeUpdateCoordinator : IUpdateCoordinator
+    {
+        /// <inheritdoc />
+        public Task<UpdateCenterSnapshot> CheckAsync(
+            UpdateCheckTrigger trigger,
+            CancellationToken cancellationToken)
+        {
+            _ = trigger;
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(
+                new UpdateCenterSnapshot
+                {
+                    State = UpdateCenterState.UpToDate,
+                    CurrentVersion = "0.4.0-preview"
+                });
+        }
+
+        /// <inheritdoc />
+        public Task DismissAsync(
+            string version,
+            CancellationToken cancellationToken)
+        {
+            _ = version;
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task<UpdatePreferences> GetPreferencesAsync(
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(
+                new UpdatePreferences());
+        }
+
+        /// <inheritdoc />
+        public Task SavePreferencesAsync(
+            UpdatePreferences preferences,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(preferences);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeUpdateService : IUpdateService
+    {
+        /// <inheritdoc />
+        public Task<UpdateCheckResult> CheckForUpdatesAsync(
+            bool includePreviewReleases,
+            CancellationToken cancellationToken)
+        {
+            _ = includePreviewReleases;
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(
+                new UpdateCheckResult
+                {
+                    CurrentVersion = "0.4.0-preview",
+                    IsUpdateAvailable = false
+                });
+        }
+
+        /// <inheritdoc />
+        public void Download(UpdateRelease release)
+        {
+            ArgumentNullException.ThrowIfNull(release);
+        }
+    }
 
     private sealed class FakeGlucoseDataService : IGlucoseDataService
     {

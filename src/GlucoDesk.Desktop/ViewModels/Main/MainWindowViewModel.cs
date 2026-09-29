@@ -2,14 +2,15 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GlucoDesk.Desktop.Cgm.History.Continuity.ViewModels;
+using GlucoDesk.Desktop.Localization;
 using GlucoDesk.Desktop.ViewModels.Account;
 using GlucoDesk.Desktop.ViewModels.BackgroundSync;
-using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.CarbGuide;
+using GlucoDesk.Desktop.ViewModels.Common;
 using GlucoDesk.Desktop.ViewModels.Dashboard;
 using GlucoDesk.Desktop.ViewModels.Diary;
 using GlucoDesk.Desktop.ViewModels.Settings;
-using GlucoDesk.Desktop.Localization;
+using GlucoDesk.Desktop.ViewModels.Updates;
 
 namespace GlucoDesk.Desktop.ViewModels.Main;
 
@@ -33,6 +34,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     private bool _isCarbGuideSelected;
 
     [ObservableProperty]
+    private bool _isUpdatesSelected;
+
+    [ObservableProperty]
     private bool _isAccountSelected;
 
     [ObservableProperty]
@@ -47,7 +51,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// <param name="backgroundSyncStatus">The background sync status view model.</param>
     /// <param name="diary">The diary view model.</param>
     /// <param name="carbGuide">The carbohydrate guide view model.</param>
-    /// <param name="historyContinuitySyncStatus">The history continuity synchronization status ViewModel.</param>
+    /// <param name="updates">The update center view model.</param>
+    /// <param name="historyContinuitySyncStatus">
+    /// The history continuity synchronization status ViewModel.
+    /// </param>
     public MainWindowViewModel(
         DashboardViewModel dashboard,
         AccountViewModel account,
@@ -55,6 +62,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         BackgroundSyncStatusViewModel backgroundSyncStatus,
         DiaryViewModel diary,
         CarbGuideViewModel carbGuide,
+        UpdateCenterViewModel updates,
         DesktopHistoryContinuitySyncStatusViewModel historyContinuitySyncStatus)
     {
         ArgumentNullException.ThrowIfNull(dashboard);
@@ -63,6 +71,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         ArgumentNullException.ThrowIfNull(backgroundSyncStatus);
         ArgumentNullException.ThrowIfNull(diary);
         ArgumentNullException.ThrowIfNull(carbGuide);
+        ArgumentNullException.ThrowIfNull(updates);
         ArgumentNullException.ThrowIfNull(historyContinuitySyncStatus);
 
         Dashboard = dashboard;
@@ -71,10 +80,14 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         BackgroundSyncStatus = backgroundSyncStatus;
         Diary = diary;
         CarbGuide = carbGuide;
+        Updates = updates;
         HistoryContinuitySyncStatus = historyContinuitySyncStatus;
 
-        BackgroundSyncStatus.PropertyChanged += OnBackgroundSyncStatusPropertyChanged;
-        LocalizationManager.LanguageChanged += OnLanguageChanged;
+        BackgroundSyncStatus.PropertyChanged +=
+            OnBackgroundSyncStatusPropertyChanged;
+
+        LocalizationManager.LanguageChanged +=
+            OnLanguageChanged;
 
         SelectSection(Dashboard);
     }
@@ -108,6 +121,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// Gets the carbohydrate guide view model.
     /// </summary>
     public CarbGuideViewModel CarbGuide { get; }
+
+    /// <summary>
+    /// Gets the update center view model.
+    /// </summary>
+    public UpdateCenterViewModel Updates { get; }
 
     /// <summary>
     /// Gets the history continuity synchronization status ViewModel.
@@ -147,9 +165,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         BackgroundSyncStatus.PropertyChanged -=
             OnBackgroundSyncStatusPropertyChanged;
 
-        LocalizationManager.LanguageChanged -= OnLanguageChanged;
+        LocalizationManager.LanguageChanged -=
+            OnLanguageChanged;
 
         CarbGuide.Dispose();
+        Updates.Dispose();
 
         _isDisposed = true;
     }
@@ -182,11 +202,21 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
+    /// Selects the update center section.
+    /// </summary>
+    [RelayCommand]
+    private void ShowUpdates()
+    {
+        SelectSection(Updates);
+    }
+
+    /// <summary>
     /// Selects the account section.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     [RelayCommand]
-    private async Task ShowAccountAsync(CancellationToken cancellationToken)
+    private async Task ShowAccountAsync(
+        CancellationToken cancellationToken)
     {
         await Account.LoadAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -206,7 +236,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     #region Helpers
 
     /// <summary>
-    /// Handles background sync status changes and refreshes consumer-facing sidebar properties.
+    /// Handles background sync status changes and refreshes
+    /// consumer-facing sidebar properties.
     /// </summary>
     /// <param name="sender">The event sender.</param>
     /// <param name="eventArgs">The property changed event arguments.</param>
@@ -215,8 +246,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         PropertyChangedEventArgs eventArgs)
     {
         if (eventArgs.PropertyName is null ||
-            eventArgs.PropertyName == nameof(BackgroundSyncStatusViewModel.HasSuccessfulSync) ||
-            eventArgs.PropertyName == nameof(BackgroundSyncStatusViewModel.StatusText))
+            eventArgs.PropertyName ==
+            nameof(BackgroundSyncStatusViewModel.HasSuccessfulSync) ||
+            eventArgs.PropertyName ==
+            nameof(BackgroundSyncStatusViewModel.StatusText))
         {
             OnPropertyChanged(nameof(LocalHistoryStatusText));
             OnPropertyChanged(nameof(LocalHistoryBadgeText));
@@ -224,9 +257,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    /// Refreshes localized sidebar values when the application language changes.
+    /// Refreshes localized sidebar values when the application
+    /// language changes.
     /// </summary>
-    private void OnLanguageChanged(object? sender, EventArgs eventArgs)
+    private void OnLanguageChanged(
+        object? sender,
+        EventArgs eventArgs)
     {
         _ = sender;
         _ = eventArgs;
@@ -245,13 +281,29 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         ArgumentNullException.ThrowIfNull(selectedContent);
 
         CurrentContent = selectedContent;
-        IsDashboardSelected = ReferenceEquals(selectedContent, Dashboard);
-        IsDiarySelected = ReferenceEquals(selectedContent, Diary);
-        IsCarbGuideSelected = ReferenceEquals(selectedContent, CarbGuide);
-        IsAccountSelected = ReferenceEquals(selectedContent, Account);
-        IsSettingsSelected = ReferenceEquals(selectedContent, Settings);
+
+        IsDashboardSelected =
+            ReferenceEquals(selectedContent, Dashboard);
+
+        IsDiarySelected =
+            ReferenceEquals(selectedContent, Diary);
+
+        IsCarbGuideSelected =
+            ReferenceEquals(selectedContent, CarbGuide);
+
+        IsUpdatesSelected =
+            ReferenceEquals(selectedContent, Updates);
+
+        IsAccountSelected =
+            ReferenceEquals(selectedContent, Account);
+
+        IsSettingsSelected =
+            ReferenceEquals(selectedContent, Settings);
     }
 
+    /// <summary>
+    /// Gets a localized string.
+    /// </summary>
     private static string T(string key)
     {
         return LocalizationManager.GetString(key);

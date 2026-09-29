@@ -1,0 +1,165 @@
+<Window
+    x:Class="GlucoDesk.Desktop.Views.Updates.UpdateAvailableWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Updates"
+    x:DataType="viewModels:UpdateCenterViewModel"
+    Title="{DynamicResource UpdateCenterAvailableTitle}"
+    Width="590"
+    MinWidth="560"
+    MaxWidth="680"
+    SizeToContent="Height"
+    CanResize="False"
+    WindowStartupLocation="CenterOwner"
+    Background="{StaticResource GlucoDesk.Brush.AppBackground}">
+
+  <Border
+      Margin="20"
+      Padding="30"
+      CornerRadius="24"
+      BorderThickness="1"
+      BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+      Background="{StaticResource GlucoDesk.Brush.Surface}">
+
+    <StackPanel Spacing="24">
+
+      <!-- Header -->
+      <Grid
+          ColumnDefinitions="Auto,*"
+          ColumnSpacing="16">
+
+        <Border
+            Width="46"
+            Height="46"
+            CornerRadius="23"
+            Background="{StaticResource GlucoDesk.Brush.AccentSoft}">
+
+          <PathIcon
+              Width="20"
+              Height="20"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}"
+              Data="M10,2 A8,8 0 1 1 4.35,4.35 L2.5,4.5 L4.5,2.5 L4.65,4.35 A8,8 0 0 1 10,2 Z M9,6 H11 V11 H14 L10,15 L6,11 H9 Z" />
+        </Border>
+
+        <StackPanel
+            Grid.Column="1"
+            Spacing="6">
+
+          <TextBlock
+              Text="{DynamicResource UpdateCenterAvailableTitle}"
+              FontSize="22"
+              FontWeight="SemiBold"
+              Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+          <TextBlock
+              Text="{DynamicResource UpdateCenterAvailableDescription}"
+              FontSize="14"
+              TextWrapping="Wrap"
+              Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+        </StackPanel>
+      </Grid>
+
+      <!-- Versions -->
+      <Grid
+          ColumnDefinitions="*,*"
+          ColumnSpacing="14">
+
+        <Border
+            Padding="16"
+            CornerRadius="15"
+            Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+
+          <StackPanel Spacing="5">
+            <TextBlock
+                Text="{DynamicResource UpdateCenterCurrentVersion}"
+                FontSize="12"
+                Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+
+            <TextBlock
+                Text="{Binding CurrentVersion}"
+                FontSize="16"
+                FontWeight="SemiBold"
+                Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+          </StackPanel>
+        </Border>
+
+        <Border
+            Grid.Column="1"
+            Padding="16"
+            CornerRadius="15"
+            Background="{StaticResource GlucoDesk.Brush.AccentSoft}">
+
+          <StackPanel Spacing="5">
+            <TextBlock
+                Text="{DynamicResource UpdateCenterLatestVersion}"
+                FontSize="12"
+                Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+
+            <TextBlock
+                Text="{Binding LatestVersion}"
+                FontSize="16"
+                FontWeight="SemiBold"
+                Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <!-- Release notes -->
+      <StackPanel
+          IsVisible="{Binding HasUpdate}"
+          Spacing="10">
+
+        <TextBlock
+            Text="{DynamicResource UpdateCenterWhatsNew}"
+            FontSize="15"
+            FontWeight="SemiBold"
+            Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+        <Border
+            Padding="16"
+            CornerRadius="14"
+            Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+
+          <ScrollViewer
+              MaxHeight="220"
+              VerticalScrollBarVisibility="Auto">
+
+            <TextBlock
+                Text="{Binding ReleaseNotes}"
+                FontSize="13"
+                LineHeight="19"
+                TextWrapping="Wrap"
+                Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+          </ScrollViewer>
+        </Border>
+      </StackPanel>
+
+      <!-- Actions -->
+      <Grid
+          ColumnDefinitions="*,Auto,Auto"
+          ColumnSpacing="10">
+
+        <Border />
+
+        <Button
+            Grid.Column="1"
+            MinWidth="100"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Content="{DynamicResource UpdateCenterLater}"
+            Click="OnLaterClicked" />
+
+        <Button
+            Grid.Column="2"
+            MinWidth="160"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Content="{DynamicResource UpdateCenterDownload}"
+            Click="OnDownloadClicked" />
+      </Grid>
+
+    </StackPanel>
+  </Border>
+</Window>

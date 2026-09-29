@@ -1,0 +1,270 @@
+<UserControl
+    x:Class="GlucoDesk.Desktop.Views.Updates.UpdateCenterView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:GlucoDesk.Desktop.ViewModels.Updates"
+    x:DataType="viewModels:UpdateCenterViewModel">
+
+  <ScrollViewer>
+    <StackPanel
+        Margin="28"
+        Spacing="22"
+        HorizontalAlignment="Stretch">
+
+      <!-- Header -->
+      <StackPanel Spacing="6">
+        <TextBlock
+            Text="{DynamicResource NavUpdates}"
+            FontSize="28"
+            FontWeight="SemiBold"
+            Foreground="{StaticResource GlucoDesk.Brush.TextPrimary}" />
+
+        <TextBlock
+            Text="{DynamicResource UpdateCenterSubtitle}"
+            FontSize="14"
+            TextWrapping="Wrap"
+            Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+      </StackPanel>
+
+      <!-- Checking -->
+      <Border
+          IsVisible="{Binding IsChecking}"
+          Padding="24"
+          CornerRadius="22"
+          BorderThickness="1"
+          BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+          Background="{StaticResource GlucoDesk.Brush.Surface}">
+
+        <StackPanel Spacing="10">
+          <ProgressBar
+              IsIndeterminate="True"
+              Height="4" />
+
+          <TextBlock
+              Text="{DynamicResource UpdateCenterCheckingTitle}"
+              FontSize="18"
+              FontWeight="SemiBold" />
+
+          <TextBlock
+              Text="{DynamicResource UpdateCenterCheckingDescription}"
+              TextWrapping="Wrap"
+              Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Up to date -->
+      <Border
+          IsVisible="{Binding IsUpToDate}"
+          Padding="26"
+          CornerRadius="22"
+          BorderThickness="1"
+          BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+          Background="{StaticResource GlucoDesk.Brush.Surface}">
+
+        <StackPanel Spacing="16">
+
+          <Grid
+              ColumnDefinitions="Auto,*"
+              ColumnSpacing="14">
+
+            <Border
+                Width="38"
+                Height="38"
+                CornerRadius="19"
+                Background="{StaticResource GlucoDesk.Brush.AccentSoft}">
+              <TextBlock
+                  Text="✓"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  FontSize="20"
+                  FontWeight="Bold"
+                  Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+            </Border>
+
+            <StackPanel
+                Grid.Column="1"
+                Spacing="5">
+
+              <TextBlock
+                  Text="{DynamicResource UpdateCenterUpToDateTitle}"
+                  FontSize="19"
+                  FontWeight="SemiBold" />
+
+              <TextBlock
+                  Text="{DynamicResource UpdateCenterUpToDateDescription}"
+                  TextWrapping="Wrap"
+                  Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+            </StackPanel>
+          </Grid>
+
+          <Border
+              Padding="16"
+              CornerRadius="14"
+              Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+
+            <Grid
+                ColumnDefinitions="*,Auto"
+                ColumnSpacing="16">
+
+              <TextBlock
+                  Text="{DynamicResource UpdateCenterCurrentVersion}"
+                  Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+
+              <TextBlock
+                  Grid.Column="1"
+                  Text="{Binding CurrentVersion}"
+                  FontWeight="SemiBold" />
+            </Grid>
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- Update available -->
+      <Border
+          IsVisible="{Binding HasUpdate}"
+          Padding="26"
+          CornerRadius="22"
+          BorderThickness="1"
+          BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+          Background="{StaticResource GlucoDesk.Brush.Surface}">
+
+        <StackPanel Spacing="20">
+
+          <StackPanel Spacing="6">
+            <TextBlock
+                Text="{DynamicResource UpdateCenterAvailableTitle}"
+                FontSize="20"
+                FontWeight="SemiBold"
+                Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+
+            <TextBlock
+                Text="{DynamicResource UpdateCenterAvailableDescription}"
+                TextWrapping="Wrap"
+                Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+          </StackPanel>
+
+          <Grid
+              ColumnDefinitions="*,*"
+              ColumnSpacing="14">
+
+            <Border
+                Padding="16"
+                CornerRadius="14"
+                Background="{StaticResource GlucoDesk.Brush.SurfaceSoft}">
+
+              <StackPanel Spacing="5">
+                <TextBlock
+                    Text="{DynamicResource UpdateCenterCurrentVersion}"
+                    FontSize="12"
+                    Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+
+                <TextBlock
+                    Text="{Binding CurrentVersion}"
+                    FontSize="16"
+                    FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+
+            <Border
+                Grid.Column="1"
+                Padding="16"
+                CornerRadius="14"
+                Background="{StaticResource GlucoDesk.Brush.AccentSoft}">
+
+              <StackPanel Spacing="5">
+                <TextBlock
+                    Text="{DynamicResource UpdateCenterLatestVersion}"
+                    FontSize="12"
+                    Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+
+                <TextBlock
+                    Text="{Binding LatestVersion}"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource GlucoDesk.Brush.AccentStrong}" />
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <StackPanel Spacing="8">
+            <TextBlock
+                Text="{DynamicResource UpdateCenterWhatsNew}"
+                FontWeight="SemiBold" />
+
+            <TextBlock
+                Text="{Binding ReleaseNotes}"
+                TextWrapping="Wrap"
+                MaxHeight="190"
+                Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+          </StackPanel>
+
+          <StackPanel
+              Orientation="Horizontal"
+              Spacing="10">
+
+            <Button
+                Content="{DynamicResource UpdateCenterDownload}"
+                Command="{Binding DownloadUpdateCommand}" />
+
+            <Button
+                Content="{DynamicResource UpdateCenterLater}"
+                Command="{Binding DismissCommand}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Error / offline -->
+      <Border
+          IsVisible="{Binding HasError}"
+          Padding="26"
+          CornerRadius="22"
+          BorderThickness="1"
+          BorderBrush="{StaticResource GlucoDesk.Brush.BorderSoft}"
+          Background="{StaticResource GlucoDesk.Brush.Surface}">
+
+        <StackPanel Spacing="10">
+
+          <TextBlock
+              Text="{DynamicResource UpdateCenterErrorTitle}"
+              FontSize="19"
+              FontWeight="SemiBold" />
+
+          <TextBlock
+              Text="{DynamicResource UpdateCenterErrorDescription}"
+              TextWrapping="Wrap"
+              Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+
+          <TextBlock
+              Text="{Binding ErrorMessage}"
+              FontSize="12"
+              TextWrapping="Wrap"
+              Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}" />
+
+          <Button
+              Margin="0,8,0,0"
+              HorizontalAlignment="Left"
+              Content="{DynamicResource UpdateCenterTryAgain}"
+              Command="{Binding CheckNowCommand}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Footer -->
+      <Grid
+          ColumnDefinitions="*,Auto"
+          ColumnSpacing="16">
+
+        <TextBlock
+            VerticalAlignment="Center"
+            Text="{DynamicResource UpdateCenterAutomaticHint}"
+            Foreground="{StaticResource GlucoDesk.Brush.TextSecondary}"
+            TextWrapping="Wrap" />
+
+        <Button
+            Grid.Column="1"
+            Content="{DynamicResource UpdateCenterCheckNow}"
+            Command="{Binding CheckNowCommand}" />
+      </Grid>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
