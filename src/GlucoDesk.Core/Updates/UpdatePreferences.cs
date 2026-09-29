@@ -1,7 +1,7 @@
 namespace GlucoDesk.Core.Updates;
 
 /// <summary>
-/// Stores local preferences related to GlucoDesk update notifications.
+/// Stores local preferences and state related to GlucoDesk update notifications.
 /// </summary>
 public sealed class UpdatePreferences
 {
@@ -24,4 +24,9 @@ public sealed class UpdatePreferences
     /// Gets or sets when the last release notification was dismissed.
     /// </summary>
     public DateTimeOffset? LastDismissedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the timestamp of the last successful update check.
+    /// </summary>
+    public DateTimeOffset? LastSuccessfulCheckAt { get; set; }
 }
